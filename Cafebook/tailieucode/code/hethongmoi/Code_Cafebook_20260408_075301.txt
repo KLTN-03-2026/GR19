@@ -1,0 +1,4723 @@
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\App.xaml
+================================================================================
+﻿<Application x:Class="AppCafebookApi.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:AppCafebookApi"
+             StartupUri="View/ManHinhDangNhap.xaml">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\App.xaml.cs
+================================================================================
+﻿using System.Configuration;
+using System.Data;
+using System.Windows;
+
+namespace AppCafebookApi
+{
+    /// <summary>
+    /// Interaction logic for App.xaml
+    /// </summary>
+    public partial class App : Application
+    {
+    }
+
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\Services\ApiClient.cs
+================================================================================
+﻿using System.Net.Http;
+using System.Net.Http.Headers;
+using System;
+using AppCafebookApi.Utils;
+
+namespace AppCafebookApi.Services
+{
+    public static class ApiClient
+    {
+        private static HttpClient? _instance;
+
+        public static HttpClient Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new HttpClient();
+
+                    // 1. Đọc URL động từ File cấu hình
+                    string? serverUrl = AppConfigManager.GetApiServerUrl();
+                    if (!string.IsNullOrEmpty(serverUrl))
+                    {
+                        _instance.BaseAddress = new Uri(serverUrl);
+                    }
+
+                    _instance.DefaultRequestHeaders.Accept.Clear();
+                    _instance.DefaultRequestHeaders.Accept.Add(
+                        new MediaTypeWithQualityHeaderValue("application/json"));
+                }
+
+                // 2. Tự động đính kèm Token vào Header nếu đã đăng nhập
+                if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                {
+                    _instance.DefaultRequestHeaders.Authorization =
+                        new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                }
+                else
+                {
+                    _instance.DefaultRequestHeaders.Authorization = null;
+                }
+
+                return _instance;
+            }
+        }
+
+        // Hàm này được gọi nếu người dùng đổi Cấu hình IP và muốn reset lại HttpClient
+        public static void ResetInstance()
+        {
+            _instance = null;
+        }
+
+        public static void SetAuthorizationHeader(string token)
+        {
+            Instance.DefaultRequestHeaders.Authorization = null;
+            if (!string.IsNullOrEmpty(token))
+            {
+                Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+        }
+
+        public static void ClearAuthorizationHeader()
+        {
+            Instance.DefaultRequestHeaders.Authorization = null;
+        }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\Services\AppConfigManager.cs
+================================================================================
+﻿using System;
+using System.IO;
+using System.Text.Json;
+using System.Windows;
+
+namespace AppCafebookApi.Services
+{
+    public class AppConfig
+    {
+        // Mặc định là chuỗi rỗng, không có link sẵn
+        public string ApiServerUrl { get; set; } = string.Empty;
+    }
+
+    public static class AppConfigManager
+    {
+        // Tự động lấy thư mục gốc nơi ứng dụng đang chạy (nơi chứa file .exe)
+        private static readonly string BaseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+        // Đường dẫn động: [Thư mục App]\SettingCafebook\AppConfig.json
+        private static readonly string ConfigFilePath = Path.Combine(BaseDir, "SettingCafebook", "AppConfig.json");
+
+        public static string? GetApiServerUrl()
+        {
+            try
+            {
+                if (File.Exists(ConfigFilePath))
+                {
+                    string json = File.ReadAllText(ConfigFilePath);
+                    var config = JsonSerializer.Deserialize<AppConfig>(json);
+
+                    // Nếu có file nhưng giá trị rỗng thì vẫn trả về rỗng
+                    if (string.IsNullOrWhiteSpace(config?.ApiServerUrl))
+                        return null;
+
+                    return config.ApiServerUrl;
+                }
+
+                // Nếu chưa có file (lần đầu chạy) thì tạo file trống và trả về null
+                SaveApiServerUrl(string.Empty);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi đọc file cấu hình: {ex.Message}", "Lỗi hệ thống", MessageBoxButton.OK, MessageBoxImage.Error);
+                return null;
+            }
+        }
+
+        public static void SaveApiServerUrl(string newUrl)
+        {
+            try
+            {
+                // Đảm bảo thư mục SettingCafebook luôn được tạo ra nếu chưa có
+                string? directory = Path.GetDirectoryName(ConfigFilePath);
+                if (directory != null && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                var config = new AppConfig { ApiServerUrl = newUrl };
+                string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+
+                File.WriteAllText(ConfigFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi lưu file cấu hình: {ex.Message}", "Lỗi hệ thống", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\Services\AuthService.cs
+================================================================================
+﻿using CafebookModel.Model.Shared;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using AppCafebookApi.Utils;
+using System;
+
+namespace AppCafebookApi.Services
+{
+    public static class AuthService
+    {
+        // Lưu thông tin người dùng và quyền hạn
+        public static LoginResponse? CurrentUser { get; private set; }
+
+        // Cung cấp nhanh Token cho ApiClient
+        public static string? AuthToken => CurrentUser?.Token;
+
+        private static HttpClient _httpClient = new HttpClient();
+
+        // Cập nhật lại URL cho HttpClient (gọi khi khởi động hoặc đổi URL)
+        public static void InitializeHttpClient()
+        {
+            string? serverUrl = AppConfigManager.GetApiServerUrl();
+            if (!string.IsNullOrEmpty(serverUrl))
+            {
+                _httpClient.BaseAddress = new Uri(serverUrl);
+            }
+        }
+
+        public static async Task<LoginResponse?> LoginAsync(LoginRequest request)
+        {
+            // Đảm bảo đã thiết lập Link Server
+            if (_httpClient.BaseAddress == null)
+            {
+                InitializeHttpClient();
+            }
+
+            // Gọi API bằng đường dẫn mới
+            var response = await _httpClient.PostAsJsonAsync("/api/shared/auth/login-nhan-vien", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var data = await response.Content.ReadFromJsonAsync<LoginResponse>();
+                CurrentUser = data;
+                return data;
+            }
+
+            return null; // Trả về null nếu sai tài khoản
+        }
+
+        // Tạm vô hiệu hóa backdoor, vì đã code mới hoàn toàn
+        public static LoginResponse? LoginBackdoor(LoginRequest model)
+        {
+            CurrentUser = null;
+            return null;
+        }
+
+        public static void Logout()
+        {
+            CurrentUser = null;
+        }
+
+        // --- CÁC HÀM KIỂM TRA QUYỀN MỚI ---
+        public static bool CoQuyen(string idQuyen)
+        {
+            if (CurrentUser == null || CurrentUser.Quyen == null) return false;
+
+            // Quản trị viên auto full quyền
+            if (CurrentUser.TenVaiTro == "Quản trị viên" || CurrentUser.Quyen.Contains("FULL")) return true;
+
+            return CurrentUser.Quyen.Contains(idQuyen);
+        }
+
+        public static bool CoQuyen(params string[] quyenIds)
+        {
+            if (CurrentUser == null || CurrentUser.Quyen == null) return false;
+
+            if (CurrentUser.TenVaiTro == "Quản trị viên" || CurrentUser.Quyen.Contains("FULL")) return true;
+
+            return quyenIds.Any(id => CurrentUser.Quyen.Contains(id));
+        }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\Services\HinhAnhHelper.cs
+================================================================================
+﻿using System;
+using System.IO;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
+namespace AppCafebookApi.Services
+{
+    public static class HinhAnhHelper
+    {
+        public static BitmapImage LoadImage(string? imageSource, string defaultImagePath)
+        {
+            if (string.IsNullOrEmpty(imageSource))
+            {
+                return LoadImageFromPackUri(defaultImagePath);
+            }
+
+            if (imageSource.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var image = new BitmapImage();
+                    image.BeginInit();
+                    image.UriSource = new Uri(imageSource, UriKind.Absolute);
+                    image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+                    image.CacheOption = BitmapCacheOption.OnLoad;
+                    image.EndInit();
+
+                    return image;
+                }
+                catch (Exception)
+                {
+                    return LoadImageFromPackUri(defaultImagePath);
+                }
+            }
+
+            try
+            {
+                if (!File.Exists(imageSource))
+                {
+                    return LoadImageFromPackUri(defaultImagePath);
+                }
+
+                var fileImage = new BitmapImage();
+                fileImage.BeginInit();
+                fileImage.UriSource = new Uri(imageSource, UriKind.Absolute);
+                fileImage.CacheOption = BitmapCacheOption.OnLoad;
+                fileImage.EndInit();
+                fileImage.Freeze();
+                return fileImage;
+            }
+            catch (Exception)
+            {
+                return LoadImageFromPackUri(defaultImagePath);
+            }
+        }
+
+        private static BitmapImage LoadImageFromPackUri(string uriPath)
+        {
+            try
+            {
+                var image = new BitmapImage();
+                var uri = new Uri($"pack://application:,,,/AppCafebookApi;component{uriPath}", UriKind.Absolute);
+
+                image.BeginInit();
+                image.UriSource = uri;
+                image.CacheOption = BitmapCacheOption.OnLoad;
+                image.EndInit();
+                image.Freeze();
+                return image;
+            }
+            catch (Exception)
+            {
+                var image = new BitmapImage();
+                var writeableBitmap = new WriteableBitmap(1, 1, 96, 96, PixelFormats.Pbgra32, null);
+                using (var stream = new MemoryStream())
+                {
+                    var encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(writeableBitmap));
+                    encoder.Save(stream);
+                    stream.Position = 0;
+                    image.BeginInit();
+                    image.CacheOption = BitmapCacheOption.OnLoad;
+                    image.StreamSource = stream;
+                    image.EndInit();
+                }
+                image.Freeze();
+                return image;
+            }
+        }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\Utils\Class1.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace AppCafebookApi.Utils
+{
+    internal class Class1
+    {
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\ManHinhDangNhap.xaml
+================================================================================
+﻿<Window x:Class="AppCafebookApi.View.ManHinhDangNhap"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AppCafebookApi.View"
+        mc:Ignorable="d"
+        Title="Đăng nhập hệ thống CafeBook" Height="500" Width="850"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize"
+        FontFamily="Segoe UI"
+        Loaded="Window_Loaded"
+        KeyDown="Window_KeyDown">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBrown" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="AccentOrange" Color="#D27D2D"/>
+        <SolidColorBrush x:Key="LightCream" Color="#FFF8E1"/>
+        <SolidColorBrush x:Key="DarkText" Color="#4E342E"/>
+        <SolidColorBrush x:Key="SubtleGray" Color="#BDBDBD"/>
+        <SolidColorBrush x:Key="WhiteText" Color="#FFFFFF"/>
+
+        <Geometry x:Key="UserIcon">M12,12A5,5 0 0,1 7,7A5,5 0 0,1 12,2A5,5 0 0,1 17,7A5,5 0 0,1 12,12M12,14C14.67,14 20,15.33 20,18V20H4V18C4,15.33 9.33,14 12,14Z</Geometry>
+        <Geometry x:Key="LockIcon">M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8H17V6A5,5 0 0,0 12,1A5,5 0 0,0 7,6V8H6A2,2 0 0,0 4,10V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8Z</Geometry>
+        <Geometry x:Key="LogoIcon">M16,5H14V3H12V5H10A3,3 0 0,0 7,8V14H18V8A3,3 0 0,0 15,5M20,19H4V17H20V19Z</Geometry>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{StaticResource SubtleGray}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Foreground" Value="{StaticResource DarkText}"/>
+            <Setter Property="Padding" Value="35,8,8,8"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentOrange}"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="0,0,0,2"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBrown}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="PasswordBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{StaticResource SubtleGray}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Foreground" Value="{StaticResource DarkText}"/>
+            <Setter Property="Padding" Value="35,8,8,8"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentOrange}"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="0,0,0,2"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBrown}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrown}"/>
+            <Setter Property="Foreground" Value="{StaticResource WhiteText}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                CornerRadius="21"
+                                Background="{TemplateBinding Background}">
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="2" Color="#6F4E37" Opacity="0.3" BlurRadius="10"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource AccentOrange}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TextButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrown}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource AccentOrange}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+
+    <Border CornerRadius="12" Background="{StaticResource LightCream}">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" Opacity="0.15" BlurRadius="30" ShadowDepth="0"/>
+        </Border.Effect>
+        <Grid x:Name="MainGrid">
+            <Grid.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="MainGrid" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.5"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Grid.Triggers>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="{StaticResource PrimaryBrown}" CornerRadius="12,0,0,12">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Ellipse Width="100" Height="100" Margin="0,0,0,20">
+                        <Ellipse.Effect>
+                            <DropShadowEffect ShadowDepth="1" BlurRadius="15" Opacity="0.2"/>
+                        </Ellipse.Effect>
+                        <Ellipse.Fill>
+                            <!-- Thay đổi "/Assets/logo.png" thành đường dẫn chính xác tới file của bạn -->
+                            <ImageBrush ImageSource="/Assets/logo.png"/>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <TextBlock Text="CafeBook" FontSize="36" FontWeight="Bold" Foreground="{StaticResource WhiteText}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Awaken your senses" Opacity="0.8" FontSize="14" Foreground="{StaticResource WhiteText}" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <Grid Grid.Column="1" Margin="50,40">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Đăng Nhập"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource DarkText}"
+                               Margin="0,0,0,10"/>
+                    <TextBlock Text="Chào mừng trở lại! Vui lòng nhập thông tin của bạn."
+                               FontSize="14"
+                               Foreground="{StaticResource DarkText}"
+                               Opacity="0.7"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,30"/>
+
+                    <Grid Margin="0,10,0,0">
+                        <TextBlock Text="Tên đăng nhập" Foreground="{StaticResource PrimaryBrown}" VerticalAlignment="Top" Margin="0,-8,0,0" FontSize="12"/>
+                        <Path Data="{StaticResource UserIcon}" Fill="{StaticResource SubtleGray}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"/>
+                        <TextBox x:Name="txtUsername"/>
+                    </Grid>
+
+                    <Grid Margin="0,25,0,0">
+                        <TextBlock Text="Mật khẩu" Foreground="{StaticResource PrimaryBrown}" VerticalAlignment="Top" Margin="0,-8,0,0" FontSize="12"/>
+                        <Path Data="{StaticResource LockIcon}" Fill="{StaticResource SubtleGray}" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"/>
+                        <TextBox x:Name="txtVisiblePassword" Visibility="Collapsed" TextChanged="TxtVisiblePassword_TextChanged"/>
+                        <PasswordBox x:Name="txtPassword" PasswordChanged="TxtPassword_PasswordChanged"/>
+                    </Grid>
+
+                    <CheckBox x:Name="chkShowPassword"
+                              Content="Hiển thị mật khẩu"
+                              FontSize="12"
+                              Foreground="{StaticResource DarkText}"
+                              HorizontalAlignment="Right"
+                              Margin="0,15,0,0"
+                              Checked="ChkShowPassword_Checked" Unchecked="ChkShowPassword_Unchecked"/>
+
+                    <Button x:Name="btnLogin" Content="ĐĂNG NHẬP" Style="{StaticResource PrimaryButton}" Margin="0,30,0,0" Click="BtnLogin_Click"/>
+                    <Button x:Name="btnExit" Content="Thoát chương trình" Style="{StaticResource TextButton}" Margin="0,10,0,0" Click="BtnExit_Click"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\ManHinhDangNhap.xaml.cs
+================================================================================
+﻿using System;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Controls;
+using System.Threading.Tasks;
+using AppCafebookApi.Services;
+using AppCafebookApi.View.Common;
+using AppCafebookApi.View.quanly;
+using AppCafebookApi.View.nhanvien;
+using CafebookModel.Model.Shared; // SỬ DỤNG DTO MỚI TẠI ĐÂY
+//using AppCafebookApi.Utils;
+
+namespace AppCafebookApi.View
+{
+    public partial class ManHinhDangNhap : Window
+    {
+        private int _countConnectionError = 0; // Biến đếm số lần lỗi kết nối
+
+        public ManHinhDangNhap()
+        {
+            InitializeComponent();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            txtUsername.Focus();
+        }
+
+        private async void BtnLogin_Click(object sender, RoutedEventArgs e)
+        {
+            // 1. Lấy dữ liệu từ UI vào DTO mới (LoginRequest)
+            var loginReq = new LoginRequest
+            {
+                Username = txtUsername.Text,
+                Password = chkShowPassword.IsChecked == true ? txtVisiblePassword.Text : txtPassword.Password
+            };
+
+            if (string.IsNullOrEmpty(loginReq.Username) || string.IsNullOrEmpty(loginReq.Password))
+            {
+                MessageBox.Show("Vui lòng nhập đầy đủ tài khoản và mật khẩu!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            btnLogin.IsEnabled = false;
+            btnLogin.Content = "ĐANG KIỂM TRA...";
+
+            try
+            {
+                // 2. Gọi API Đăng nhập (Sử dụng AuthService mới trả về LoginResponse)
+                var response = await AuthService.LoginAsync(loginReq);
+
+                if (response != null && !string.IsNullOrEmpty(response.Token))
+                {
+                    _countConnectionError = 0; // Reset bộ đếm khi thành công
+
+                    // 3. Xử lý phân quyền mở màn hình (Dựa trên TenVaiTro trong LoginResponse)
+                    if (response.TenVaiTro == "Quản lý" || response.TenVaiTro == "Quản trị viên")
+                    {
+                        var adminWindow = new ManHinhQuanly();
+                        var welcome = new WelcomeWindow(response); // Chỉnh lại WelcomeWindow nhận LoginResponse
+                        welcome.Show();
+
+                        await Task.Delay(2500);
+                        welcome.Close();
+                        adminWindow.Show();
+                    }
+                    else
+                    {
+                        var employeeWindow = new ManHinhNhanVien();
+                        var welcome = new WelcomeWindow(response);
+                        welcome.Show();
+
+                        await Task.Delay(2500);
+                        welcome.Close();
+                        employeeWindow.Show();
+                    }
+                    this.Close();
+                }
+                else
+                {
+                    // Lỗi nghiệp vụ (Sai pass, khóa tài khoản...)
+                    MessageBox.Show("Tên đăng nhập hoặc mật khẩu không chính xác!", "Đăng nhập thất bại", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ResetLoginButton();
+                }
+            }
+            catch (Exception ex)
+            {
+                // 4. XỬ LÝ LỖI KẾT NỐI SERVER
+                _countConnectionError++;
+
+                if (_countConnectionError >= 3)
+                {
+                    MessageBox.Show("Không thể kết nối đến máy chủ sau 3 lần thử. Vui lòng kiểm tra lại địa chỉ Server!", "Lỗi kết nối", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                    // Hiện cửa sổ cài đặt Server
+                    var setupWindow = new CaiDatServerWindow();
+                    if (setupWindow.ShowDialog() == true)
+                    {
+                        // Sau khi đổi link, tự động khởi động lại App để nạp lại HttpClient
+                        System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
+                        Application.Current.Shutdown();
+                    }
+                    _countConnectionError = 0;
+                }
+                else
+                {
+                    MessageBox.Show($"Lỗi kết nối Server lần {_countConnectionError}/3: {ex.Message}", "Lỗi hệ thống", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                ResetLoginButton();
+            }
+        }
+
+        private void ResetLoginButton()
+        {
+            btnLogin.IsEnabled = true;
+            btnLogin.Content = "ĐĂNG NHẬP";
+        }
+
+        private void BtnExit_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && btnLogin.IsEnabled)
+            {
+                BtnLogin_Click(sender, e);
+                e.Handled = true;
+            }
+        }
+
+        // --- Logic Hiển thị Mật khẩu (Giữ nguyên thiết kế của bạn) ---
+        private void ChkShowPassword_Checked(object sender, RoutedEventArgs e)
+        {
+            txtVisiblePassword.Text = txtPassword.Password;
+            txtVisiblePassword.Visibility = Visibility.Visible;
+            txtPassword.Visibility = Visibility.Collapsed;
+        }
+
+        private void ChkShowPassword_Unchecked(object sender, RoutedEventArgs e)
+        {
+            txtPassword.Password = txtVisiblePassword.Text;
+            txtVisiblePassword.Visibility = Visibility.Collapsed;
+            txtPassword.Visibility = Visibility.Visible;
+        }
+
+        private void TxtPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (chkShowPassword.IsChecked == true)
+                txtVisiblePassword.Text = txtPassword.Password;
+        }
+
+        private void TxtVisiblePassword_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (chkShowPassword.IsChecked == false)
+                txtPassword.Password = txtVisiblePassword.Text;
+        }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\Common\CaiDatServerWindow.xaml
+================================================================================
+﻿<Window x:Class="AppCafebookApi.View.Common.CaiDatServerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Thiết lập kết nối Server" Height="250" Width="450"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent">
+    <Border CornerRadius="15" Background="White" BorderBrush="#6F4E37" BorderThickness="2">
+        <StackPanel Margin="20">
+            <TextBlock Text="THIẾT LẬP KẾT NỐI HỆ THỐNG" FontWeight="Bold" FontSize="18" 
+                       Foreground="#6F4E37" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+            <TextBlock Text="Nhập địa chỉ API Server (Lần đầu tiên):" Margin="0,0,0,5" FontSize="13"/>
+            <TextBox x:Name="txtServerUrl" Padding="10" FontSize="14" 
+                     Text="http://localhost:5202" BorderBrush="#BDBDBD"/>
+
+            <TextBlock Text="Ví dụ: http://192.168.1.50:5166" FontSize="11" Foreground="Gray" Margin="0,5,0,0"/>
+
+            <Button x:Name="btnSave" Content="LƯU VÀ KẾT NỐI" Margin="0,25,0,0" 
+                    Background="#6F4E37" Foreground="White" Height="40" FontWeight="Bold"
+                    Click="BtnSave_Click">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="5"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
+        </StackPanel>
+    </Border>
+</Window>
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\Common\CaiDatServerWindow.xaml.cs
+================================================================================
+﻿using System.Windows;
+using AppCafebookApi.Services;
+
+namespace AppCafebookApi.View.Common
+{
+    public partial class CaiDatServerWindow : Window
+    {
+        public CaiDatServerWindow()
+        {
+            InitializeComponent();
+        }
+
+        private void BtnSave_Click(object sender, RoutedEventArgs e)
+        {
+            string url = txtServerUrl.Text.Trim();
+
+            if (string.IsNullOrEmpty(url))
+            {
+                MessageBox.Show("Vui lòng không để trống địa chỉ Server!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Lưu vào file AppConfig.json cục bộ
+            AppConfigManager.SaveApiServerUrl(url);
+
+            MessageBox.Show("Thiết lập thành công! Ứng dụng sẽ bắt đầu kết nối.", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            this.DialogResult = true; // Đánh dấu là đã cài đặt xong để App.xaml.cs biết
+            this.Close();
+        }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\Common\WelcomeWindow.xaml
+================================================================================
+﻿<Window x:Class="AppCafebookApi.View.Common.WelcomeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AppCafebookApi.View.Common"
+        Title="Chào mừng" Height="280" Width="540"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize"
+        Loaded="Window_Loaded"
+        Opacity="0">
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Window.Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                                     From="0" To="1" Duration="0:0:0.6">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+
+                    <DoubleAnimation Storyboard.TargetName="RootBorder" 
+                                     Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" 
+                                     From="0.85" To="1" Duration="0:0:0.6">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                    <DoubleAnimation Storyboard.TargetName="RootBorder" 
+                                     Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" 
+                                     From="0.85" To="1" Duration="0:0:0.6">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Window.Triggers>
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="AccentOrangeBrush" Color="#D27D2D"/>
+        <SolidColorBrush x:Key="LightCreamBrush" Color="#FFF8E1"/>
+        <SolidColorBrush x:Key="DarkTextBrush" Color="#4E342E"/>
+        <SolidColorBrush x:Key="SubtleGrayBrush" Color="#BDBDBD"/>
+        <SolidColorBrush x:Key="WhiteTextBrush" Color="#FFFFFF"/>
+
+        <Style TargetType="ProgressBar">
+            <Setter Property="Background" Value="#E0D7D3"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrownBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="6"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Border x:Name="RootBorder" Background="{StaticResource LightCreamBrush}" CornerRadius="15" Margin="10" RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="0.85" ScaleY="0.85"/>
+            </Border.RenderTransform>
+
+            <Border.Effect>
+                <DropShadowEffect Color="Black" BlurRadius="15" Opacity="0.15" ShadowDepth="3"/>
+            </Border.Effect>
+
+            <Grid Margin="30">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Ellipse x:Name="imgAvatar" Width="120" Height="120" Margin="0,0,30,0"
+                         Stroke="{StaticResource PrimaryBrownBrush}"
+                         StrokeThickness="1.5">
+                    <Ellipse.Fill>
+                        <SolidColorBrush Color="#EFEBE9"/>
+                    </Ellipse.Fill>
+                </Ellipse>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left">
+                    <TextBlock x:Name="txtWelcome" Text="CHÀO MỪNG" 
+                               FontWeight="Bold" 
+                               FontSize="28" 
+                               Margin="0,0,0,15"
+                               Foreground="{StaticResource PrimaryBrownBrush}"/>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="txtUserGreeting" 
+                                   Text="Xin chào, [Tên]" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="{StaticResource DarkTextBrush}"/>
+                        <TextBlock x:Name="txtSub" 
+                                   Text="Đang chuẩn bị không gian làm việc cho bạn..." 
+                                   FontSize="13" 
+                                   Foreground="{StaticResource DarkTextBrush}" Opacity="0.7"
+                                   Margin="0,6,0,12"/>
+
+                        <ProgressBar Width="280" 
+                                     IsIndeterminate="True" 
+                                     HorizontalAlignment="Left"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\Common\WelcomeWindow.xaml.cs
+================================================================================
+﻿using System;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+using CafebookModel.Model.Shared; // Sử dụng thư viện DTO Mới
+using AppCafebookApi.Services;
+using CafebookModel.Utils;
+//using CafebookModel.Utils;
+
+namespace AppCafebookApi.View.Common
+{
+    public partial class WelcomeWindow : Window
+    {
+        private readonly LoginResponse? _user; // ĐỔI TỪ NhanVienDto SANG LoginResponse
+        private DispatcherTimer? _timer;
+
+        public WelcomeWindow()
+        {
+            InitializeComponent();
+        }
+
+        // ĐỔI THAM SỐ CONSTRUCTOR
+        public WelcomeWindow(LoginResponse user)
+        {
+            InitializeComponent();
+            _user = user;
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (_user != null)
+            {
+                txtUserGreeting.Text = $"Xin chào, {_user.HoTen}";
+
+                // Tải ảnh đại diện (giữ nguyên logic cũ của bạn)
+                BitmapImage avatar = HinhAnhHelper.LoadImage(
+                    _user.AnhDaiDien ?? string.Empty,
+                    HinhAnhPaths.DefaultAvatar
+                );
+
+                if (avatar != null)
+                {
+                    imgAvatar.Fill = new ImageBrush(avatar)
+                    {
+                        Stretch = Stretch.UniformToFill
+                    };
+                }
+            }
+
+            // Cấu hình timer
+            _timer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(2500)
+            };
+            _timer.Tick += Timer_Tick;
+            _timer.Start();
+        }
+
+        private void Timer_Tick(object? sender, EventArgs e)
+        {
+            _timer?.Stop();
+            // Việc Close() bây giờ đã được xử lý bằng Task.Delay bên ManHinhDangNhap.xaml.cs
+            // Nên ở đây ta không cần làm gì thêm, hoặc có thể gỡ bỏ _timer đi cho sạch
+        }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\nhanvien\ManHinhNhanVien.xaml
+================================================================================
+﻿<Window x:Class="AppCafebookApi.View.nhanvien.ManHinhNhanVien"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AppCafebookApi.View.nhanvien"
+        mc:Ignorable="d"
+        Title="ManHinhNhanVien" Height="450" Width="800">
+    <Grid>
+        
+    </Grid>
+</Window>
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\nhanvien\ManHinhNhanVien.xaml.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+
+namespace AppCafebookApi.View.nhanvien
+{
+    /// <summary>
+    /// Interaction logic for ManHinhNhanVien.xaml
+    /// </summary>
+    public partial class ManHinhNhanVien : Window
+    {
+        public ManHinhNhanVien()
+        {
+            InitializeComponent();
+        }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\nhanvien\pages\Page1.xaml
+================================================================================
+﻿<Page x:Class="AppCafebookApi.View.nhanvien.pages.Page1"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:AppCafebookApi.View.nhanvien.pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="Page1">
+
+    <Grid>
+        
+    </Grid>
+</Page>
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\nhanvien\pages\Page1.xaml.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace AppCafebookApi.View.nhanvien.pages
+{
+    /// <summary>
+    /// Interaction logic for Page1.xaml
+    /// </summary>
+    public partial class Page1 : Page
+    {
+        public Page1()
+        {
+            InitializeComponent();
+        }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\quanly\ManHinhQuanly.xaml
+================================================================================
+﻿<Window x:Class="AppCafebookApi.View.quanly.ManHinhQuanly"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AppCafebookApi.View.quanly"
+        mc:Ignorable="d"
+        Title="ManHinhQuanly" Height="450" Width="800">
+    <Grid>
+        
+    </Grid>
+</Window>
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\quanly\ManHinhQuanly.xaml.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+
+namespace AppCafebookApi.View.quanly
+{
+    /// <summary>
+    /// Interaction logic for ManHinhQuanly.xaml
+    /// </summary>
+    public partial class ManHinhQuanly : Window
+    {
+        public ManHinhQuanly()
+        {
+            InitializeComponent();
+        }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\quanly\pages\Window1.xaml
+================================================================================
+﻿<Window x:Class="AppCafebookApi.View.quanly.pages.Window1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AppCafebookApi.View.quanly.pages"
+        mc:Ignorable="d"
+        Title="Window1" Height="450" Width="800">
+    <Grid>
+        
+    </Grid>
+</Window>
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\AppCafebookApi\View\quanly\pages\Window1.xaml.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+
+namespace AppCafebookApi.View.quanly.pages
+{
+    /// <summary>
+    /// Interaction logic for Window1.xaml
+    /// </summary>
+    public partial class Window1 : Window
+    {
+        public Window1()
+        {
+            InitializeComponent();
+        }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookApi\appsettings.Development.json
+================================================================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookApi\appsettings.json
+================================================================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "CafeBookConnectionString": "Server=localhost\\SQLEXPRESS;Database=CafebookDB;Integrated Security=True;Encrypt=False;"
+  },
+  "Jwt": {
+    "Key": "b3a9f8c1d7e0a5b2f6c8d1e3a9b7f2d5e8c1a0b3f6d8e2a4c7b1f9d0e5a2c6b8",
+    "Issuer": "http://127.0.0.1:5166",
+    "Audience": "http://127.0.0.1:5166"
+  }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookApi\Program.cs
+================================================================================
+using CafebookApi.Data;
+// using CafebookApi.Services; // (Bỏ comment khi tạo xong VNPayService, AiToolService)
+// using CafebookApi.Hubs;     // (Bỏ comment khi tạo xong ChatHub)
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ==========================================================
+// 1. KẾT NỐI DATABASE
+// ==========================================================
+var connectionString = builder.Configuration.GetConnectionString("CafeBookConnectionString");
+builder.Services.AddDbContext<CafebookDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// ==========================================================
+// 2. CẤU HÌNH CORS (Bảo mật truy cập chéo)
+// ==========================================================
+builder.Services.AddCors(options =>
+{
+    // Policy chung cho App WPF và Mobile gọi API (Cho phép tất cả)
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+
+    // Policy chặt chẽ hơn dành riêng cho Web Frontend gọi SignalR (Bắt buộc AllowCredentials)
+    options.AddPolicy("SignalRPolicy", policy =>
+    {
+        // Thay bằng port Web thực tế của bạn (VD: localhost:5156, localhost:3000)
+        policy.WithOrigins("http://localhost:5156")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// ==========================================================
+// 3. ĐĂNG KÝ CÁC DỊCH VỤ (DEPENDENCY INJECTION)
+// ==========================================================
+builder.Services.AddControllers();
+builder.Services.AddHttpClient();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.CustomSchemaIds(type => type.FullName);
+});
+
+// Thêm SignalR cho chức năng Chat / Thông báo realtime
+builder.Services.AddSignalR();
+
+// Đăng ký các Service nghiệp vụ (Sẽ tạo ở bước sau)
+// builder.Services.AddScoped<AiToolService>();
+// builder.Services.AddScoped<VNPayService>(); // <-- Chuẩn bị sẵn cho VNPay
+
+// ==========================================================
+// 4. CẤU HÌNH BẢO MẬT JWT
+// ==========================================================
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"]!,
+        ValidAudience = builder.Configuration["Jwt:Audience"]! ?? builder.Configuration["Jwt:Issuer"]!,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+});
+
+var app = builder.Build();
+
+// ==========================================================
+// 5. CẤU HÌNH PIPELINE (MIDDLEWARE)
+// ==========================================================
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseStaticFiles();
+app.UseRouting();
+
+// Chỉ dùng UseCors 1 lần với Policy chung cho toàn bộ API
+app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+// Gắn Policy riêng cho endpoint SignalR để tránh lỗi khi Web kết nối
+// app.MapHub<ChatHub>("/chathub").RequireCors("SignalRPolicy");
+
+app.Run();
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookApi\WeatherForecast.cs
+================================================================================
+namespace CafebookApi
+{
+    public class WeatherForecast
+    {
+        public DateOnly Date { get; set; }
+
+        public int TemperatureC { get; set; }
+
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+
+        public string? Summary { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookApi\Controllers\Shared\AuthController.cs
+================================================================================
+﻿using CafebookApi.Data;
+using CafebookModel.Model.Shared;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+
+namespace CafebookApi.Controllers.Shared
+{
+    [Route("api/shared/[controller]")]
+    [ApiController]
+    public class AuthController : ControllerBase
+    {
+        private readonly CafebookDbContext _context;
+        private readonly IConfiguration _configuration;
+
+        public AuthController(CafebookDbContext context, IConfiguration configuration)
+        {
+            _context = context;
+            _configuration = configuration;
+        }
+
+        [HttpPost("login-nhan-vien")]
+        public async Task<IActionResult> LoginNhanVien([FromBody] LoginRequest request)
+        {
+            // TÌM NHÂN VIÊN: Có thể nhập Tên đăng nhập, Số điện thoại hoặc Email
+            var nv = await _context.NhanViens
+                .Include(n => n.VaiTro)
+                .FirstOrDefaultAsync(x =>
+                    (x.TenDangNhap == request.Username ||
+                     x.SoDienThoai == request.Username ||
+                     x.Email == request.Username)
+                    && x.MatKhau == request.Password);
+
+            if (nv == null)
+                return Unauthorized(new { message = "Tài khoản hoặc mật khẩu không chính xác" });
+
+            if (nv.TrangThaiLamViec != "Đang làm việc")
+                return BadRequest(new { message = "Tài khoản đang bị khóa hoặc tạm nghỉ" });
+
+            // Lấy danh sách mã quyền từ bảng VaiTro_Quyen
+            var quyens = await _context.VaiTroQuyens
+                .Where(vq => vq.IdVaiTro == nv.IdVaiTro)
+                .Select(vq => vq.IdQuyen)
+                .ToListAsync();
+
+            var token = GenerateJwtToken(nv);
+
+            return Ok(new LoginResponse
+            {
+                Token = token,
+                IdNhanVien = nv.IdNhanVien,
+                HoTen = nv.HoTen,
+                TenVaiTro = nv.VaiTro.TenVaiTro,
+                AnhDaiDien = nv.AnhDaiDien,
+                Quyen = quyens
+            });
+        }
+
+        private string GenerateJwtToken(CafebookModel.Model.ModelEntities.NhanVien nv)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, nv.IdNhanVien.ToString()),
+                new Claim(ClaimTypes.Name, nv.HoTen),
+                new Claim(ClaimTypes.Role, nv.VaiTro.TenVaiTro),
+                new Claim("Username", nv.TenDangNhap)
+            };
+
+            var token = new JwtSecurityToken(
+                _configuration["Jwt:Issuer"],
+                _configuration["Jwt:Audience"],
+                claims,
+                expires: DateTime.Now.AddDays(1),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookApi\Data\CafebookDbContext.cs
+================================================================================
+﻿using CafebookModel.Model.ModelEntities;
+using Microsoft.EntityFrameworkCore;
+
+namespace CafebookApi.Data
+{
+    public class CafebookDbContext : DbContext
+    {
+        public CafebookDbContext(DbContextOptions<CafebookDbContext> options)
+            : base(options)
+        {
+        }
+
+        #region --- Khai báo các Bảng (DbSet) ---
+        public DbSet<Ban> Bans { get; set; }
+        public DbSet<BangChamCong> BangChamCongs { get; set; }
+        public DbSet<CaiDat> CaiDats { get; set; }
+        public DbSet<CaLamViec> CaLamViecs { get; set; }
+        public DbSet<ChatLichSu> ChatLichSus { get; set; }
+        public DbSet<ChiTietHoaDon> ChiTietHoaDons { get; set; }
+        public DbSet<ChiTietKiemKho> ChiTietKiemKhos { get; set; }
+        public DbSet<ChiTietNhapKho> ChiTietNhapKhos { get; set; }
+        public DbSet<ChiTietPhieuThue> ChiTietPhieuThues { get; set; }
+        public DbSet<ChiTietPhieuTra> ChiTietPhieuTras { get; set; }
+        public DbSet<ChiTietPhuThuHoaDon> ChiTietPhuThuHoaDons { get; set; }
+        public DbSet<ChiTietXuatHuy> ChiTietXuatHuys { get; set; }
+        public DbSet<DanhGia> DanhGias { get; set; }
+        public DbSet<DanhMuc> DanhMucs { get; set; }
+        public DbSet<DeXuatSach> DeXuatSachs { get; set; }
+        public DbSet<DeXuatSanPham> DeXuatSanPhams { get; set; }
+        public DbSet<DinhLuong> DinhLuongs { get; set; }
+        public DbSet<DonViChuyenDoi> DonViChuyenDois { get; set; }
+        public DbSet<DonXinNghi> DonXinNghis { get; set; }
+        public DbSet<GiaoDichThanhToan> GiaoDichThanhToans { get; set; }
+        public DbSet<HoaDon> HoaDons { get; set; }
+        public DbSet<HoaDon_KhuyenMai> HoaDonKhuyenMais { get; set; }
+        public DbSet<KhachHang> KhachHangs { get; set; }
+        public DbSet<KhuVuc> KhuVucs { get; set; }
+        public DbSet<KhuyenMai> KhuyenMais { get; set; }
+        public DbSet<LichLamViec> LichLamViecs { get; set; }
+        public DbSet<NguyenLieu> NguyenLieus { get; set; }
+        public DbSet<NhaCungCap> NhaCungCaps { get; set; }
+        public DbSet<NhanVien> NhanViens { get; set; }
+        public DbSet<NhatKyHuyMon> NhatKyHuyMons { get; set; }
+        public DbSet<NhaXuatBan> NhaXuatBans { get; set; }
+        public DbSet<PhanHoiDanhGia> PhanHoiDanhGias { get; set; }
+        public DbSet<PhieuDatBan> PhieuDatBans { get; set; }
+        public DbSet<PhieuKiemKho> PhieuKiemKhos { get; set; }
+        public DbSet<PhieuLuong> PhieuLuongs { get; set; }
+        public DbSet<PhieuNhapKho> PhieuNhapKhos { get; set; }
+        public DbSet<PhieuThueSach> PhieuThueSachs { get; set; }
+        public DbSet<PhieuThuongPhat> PhieuThuongPhats { get; set; }
+        public DbSet<PhieuTraSach> PhieuTraSachs { get; set; }
+        public DbSet<PhieuXuatHuy> PhieuXuatHuys { get; set; }
+        public DbSet<PhuThu> PhuThus { get; set; }
+        public DbSet<Quyen> Quyens { get; set; }
+        public DbSet<Sach> Sachs { get; set; }
+        public DbSet<SachNhaXuatBan> SachNhaXuatBans { get; set; }
+        public DbSet<SachTacGia> SachTacGias { get; set; }
+        public DbSet<SachTheLoai> SachTheLoais { get; set; }
+        public DbSet<SanPham> SanPhams { get; set; }
+        public DbSet<TacGia> TacGias { get; set; }
+        public DbSet<TheLoai> TheLoais { get; set; }
+        public DbSet<ThongBao> ThongBaos { get; set; }
+        public DbSet<ThongBaoHoTro> ThongBaoHoTros { get; set; }
+        public DbSet<TrangThaiCheBien> TrangThaiCheBiens { get; set; }
+        public DbSet<VaiTro> VaiTros { get; set; }
+        public DbSet<VaiTro_Quyen> VaiTroQuyens { get; set; }
+        #endregion
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // 1. Cấu hình Khóa chính phức hợp cho các bảng trung gian
+            modelBuilder.Entity<VaiTro_Quyen>().HasKey(vq => new { vq.IdVaiTro, vq.IdQuyen });
+            modelBuilder.Entity<HoaDon_KhuyenMai>().HasKey(hk => new { hk.IdHoaDon, hk.IdKhuyenMai });
+            modelBuilder.Entity<DinhLuong>().HasKey(d => new { d.IdSanPham, d.IdNguyenLieu });
+            modelBuilder.Entity<DeXuatSach>().HasKey(d => new { d.IdSachGoc, d.IdSachDeXuat, d.LoaiDeXuat });
+            modelBuilder.Entity<DeXuatSanPham>().HasKey(d => new { d.IdSanPhamGoc, d.IdSanPhamDeXuat, d.LoaiDeXuat });
+            modelBuilder.Entity<ChiTietPhuThuHoaDon>().HasKey(c => new { c.IdHoaDon, c.IdPhuThu });
+            modelBuilder.Entity<ChiTietNhapKho>().HasKey(c => new { c.IdPhieuNhapKho, c.IdNguyenLieu });
+            modelBuilder.Entity<ChiTietKiemKho>().HasKey(c => new { c.IdPhieuKiemKho, c.IdNguyenLieu });
+            modelBuilder.Entity<ChiTietXuatHuy>().HasKey(c => new { c.IdPhieuXuatHuy, c.IdNguyenLieu });
+            modelBuilder.Entity<ChiTietPhieuThue>().HasKey(c => new { c.IdPhieuThueSach, c.IdSach });
+            modelBuilder.Entity<ChiTietPhieuTra>().HasKey(c => new { c.IdPhieuTra, c.IdSach });
+            modelBuilder.Entity<SachTacGia>().HasKey(s => new { s.IdSach, s.IdTacGia });
+            modelBuilder.Entity<SachTheLoai>().HasKey(s => new { s.IdSach, s.IdTheLoai });
+            modelBuilder.Entity<SachNhaXuatBan>().HasKey(s => new { s.IdSach, s.IdNhaXuatBan });
+            // Cấu hình rõ ràng cho DeXuatSanPham
+            modelBuilder.Entity<DeXuatSanPham>(entity =>
+            {
+                entity.HasKey(e => new { e.IdSanPhamGoc, e.IdSanPhamDeXuat, e.LoaiDeXuat });
+
+                entity.HasOne(d => d.SanPhamGoc)
+                    .WithMany(s => s.DeXuatSanPhamGocs) // Nối đúng vào danh sách Gốc trong SanPham
+                    .HasForeignKey(d => d.IdSanPhamGoc)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(d => d.SanPhamDeXuat)
+                    .WithMany(s => s.DeXuatSanPhamDeXuats) // Nối đúng vào danh sách Đề xuất trong SanPham
+                    .HasForeignKey(d => d.IdSanPhamDeXuat)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // Cấu hình rõ ràng cho DeXuatSach
+            modelBuilder.Entity<DeXuatSach>(entity =>
+            {
+                entity.HasKey(e => new { e.IdSachGoc, e.IdSachDeXuat, e.LoaiDeXuat });
+
+                entity.HasOne(d => d.SachGoc)
+                    .WithMany(s => s.DeXuatSachGocs) // Nối đúng vào danh sách Gốc trong Sach
+                    .HasForeignKey(d => d.IdSachGoc)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(d => d.SachDeXuat)
+                    .WithMany(s => s.DeXuatSachDeXuats) // Nối đúng vào danh sách Đề xuất trong Sach
+                    .HasForeignKey(d => d.IdSachDeXuat)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // 2. Cấu hình quan hệ NhanVien - HoaDon (2 khóa ngoại cùng trỏ về 1 bảng)
+            modelBuilder.Entity<HoaDon>(entity =>
+            {
+                entity.HasOne(d => d.NhanVienTao)
+                    .WithMany(p => p.HoaDonsTao)
+                    .HasForeignKey(d => d.IdNhanVien)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(d => d.NhanVienGiaoHang)
+                    .WithMany(p => p.HoaDonsGiao)
+                    .HasForeignKey(d => d.IdNguoiGiaoHang)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // 3. Xử lý các quan hệ vòng (Cascade Delete) để tránh lỗi SQL
+            modelBuilder.Entity<DonXinNghi>()
+                .HasOne(d => d.NguoiDuyet)
+                .WithMany(n => n.DonXinNghiNguoiDuyets)
+                .HasForeignKey(d => d.IdNguoiDuyet)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PhieuLuong>()
+                .HasOne(p => p.NguoiPhat)
+                .WithMany(n => n.PhieuLuongsDaPhat)
+                .HasForeignKey(p => p.IdNguoiPhat)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<NhatKyHuyMon>()
+                .HasOne(n => n.NhanVienHuy)
+                .WithMany(nv => nv.NhatKyHuyMons)
+                .HasForeignKey(n => n.IdNhanVienHuy)
+                .OnDelete(DeleteBehavior.NoAction);
+            // Dán vào cuối hàm OnModelCreating trong CafebookDbContext.cs
+            modelBuilder.Entity<DeXuatSanPham>()
+                .HasOne(d => d.SanPhamGoc)
+                .WithMany()
+                .HasForeignKey(d => d.IdSanPhamGoc)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<DeXuatSanPham>()
+                .HasOne(d => d.SanPhamDeXuat)
+                .WithMany()
+                .HasForeignKey(d => d.IdSanPhamDeXuat)
+                .OnDelete(DeleteBehavior.NoAction);
+        }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookApi\Properties\launchSettings.json
+================================================================================
+﻿{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:30278",
+      "sslPort": 0
+    }
+  },
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://localhost:5202",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\Ban.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Ban")]
+    public class Ban
+    {
+        [Key]
+        public int IdBan { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string SoBan { get; set; } = string.Empty;
+        public int SoGhe { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+
+        public int? IdKhuVuc { get; set; }
+        [ForeignKey("IdKhuVuc")]
+        public virtual KhuVuc? KhuVuc { get; set; }
+
+        public virtual ICollection<HoaDon> HoaDons { get; set; } = new List<HoaDon>();
+        public virtual ICollection<PhieuDatBan> PhieuDatBans { get; set; } = new List<PhieuDatBan>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\BangChamCong.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("BangChamCong")]
+    public class BangChamCong
+    {
+        [Key]
+        public int IdChamCong { get; set; }
+        public int IdLichLamViec { get; set; }
+        public DateTime? GioVao { get; set; }
+        public DateTime? GioRa { get; set; }
+
+        // --- SỬA LỖI TỪ double? SANG decimal? VÀ THÊM TYPE ---
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal? SoGioLam { get; set; }
+
+        [ForeignKey("IdLichLamViec")]
+        public virtual LichLamViec LichLamViec { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\CaiDat.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("CaiDat")]
+    public class CaiDat
+    {
+        [Key]
+        [StringLength(100)]
+        public string TenCaiDat { get; set; } = string.Empty;
+        [Required]
+        public string GiaTri { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? MoTa { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\CaLamViec.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("CaLamViec")]
+    public class CaLamViec
+    {
+        [Key]
+        public int IdCa { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string TenCa { get; set; } = string.Empty;
+        public TimeSpan GioBatDau { get; set; }
+        public TimeSpan GioKetThuc { get; set; }
+
+        public virtual ICollection<LichLamViec> LichLamViecs { get; set; } = new List<LichLamViec>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\ChatLichSu.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChatLichSu")]
+    public class ChatLichSu
+    {
+        [Key]
+        public long IdChat { get; set; }
+        public int? IdKhachHang { get; set; }
+        public int? IdNhanVien { get; set; }
+        [Required]
+        public string NoiDungHoi { get; set; } = string.Empty;
+        [Required]
+        public string NoiDungTraLoi { get; set; } = string.Empty;
+        public DateTime ThoiGian { get; set; }
+        [StringLength(50)]
+        public string? LoaiChat { get; set; }
+
+        // === CẬP NHẬT (THEO FSD MỚI) ===
+        [StringLength(100)]
+        public string? GuestSessionId { get; set; } // Hỗ trợ khách vãng lai
+
+        [StringLength(20)]
+        public string? LoaiTinNhan { get; set; } // "KhachHang", "AI", "NhanVien"
+
+        public int? IdThongBaoHoTro { get; set; }
+        // === KẾT THÚC CẬP NHẬT ===
+
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang? KhachHang { get; set; }
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien? NhanVien { get; set; }
+
+        [ForeignKey("IdThongBaoHoTro")]
+        public virtual ThongBaoHoTro? ThongBaoHoTro { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\ChiTietHoaDon.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietHoaDon")]
+    public class ChiTietHoaDon
+    {
+        [Key]
+        public int IdChiTietHoaDon { get; set; }
+        public int IdHoaDon { get; set; }
+        public int IdSanPham { get; set; }
+        public int SoLuong { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal DonGia { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal ThanhTien { get; set; }
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+        [ForeignKey("IdSanPham")]
+        public virtual SanPham SanPham { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\ChiTietKiemKho.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietKiemKho")]
+    public class ChiTietKiemKho
+    {
+        public int IdPhieuKiemKho { get; set; }
+        public int IdNguyenLieu { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TonKhoHeThong { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TonKhoThucTe { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal ChenhLech { get; set; }
+        [StringLength(255)]
+        public string? LyDoChenhLech { get; set; }
+
+        [ForeignKey("IdPhieuKiemKho")]
+        public virtual PhieuKiemKho PhieuKiemKho { get; set; } = null!;
+        [ForeignKey("IdNguyenLieu")]
+        public virtual NguyenLieu NguyenLieu { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\ChiTietNhapKho.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietNhapKho")]
+    public class ChiTietNhapKho
+    {
+        public int IdPhieuNhapKho { get; set; }
+        public int IdNguyenLieu { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoLuongNhap { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal DonGiaNhap { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal ThanhTien { get; set; }
+
+        [ForeignKey("IdPhieuNhapKho")]
+        public virtual PhieuNhapKho PhieuNhapKho { get; set; } = null!;
+        [ForeignKey("IdNguyenLieu")]
+        public virtual NguyenLieu NguyenLieu { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\ChiTietPhieuThue.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietPhieuThue")]
+    public class ChiTietPhieuThue
+    {
+        public int IdPhieuThueSach { get; set; }
+        public int IdSach { get; set; }
+        public DateTime NgayHenTra { get; set; }
+        public DateTime? NgayTraThucTe { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TienCoc { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? TienPhatTraTre { get; set; }
+
+        [ForeignKey("IdPhieuThueSach")]
+        public virtual PhieuThueSach PhieuThueSach { get; set; } = null!;
+        [ForeignKey("IdSach")]
+        public virtual Sach Sach { get; set; } = null!;
+
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\ChiTietPhieuTra.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietPhieuTra")]
+    public class ChiTietPhieuTra
+    {
+        public int IdPhieuTra { get; set; }
+        public int IdSach { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TienPhat { get; set; }
+
+        // Navigation properties
+        [ForeignKey("IdPhieuTra")]
+        public virtual PhieuTraSach PhieuTraSach { get; set; } = null!;
+
+        [ForeignKey("IdSach")]
+        public virtual Sach Sach { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\ChiTietPhuThuHoaDon.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietPhuThuHoaDon")]
+    public class ChiTietPhuThuHoaDon
+    {
+        public int IdHoaDon { get; set; }
+        public int IdPhuThu { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoTien { get; set; }
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+        [ForeignKey("IdPhuThu")]
+        public virtual PhuThu PhuThu { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\ChiTietXuatHuy.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietXuatHuy")]
+    public class ChiTietXuatHuy
+    {
+        public int IdPhieuXuatHuy { get; set; }
+        public int IdNguyenLieu { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoLuong { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal DonGiaVon { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal ThanhTien { get; set; }
+
+        [ForeignKey("IdPhieuXuatHuy")]
+        public virtual PhieuXuatHuy PhieuXuatHuy { get; set; } = null!;
+        [ForeignKey("IdNguyenLieu")]
+        public virtual NguyenLieu NguyenLieu { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\DanhGia.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DanhGia")]
+    public class DanhGia
+    {
+        [Key]
+        public int idDanhGia { get; set; }
+
+        [ForeignKey("KhachHang")]
+        public int idKhachHang { get; set; }
+        public virtual KhachHang? KhachHang { get; set; }
+
+        [ForeignKey("SanPham")]
+        public int? idSanPham { get; set; }
+        public virtual SanPham? SanPham { get; set; }
+
+        [ForeignKey("HoaDon")]
+        public int idHoaDon { get; set; }
+        public virtual HoaDon? HoaDon { get; set; }
+
+        [Range(1, 5)]
+        public int SoSao { get; set; }
+
+        [Column(TypeName = "nvarchar(max)")]
+        public string? BinhLuan { get; set; }
+
+        [Column(TypeName = "nvarchar(max)")]
+        public string? HinhAnhURL { get; set; }
+
+        [Required]
+        // CHỈ CÓ MỘT DÒNG NÀY
+        public DateTime NgayTao { get; set; }
+
+        [Required]
+        [Column(TypeName = "nvarchar(50)")]
+        public string TrangThai { get; set; } = "Hiển thị";
+
+        public virtual ICollection<PhanHoiDanhGia> PhanHoiDanhGias { get; set; } = new List<PhanHoiDanhGia>();
+
+        public DanhGia()
+        {
+            // Constructor gán giá trị cho thuộc tính NgayTao ở trên
+            this.NgayTao = DateTime.Now;
+        }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\DanhMuc.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DanhMuc")]
+    public class DanhMuc
+    {
+        [Key]
+        public int IdDanhMuc { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string TenDanhMuc { get; set; } = string.Empty;
+        public int? IdDanhMucCha { get; set; }
+
+        [ForeignKey("IdDanhMucCha")]
+        public virtual DanhMuc? DanhMucCha { get; set; }
+        public virtual ICollection<DanhMuc> DanhMucCons { get; set; } = new List<DanhMuc>();
+        public virtual ICollection<SanPham> SanPhams { get; set; } = new List<SanPham>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\DeXuatSach.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DeXuatSach")]
+    public class DeXuatSach
+    {
+        public int IdSachGoc { get; set; }
+        public int IdSachDeXuat { get; set; }
+        public double DoLienQuan { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string LoaiDeXuat { get; set; } = string.Empty;
+
+        [ForeignKey("IdSachGoc")]
+        public virtual Sach SachGoc { get; set; } = null!;
+        [ForeignKey("IdSachDeXuat")]
+        public virtual Sach SachDeXuat { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\DeXuatSanPham.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DeXuatSanPham")]
+    public class DeXuatSanPham
+    {
+        public int IdSanPhamGoc { get; set; }
+        public int IdSanPhamDeXuat { get; set; }
+        public double DoLienQuan { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string LoaiDeXuat { get; set; } = string.Empty;
+
+        [ForeignKey("IdSanPhamGoc")]
+        public virtual SanPham SanPhamGoc { get; set; } = null!;
+        [ForeignKey("IdSanPhamDeXuat")]
+        public virtual SanPham SanPhamDeXuat { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\DinhLuong.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DinhLuong")]
+    public class DinhLuong
+    {
+        public int IdSanPham { get; set; }
+        public int IdNguyenLieu { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoLuongSuDung { get; set; } // <-- ĐÃ ĐỔI TÊN
+
+        public int IdDonViSuDung { get; set; } // <-- THÊM MỚI
+
+        [ForeignKey("IdSanPham")]
+        public virtual SanPham SanPham { get; set; } = null!;
+        [ForeignKey("IdNguyenLieu")]
+        public virtual NguyenLieu NguyenLieu { get; set; } = null!;
+
+        [ForeignKey("IdDonViSuDung")] // <-- THÊM MỚI
+        public virtual DonViChuyenDoi DonViSuDung { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\DonViChuyenDoi.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DonViChuyenDoi")]
+    public class DonViChuyenDoi
+    {
+        [Key]
+        public int IdChuyenDoi { get; set; }
+
+        public int IdNguyenLieu { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string TenDonVi { get; set; } = string.Empty;
+
+        [Column(TypeName = "decimal(18, 6)")]
+        public decimal GiaTriQuyDoi { get; set; }
+
+        public bool LaDonViCoBan { get; set; }
+
+        [ForeignKey("IdNguyenLieu")]
+        public virtual NguyenLieu NguyenLieu { get; set; } = null!;
+        public virtual ICollection<DinhLuong> DinhLuongs { get; set; } = new List<DinhLuong>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\DonXinNghi.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DonXinNghi")]
+    public class DonXinNghi
+    {
+        [Key]
+        public int IdDonXinNghi { get; set; }
+        public int IdNhanVien { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string LoaiDon { get; set; } = string.Empty;
+        [Required]
+        [StringLength(500)]
+        public string LyDo { get; set; } = string.Empty;
+        public DateTime NgayBatDau { get; set; }
+        public DateTime NgayKetThuc { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+        public int? IdNguoiDuyet { get; set; }
+        public DateTime? NgayDuyet { get; set; }
+        [StringLength(255)]
+        public string? GhiChuPheDuyet { get; set; }
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+        [ForeignKey("IdNguoiDuyet")]
+        public virtual NhanVien? NguoiDuyet { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\GiaoDichThanhToan.cs
+================================================================================
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("GiaoDichThanhToan")]
+    public class GiaoDichThanhToan
+    {
+        [Key]
+        public int IdGiaoDich { get; set; }
+        public int IdHoaDon { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string MaGiaoDichNgoai { get; set; } = string.Empty; // Sẽ lưu mã VNPay ở đây
+        [Required]
+        [StringLength(50)]
+        public string CongThanhToan { get; set; } = string.Empty; // Lưu chữ "VNPay"
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoTien { get; set; }
+        public DateTime ThoiGianGiaoDich { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string TrangThai { get; set; } = string.Empty;
+        [StringLength(50)]
+        public string? MaLoi { get; set; }
+        [StringLength(500)]
+        public string? MoTaLoi { get; set; }
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\HoaDon.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("HoaDon")]
+    public class HoaDon
+    {
+        [Key]
+        public int IdHoaDon { get; set; }
+        public int? IdBan { get; set; }
+        public int? IdNhanVien { get; set; } // Nhân viên order/tạo đơn
+        public int? IdKhachHang { get; set; }
+        public DateTime ThoiGianTao { get; set; }
+        public DateTime? ThoiGianThanhToan { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongTienGoc { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal GiamGia { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongPhuThu { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal ThanhTien { get; set; }
+        [StringLength(50)]
+        public string? PhuongThucThanhToan { get; set; }
+        public string? GhiChu { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string LoaiHoaDon { get; set; } = string.Empty;
+        [StringLength(100)]
+        public string? TrangThaiGiaoHang { get; set; }
+        [StringLength(500)]
+        public string? DiaChiGiaoHang { get; set; }
+        [StringLength(20)]
+        public string? SoDienThoaiGiaoHang { get; set; }
+
+        public int? IdNguoiGiaoHang { get; set; } // Sẽ lưu IdNhanVien của Shipper
+
+        [ForeignKey("IdBan")]
+        public virtual Ban? Ban { get; set; }
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien? NhanVienTao { get; set; } // Map với InverseProperty NhanVienTao
+
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang? KhachHang { get; set; }
+
+        [ForeignKey("IdNguoiGiaoHang")]
+        public virtual NhanVien? NhanVienGiaoHang { get; set; } // Map với InverseProperty NhanVienGiaoHang
+
+        public virtual ICollection<ChiTietHoaDon> ChiTietHoaDons { get; set; } = new List<ChiTietHoaDon>();
+        public virtual ICollection<NhatKyHuyMon> NhatKyHuyMons { get; set; } = new List<NhatKyHuyMon>();
+        public virtual ICollection<GiaoDichThanhToan> GiaoDichThanhToans { get; set; } = new List<GiaoDichThanhToan>();
+        public virtual ICollection<ChiTietPhuThuHoaDon> ChiTietPhuThuHoaDons { get; set; } = new List<ChiTietPhuThuHoaDon>();
+        public virtual ICollection<HoaDon_KhuyenMai> HoaDonKhuyenMais { get; set; } = new List<HoaDon_KhuyenMai>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\HoaDon_KhuyenMai.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("HoaDon_KhuyenMai")]
+    public class HoaDon_KhuyenMai
+    {
+        public int IdHoaDon { get; set; }
+        public int IdKhuyenMai { get; set; }
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+        [ForeignKey("IdKhuyenMai")]
+        public virtual KhuyenMai KhuyenMai { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\KhachHang.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("KhachHang")]
+    public class KhachHang
+    {
+        [Key]
+        public int IdKhachHang { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string HoTen { get; set; } = string.Empty;
+        [StringLength(20)]
+        public string? SoDienThoai { get; set; }
+        [StringLength(100)]
+        public string? Email { get; set; }
+        [StringLength(500)]
+        public string? DiaChi { get; set; }
+        public int DiemTichLuy { get; set; }
+        [StringLength(100)]
+        public string? TenDangNhap { get; set; }
+        [StringLength(255)]
+        public string? MatKhau { get; set; }
+        public DateTime NgayTao { get; set; }
+        public bool BiKhoa { get; set; }
+        public string? AnhDaiDien { get; set; }
+        public bool TaiKhoanTam { get; set; }
+
+        // --- ĐÃ FIX LỖI TẠI ĐÂY ---
+        // Xóa 2 dòng HoaDonsTao và HoaDonsGiao bị sai.
+        // Thay bằng một danh sách HoaDons chuẩn của Khách Hàng.
+        public virtual ICollection<HoaDon> HoaDons { get; set; } = new List<HoaDon>();
+
+        public virtual ICollection<PhieuDatBan> PhieuDatBans { get; set; } = new List<PhieuDatBan>();
+        public virtual ICollection<PhieuThueSach> PhieuThueSachs { get; set; } = new List<PhieuThueSach>();
+        public virtual ICollection<ChatLichSu> ChatLichSus { get; set; } = new List<ChatLichSu>();
+        public virtual ICollection<DanhGia> DanhGias { get; set; } = new List<DanhGia>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\KhuVuc.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("KhuVuc")]
+    public class KhuVuc
+    {
+        [Key]
+        public int IdKhuVuc { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string TenKhuVuc { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? MoTa { get; set; }
+
+        public virtual ICollection<Ban> Bans { get; set; } = new List<Ban>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\KhuyenMai.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("KhuyenMai")]
+    public class KhuyenMai
+    {
+        [Key]
+        public int IdKhuyenMai { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string MaKhuyenMai { get; set; } = string.Empty;
+        [Required]
+        [StringLength(255)]
+        public string TenChuongTrinh { get; set; } = string.Empty;
+        public string? MoTa { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string LoaiGiamGia { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal GiaTriGiam { get; set; }
+        public DateTime NgayBatDau { get; set; }
+        public DateTime NgayKetThuc { get; set; }
+        [StringLength(500)]
+        public string? DieuKienApDung { get; set; } // Mô tả cho DataGrid
+        public int? SoLuongConLai { get; set; }
+
+        // --- CÁC CỘT MỚI ---
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty; // Hoạt động, Tạm dừng, Hết hạn
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? GiamToiDa { get; set; }
+        public int? IdSanPhamApDung { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? HoaDonToiThieu { get; set; }
+        public TimeSpan? GioBatDau { get; set; }
+        public TimeSpan? GioKetThuc { get; set; }
+        [StringLength(50)]
+        public string? NgayTrongTuan { get; set; }
+
+        [ForeignKey("IdSanPhamApDung")]
+        public virtual SanPham? SanPhamApDung { get; set; }
+
+        public virtual ICollection<HoaDon_KhuyenMai> HoaDonKhuyenMais { get; set; } = new List<HoaDon_KhuyenMai>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\LichLamViec.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("LichLamViec")]
+    public class LichLamViec
+    {
+        [Key]
+        public int IdLichLamViec { get; set; }
+        public int IdNhanVien { get; set; }
+        public int IdCa { get; set; }
+        public DateTime NgayLam { get; set; }
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+        [ForeignKey("IdCa")]
+        public virtual CaLamViec CaLamViec { get; set; } = null!;
+
+        public virtual ICollection<BangChamCong> BangChamCongs { get; set; } = new List<BangChamCong>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\NguyenLieu.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NguyenLieu")]
+    public class NguyenLieu
+    {
+        [Key]
+        public int IdNguyenLieu { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string TenNguyenLieu { get; set; } = string.Empty;
+        [Required]
+        [StringLength(50)]
+        public string DonViTinh { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TonKho { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TonKhoToiThieu { get; set; }
+
+        public virtual ICollection<DinhLuong> DinhLuongs { get; set; } = new List<DinhLuong>();
+        public virtual ICollection<ChiTietNhapKho> ChiTietNhapKhos { get; set; } = new List<ChiTietNhapKho>();
+        public virtual ICollection<ChiTietKiemKho> ChiTietKiemKhos { get; set; } = new List<ChiTietKiemKho>();
+        public virtual ICollection<ChiTietXuatHuy> ChiTietXuatHuys { get; set; } = new List<ChiTietXuatHuy>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\NhaCungCap.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhaCungCap")]
+    public class NhaCungCap
+    {
+        [Key]
+        public int IdNhaCungCap { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string TenNhaCungCap { get; set; } = string.Empty;
+        [StringLength(20)]
+        public string? SoDienThoai { get; set; }
+        [StringLength(500)]
+        public string? DiaChi { get; set; }
+        [StringLength(100)]
+        public string? Email { get; set; }
+
+        public virtual ICollection<PhieuNhapKho> PhieuNhapKhos { get; set; } = new List<PhieuNhapKho>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\NhanVien.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhanVien")]
+    public class NhanVien
+    {
+        [Key]
+        public int IdNhanVien { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string HoTen { get; set; } = string.Empty;
+        [Required]
+        [StringLength(20)]
+        public string SoDienThoai { get; set; } = string.Empty;
+        [StringLength(100)]
+        public string? Email { get; set; }
+        [StringLength(500)]
+        public string? DiaChi { get; set; }
+        public DateTime NgayVaoLam { get; set; }
+        public int IdVaiTro { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal LuongCoBan { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThaiLamViec { get; set; } = string.Empty;
+        [Required]
+        [StringLength(100)]
+        public string TenDangNhap { get; set; } = string.Empty;
+        [Required]
+        [StringLength(255)]
+        public string MatKhau { get; set; } = string.Empty;
+        public string? AnhDaiDien { get; set; }
+
+        [ForeignKey("IdVaiTro")]
+        public virtual VaiTro VaiTro { get; set; } = null!;
+
+        // --- ĐÃ FIX LỖI KHÓA NGOẠI ---
+        [InverseProperty("NhanVienTao")]
+        public virtual ICollection<HoaDon> HoaDonsTao { get; set; } = new List<HoaDon>();
+
+        [InverseProperty("NhanVienGiaoHang")]
+        public virtual ICollection<HoaDon> HoaDonsGiao { get; set; } = new List<HoaDon>();
+
+        public virtual ICollection<NhatKyHuyMon> NhatKyHuyMons { get; set; } = new List<NhatKyHuyMon>();
+        public virtual ICollection<PhieuNhapKho> PhieuNhapKhos { get; set; } = new List<PhieuNhapKho>();
+        public virtual ICollection<PhieuKiemKho> PhieuKiemKhos { get; set; } = new List<PhieuKiemKho>();
+        public virtual ICollection<PhieuXuatHuy> PhieuXuatHuys { get; set; } = new List<PhieuXuatHuy>();
+        public virtual ICollection<PhieuThueSach> PhieuThueSachs { get; set; } = new List<PhieuThueSach>();
+        public virtual ICollection<LichLamViec> LichLamViecs { get; set; } = new List<LichLamViec>();
+
+        [InverseProperty("NhanVien")]
+        public virtual ICollection<PhieuLuong> PhieuLuongs { get; set; } = new List<PhieuLuong>();
+
+        [InverseProperty("NguoiPhat")]
+        public virtual ICollection<PhieuLuong> PhieuLuongsDaPhat { get; set; } = new List<PhieuLuong>();
+
+        [InverseProperty("NhanVien")]
+        public virtual ICollection<DonXinNghi> DonXinNghis { get; set; } = new List<DonXinNghi>();
+
+        [InverseProperty("NguoiDuyet")]
+        public virtual ICollection<DonXinNghi> DonXinNghiNguoiDuyets { get; set; } = new List<DonXinNghi>();
+
+        public virtual ICollection<ChatLichSu> ChatLichSus { get; set; } = new List<ChatLichSu>();
+        public virtual ICollection<PhieuTraSach> PhieuTraSachs { get; set; } = new List<PhieuTraSach>();
+        [NotMapped]
+        public virtual ICollection<PhieuThuongPhat> PhieuThuongPhatNguoiTaos { get; set; } = new List<PhieuThuongPhat>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\NhatKyHuyMon.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhatKyHuyMon")]
+    public class NhatKyHuyMon
+    {
+        [Key]
+        public int IdNhatKy { get; set; }
+        public int IdHoaDon { get; set; }
+        public int IdSanPham { get; set; }
+        public int SoLuongHuy { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string LyDo { get; set; } = string.Empty;
+        public int IdNhanVienHuy { get; set; }
+        public DateTime ThoiGianHuy { get; set; }
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+        [ForeignKey("IdSanPham")]
+        public virtual SanPham SanPham { get; set; } = null!;
+        [ForeignKey("IdNhanVienHuy")]
+        public virtual NhanVien NhanVienHuy { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\NhaXuatBan.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhaXuatBan")]
+    public class NhaXuatBan
+    {
+        [Key]
+        public int IdNhaXuatBan { get; set; }
+        public string TenNhaXuatBan { get; set; } = null!;
+        public string? MoTa { get; set; }
+        public virtual ICollection<SachNhaXuatBan> SachNhaXuatBans { get; set; } = new List<SachNhaXuatBan>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\PhanHoiDanhGia.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhanHoiDanhGia")]
+    public class PhanHoiDanhGia
+    {
+        [Key]
+        public int idPhanHoi { get; set; }
+
+        [ForeignKey("DanhGia")]
+        public int idDanhGia { get; set; }
+        public virtual DanhGia? DanhGia { get; set; }
+
+        [ForeignKey("NhanVien")]
+        public int idNhanVien { get; set; }
+        public virtual NhanVien? NhanVien { get; set; }
+
+        [Required]
+        [Column(TypeName = "nvarchar(max)")]
+        public string NoiDung { get; set; } = null!;
+
+        [Required]
+        // CHỈ CÓ MỘT DÒNG NÀY
+        public DateTime NgayTao { get; set; }
+
+        public PhanHoiDanhGia()
+        {
+            // Constructor gán giá trị cho thuộc tính NgayTao ở trên
+            this.NgayTao = DateTime.Now;
+        }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\PhieuDatBan.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuDatBan")]
+    public class PhieuDatBan
+    {
+        [Key]
+        public int IdPhieuDatBan { get; set; }
+        public int? IdKhachHang { get; set; }
+        public int IdBan { get; set; }
+        [StringLength(100)]
+        public string? HoTenKhach { get; set; }
+        [StringLength(20)]
+        public string? SdtKhach { get; set; }
+        public DateTime ThoiGianDat { get; set; }
+        public int SoLuongKhach { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang? KhachHang { get; set; }
+        [ForeignKey("IdBan")]
+        public virtual Ban Ban { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\PhieuKiemKho.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuKiemKho")]
+    public class PhieuKiemKho
+    {
+        [Key]
+        public int IdPhieuKiemKho { get; set; }
+        public int IdNhanVienKiem { get; set; }
+        public DateTime NgayKiem { get; set; }
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+
+        [ForeignKey("IdNhanVienKiem")]
+        public virtual NhanVien NhanVienKiem { get; set; } = null!;
+
+        public virtual ICollection<ChiTietKiemKho> ChiTietKiemKhos { get; set; } = new List<ChiTietKiemKho>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\PhieuLuong.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuLuong")]
+    public class PhieuLuong
+    {
+        [Key]
+        public int IdPhieuLuong { get; set; }
+        public int IdNhanVien { get; set; }
+        public int Thang { get; set; }
+        public int Nam { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal LuongCoBan { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongGioLam { get; set; }
+
+        // --- SỬA LỖI KHỚP VỚI CSDL (cho phép NULL) ---
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? TienThuong { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? KhauTru { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal ThucLanh { get; set; }
+        public DateTime NgayTao { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+
+        // --- SỬA LỖI KHỚP VỚI CSDL (thêm cột mới) ---
+        public DateTime? NgayPhatLuong { get; set; }
+        public int? IdNguoiPhat { get; set; }
+        [ForeignKey("IdNguoiPhat")]
+        public virtual NhanVien? NguoiPhat { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\PhieuNhapKho.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuNhapKho")]
+    public class PhieuNhapKho
+    {
+        [Key]
+        public int IdPhieuNhapKho { get; set; }
+        public int? IdNhaCungCap { get; set; }
+        public int IdNhanVien { get; set; }
+        public DateTime NgayNhap { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongTien { get; set; }
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+
+        [ForeignKey("IdNhaCungCap")]
+        public virtual NhaCungCap? NhaCungCap { get; set; }
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+
+        public virtual ICollection<ChiTietNhapKho> ChiTietNhapKhos { get; set; } = new List<ChiTietNhapKho>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\PhieuThueSach.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuThueSach")]
+    public class PhieuThueSach
+    {
+        [Key]
+        public int IdPhieuThueSach { get; set; }
+        public int IdKhachHang { get; set; }
+        public int? IdNhanVien { get; set; }
+        public DateTime NgayThue { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongTienCoc { get; set; }
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang KhachHang { get; set; } = null!;
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien? NhanVien { get; set; }
+        public virtual ICollection<ChiTietPhieuThue> ChiTietPhieuThues { get; set; } = new List<ChiTietPhieuThue>();
+        public virtual ICollection<PhieuTraSach> PhieuTraSachs { get; set; } = new List<PhieuTraSach>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\PhieuThuongPhat.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuThuongPhat")]
+    public class PhieuThuongPhat
+    {
+        [Key]
+        public int IdPhieuThuongPhat { get; set; }
+
+        public int IdNhanVien { get; set; }
+
+        public int IdNguoiTao { get; set; }
+
+        public DateTime NgayTao { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoTien { get; set; }
+
+        [Required]
+        [StringLength(500)]
+        public string LyDo { get; set; } = string.Empty;
+
+        public int? IdPhieuLuong { get; set; }
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+
+        [ForeignKey("IdNguoiTao")]
+        public virtual NhanVien NguoiTao { get; set; } = null!;
+
+        [ForeignKey("IdPhieuLuong")]
+        public virtual PhieuLuong? PhieuLuong { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\PhieuTraSach.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuTraSach")]
+    public class PhieuTraSach
+    {
+        [Key]
+        public int IdPhieuTra { get; set; }
+
+        public int IdPhieuThueSach { get; set; }
+        public int IdNhanVien { get; set; }
+        public DateTime NgayTra { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongPhiThue { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongTienPhat { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongTienCocHoan { get; set; }
+
+        public int DiemTichLuy { get; set; }
+
+        // Navigation properties
+        [ForeignKey("IdPhieuThueSach")]
+        public virtual PhieuThueSach PhieuThueSach { get; set; } = null!;
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+
+        public virtual ICollection<ChiTietPhieuTra> ChiTietPhieuTras { get; set; } = new List<ChiTietPhieuTra>();
+
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\PhieuXuatHuy.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuXuatHuy")]
+    public class PhieuXuatHuy
+    {
+        [Key]
+        public int IdPhieuXuatHuy { get; set; }
+        public int IdNhanVienXuat { get; set; }
+        public DateTime NgayXuatHuy { get; set; }
+        [Required]
+        [StringLength(500)]
+        public string LyDoXuatHuy { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongGiaTriHuy { get; set; }
+
+        [ForeignKey("IdNhanVienXuat")]
+        public virtual NhanVien NhanVienXuat { get; set; } = null!;
+
+        public virtual ICollection<ChiTietXuatHuy> ChiTietXuatHuys { get; set; } = new List<ChiTietXuatHuy>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\PhuThu.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhuThu")]
+    public class PhuThu
+    {
+        [Key]
+        public int IdPhuThu { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string TenPhuThu { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal GiaTri { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string LoaiGiaTri { get; set; } = string.Empty;
+
+        public virtual ICollection<ChiTietPhuThuHoaDon> ChiTietPhuThuHoaDons { get; set; } = new List<ChiTietPhuThuHoaDon>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\Quyen.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Quyen")]
+    public class Quyen
+    {
+        [Key]
+        [StringLength(100)]
+        public string IdQuyen { get; set; } = string.Empty;
+        [Required]
+        [StringLength(255)]
+        public string TenQuyen { get; set; } = string.Empty;
+        [Required]
+        [StringLength(100)]
+        public string NhomQuyen { get; set; } = string.Empty;
+
+        public virtual ICollection<VaiTro_Quyen> VaiTroQuyens { get; set; } = new List<VaiTro_Quyen>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\Sach.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Sach")]
+    public class Sach
+    {
+        [Key]
+        public int IdSach { get; set; }
+        public string TenSach { get; set; } = null!;
+        public int? NamXuatBan { get; set; }
+        public string? MoTa { get; set; }
+        public int SoLuongTong { get; set; }
+        public int SoLuongHienCo { get; set; }
+        public string? AnhBia { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? GiaBia { get; set; }
+        public string? ViTri { get; set; }
+        public virtual ICollection<SachTacGia> SachTacGias { get; set; } = new List<SachTacGia>();
+        public virtual ICollection<SachTheLoai> SachTheLoais { get; set; } = new List<SachTheLoai>();
+        public virtual ICollection<SachNhaXuatBan> SachNhaXuatBans { get; set; } = new List<SachNhaXuatBan>();
+        public virtual ICollection<ChiTietPhieuThue> ChiTietPhieuThues { get; set; } = new List<ChiTietPhieuThue>();
+        [InverseProperty("SachGoc")]
+        public virtual ICollection<DeXuatSach> DeXuatSachGocs { get; set; } = new List<DeXuatSach>();
+        [InverseProperty("SachDeXuat")]
+        public virtual ICollection<DeXuatSach> DeXuatSachDeXuats { get; set; } = new List<DeXuatSach>();
+        public virtual ICollection<ChiTietPhieuTra> ChiTietPhieuTras { get; set; } = new List<ChiTietPhieuTra>();
+        [NotMapped]
+        public virtual ICollection<DeXuatSach> DeXuatSachs { get; set; } = new List<DeXuatSach>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\Sach_NhaXuatBan.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Sach_NhaXuatBan")]
+    public class SachNhaXuatBan
+    {
+        public int IdSach { get; set; }
+        public virtual Sach Sach { get; set; } = null!;
+        public int IdNhaXuatBan { get; set; }
+        public virtual NhaXuatBan NhaXuatBan { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\Sach_TacGia.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Sach_TacGia")]
+    public class SachTacGia
+    {
+        public int IdSach { get; set; }
+        public virtual Sach Sach { get; set; } = null!;
+        public int IdTacGia { get; set; }
+        public virtual TacGia TacGia { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\Sach_TheLoai.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Sach_TheLoai")]
+    public class SachTheLoai
+    {
+        public int IdSach { get; set; }
+        public virtual Sach Sach { get; set; } = null!;
+        public int IdTheLoai { get; set; }
+        public virtual TheLoai TheLoai { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\SanPham.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("SanPham")]
+    public class SanPham
+    {
+        [Key]
+        public int IdSanPham { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string TenSanPham { get; set; } = string.Empty;
+        public int IdDanhMuc { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal GiaBan { get; set; }
+        public string? MoTa { get; set; }
+        public bool TrangThaiKinhDoanh { get; set; }
+        public string? HinhAnh { get; set; } // Base64
+        [StringLength(50)]
+        public string? NhomIn { get; set; }
+
+        [ForeignKey("IdDanhMuc")]
+        public virtual DanhMuc DanhMuc { get; set; } = null!;
+
+        public virtual ICollection<ChiTietHoaDon> ChiTietHoaDons { get; set; } = new List<ChiTietHoaDon>();
+        public virtual ICollection<NhatKyHuyMon> NhatKyHuyMons { get; set; } = new List<NhatKyHuyMon>();
+        public virtual ICollection<DinhLuong> DinhLuongs { get; set; } = new List<DinhLuong>();
+        public virtual ICollection<DeXuatSanPham> DeXuatSanPhamGocs { get; set; } = new List<DeXuatSanPham>();
+        public virtual ICollection<DeXuatSanPham> DeXuatSanPhamDeXuats { get; set; } = new List<DeXuatSanPham>();
+        public virtual ICollection<DanhGia> DanhGias { get; set; } = new List<DanhGia>();
+        [NotMapped]
+        public virtual ICollection<DeXuatSanPham> DeXuatSanPhams { get; set; } = new List<DeXuatSanPham>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\TacGia.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("TacGia")]
+    public class TacGia
+    {
+        [Key]
+        public int IdTacGia { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string TenTacGia { get; set; } = string.Empty;
+        public string? GioiThieu { get; set; }
+        public virtual ICollection<SachTacGia> SachTacGias { get; set; } = new List<SachTacGia>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\TheLoai.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("TheLoai")]
+    public class TheLoai
+    {
+        [Key]
+        public int IdTheLoai { get; set; }
+        public string TenTheLoai { get; set; } = null!;
+        public string? MoTa { get; set; }
+        public virtual ICollection<SachTheLoai> SachTheLoais { get; set; } = new List<SachTheLoai>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\ThongBao.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ThongBao")]
+    public class ThongBao
+    {
+        [Key]
+        public int IdThongBao { get; set; }
+
+        public int? IdNhanVienTao { get; set; }
+
+        [Required]
+        [StringLength(500)]
+        public string NoiDung { get; set; } = string.Empty;
+
+        public DateTime ThoiGianTao { get; set; }
+
+        [StringLength(50)]
+        public string? LoaiThongBao { get; set; }
+
+        public int? IdLienQuan { get; set; } // Sẽ là idBan
+
+        public bool DaXem { get; set; }
+
+        [ForeignKey("IdNhanVienTao")]
+        public virtual NhanVien? NhanVienTao { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\ThongBaoHoTro.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ThongBaoHoTro")]
+    public class ThongBaoHoTro
+    {
+        [Key]
+        public int IdThongBao { get; set; }
+
+        // ======================================
+        // === SỬA LỖI CS0266 TẠI ĐÂY ===
+        // ======================================
+        // 1. Xóa [Required]
+        // 2. Thêm dấu '?' để cho phép NULL
+        public int? IdKhachHang { get; set; }
+        // ======================================
+
+        [StringLength(100)]
+        public string? GuestSessionId { get; set; } // Hỗ trợ khách vãng lai
+
+        public string? NoiDungYeuCau { get; set; }
+
+        [Required]
+        public DateTime ThoiGianTao { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+
+        public int? IdNhanVien { get; set; }
+
+        public DateTime? ThoiGianPhanHoi { get; set; }
+
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+
+        // Navigation Properties
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang? KhachHang { get; set; } // Thêm '?'
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien? NhanVien { get; set; }
+
+        public virtual ICollection<ChatLichSu> ChatLichSus { get; set; } = new List<ChatLichSu>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\TrangThaiCheBien.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("TrangThaiCheBien")]
+    public class TrangThaiCheBien
+    {
+        [Key]
+        public int IdTrangThaiCheBien { get; set; }
+
+        public int IdChiTietHoaDon { get; set; }
+        public int IdHoaDon { get; set; }
+        public int IdSanPham { get; set; }
+
+        [Required]
+        [StringLength(255)]
+        public string TenMon { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string SoBan { get; set; } = string.Empty;
+
+        public int SoLuong { get; set; }
+
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+
+        [StringLength(50)]
+        public string? NhomIn { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty; // Chờ làm, Đang làm, Hoàn thành
+
+        public DateTime ThoiGianGoi { get; set; }
+        public DateTime? ThoiGianBatDau { get; set; }
+        public DateTime? ThoiGianHoanThanh { get; set; }
+
+        // Khóa ngoại
+        [ForeignKey("IdChiTietHoaDon")]
+        public virtual ChiTietHoaDon ChiTietHoaDon { get; set; } = null!;
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+
+        [ForeignKey("IdSanPham")]
+        public virtual SanPham SanPham { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\VaiTro.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("VaiTro")]
+    public class VaiTro
+    {
+        [Key]
+        public int IdVaiTro { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string TenVaiTro { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? MoTa { get; set; }
+
+        public virtual ICollection<NhanVien> NhanViens { get; set; } = new List<NhanVien>();
+        public virtual ICollection<VaiTro_Quyen> VaiTroQuyens { get; set; } = new List<VaiTro_Quyen>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\ModelEntities\VaiTro_Quyen.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("VaiTro_Quyen")]
+    public class VaiTro_Quyen
+    {
+        public int IdVaiTro { get; set; }
+        [StringLength(100)]
+        public string IdQuyen { get; set; } = string.Empty;
+
+        [ForeignKey("IdVaiTro")]
+        public virtual VaiTro VaiTro { get; set; } = null!;
+        [ForeignKey("IdQuyen")]
+        public virtual Quyen Quyen { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Model\Shared\AuthDTOs.cs
+================================================================================
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace CafebookModel.Model.Shared
+{
+    public class LoginRequest
+    {
+        [Required(ErrorMessage = "Tên đăng nhập không được để trống")]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Mật khẩu không được để trống")]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class LoginResponse
+    {
+        public string Token { get; set; } = string.Empty;
+        public int IdNhanVien { get; set; }
+        public string HoTen { get; set; } = string.Empty;
+        public string TenVaiTro { get; set; } = string.Empty;
+        public string? AnhDaiDien { get; set; }
+
+        // Danh sách quyền lấy từ bảng VaiTro_Quyen để phân quyền UI
+        public List<string> Quyen { get; set; } = new List<string>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\CafebookModel\Utils\HinhAnhPaths.cs
+================================================================================
+﻿// Tập tin: CafebookModel/Utils/HinhAnhPaths.cs
+using System.IO; // Thêm
+
+namespace CafebookModel.Utils
+{
+    public static class HinhAnhPaths
+    {
+        // --- WPF Pack URIs (Defaults/Fallbacks) ---
+        public const string DefaultAvatar = "/Assets/Images/default-avatar.png";
+        public const string DefaultBookCover = "/Assets/Images/default-book-cover.png";
+        public const string DefaultFoodIcon = "/Assets/Images/default-food-icon.png";
+
+        // --- Server Relative URL Paths (Dùng /) ---
+        public const string UrlAvatarNV = "/images/avatars/avatarNV";
+        public const string UrlAvatarKH = "/images/avatars/avatarKH";
+        public const string UrlBooks = "/images/books";
+        public const string UrlFoods = "/images/foods";
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\SettingCafebook\AppConfig.json
+================================================================================
+{
+  "ApiServerUrl": "http://localhost:5202"
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\appsettings.Development.json
+================================================================================
+{
+  "DetailedErrors": true,
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\appsettings.json
+================================================================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Program.cs
+================================================================================
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddRazorPages();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+}
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapRazorPages();
+
+app.Run();
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\Error.cshtml
+================================================================================
+﻿@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<h1 class="text-danger">Error.</h1>
+<h2 class="text-danger">An error occurred while processing your request.</h2>
+
+@if (Model.ShowRequestId)
+{
+    <p>
+        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+    </p>
+}
+
+<h3>Development Mode</h3>
+<p>
+    Swapping to the <strong>Development</strong> environment displays detailed information about the error that occurred.
+</p>
+<p>
+    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
+    It can result in displaying sensitive information from exceptions to end users.
+    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
+    and restarting the app.
+</p>
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\Error.cshtml.cs
+================================================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Diagnostics;
+
+namespace WebCafebookApi.Pages
+{
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    [IgnoreAntiforgeryToken]
+    public class ErrorModel : PageModel
+    {
+        public string? RequestId { get; set; }
+
+        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+
+        private readonly ILogger<ErrorModel> _logger;
+
+        public ErrorModel(ILogger<ErrorModel> logger)
+        {
+            _logger = logger;
+        }
+
+        public void OnGet()
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        }
+    }
+
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\Index.cshtml
+================================================================================
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\Index.cshtml.cs
+================================================================================
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace WebCafebookApi.Pages
+{
+    public class IndexModel : PageModel
+    {
+        private readonly ILogger<IndexModel> _logger;
+
+        public IndexModel(ILogger<IndexModel> logger)
+        {
+            _logger = logger;
+        }
+
+        public void OnGet()
+        {
+
+        }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\Privacy.cshtml
+================================================================================
+﻿@page
+@model PrivacyModel
+@{
+    ViewData["Title"] = "Privacy Policy";
+}
+<h1>@ViewData["Title"]</h1>
+
+<p>Use this page to detail your site's privacy policy.</p>
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\Privacy.cshtml.cs
+================================================================================
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace WebCafebookApi.Pages
+{
+    public class PrivacyModel : PageModel
+    {
+        private readonly ILogger<PrivacyModel> _logger;
+
+        public PrivacyModel(ILogger<PrivacyModel> logger)
+        {
+            _logger = logger;
+        }
+
+        public void OnGet()
+        {
+        }
+    }
+
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\_ViewImports.cshtml
+================================================================================
+﻿@using WebCafebookApi
+@namespace WebCafebookApi.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\_ViewStart.cshtml
+================================================================================
+﻿@{
+    Layout = "_Layout";
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\Shared\_Layout.cshtml
+================================================================================
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WebCafebookApi</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/WebCafebookApi.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-page="/Index">WebCafebookApi</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - WebCafebookApi - <a asp-area="" asp-page="/Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\Shared\_Layout.cshtml.css
+================================================================================
+﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
+for details on configuring this project to bundle and minify static web assets. */
+
+a.navbar-brand {
+  white-space: normal;
+  text-align: center;
+  word-break: break-all;
+}
+
+a {
+  color: #0077cc;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+.border-top {
+  border-top: 1px solid #e5e5e5;
+}
+.border-bottom {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow {
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+button.accept-policy {
+  font-size: 1rem;
+  line-height: inherit;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px;
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Pages\Shared\_ValidationScriptsPartial.cshtml
+================================================================================
+﻿<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\Properties\launchSettings.json
+================================================================================
+{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:15879",
+      "sslPort": 0
+    }
+  },
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5175",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\wwwroot\css\site.css
+================================================================================
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\wwwroot\js\site.js
+================================================================================
+﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
+// for details on configuring this project to bundle and minify static web assets.
+
+// Write your JavaScript code.
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\wwwroot\lib\jquery\LICENSE.txt
+================================================================================
+
+Copyright OpenJS Foundation and other contributors, https://openjsf.org/
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\wwwroot\lib\jquery-validation\LICENSE.md
+================================================================================
+The MIT License (MIT)
+=====================
+
+Copyright Jörn Zaefferer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\wwwroot\lib\jquery-validation-unobtrusive\jquery.validate.unobtrusive.js
+================================================================================
+/**
+ * @license
+ * Unobtrusive validation support library for jQuery and jQuery Validate
+ * Copyright (c) .NET Foundation. All rights reserved.
+ * Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ * @version v4.0.0
+ */
+
+/*jslint white: true, browser: true, onevar: true, undef: true, nomen: true, eqeqeq: true, plusplus: true, bitwise: true, regexp: true, newcap: true, immed: true, strict: false */
+/*global document: false, jQuery: false */
+
+(function (factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define("jquery.validate.unobtrusive", ['jquery-validation'], factory);
+    } else if (typeof module === 'object' && module.exports) {
+        // CommonJS-like environments that support module.exports     
+        module.exports = factory(require('jquery-validation'));
+    } else {
+        // Browser global
+        jQuery.validator.unobtrusive = factory(jQuery);
+    }
+}(function ($) {
+    var $jQval = $.validator,
+        adapters,
+        data_validation = "unobtrusiveValidation";
+
+    function setValidationValues(options, ruleName, value) {
+        options.rules[ruleName] = value;
+        if (options.message) {
+            options.messages[ruleName] = options.message;
+        }
+    }
+
+    function splitAndTrim(value) {
+        return value.replace(/^\s+|\s+$/g, "").split(/\s*,\s*/g);
+    }
+
+    function escapeAttributeValue(value) {
+        // As mentioned on http://api.jquery.com/category/selectors/
+        return value.replace(/([!"#$%&'()*+,./:;<=>?@\[\\\]^`{|}~])/g, "\\$1");
+    }
+
+    function getModelPrefix(fieldName) {
+        return fieldName.substr(0, fieldName.lastIndexOf(".") + 1);
+    }
+
+    function appendModelPrefix(value, prefix) {
+        if (value.indexOf("*.") === 0) {
+            value = value.replace("*.", prefix);
+        }
+        return value;
+    }
+
+    function onError(error, inputElement) {  // 'this' is the form element
+        var container = $(this).find("[data-valmsg-for='" + escapeAttributeValue(inputElement[0].name) + "']"),
+            replaceAttrValue = container.attr("data-valmsg-replace"),
+            replace = replaceAttrValue ? $.parseJSON(replaceAttrValue) !== false : null;
+
+        container.removeClass("field-validation-valid").addClass("field-validation-error");
+        error.data("unobtrusiveContainer", container);
+
+        if (replace) {
+            container.empty();
+            error.removeClass("input-validation-error").appendTo(container);
+        }
+        else {
+            error.hide();
+        }
+    }
+
+    function onErrors(event, validator) {  // 'this' is the form element
+        var container = $(this).find("[data-valmsg-summary=true]"),
+            list = container.find("ul");
+
+        if (list && list.length && validator.errorList.length) {
+            list.empty();
+            container.addClass("validation-summary-errors").removeClass("validation-summary-valid");
+
+            $.each(validator.errorList, function () {
+                $("<li />").html(this.message).appendTo(list);
+            });
+        }
+    }
+
+    function onSuccess(error) {  // 'this' is the form element
+        var container = error.data("unobtrusiveContainer");
+
+        if (container) {
+            var replaceAttrValue = container.attr("data-valmsg-replace"),
+                replace = replaceAttrValue ? $.parseJSON(replaceAttrValue) : null;
+
+            container.addClass("field-validation-valid").removeClass("field-validation-error");
+            error.removeData("unobtrusiveContainer");
+
+            if (replace) {
+                container.empty();
+            }
+        }
+    }
+
+    function onReset(event) {  // 'this' is the form element
+        var $form = $(this),
+            key = '__jquery_unobtrusive_validation_form_reset';
+        if ($form.data(key)) {
+            return;
+        }
+        // Set a flag that indicates we're currently resetting the form.
+        $form.data(key, true);
+        try {
+            $form.data("validator").resetForm();
+        } finally {
+            $form.removeData(key);
+        }
+
+        $form.find(".validation-summary-errors")
+            .addClass("validation-summary-valid")
+            .removeClass("validation-summary-errors");
+        $form.find(".field-validation-error")
+            .addClass("field-validation-valid")
+            .removeClass("field-validation-error")
+            .removeData("unobtrusiveContainer")
+            .find(">*")  // If we were using valmsg-replace, get the underlying error
+            .removeData("unobtrusiveContainer");
+    }
+
+    function validationInfo(form) {
+        var $form = $(form),
+            result = $form.data(data_validation),
+            onResetProxy = $.proxy(onReset, form),
+            defaultOptions = $jQval.unobtrusive.options || {},
+            execInContext = function (name, args) {
+                var func = defaultOptions[name];
+                func && $.isFunction(func) && func.apply(form, args);
+            };
+
+        if (!result) {
+            result = {
+                options: {  // options structure passed to jQuery Validate's validate() method
+                    errorClass: defaultOptions.errorClass || "input-validation-error",
+                    errorElement: defaultOptions.errorElement || "span",
+                    errorPlacement: function () {
+                        onError.apply(form, arguments);
+                        execInContext("errorPlacement", arguments);
+                    },
+                    invalidHandler: function () {
+                        onErrors.apply(form, arguments);
+                        execInContext("invalidHandler", arguments);
+                    },
+                    messages: {},
+                    rules: {},
+                    success: function () {
+                        onSuccess.apply(form, arguments);
+                        execInContext("success", arguments);
+                    }
+                },
+                attachValidation: function () {
+                    $form
+                        .off("reset." + data_validation, onResetProxy)
+                        .on("reset." + data_validation, onResetProxy)
+                        .validate(this.options);
+                },
+                validate: function () {  // a validation function that is called by unobtrusive Ajax
+                    $form.validate();
+                    return $form.valid();
+                }
+            };
+            $form.data(data_validation, result);
+        }
+
+        return result;
+    }
+
+    $jQval.unobtrusive = {
+        adapters: [],
+
+        parseElement: function (element, skipAttach) {
+            /// <summary>
+            /// Parses a single HTML element for unobtrusive validation attributes.
+            /// </summary>
+            /// <param name="element" domElement="true">The HTML element to be parsed.</param>
+            /// <param name="skipAttach" type="Boolean">[Optional] true to skip attaching the
+            /// validation to the form. If parsing just this single element, you should specify true.
+            /// If parsing several elements, you should specify false, and manually attach the validation
+            /// to the form when you are finished. The default is false.</param>
+            var $element = $(element),
+                form = $element.parents("form")[0],
+                valInfo, rules, messages;
+
+            if (!form) {  // Cannot do client-side validation without a form
+                return;
+            }
+
+            valInfo = validationInfo(form);
+            valInfo.options.rules[element.name] = rules = {};
+            valInfo.options.messages[element.name] = messages = {};
+
+            $.each(this.adapters, function () {
+                var prefix = "data-val-" + this.name,
+                    message = $element.attr(prefix),
+                    paramValues = {};
+
+                if (message !== undefined) {  // Compare against undefined, because an empty message is legal (and falsy)
+                    prefix += "-";
+
+                    $.each(this.params, function () {
+                        paramValues[this] = $element.attr(prefix + this);
+                    });
+
+                    this.adapt({
+                        element: element,
+                        form: form,
+                        message: message,
+                        params: paramValues,
+                        rules: rules,
+                        messages: messages
+                    });
+                }
+            });
+
+            $.extend(rules, { "__dummy__": true });
+
+            if (!skipAttach) {
+                valInfo.attachValidation();
+            }
+        },
+
+        parse: function (selector) {
+            /// <summary>
+            /// Parses all the HTML elements in the specified selector. It looks for input elements decorated
+            /// with the [data-val=true] attribute value and enables validation according to the data-val-*
+            /// attribute values.
+            /// </summary>
+            /// <param name="selector" type="String">Any valid jQuery selector.</param>
+
+            // $forms includes all forms in selector's DOM hierarchy (parent, children and self) that have at least one
+            // element with data-val=true
+            var $selector = $(selector),
+                $forms = $selector.parents()
+                    .addBack()
+                    .filter("form")
+                    .add($selector.find("form"))
+                    .has("[data-val=true]");
+
+            $selector.find("[data-val=true]").each(function () {
+                $jQval.unobtrusive.parseElement(this, true);
+            });
+
+            $forms.each(function () {
+                var info = validationInfo(this);
+                if (info) {
+                    info.attachValidation();
+                }
+            });
+        }
+    };
+
+    adapters = $jQval.unobtrusive.adapters;
+
+    adapters.add = function (adapterName, params, fn) {
+        /// <summary>Adds a new adapter to convert unobtrusive HTML into a jQuery Validate validation.</summary>
+        /// <param name="adapterName" type="String">The name of the adapter to be added. This matches the name used
+        /// in the data-val-nnnn HTML attribute (where nnnn is the adapter name).</param>
+        /// <param name="params" type="Array" optional="true">[Optional] An array of parameter names (strings) that will
+        /// be extracted from the data-val-nnnn-mmmm HTML attributes (where nnnn is the adapter name, and
+        /// mmmm is the parameter name).</param>
+        /// <param name="fn" type="Function">The function to call, which adapts the values from the HTML
+        /// attributes into jQuery Validate rules and/or messages.</param>
+        /// <returns type="jQuery.validator.unobtrusive.adapters" />
+        if (!fn) {  // Called with no params, just a function
+            fn = params;
+            params = [];
+        }
+        this.push({ name: adapterName, params: params, adapt: fn });
+        return this;
+    };
+
+    adapters.addBool = function (adapterName, ruleName) {
+        /// <summary>Adds a new adapter to convert unobtrusive HTML into a jQuery Validate validation, where
+        /// the jQuery Validate validation rule has no parameter values.</summary>
+        /// <param name="adapterName" type="String">The name of the adapter to be added. This matches the name used
+        /// in the data-val-nnnn HTML attribute (where nnnn is the adapter name).</param>
+        /// <param name="ruleName" type="String" optional="true">[Optional] The name of the jQuery Validate rule. If not provided, the value
+        /// of adapterName will be used instead.</param>
+        /// <returns type="jQuery.validator.unobtrusive.adapters" />
+        return this.add(adapterName, function (options) {
+            setValidationValues(options, ruleName || adapterName, true);
+        });
+    };
+
+    adapters.addMinMax = function (adapterName, minRuleName, maxRuleName, minMaxRuleName, minAttribute, maxAttribute) {
+        /// <summary>Adds a new adapter to convert unobtrusive HTML into a jQuery Validate validation, where
+        /// the jQuery Validate validation has three potential rules (one for min-only, one for max-only, and
+        /// one for min-and-max). The HTML parameters are expected to be named -min and -max.</summary>
+        /// <param name="adapterName" type="String">The name of the adapter to be added. This matches the name used
+        /// in the data-val-nnnn HTML attribute (where nnnn is the adapter name).</param>
+        /// <param name="minRuleName" type="String">The name of the jQuery Validate rule to be used when you only
+        /// have a minimum value.</param>
+        /// <param name="maxRuleName" type="String">The name of the jQuery Validate rule to be used when you only
+        /// have a maximum value.</param>
+        /// <param name="minMaxRuleName" type="String">The name of the jQuery Validate rule to be used when you
+        /// have both a minimum and maximum value.</param>
+        /// <param name="minAttribute" type="String" optional="true">[Optional] The name of the HTML attribute that
+        /// contains the minimum value. The default is "min".</param>
+        /// <param name="maxAttribute" type="String" optional="true">[Optional] The name of the HTML attribute that
+        /// contains the maximum value. The default is "max".</param>
+        /// <returns type="jQuery.validator.unobtrusive.adapters" />
+        return this.add(adapterName, [minAttribute || "min", maxAttribute || "max"], function (options) {
+            var min = options.params.min,
+                max = options.params.max;
+
+            if (min && max) {
+                setValidationValues(options, minMaxRuleName, [min, max]);
+            }
+            else if (min) {
+                setValidationValues(options, minRuleName, min);
+            }
+            else if (max) {
+                setValidationValues(options, maxRuleName, max);
+            }
+        });
+    };
+
+    adapters.addSingleVal = function (adapterName, attribute, ruleName) {
+        /// <summary>Adds a new adapter to convert unobtrusive HTML into a jQuery Validate validation, where
+        /// the jQuery Validate validation rule has a single value.</summary>
+        /// <param name="adapterName" type="String">The name of the adapter to be added. This matches the name used
+        /// in the data-val-nnnn HTML attribute(where nnnn is the adapter name).</param>
+        /// <param name="attribute" type="String">[Optional] The name of the HTML attribute that contains the value.
+        /// The default is "val".</param>
+        /// <param name="ruleName" type="String" optional="true">[Optional] The name of the jQuery Validate rule. If not provided, the value
+        /// of adapterName will be used instead.</param>
+        /// <returns type="jQuery.validator.unobtrusive.adapters" />
+        return this.add(adapterName, [attribute || "val"], function (options) {
+            setValidationValues(options, ruleName || adapterName, options.params[attribute]);
+        });
+    };
+
+    $jQval.addMethod("__dummy__", function (value, element, params) {
+        return true;
+    });
+
+    $jQval.addMethod("regex", function (value, element, params) {
+        var match;
+        if (this.optional(element)) {
+            return true;
+        }
+
+        match = new RegExp(params).exec(value);
+        return (match && (match.index === 0) && (match[0].length === value.length));
+    });
+
+    $jQval.addMethod("nonalphamin", function (value, element, nonalphamin) {
+        var match;
+        if (nonalphamin) {
+            match = value.match(/\W/g);
+            match = match && match.length >= nonalphamin;
+        }
+        return match;
+    });
+
+    if ($jQval.methods.extension) {
+        adapters.addSingleVal("accept", "mimtype");
+        adapters.addSingleVal("extension", "extension");
+    } else {
+        // for backward compatibility, when the 'extension' validation method does not exist, such as with versions
+        // of JQuery Validation plugin prior to 1.10, we should use the 'accept' method for
+        // validating the extension, and ignore mime-type validations as they are not supported.
+        adapters.addSingleVal("extension", "extension", "accept");
+    }
+
+    adapters.addSingleVal("regex", "pattern");
+    adapters.addBool("creditcard").addBool("date").addBool("digits").addBool("email").addBool("number").addBool("url");
+    adapters.addMinMax("length", "minlength", "maxlength", "rangelength").addMinMax("range", "min", "max", "range");
+    adapters.addMinMax("minlength", "minlength").addMinMax("maxlength", "minlength", "maxlength");
+    adapters.add("equalto", ["other"], function (options) {
+        var prefix = getModelPrefix(options.element.name),
+            other = options.params.other,
+            fullOtherName = appendModelPrefix(other, prefix),
+            element = $(options.form).find(":input").filter("[name='" + escapeAttributeValue(fullOtherName) + "']")[0];
+
+        setValidationValues(options, "equalTo", element);
+    });
+    adapters.add("required", function (options) {
+        // jQuery Validate equates "required" with "mandatory" for checkbox elements
+        if (options.element.tagName.toUpperCase() !== "INPUT" || options.element.type.toUpperCase() !== "CHECKBOX") {
+            setValidationValues(options, "required", true);
+        }
+    });
+    adapters.add("remote", ["url", "type", "additionalfields"], function (options) {
+        var value = {
+            url: options.params.url,
+            type: options.params.type || "GET",
+            data: {}
+        },
+            prefix = getModelPrefix(options.element.name);
+
+        $.each(splitAndTrim(options.params.additionalfields || options.element.name), function (i, fieldName) {
+            var paramName = appendModelPrefix(fieldName, prefix);
+            value.data[paramName] = function () {
+                var field = $(options.form).find(":input").filter("[name='" + escapeAttributeValue(paramName) + "']");
+                // For checkboxes and radio buttons, only pick up values from checked fields.
+                if (field.is(":checkbox")) {
+                    return field.filter(":checked").val() || field.filter(":hidden").val() || '';
+                }
+                else if (field.is(":radio")) {
+                    return field.filter(":checked").val() || '';
+                }
+                return field.val();
+            };
+        });
+
+        setValidationValues(options, "remote", value);
+    });
+    adapters.add("password", ["min", "nonalphamin", "regex"], function (options) {
+        if (options.params.min) {
+            setValidationValues(options, "minlength", options.params.min);
+        }
+        if (options.params.nonalphamin) {
+            setValidationValues(options, "nonalphamin", options.params.nonalphamin);
+        }
+        if (options.params.regex) {
+            setValidationValues(options, "regex", options.params.regex);
+        }
+    });
+    adapters.add("fileextensions", ["extensions"], function (options) {
+        setValidationValues(options, "extension", options.params.extensions);
+    });
+
+    $(function () {
+        $jQval.unobtrusive.parse(document);
+    });
+
+    return $jQval.unobtrusive;
+}));
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\wwwroot\lib\jquery-validation-unobtrusive\jquery.validate.unobtrusive.min.js
+================================================================================
+/**
+ * @license
+ * Unobtrusive validation support library for jQuery and jQuery Validate
+ * Copyright (c) .NET Foundation. All rights reserved.
+ * Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+ * @version v4.0.0
+ */
+!function(a){"function"==typeof define&&define.amd?define("jquery.validate.unobtrusive",["jquery-validation"],a):"object"==typeof module&&module.exports?module.exports=a(require("jquery-validation")):jQuery.validator.unobtrusive=a(jQuery)}(function(s){var a,o=s.validator,d="unobtrusiveValidation";function l(a,e,n){a.rules[e]=n,a.message&&(a.messages[e]=a.message)}function u(a){return a.replace(/([!"#$%&'()*+,./:;<=>?@\[\\\]^`{|}~])/g,"\\$1")}function n(a){return a.substr(0,a.lastIndexOf(".")+1)}function m(a,e){return a=0===a.indexOf("*.")?a.replace("*.",e):a}function f(a){var e=s(this),n="__jquery_unobtrusive_validation_form_reset";if(!e.data(n)){e.data(n,!0);try{e.data("validator").resetForm()}finally{e.removeData(n)}e.find(".validation-summary-errors").addClass("validation-summary-valid").removeClass("validation-summary-errors"),e.find(".field-validation-error").addClass("field-validation-valid").removeClass("field-validation-error").removeData("unobtrusiveContainer").find(">*").removeData("unobtrusiveContainer")}}function p(n){function a(a,e){(a=r[a])&&s.isFunction(a)&&a.apply(n,e)}var e=s(n),t=e.data(d),i=s.proxy(f,n),r=o.unobtrusive.options||{};return t||(t={options:{errorClass:r.errorClass||"input-validation-error",errorElement:r.errorElement||"span",errorPlacement:function(){!function(a,e){var e=s(this).find("[data-valmsg-for='"+u(e[0].name)+"']"),n=(n=e.attr("data-valmsg-replace"))?!1!==s.parseJSON(n):null;e.removeClass("field-validation-valid").addClass("field-validation-error"),a.data("unobtrusiveContainer",e),n?(e.empty(),a.removeClass("input-validation-error").appendTo(e)):a.hide()}.apply(n,arguments),a("errorPlacement",arguments)},invalidHandler:function(){!function(a,e){var n=s(this).find("[data-valmsg-summary=true]"),t=n.find("ul");t&&t.length&&e.errorList.length&&(t.empty(),n.addClass("validation-summary-errors").removeClass("validation-summary-valid"),s.each(e.errorList,function(){s("<li />").html(this.message).appendTo(t)}))}.apply(n,arguments),a("invalidHandler",arguments)},messages:{},rules:{},success:function(){!function(a){var e,n=a.data("unobtrusiveContainer");n&&(e=(e=n.attr("data-valmsg-replace"))?s.parseJSON(e):null,n.addClass("field-validation-valid").removeClass("field-validation-error"),a.removeData("unobtrusiveContainer"),e&&n.empty())}.apply(n,arguments),a("success",arguments)}},attachValidation:function(){e.off("reset."+d,i).on("reset."+d,i).validate(this.options)},validate:function(){return e.validate(),e.valid()}},e.data(d,t)),t}return o.unobtrusive={adapters:[],parseElement:function(t,a){var e,i,r,o=s(t),d=o.parents("form")[0];d&&((e=p(d)).options.rules[t.name]=i={},e.options.messages[t.name]=r={},s.each(this.adapters,function(){var a="data-val-"+this.name,e=o.attr(a),n={};void 0!==e&&(a+="-",s.each(this.params,function(){n[this]=o.attr(a+this)}),this.adapt({element:t,form:d,message:e,params:n,rules:i,messages:r}))}),s.extend(i,{__dummy__:!0}),a||e.attachValidation())},parse:function(a){var a=s(a),e=a.parents().addBack().filter("form").add(a.find("form")).has("[data-val=true]");a.find("[data-val=true]").each(function(){o.unobtrusive.parseElement(this,!0)}),e.each(function(){var a=p(this);a&&a.attachValidation()})}},(a=o.unobtrusive.adapters).add=function(a,e,n){return n||(n=e,e=[]),this.push({name:a,params:e,adapt:n}),this},a.addBool=function(e,n){return this.add(e,function(a){l(a,n||e,!0)})},a.addMinMax=function(a,t,i,r,e,n){return this.add(a,[e||"min",n||"max"],function(a){var e=a.params.min,n=a.params.max;e&&n?l(a,r,[e,n]):e?l(a,t,e):n&&l(a,i,n)})},a.addSingleVal=function(e,n,t){return this.add(e,[n||"val"],function(a){l(a,t||e,a.params[n])})},o.addMethod("__dummy__",function(a,e,n){return!0}),o.addMethod("regex",function(a,e,n){return!!this.optional(e)||(e=new RegExp(n).exec(a))&&0===e.index&&e[0].length===a.length}),o.addMethod("nonalphamin",function(a,e,n){var t;return t=n?(t=a.match(/\W/g))&&t.length>=n:t}),o.methods.extension?(a.addSingleVal("accept","mimtype"),a.addSingleVal("extension","extension")):a.addSingleVal("extension","extension","accept"),a.addSingleVal("regex","pattern"),a.addBool("creditcard").addBool("date").addBool("digits").addBool("email").addBool("number").addBool("url"),a.addMinMax("length","minlength","maxlength","rangelength").addMinMax("range","min","max","range"),a.addMinMax("minlength","minlength").addMinMax("maxlength","minlength","maxlength"),a.add("equalto",["other"],function(a){var e=n(a.element.name),e=m(a.params.other,e);l(a,"equalTo",s(a.form).find(":input").filter("[name='"+u(e)+"']")[0])}),a.add("required",function(a){"INPUT"===a.element.tagName.toUpperCase()&&"CHECKBOX"===a.element.type.toUpperCase()||l(a,"required",!0)}),a.add("remote",["url","type","additionalfields"],function(t){var i={url:t.params.url,type:t.params.type||"GET",data:{}},r=n(t.element.name);s.each((t.params.additionalfields||t.element.name).replace(/^\s+|\s+$/g,"").split(/\s*,\s*/g),function(a,e){var n=m(e,r);i.data[n]=function(){var a=s(t.form).find(":input").filter("[name='"+u(n)+"']");return a.is(":checkbox")?a.filter(":checked").val()||a.filter(":hidden").val()||"":a.is(":radio")?a.filter(":checked").val()||"":a.val()}}),l(t,"remote",i)}),a.add("password",["min","nonalphamin","regex"],function(a){a.params.min&&l(a,"minlength",a.params.min),a.params.nonalphamin&&l(a,"nonalphamin",a.params.nonalphamin),a.params.regex&&l(a,"regex",a.params.regex)}),a.add("fileextensions",["extensions"],function(a){l(a,"extension",a.params.extensions)}),s(function(){o.unobtrusive.parse(document)}),o.unobtrusive});
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook\WebCafebookApi\wwwroot\lib\jquery-validation-unobtrusive\LICENSE.txt
+================================================================================
+The MIT License (MIT)
+
+Copyright (c) .NET Foundation and Contributors
+
+All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+

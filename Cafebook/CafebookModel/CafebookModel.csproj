@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Model\ModelApi\" />
+    <Folder Include="Model\ModelApp\NhanVien\" />
+    <Folder Include="Model\ModelWeb\KhachHang\" />
+    <Folder Include="Model\ModelWeb\Nhanvien\" />
+    <Folder Include="Utils\" />
+  </ItemGroup>
+
+</Project>
+ 

@@ -1,0 +1,69 @@
+Chào bạn, đây là một kế hoạch nâng cấp và cấu trúc lại dự án rất rõ ràng. Việc đập đi xây lại (hoặc refactor toàn diện) kết hợp với chuyển dịch các tính năng giữa App (WPF) và Web đòi hỏi một quy trình làm việc từ dưới lên trên (Bottom-Up): **Từ Cơ sở dữ liệu $\rightarrow$ Backend API $\rightarrow$ Giao diện Web $\rightarrow$ Giao diện App**.
+
+Việc lưu tiếng Việt không dấu sẽ được xử lý chủ yếu ở tầng Logic (Backend) trước khi ghi vào CSDL để tránh phải sửa đổi cấu trúc bảng quá nhiều. 
+
+Dưới đây là danh sách chi tiết thứ tự các tệp (files) bạn cần tạo hoặc chỉnh sửa từ đầu đến cuối để đảm bảo hệ thống không bị lỗi tham chiếu chéo.
+
+---
+
+### Giai đoạn 1: Cơ sở dữ liệu (Nền tảng)
+Làm việc với file SQL đầu tiên để chuẩn bị chỗ trống cho các tính năng mới.
+
+1. **`datanew.sql`**:
+   * **Bảng `CaiDat`:** Thêm các cột: `VNPay_TmnCode`, `VNPay_HashSecret`, `VNPay_Url`, `ServerUrl_Config` (để lưu thiết lập chung).
+   * **Bảng `HoaDon`:** Thêm cột `PhuongThucThanhToan` (Tiền mặt / VNPay) và `MaGiaoDichVNPay` (để đối soát).
+   * **Bảng `VaiTro_Quyen` / `Quyen`:** Đảm bảo đã có đủ dữ liệu mẫu cho các quyền mới (Quyền xem quản lý ship hàng, Quyền thiết lập VNPay...).
+   * *(Lưu ý: Giữ nguyên các bảng khác. Việc lưu tiếng Việt không dấu sẽ do code C# xử lý).*
+
+---
+
+### Giai đoạn 2: Backend API - Cấu hình & Tiện ích (Core Logic)
+Xây dựng các công cụ nền tảng và cập nhật Model khớp với DB.
+
+2. **`Models/CaiDat.cs` & `Models/HoaDon.cs`**: Cập nhật thêm các thuộc tính (Properties) tương ứng với các cột vừa thêm trong CSDL.
+3. **`Utils/HelperString.cs` (Tạo mới)**: Viết hàm `ConvertToUnSign(string text)` để chuyển tiếng Việt có dấu thành không dấu. Hàm này sẽ được gọi ở mọi nơi trước khi lưu các điều kiện/thông tin vào CSDL.
+4. **`Services/VNPayService.cs` (Tạo mới)**: Viết service chứa logic tạo URL thanh toán và xác thực mã phản hồi (checksum) từ VNPay. Đọc config từ bảng `CaiDat`.
+5. **`Middlewares/AuthorizationMiddleware.cs` (Hoặc logic phân quyền JwtAuth)**: Viết lại logic kiểm tra token. Bắt buộc map đúng `VaiTro` của user đang đăng nhập với danh sách `VaiTro_Quyen` để quyết định cho phép truy cập API hay không.
+
+---
+
+### Giai đoạn 3: Backend API - Controllers (Cửa ngõ dữ liệu)
+Cập nhật các API để App và Web gọi đến.
+
+6. **`Controllers/AuthController.cs`**: Cập nhật API Login trả về Token kèm theo danh sách Quyền (Permissions) chi tiết thay vì chỉ trả về Role chung chung.
+7. **`Controllers/CaiDatController.cs`**: Thêm API Get/Update cho các thông số VNPay và Server. (Sử dụng hàm `ConvertToUnSign` nếu cần lưu text tìm kiếm).
+8. **`Controllers/HoaDonController.cs`**: Thêm API `CreateVNPayPaymentUrl` (trả về link thanh toán) và API `VNPayReturn` (xử lý kết quả thanh toán cập nhật trạng thái hóa đơn).
+9. **`Controllers/DonXinNghiController.cs`**: Bổ sung API lấy danh sách đơn xin nghỉ và lịch làm việc dành riêng cho Web (dashboard nhân viên).
+10. **`Controllers/PhanHoiController.cs`**: Điều chỉnh lại API để Web Quản lý ship có thể dễ dàng gọi và phản hồi (thay vì tối ưu cho App như trước).
+
+---
+
+### Giai đoạn 4: Ứng dụng Web (Frontend)
+Chuyển đổi các tính năng từ App sang Web và làm giao diện Shipper mới.
+
+11. **`src/utils/authConfig.js` (hoặc file xử lý Router/Auth)**: Code logic ẩn/hiện Menu và chặn Route dựa vào bảng phân quyền trả về từ API lúc Login.
+12. **`src/layouts/ShipperLayout.jsx` (Tạo mới)**: Thiết kế Layout riêng, CSS bóp khung hiển thị tỷ lệ 16:9, tối ưu cho thao tác vuốt/chạm trên điện thoại di động.
+13. **`src/pages/Shipper/Dashboard.jsx` (Tạo mới)**: Code màn hình nhận đơn, cập nhật trạng thái giao hàng riêng cho Shipper.
+14. **`src/pages/ShippingManagement/Feedback.jsx` (Tạo mới)**: Xây dựng UI danh sách đánh giá khách hàng và form để nhân viên phản hồi (Tính năng này vừa rút từ App sang).
+15. **`src/pages/Employee/LeaveSchedule.jsx` (Tạo mới)**: Clone logic giao diện xin nghỉ và xem lịch từ App cũ, ráp API `DonXinNghiController` vào để chạy trên Web.
+16. **`src/pages/Admin/Settings.jsx`**: Thêm form nhập thông số API Token VNPay.
+17. **`src/components/Checkout/VNPayButton.jsx` (Tạo mới)**: Nút thanh toán VNPay trên Web, gọi API lấy link và redirect khách hàng sang cổng thanh toán.
+
+---
+
+### Giai đoạn 5: Ứng dụng App Desktop (WPF POS)
+Dọn dẹp các tính năng đã chuyển đi và tích hợp Cài đặt mạng & VNPay POS.
+
+18. **`App.xaml` & `Utils/AppConfig.cs`**: Viết logic khởi tạo ứng dụng. Đọc tệp cấu hình cục bộ (ví dụ: `appsettings.json` hoặc `.ini` nội bộ) để lấy "Link nối tới Server" trước khi kết nối.
+19. **`View/CaiDatTruyCapWindow.xaml` & `ViewModel` (Tạo mới)**: Làm UI nhỏ (truy cập trước khi Login hoặc trong Setting) để người dùng có thể nhập/đổi "Link Server" và lưu lại cục bộ.
+20. **`View/ManHinhDangNhap.xaml.cs` (và ViewModel)**: Sửa lại logic đăng nhập. Sau khi login thành công, đọc danh sách quyền để quyết định mở các module nào trên App.
+21. **`View/MainWindow.xaml`**: Đặt thuộc tính `Visibility` của các Tab/Nút (Bán hàng, Kho, Cài đặt...) bind với quyền hạn đã phân.
+22. **`View/ThanhToanWindow.xaml` & `ViewModel`**: 
+    * Thêm tuỳ chọn "Thanh toán VNPay".
+    * Khi chọn VNPay, gọi API tạo mã QR Code (từ link VNPay) và hiển thị lên màn hình POS cho khách quét. Lắng nghe trạng thái cập nhật để in hóa đơn.
+23. **`View/PhanHoiKhachHangWindow.xaml` (Xóa/Vô hiệu hóa)**: Gỡ bỏ hoàn toàn form này khỏi App vì đã chuyển chức năng lên Web quản lý.
+24. **Các ViewModel có chức năng lưu dữ liệu**: Quét qua các chức năng Thêm/Sửa (ví dụ: Thêm Sản phẩm, Cấu hình điều kiện). Gọi API hoặc tự gọi hàm `ConvertToUnSign` trước khi truyền cục data đi để đảm bảo quy tắc "tiếng Việt không dấu".
+
+---
+
+Bạn muốn bắt đầu xem xét chi tiết vào việc chỉnh sửa cấu trúc các bảng `CaiDat` và `HoaDon` trong file `datanew.sql` ở Bước 1 trước không?

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="AppCafebookApi/AppCafebookApi.csproj" />
+  <Project Path="CafebookApi/CafebookApi.csproj" />
+  <Project Path="CafebookModel/CafebookModel.csproj" />
+  <Project Path="WebCafebookApi/WebCafebookApi.csproj" />
+</Solution>

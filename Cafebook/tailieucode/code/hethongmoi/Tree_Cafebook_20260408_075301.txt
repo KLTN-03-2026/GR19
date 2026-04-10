@@ -1,0 +1,193 @@
+Project: Cafebook
+├── AppCafebookApi
+│   ├── App.xaml
+│   ├── App.xaml.cs
+│   ├── AppCafebookApi.csproj
+│   ├── AppCafebookApi.csproj.user
+│   ├── Assets
+│   │   ├── images
+│   │   │   ├── default-avatar.png
+│   │   │   ├── default-book-cover.png
+│   │   │   └── default-food-icon.png
+│   │   ├── logo.ico
+│   │   └── logo.png
+│   ├── Fonts
+│   │   └── Font Awesome 6 Free-Solid-900.otf
+│   ├── Services
+│   │   ├── ApiClient.cs
+│   │   ├── AppConfigManager.cs
+│   │   ├── AuthService.cs
+│   │   └── HinhAnhHelper.cs
+│   ├── Utils
+│   │   └── Class1.cs
+│   ├── View
+│   │   ├── Common
+│   │   │   ├── CaiDatServerWindow.xaml
+│   │   │   ├── CaiDatServerWindow.xaml.cs
+│   │   │   ├── WelcomeWindow.xaml
+│   │   │   └── WelcomeWindow.xaml.cs
+│   │   ├── ManHinhDangNhap.xaml
+│   │   ├── ManHinhDangNhap.xaml.cs
+│   │   ├── nhanvien
+│   │   │   ├── ManHinhNhanVien.xaml
+│   │   │   ├── ManHinhNhanVien.xaml.cs
+│   │   │   └── pages
+│   │   │       ├── Page1.xaml
+│   │   │       └── Page1.xaml.cs
+│   │   └── quanly
+│   │       ├── ManHinhQuanly.xaml
+│   │       ├── ManHinhQuanly.xaml.cs
+│   │       └── pages
+│   │           ├── Window1.xaml
+│   │           └── Window1.xaml.cs
+│   └── logo.ico
+├── Cafebook.slnLaunch.user
+├── Cafebook.slnx
+├── CafebookApi
+│   ├── CafebookApi.csproj
+│   ├── CafebookApi.http
+│   ├── Controllers
+│   │   ├── App
+│   │   │   ├── NhanVien
+│   │   │   └── QuanLy
+│   │   ├── Shared
+│   │   │   └── AuthController.cs
+│   │   └── Web
+│   │       ├── KhachHang
+│   │       └── NhanVien
+│   ├── Data
+│   │   └── CafebookDbContext.cs
+│   ├── Hubs
+│   ├── Program.cs
+│   ├── Properties
+│   │   └── launchSettings.json
+│   ├── Services
+│   ├── WeatherForecast.cs
+│   ├── appsettings.Development.json
+│   ├── appsettings.json
+│   └── wwwroot
+│       └── images
+│           ├── anhdanhgia
+│           │   ├── monan
+│           │   └── sach
+│           ├── anhgiaohang
+│           ├── avatars
+│           │   ├── avatarKH
+│           │   └── avatarNV
+│           ├── books
+│           └── foods
+├── CafebookModel
+│   ├── CafebookModel.csproj
+│   ├── Model
+│   │   ├── ModelApi
+│   │   ├── ModelApp
+│   │   │   ├── NhanVien
+│   │   │   └── QuanLy
+│   │   ├── ModelEntities
+│   │   │   ├── Ban.cs
+│   │   │   ├── BangChamCong.cs
+│   │   │   ├── CaLamViec.cs
+│   │   │   ├── CaiDat.cs
+│   │   │   ├── ChatLichSu.cs
+│   │   │   ├── ChiTietHoaDon.cs
+│   │   │   ├── ChiTietKiemKho.cs
+│   │   │   ├── ChiTietNhapKho.cs
+│   │   │   ├── ChiTietPhieuThue.cs
+│   │   │   ├── ChiTietPhieuTra.cs
+│   │   │   ├── ChiTietPhuThuHoaDon.cs
+│   │   │   ├── ChiTietXuatHuy.cs
+│   │   │   ├── DanhGia.cs
+│   │   │   ├── DanhMuc.cs
+│   │   │   ├── DeXuatSach.cs
+│   │   │   ├── DeXuatSanPham.cs
+│   │   │   ├── DinhLuong.cs
+│   │   │   ├── DonViChuyenDoi.cs
+│   │   │   ├── DonXinNghi.cs
+│   │   │   ├── GiaoDichThanhToan.cs
+│   │   │   ├── HoaDon.cs
+│   │   │   ├── HoaDon_KhuyenMai.cs
+│   │   │   ├── KhachHang.cs
+│   │   │   ├── KhuVuc.cs
+│   │   │   ├── KhuyenMai.cs
+│   │   │   ├── LichLamViec.cs
+│   │   │   ├── NguyenLieu.cs
+│   │   │   ├── NhaCungCap.cs
+│   │   │   ├── NhaXuatBan.cs
+│   │   │   ├── NhanVien.cs
+│   │   │   ├── NhatKyHuyMon.cs
+│   │   │   ├── PhanHoiDanhGia.cs
+│   │   │   ├── PhieuDatBan.cs
+│   │   │   ├── PhieuKiemKho.cs
+│   │   │   ├── PhieuLuong.cs
+│   │   │   ├── PhieuNhapKho.cs
+│   │   │   ├── PhieuThueSach.cs
+│   │   │   ├── PhieuThuongPhat.cs
+│   │   │   ├── PhieuTraSach.cs
+│   │   │   ├── PhieuXuatHuy.cs
+│   │   │   ├── PhuThu.cs
+│   │   │   ├── Quyen.cs
+│   │   │   ├── Sach.cs
+│   │   │   ├── Sach_NhaXuatBan.cs
+│   │   │   ├── Sach_TacGia.cs
+│   │   │   ├── Sach_TheLoai.cs
+│   │   │   ├── SanPham.cs
+│   │   │   ├── TacGia.cs
+│   │   │   ├── TheLoai.cs
+│   │   │   ├── ThongBao.cs
+│   │   │   ├── ThongBaoHoTro.cs
+│   │   │   ├── TrangThaiCheBien.cs
+│   │   │   ├── VaiTro.cs
+│   │   │   └── VaiTro_Quyen.cs
+│   │   ├── ModelWeb
+│   │   │   ├── KhachHang
+│   │   │   └── Nhanvien
+│   │   └── Shared
+│   │       └── AuthDTOs.cs
+│   └── Utils
+│       └── HinhAnhPaths.cs
+├── DatabaseCafebook
+│   ├── CafebookDB.mdf
+│   └── CafebookDB_log.ldf
+├── SettingCafebook
+│   └── AppConfig.json
+└── WebCafebookApi
+    ├── Pages
+    │   ├── Account
+    │   ├── Error.cshtml
+    │   ├── Error.cshtml.cs
+    │   ├── Index.cshtml
+    │   ├── Index.cshtml.cs
+    │   ├── Privacy.cshtml
+    │   ├── Privacy.cshtml.cs
+    │   ├── Shared
+    │   │   ├── _Layout.cshtml
+    │   │   ├── _Layout.cshtml.css
+    │   │   └── _ValidationScriptsPartial.cshtml
+    │   ├── _ViewImports.cshtml
+    │   ├── _ViewStart.cshtml
+    │   └── employee
+    ├── Program.cs
+    ├── Properties
+    │   └── launchSettings.json
+    ├── Services
+    ├── WebCafebookApi.csproj
+    ├── appsettings.Development.json
+    ├── appsettings.json
+    └── wwwroot
+        ├── css
+        │   └── site.css
+        ├── favicon.ico
+        ├── images
+        ├── js
+        │   └── site.js
+        └── lib
+            ├── bootstrap
+            │   └── LICENSE
+            ├── jquery
+            │   └── LICENSE.txt
+            ├── jquery-validation
+            │   └── LICENSE.md
+            └── jquery-validation-unobtrusive
+                ├── LICENSE.txt
+                ├── jquery.validate.unobtrusive.js
+                └── jquery.validate.unobtrusive.min.js

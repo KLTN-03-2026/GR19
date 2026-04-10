@@ -1,0 +1,28 @@
+Câu hỏi 1: "Tại sao các em lại chọn tích hợp AI vào hệ thống CafeBook? Nếu không có AI, hệ thống của các em có vận hành được không?"
+
+Trả lời:
+Chúng em tích hợp AI vào hệ thống như một "Trợ lý ảo" nhằm nâng cao tối đa trải nghiệm người dùng. Thay vì phải tự tìm kiếm, AI giúp khách hàng được hỗ trợ 24/7 trong việc gợi ý sách, tư vấn món ăn và tự động hóa toàn bộ quy trình đặt bàn.
+Nếu không có AI, hệ thống hoàn toàn vẫn vận hành bình thường. Hệ thống AI được thiết kế như một module giá trị gia tăng độc lập; các nghiệp vụ cốt lõi (quản lý đơn hàng, thư viện sách, đặt bàn) khách hàng đều có thể thao tác trực tiếp qua giao diện web truyền thống.
+
+Câu hỏi 2: "Cơ chế 'Handoff' (chuyển giao) giữa Chatbot AI và nhân viên thực được thực hiện như thế nào về mặt kỹ thuật?"
+
+Trả lời:
+Dạ, cơ chế chuyển giao được hệ thống xử lý qua 3 bước kỹ thuật như sau:
+
+Nhận diện (AI): Bằng System Prompt, khi AI nhận thấy khách hàng báo lỗi, phàn nàn hoặc yêu cầu gặp người thật, nó sẽ dừng tự động trả lời và chỉ xuất ra một mã lệnh duy nhất là [NEEDS_SUPPORT].
+
+Kết nối (SignalR): Ngay khi bắt được mã lệnh này, hệ thống sẽ ngắt luồng AI và gọi hàm JoinGroup trong ChatHub để đưa kết nối của khách hàng và nhân viên vào chung một phòng chat (Room).
+
+Giao tiếp (Real-time): Từ lúc này, hai bên giao tiếp thời gian thực qua WebSockets. Khách gửi tin qua SendMessageFromClient, nhân viên phản hồi qua SendMessageFromStaff. Hệ thống đồng thời lưu trữ tin nhắn và tự động chuyển trạng thái phiếu hỗ trợ thành "Đã trả lời".
+
+Câu hỏi 3: "Các em sử dụng mô hình AI nào (GPT hay Gemini) và làm sao để kiểm soát việc AI trả lời sai thông tin thực đơn?"
+
+Trả lời:
+
+Về mô hình AI: Hệ thống của chúng em được thiết kế linh hoạt hỗ trợ đa mô hình (bao gồm Gemini, OpenAI/GPT và cả Ollama chạy local). Hàm DetectProvider sẽ tự động nhận diện mô hình đang dùng dựa trên cấu hình Endpoint API trong database.
+
+Về cách kiểm soát sai lệch (Hallucination): Để ngăn AI "bịa" ra giá hay món ăn, chúng em áp dụng 2 lớp bảo vệ chặt chẽ:
+
+Function Calling (Tools): AI bị tước quyền tự trả lời bằng kiến thức chung, mà bắt buộc phải gọi các Tool (như KIEM_TRA_SAN_PHAM, TIM_MON_THEO_LOAI) để truy vấn trực tiếp vào Database thực tế của quán.
+
+Quy tắc System Prompt: AI bị ràng buộc bởi nguyên tắc "DỮ LIỆU LÀ VUA". Nếu Tool trả về rỗng, AI bị ép buộc phải trả lời theo form mẫu: "Dạ, hiện tại em chưa tìm thấy thông tin này trên hệ thống", tuyệt đối không được tự suy đoán hay chế tác thêm.

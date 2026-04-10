@@ -1,0 +1,87 @@
+### 1. Danh Sách Người Dùng (Actors - Hình người)
+*(Sử dụng Danh từ chỉ vai trò)*
+
+* **Khách hàng (Customer)**: Người sử dụng hệ thống Web để xem menu, đặt bàn, đặt món, thuê sách.
+* **Khách vãng lai (Guest)**: Người dùng truy cập Web nhưng chưa đăng nhập tài khoản.
+* **Nhân viên (Staff)**: Người sử dụng App WPF thực hiện các tác vụ hàng ngày (Bao gồm các vai trò: *Thu ngân, Phục vụ, Pha chế/Bếp*).
+* **Quản lý / Quản trị viên (Admin/Manager)**: Người có toàn quyền trên App WPF, thực hiện cấu hình, quản lý nhân sự và xem báo cáo.
+
+---
+
+### 2. Bản Đồ Chức Năng (Use Cases) - Hệ Thống WPF (App Desktop)
+*(Dành cho Nhân viên, Quản lý - Bắt đầu bằng Động từ)*
+
+**Nhóm Đăng nhập & Hệ thống:**
+* Đăng nhập hệ thống (Có xác thực quyền/Role)
+* Cài đặt thông tin quán và hệ thống AI
+
+**Nhóm Quản lý Bán hàng & Phục vụ (Thu ngân / Phục vụ):**
+* Lập hóa đơn bán hàng
+* Thêm / Sửa / Xóa món trong order
+* Áp dụng mã khuyến mãi
+* Chuyển bàn / Gộp bàn
+* Thanh toán hóa đơn
+* In hóa đơn / In phiếu gọi món
+* Tiếp nhận đơn đặt bàn trước
+* Quản lý trạng thái giao hàng (Phân công Shipper, in phiếu giao)
+
+**Nhóm Quản lý Chế biến (Pha chế / Bếp):**
+* Xem danh sách món cần chế biến
+* Cập nhật trạng thái món (Đang làm, Đã xong, Hết nguyên liệu)
+
+**Nhóm Quản lý Thuê & Trả Sách:**
+* Lập phiếu thuê sách
+* Cập nhật trả sách & Xử lý sách trễ hạn
+
+**Nhóm Quản lý Kho & Nguyên liệu (Quản lý):**
+* Lập phiếu nhập kho
+* Lập phiếu kiểm kho (Ghi nhận chênh lệch)
+* Lập phiếu xuất hủy nguyên liệu
+* Cài đặt định lượng món ăn
+
+**Nhóm Quản lý Nhân sự (Quản lý):**
+* Phân ca / Lập lịch làm việc
+* Chấm công nhân viên (Ghi nhận giờ vào/ra)
+* Quản lý đơn xin nghỉ (Duyệt/Từ chối)
+* Chốt lương & In phiếu lương
+
+**Nhóm Chăm sóc Khách hàng:**
+* Phản hồi tin nhắn hỗ trợ trực tuyến (Chat SignalR với khách Web)
+
+**Nhóm Báo cáo & Thống kê (Quản lý):**
+* Xem báo cáo doanh thu & lợi nhuận (P&L)
+* Xem báo cáo hiệu suất nhân viên
+* Xem báo cáo tồn kho nguyên liệu (Cảnh báo sắp hết)
+* Xem báo cáo tồn kho & luân chuyển sách
+* Xuất báo cáo ra Excel
+
+---
+
+### 3. Bản Đồ Chức Năng (Use Cases) - Hệ Thống WEB (Website)
+*(Dành cho Khách hàng, Khách vãng lai - Bắt đầu bằng Động từ)*
+
+**Nhóm Tài khoản & Hồ sơ:**
+* Đăng ký tài khoản
+* Đăng nhập hệ thống
+* Xem thông tin tài khoản & Điểm tích lũy
+* Quản lý địa chỉ giao hàng
+
+**Nhóm Mua sắm & Đặt món:**
+* Tìm kiếm & Lọc thực đơn (Sách, Đồ uống)
+* Xem chi tiết món / sách
+* Thêm món vào giỏ hàng
+* Áp dụng mã khuyến mãi
+* Đặt hàng và Thanh toán
+
+**Nhóm Dịch vụ tại quán:**
+* Đặt bàn trước trực tuyến
+* Thuê sách trực tuyến
+
+**Nhóm Theo dõi & Tương tác:**
+* Xem lịch sử đơn hàng
+* Theo dõi trạng thái đơn hàng thời gian thực
+* Chat với AI hỗ trợ (Tư vấn sách/món)
+* Chat với Nhân viên quán
+* Đánh giá & Bình luận sản phẩm
+* Nhận thông báo tự động (Nhắc trả sách, Trạng thái đơn, Tồn kho)
+
