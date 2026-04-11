@@ -34,20 +34,20 @@
 ## ✨ Tính năng chính
 
 ### 🛒 Quản lý bán hàng & POS
-- [x] Quản lý thực đơn đồ uống và danh mục sách.
-- [x] Hệ thống đặt hàng (Order delivery) và thanh toán tại quầy.
-- [x] Theo dõi trạng thái đơn hàng thời gian thực.
+- [x] Quản lý danh mục thực đơn (đồ ăn, thức uống) và thư viện sách.
+- [x] Nghiệp vụ POS tại quầy: Gọi món, thanh toán, quản lý sơ đồ bàn (trạng thái).
+- [x] Quản lý Thuê & Trả sách: Lập phiếu thuê, xử lý sách trễ hạn.
+- [x] Quản lý đơn hàng giao đi (Order delivery): Tiếp nhận, xác nhận hoặc hủy đơn và in phiếu giao hàng.
 
 ### 🤖 Trợ lý AI thông minh
-- [x] Tư vấn chọn sách dựa trên sở thích khách hàng.
-- [x] Gợi ý combo đồ uống đi kèm phù hợp.
-- [x] Hỗ trợ giải đáp các thắc mắc về dịch vụ tại quán.
+- [x] Tư vấn, giải đáp thắc mắc khách hàng 24/7
+- [x] Hỗ trợ đặt bàn trực tiếp ngay trong khung chat và giải đáp dịch vụ.
+- [x] Cơ chế Handoff: Chuyển luồng hội thoại từ AI sang nhân viên tư vấn trực tiếp khi có yêu cầu chuyên sâu.
 
 ### 📊 Quản trị & Tài chính
-- [x] Quản lý nhân sự, chấm công và tính lương tự động.
-- [x] Dashboard báo cáo doanh thu theo ngày/tháng/năm.
-- [x] Hệ thống tính toán và chi trả cổ tức cho cổ đông.
-
+- [x] Quản lý nhân sự toàn diện: Chấm công, xếp lịch làm việc, phê duyệt đơn xin nghỉ và tính lương, thưởng/phạt.
+- [x] Quản lý kho: Kiểm soát hiện trạng, nhập/xuất kho, định lượng nguyên liệu và quản lý nhà cung cấp.
+- [x] Dashboard báo cáo & thống kê: Theo dõi doanh thu, tồn kho sách/nguyên liệu và hiệu suất nhân viên.
 ---
 
 ## 🛠 Công nghệ sử dụng
@@ -121,8 +121,8 @@ Dự án được thiết kế theo kiến trúc Microservices/API, do đó cầ
 
 | STT | Họ và Tên | Mã Sinh Viên | Vai trò trong nhóm |
 | :---: | :--- | :---: | :--- |
-| 1 | **Huỳnh Ngọc Phú** | 28211106495 | Quản lý dự án (Scrum Master) |
-| 2 | **Nguyễn Minh Tú** | 28211105717 | Thành viên (Frontend/Backend) |
-| 3 | **Nguyễn Tú Uyên** | 28201149694 | Thành viên (Frontend/Tester) |
+| 1 | **Huỳnh Ngọc Phú** | 28211106495 | Quản lý dự án (Scrum Master/Frontend) |
+| 2 | **Nguyễn Minh Tú** | 28211105717 | Thành viên (Frontend/WPF UI/QA/Tester) |
+| 3 | **Nguyễn Tú Uyên** | 28201149694 | Thành viên (Frontend/WPF UI/QA/Tester) |
 | 4 | **Lâm Chu Bảo Toàn** | 28211105266 | Thành viên (Backend API/AI Integration) |
-| 5 | **Vương Quốc Hưng** | 28211145208 | Thành viên (WPF UI/QA) |
+| 5 | **Vương Quốc Hưng** | 28211145208 | Thành viên (WPF UI/QA/Tester) |
