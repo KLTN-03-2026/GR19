@@ -1,0 +1,71 @@
+﻿<Page x:Class="AppCafebookApi.View.quanly.pages.QuanLyDanhMucView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Danh mục" FontFamily="Segoe UI" Background="#FFF8E1" Loaded="Page_Loaded">
+    <Page.Resources>
+        <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#6F4E37"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="QUẢN LÝ DANH MỤC" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+            <Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="400"/>
+            </Grid.ColumnDefinitions>
+            <Border Background="White" CornerRadius="8" Margin="0,0,10,0" Padding="15">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="Tìm kiếm:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBox x:Name="txtSearch" Width="250" Padding="5" TextChanged="TxtSearch_TextChanged"/>
+                        <Button x:Name="btnThemMoi" Content="➕ Thêm mới" Style="{StaticResource ActionBtn}" Background="#4CAF50" Margin="10,0,0,0" Click="BtnThemMoi_Click"/>
+                    </StackPanel>
+                    <DataGrid x:Name="dgDanhMuc" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" SelectionChanged="DgDanhMuc_SelectionChanged" BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Tên Danh Mục" Binding="{Binding TenDanhMuc}" Width="*"/>
+                            <DataGridTextColumn Header="Số SP" Binding="{Binding SoLuongSanPham}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+            <Border Background="White" CornerRadius="8" Grid.Column="1" Padding="20">
+                <StackPanel x:Name="formChiTiet" IsEnabled="False">
+                    <TextBlock x:Name="lblTitle" Text="Chi tiết Danh mục" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
+                    <TextBlock Text="Tên Danh mục (*)" FontWeight="SemiBold" Margin="0,5"/>
+                    <TextBox x:Name="txtTenDanhMuc" Padding="8" Margin="0,0,0,15"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button x:Name="btnLuu" Content="💾 Lưu" Style="{StaticResource ActionBtn}" Background="#2196F3" Margin="0,0,10,0" Click="BtnLuu_Click"/>
+                        <Button x:Name="btnXoa" Content="🗑 Xóa" Style="{StaticResource ActionBtn}" Background="#F44336" Click="BtnXoa_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <Border x:Name="LoadingOverlay" Grid.ColumnSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
+                <TextBlock Text="Đang tải..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>
