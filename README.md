@@ -1,5 +1,5 @@
 <div align="center">
-  <h1 align="center">☕ CAFEBOOK SYSTEM 📚</h1>
+  <h1 align="center">☕ HỆ THỐNG QUẢN LÝ VÀ ĐẶT BÀN CAFEBOOK TÍCH HỢP CHATBOT AI HỖ TRỢ TƯ VẤN 📚</h1>
   <p align="center">
     <b>Giải pháp quản lý thông minh tích hợp Nhà sách & Quán Cà phê</b>
     <br />
@@ -54,10 +54,11 @@
 
 | Thành phần | Công nghệ |
 | :--- | :--- |
-| **Backend API** | ![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core_8.0-512BD4?style=flat-square&logo=dotnet&logoColor=white) ![Entity Framework](https://img.shields.io/badge/EF_Core-512BD4?style=flat-square&logo=dotnet&logoColor=white) |
-| **Frontend Web** | ![Razor Pages](https://img.shields.io/badge/Razor_Pages-512BD4?style=flat-square&logo=dotnet&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) |
-| **Desktop App** | ![WPF](https://img.shields.io/badge/C%23_WPF-0078D4?style=flat-square&logo=windows&logoColor=white) |
-| **Database** | ![SQL Server](https://img.shields.io/badge/SQL_Server-CC2927?style=flat-square&logo=microsoft-sql-server&logoColor=white) |
+| **Backend API** | ![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core_8.0-512BD4?style=flat-square&logo=dotnet&logoColor=white) ![Entity Framework](https://img.shields.io/badge/ASP.NET_Core_Web_App_API-512BD4?style=flat-square&logo=dotnet&logoColor=white) |
+| **Frontend Web** | ![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core_8.0-512BD4?style=flat-square&logo=dotnet&logoColor=white) ![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core_Web_API-512BD4?style=flat-square&logo=dotnet&logoColor=white)  |
+| **Desktop App** |![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core_8.0-512BD4?style=flat-square&logo=dotnet&logoColor=white) ![WPF](https://img.shields.io/badge/WPF_Application-0078D4?style=flat-square&logo=windows&logoColor=white) |
+| **Class Library** |![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core_8.0-512BD4?style=flat-square&logo=dotnet&logoColor=white) ![ASP.NET Core](https://img.shields.io/badge/.NET_Class_Library-512BD4?style=flat-square&logo=dotnet&logoColor=white) |
+| **Database** | ![SQL Server](https://img.shields.io/badge/SQL_Server_Management_Studio_22-0078D4?style=flat-square&logo=microsoft-sql-server&logoColor=white) |
 
 ---
 
@@ -123,6 +124,6 @@ Dự án được thiết kế theo kiến trúc Microservices/API, do đó cầ
 | :---: | :--- | :---: | :--- |
 | 1 | **Huỳnh Ngọc Phú** | 28211106495 | Quản lý dự án (Scrum Master/Frontend) |
 | 2 | **Nguyễn Minh Tú** | 28211105717 | Thành viên (Frontend/WPF UI/QA/Tester) |
-| 3 | **Nguyễn Tú Uyên** | 28201149694 | Thành viên (Frontend/WPF UI/QA/Tester) |
-| 4 | **Lâm Chu Bảo Toàn** | 28211105266 | Thành viên (Backend API/AI Integration) |
+| 3 | **Nguyễn Tú Uyên** | 28201149694 | Thành viên (Frontend/Web UI/QA/Tester) |
+| 4 | **Lâm Chu Bảo Toàn** | 28211105266 | Thành viên (Full Stack Developer) |
 | 5 | **Vương Quốc Hưng** | 28211145208 | Thành viên (WPF UI/QA/Tester) |
