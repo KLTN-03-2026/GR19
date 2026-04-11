@@ -1,14 +1,114 @@
 ﻿<Page x:Class="AppCafebookApi.View.quanly.pages.QuanLyDonViChuyenDoiView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:AppCafebookApi.View.quanly.pages"
-      mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="QuanLyDonViChuyenDoiView">
+      Title="Quản lý Đơn vị Quy đổi" FontFamily="Segoe UI" Background="#FFF8E1" Loaded="Page_Loaded">
 
-    <Grid>
-        
+    <Page.Resources>
+        <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="SubtleGrayBrush" Color="#F5F5F5"/>
+        <SolidColorBrush x:Key="BorderGrayBrush" Color="#BDBDBD"/>
+
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#6F4E37"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="InputStyle" TargetType="Control">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="#BDBDBD"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource InputStyle}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource InputStyle}"/>
+    </Page.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="QUẢN LÝ ĐƠN VỊ QUY ĐỔI" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+            <Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="400"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Background="White" CornerRadius="8" Margin="0,0,10,0" Padding="15">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="Tìm kiếm:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBox x:Name="txtSearch" Width="150" TextChanged="Filter_Changed"/>
+                        <TextBlock Text="Lọc NL:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+                        <ComboBox x:Name="cmbFilterNL" Width="150" DisplayMemberPath="Ten" SelectedValuePath="Id" SelectionChanged="Filter_Changed" IsEditable="True" IsTextSearchEnabled="True"/>
+                        <Button x:Name="btnLamMoiForm" Content="➕ Thêm mới" Style="{StaticResource ActionBtn}" Background="#4CAF50" Margin="15,0,0,0" Click="BtnLamMoiForm_Click"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="dgDonVi" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" SelectionChanged="DgDonVi_SelectionChanged" BorderThickness="0" Background="Transparent">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nguyên Liệu" Binding="{Binding TenNguyenLieu}" Width="*"/>
+                            <DataGridTextColumn Header="Tên Đơn vị" Binding="{Binding TenDonVi}" Width="100"/>
+                            <DataGridTextColumn Header="Tỷ lệ quy đổi" Binding="{Binding GiaTriQuyDoi, StringFormat=N2}" Width="100"/>
+                            <DataGridCheckBoxColumn Header="Là ĐV Cơ bản" Binding="{Binding LaDonViCoBan}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Background="White" CornerRadius="8" Grid.Column="1" Padding="20">
+                <StackPanel x:Name="formChiTiet" IsEnabled="False">
+                    <TextBlock Text="Chi tiết Đơn vị quy đổi" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
+
+                    <TextBlock Text="Nguyên Liệu (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox x:Name="cmbNguyenLieu" DisplayMemberPath="Ten" SelectedValuePath="Id" Margin="0,0,0,15" IsEditable="True" IsTextSearchEnabled="True"/>
+
+                    <TextBlock Text="Tên Đơn vị (vd: kg, hộp...) (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtTenDonVi" Margin="0,0,0,15"/>
+
+                    <TextBlock Text="Giá trị quy đổi ra ĐV Cơ bản" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtGiaTriQuyDoi" Margin="0,0,0,5"/>
+                    <TextBlock Text="(Nếu là ĐV Cơ bản thì điền 1. VD: ĐV Cơ bản là 'gram', ĐV quy đổi là 'kg' thì điền 1000)" FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                    <CheckBox x:Name="chkLaDonViCoBan" Content="Là Đơn vị Cơ bản (Mặc định)" FontWeight="SemiBold" Margin="0,10,0,10"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button x:Name="btnLuu" Content="💾 Lưu" Style="{StaticResource ActionBtn}" Background="#2196F3" Margin="0,0,10,0" Click="BtnLuu_Click"/>
+                        <Button x:Name="btnXoa" Content="🗑 Xóa" Style="{StaticResource ActionBtn}" Background="#F44336" Click="BtnXoa_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border x:Name="LoadingOverlay" Grid.ColumnSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
+                <TextBlock Text="Đang xử lý..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+            </Border>
+        </Grid>
     </Grid>
 </Page>

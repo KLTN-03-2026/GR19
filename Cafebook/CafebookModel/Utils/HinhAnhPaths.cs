@@ -15,5 +15,6 @@ namespace CafebookModel.Utils
         public const string UrlAvatarKH = "/images/avatars/avatarKH";
         public const string UrlBooks = "/images/books";
         public const string UrlFoods = "/images/foods";
+        public const string UrlBuildnhapkho = "/images/BuildNhapKho";
     }
 }

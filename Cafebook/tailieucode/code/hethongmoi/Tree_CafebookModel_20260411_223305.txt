@@ -1,0 +1,87 @@
+Project: CafebookModel
+├── CafebookModel.csproj
+├── Model
+│   ├── ModelApi
+│   ├── ModelApp
+│   │   ├── NhanVien
+│   │   └── QuanLy
+│   │       ├── QuanLyBanDto.cs
+│   │       ├── QuanLyDanhMucDto.cs
+│   │       ├── QuanLyDinhLuongDto.cs
+│   │       ├── QuanLyDonViChuyenDoiDto.cs
+│   │       ├── QuanLyDonXinNghiDto.cs
+│   │       ├── QuanLyKhuVucDto.cs
+│   │       ├── QuanLyLichLamViecDto.cs
+│   │       ├── QuanLyNguyenLieuDto.cs
+│   │       ├── QuanLyNhanVienDto.cs
+│   │       ├── QuanLyNhapKhoDto.cs
+│   │       ├── QuanLyPhanQuyenDto.cs
+│   │       ├── QuanLySanPhamDto.cs
+│   │       ├── QuanLySuCoBanDto.cs
+│   │       ├── QuanLyTonKhoDto.cs
+│   │       └── QuanLyTongQuanDto.cs
+│   ├── ModelEntities
+│   │   ├── Ban.cs
+│   │   ├── BangChamCong.cs
+│   │   ├── CaLamViec.cs
+│   │   ├── CaiDat.cs
+│   │   ├── ChatLichSu.cs
+│   │   ├── ChiTietHoaDon.cs
+│   │   ├── ChiTietKiemKho.cs
+│   │   ├── ChiTietNhapKho.cs
+│   │   ├── ChiTietPhieuThue.cs
+│   │   ├── ChiTietPhieuTra.cs
+│   │   ├── ChiTietPhuThuHoaDon.cs
+│   │   ├── ChiTietXuatHuy.cs
+│   │   ├── DanhGia.cs
+│   │   ├── DanhMuc.cs
+│   │   ├── DeXuatSach.cs
+│   │   ├── DeXuatSanPham.cs
+│   │   ├── DinhLuong.cs
+│   │   ├── DonViChuyenDoi.cs
+│   │   ├── DonXinNghi.cs
+│   │   ├── GiaoDichThanhToan.cs
+│   │   ├── HoaDon.cs
+│   │   ├── HoaDon_KhuyenMai.cs
+│   │   ├── KhachHang.cs
+│   │   ├── KhuVuc.cs
+│   │   ├── KhuyenMai.cs
+│   │   ├── LichLamViec.cs
+│   │   ├── NguyenLieu.cs
+│   │   ├── NhaCungCap.cs
+│   │   ├── NhaXuatBan.cs
+│   │   ├── NhanVien.cs
+│   │   ├── NhanVien_Quyen.cs
+│   │   ├── NhatKyHeThong.cs
+│   │   ├── NhatKyHuyMon.cs
+│   │   ├── NhuCauCaLam.cs
+│   │   ├── PhanHoiDanhGia.cs
+│   │   ├── PhieuDatBan.cs
+│   │   ├── PhieuKiemKho.cs
+│   │   ├── PhieuLuong.cs
+│   │   ├── PhieuNhapKho.cs
+│   │   ├── PhieuThueSach.cs
+│   │   ├── PhieuThuongPhat.cs
+│   │   ├── PhieuTraSach.cs
+│   │   ├── PhieuXuatHuy.cs
+│   │   ├── PhuThu.cs
+│   │   ├── Quyen.cs
+│   │   ├── Sach.cs
+│   │   ├── Sach_NhaXuatBan.cs
+│   │   ├── Sach_TacGia.cs
+│   │   ├── Sach_TheLoai.cs
+│   │   ├── SanPham.cs
+│   │   ├── TacGia.cs
+│   │   ├── TheLoai.cs
+│   │   ├── ThongBao.cs
+│   │   ├── ThongBaoHoTro.cs
+│   │   ├── TrangThaiCheBien.cs
+│   │   └── VaiTro.cs
+│   ├── ModelWeb
+│   │   ├── KhachHang
+│   │   └── Nhanvien
+│   └── Shared
+│       └── AuthDTOs.cs
+└── Utils
+    ├── HinhAnhPaths.cs
+    └── SlugifyUtil.cs

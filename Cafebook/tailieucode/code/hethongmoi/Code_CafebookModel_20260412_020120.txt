@@ -1,0 +1,2876 @@
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyBanDto.cs
+================================================================================
+﻿using System.ComponentModel.DataAnnotations;
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyBanGridDto
+    {
+        public int IdBan { get; set; }
+        public string SoBan { get; set; } = string.Empty;
+        public int SoGhe { get; set; }
+        public string TrangThai { get; set; } = string.Empty;
+        public string? GhiChu { get; set; }
+        public int IdKhuVuc { get; set; }
+        public string? TenKhuVuc { get; set; }
+    }
+    public class QuanLyBanSaveDto
+    {
+        [Required] public string SoBan { get; set; } = string.Empty;
+        public int SoGhe { get; set; }
+        public int IdKhuVuc { get; set; }
+        public string TrangThai { get; set; } = "Trống";
+        public string? GhiChu { get; set; }
+    }
+    public class LookupKhuVucDto { public int IdKhuVuc { get; set; } public string TenKhuVuc { get; set; } = string.Empty; }
+    public class QuanLyBanHistoryDto { public int SoLuotPhucVu { get; set; } public decimal TongDoanhThu { get; set; } public int SoLuotDatTruoc { get; set; } }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyDanhMucDto.cs
+================================================================================
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyDanhMucGridDto { public int IdDanhMuc { get; set; } public string TenDanhMuc { get; set; } = string.Empty; public int SoLuongSanPham { get; set; } }
+    public class QuanLyDanhMucSaveDto { public string TenDanhMuc { get; set; } = string.Empty; }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyDinhLuongDto.cs
+================================================================================
+﻿namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyDinhLuongSPDto { public int IdSanPham { get; set; } public string TenSanPham { get; set; } = string.Empty; public string TenDanhMuc { get; set; } = string.Empty; }
+    public class QuanLyDinhLuongNLDto { public int IdNguyenLieu { get; set; } public string TenNguyenLieu { get; set; } = string.Empty; public decimal SoLuongSuDung { get; set; } public int IdDonViSuDung { get; set; } public string TenDonVi { get; set; } = string.Empty; }
+    public class QuanLyDinhLuongSaveDto { public int IdNguyenLieu { get; set; } public decimal SoLuongSuDung { get; set; } public int IdDonViSuDung { get; set; } }
+    public class LookupDinhLuongDto { public int Id { get; set; } public string Ten { get; set; } = string.Empty; }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyDonViChuyenDoiDto.cs
+================================================================================
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyDonViChuyenDoiGridDto
+    {
+        public int IdChuyenDoi { get; set; }
+        public int IdNguyenLieu { get; set; }
+        public string TenNguyenLieu { get; set; } = string.Empty;
+        public string TenDonVi { get; set; } = string.Empty;
+        public decimal GiaTriQuyDoi { get; set; }
+        public bool LaDonViCoBan { get; set; }
+    }
+
+    public class QuanLyDonViChuyenDoiSaveDto
+    {
+        public int IdNguyenLieu { get; set; }
+        [Required] public string TenDonVi { get; set; } = string.Empty;
+        public decimal GiaTriQuyDoi { get; set; }
+        public bool LaDonViCoBan { get; set; }
+    }
+
+    public class LookupNguyenLieuDvtDto
+    {
+        public int Id { get; set; }
+        public string Ten { get; set; } = string.Empty;
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyDonXinNghiDto.cs
+================================================================================
+﻿using System;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyDonXinNghiGridDto
+    {
+        public int IdDonXinNghi { get; set; }
+        public string TenNhanVien { get; set; } = string.Empty;
+        public string LoaiDon { get; set; } = string.Empty;
+        public DateTime NgayBatDau { get; set; }
+        public DateTime NgayKetThuc { get; set; }
+        public string LyDo { get; set; } = string.Empty;
+        public string TrangThai { get; set; } = string.Empty;
+        public string? TenNguoiDuyet { get; set; }
+        public DateTime? NgayDuyet { get; set; }
+        public string? GhiChuPheDuyet { get; set; }
+    }
+
+    public class QuanLyDonXinNghiActionDto
+    {
+        public int IdNguoiDuyet { get; set; }
+        public string? GhiChuPheDuyet { get; set; }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyKhuVucDto.cs
+================================================================================
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyKhuVucDto
+    {
+        public int IdKhuVuc { get; set; }
+        public string TenKhuVuc { get; set; } = string.Empty;
+        public string? MoTa { get; set; }
+        public int SoLuongBan { get; set; } // Tối ưu: Chỉ đếm số bàn, không lấy list
+    }
+
+    public class QuanLyKhuVucSaveDto
+    {
+        [Required] public string TenKhuVuc { get; set; } = string.Empty;
+        public string? MoTa { get; set; }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyKiemKhoDto.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyKiemKhoGridDto
+    {
+        public int IdPhieuKiemKho { get; set; }
+        public DateTime NgayKiem { get; set; }
+        public string TenNhanVien { get; set; } = string.Empty;
+    }
+
+    public class QuanLyKiemKhoDetailDto
+    {
+        public int IdPhieuKiemKho { get; set; }
+        public DateTime NgayKiem { get; set; }
+        public string TenNhanVien { get; set; } = string.Empty;
+        public List<QuanLyChiTietKiemKhoDto> ChiTiet { get; set; } = new();
+    }
+
+    public class QuanLyChiTietKiemKhoDto
+    {
+        public int IdNguyenLieu { get; set; }
+        public string TenNguyenLieu { get; set; } = string.Empty;
+        public string DonViTinh { get; set; } = string.Empty;
+        public decimal TonKhoHeThong { get; set; }
+        public decimal TonKhoThucTe { get; set; }
+        public decimal ChenhLech => TonKhoThucTe - TonKhoHeThong;
+        public string LyDoChenhLech { get; set; } = string.Empty;
+    }
+
+    // DTO Dùng riêng cho lúc tạo Phiếu mới (Tương tác UI Real-time)
+    public class QuanLyKiemKhoNguyenLieuDto : INotifyPropertyChanged
+    {
+        public int IdNguyenLieu { get; set; }
+        public string TenNguyenLieu { get; set; } = string.Empty;
+        public string DonViTinh { get; set; } = string.Empty;
+        public decimal TonKhoHeThong { get; set; }
+
+        private decimal _tonKhoThucTe;
+        public decimal TonKhoThucTe
+        {
+            get => _tonKhoThucTe;
+            set
+            {
+                if (_tonKhoThucTe != value)
+                {
+                    _tonKhoThucTe = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ChenhLech)); // Tự động cập nhật cột chênh lệch
+                }
+            }
+        }
+
+        public decimal ChenhLech => TonKhoThucTe - TonKhoHeThong;
+        public string LyDoChenhLech { get; set; } = string.Empty;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
+    public class QuanLyKiemKhoSaveDto
+    {
+        public List<QuanLyChiTietKiemKhoSaveDto> ChiTiet { get; set; } = new();
+    }
+
+    public class QuanLyChiTietKiemKhoSaveDto
+    {
+        public int IdNguyenLieu { get; set; }
+        public decimal TonKhoHeThong { get; set; }
+        public decimal TonKhoThucTe { get; set; }
+        public string LyDoChenhLech { get; set; } = string.Empty;
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyLichLamViecDto.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyLichLamViec_CaiDatDto
+    {
+        public TimeSpan GioMoCua { get; set; }
+        public TimeSpan GioDongCua { get; set; }
+        public List<int> ThuMoCua { get; set; } = new List<int>();
+    }
+
+    public class QuanLyLichLamViec_ItemDto
+    {
+        public int IdNhuCau { get; set; }
+        public DateTime NgayLam { get; set; }
+        public int IdCa { get; set; }
+        public string TenCa { get; set; } = string.Empty;
+        public TimeSpan GioBatDau { get; set; }
+        public TimeSpan GioKetThuc { get; set; }
+
+        public string TenVaiTroYeuCau { get; set; } = string.Empty;
+        public int SoLuongCan { get; set; }
+        public string LoaiYeuCau { get; set; } = string.Empty;
+        public string? GhiChu { get; set; } // THÊM THUỘC TÍNH NÀY
+
+        public List<QuanLyLichLamViec_NhanVienDangKyDto> NhanViens { get; set; } = new();
+    }
+
+    public class QuanLyLichLamViec_NhanVienDangKyDto
+    {
+        public int IdLichLamViec { get; set; }
+        public int IdNhanVien { get; set; }
+        public string TenNhanVien { get; set; } = string.Empty;
+        public string TenVaiTro { get; set; } = string.Empty;
+        public string TrangThai { get; set; } = "Chờ duyệt";
+        public string? GhiChu { get; set; } // THÊM DÒNG NÀY
+    }
+
+    public class QuanLyLichLamViec_CaDto
+    {
+        public int IdCa { get; set; }
+        [Required] public string TenCa { get; set; } = string.Empty;
+        public TimeSpan GioBatDau { get; set; }
+        public TimeSpan GioKetThuc { get; set; }
+    }
+
+    public class QuanLyLichLamViec_NhuCauSaveDto
+    {
+        public DateTime NgayLam { get; set; }
+        public int IdCa { get; set; }
+        public int IdVaiTro { get; set; }
+        public int SoLuongCan { get; set; }
+        public string LoaiYeuCau { get; set; } = "Tất cả";
+        public string? GhiChu { get; set; }
+    }
+
+    public class QuanLyLichLamViec_AssignDto
+    {
+        public int IdNhanVien { get; set; }
+        public int IdCa { get; set; }
+        public DateTime NgayLam { get; set; }
+        public string TrangThai { get; set; } = "Đã duyệt";
+        public string? GhiChu { get; set; } // THÊM DÒNG NÀY
+    }
+
+    public class QuanLyNhanVienLookupDto
+    {
+        public int IdNhanVien { get; set; }
+        public string HoTen { get; set; } = string.Empty;
+        public string TenVaiTro { get; set; } = string.Empty;
+    }
+
+    public class QuanLyVaiTroLookupDto
+    {
+        public int IdVaiTro { get; set; }
+        public string TenVaiTro { get; set; } = string.Empty;
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyNguyenLieuDto.cs
+================================================================================
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    // DTO hiển thị trên DataGrid
+    public class QuanLyNguyenLieuGridDto
+    {
+        public int IdNguyenLieu { get; set; }
+        public string TenNguyenLieu { get; set; } = string.Empty;
+        public decimal TonKho { get; set; }
+        public string DonViTinh { get; set; } = string.Empty;
+        public decimal TonKhoToiThieu { get; set; }
+    }
+
+    // DTO dùng khi Thêm/Sửa
+    public class QuanLyNguyenLieuSaveDto
+    {
+        [Required]
+        public string TenNguyenLieu { get; set; } = string.Empty;
+
+        [Required]
+        public string DonViTinh { get; set; } = string.Empty;
+
+        public decimal TonKhoToiThieu { get; set; }
+        public decimal TonKho { get; set; } // Có thể gán khi khởi tạo nguyên liệu mới
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyNhaCungCapDto.cs
+================================================================================
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyNhaCungCapGridDto
+    {
+        public int IdNhaCungCap { get; set; }
+        public string TenNhaCungCap { get; set; } = string.Empty;
+        public string? SoDienThoai { get; set; }
+        public string? DiaChi { get; set; }
+        public string? Email { get; set; }
+    }
+
+    public class QuanLyNhaCungCapSaveDto
+    {
+        [Required]
+        public string TenNhaCungCap { get; set; } = string.Empty;
+        public string? SoDienThoai { get; set; }
+        public string? DiaChi { get; set; }
+        public string? Email { get; set; }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyNhanVienDto.cs
+================================================================================
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyNhanVienGridDto
+    {
+        public int IdNhanVien { get; set; }
+        public string HoTen { get; set; } = string.Empty;
+        public string TenDangNhap { get; set; } = string.Empty;
+        public string TenVaiTro { get; set; } = string.Empty;
+        public decimal LuongCoBan { get; set; }
+        public string TrangThaiLamViec { get; set; } = string.Empty;
+        public string? SoDienThoai { get; set; }
+    }
+
+    public class QuanLyNhanVienDetailDto
+    {
+        public int IdNhanVien { get; set; }
+        public string HoTen { get; set; } = string.Empty;
+        public string TenDangNhap { get; set; } = string.Empty;
+        public int IdVaiTro { get; set; }
+        public decimal LuongCoBan { get; set; }
+        public string TrangThaiLamViec { get; set; } = string.Empty;
+        public string? SoDienThoai { get; set; }
+        public string? Email { get; set; }
+        public string? DiaChi { get; set; }
+        public DateTime NgayVaoLam { get; set; }
+        public string? AnhDaiDienUrl { get; set; }
+    }
+
+    public class QuanLyNhanVienSaveRequestDto
+    {
+        public string HoTen { get; set; } = string.Empty;
+        public string TenDangNhap { get; set; } = string.Empty;
+        public string? MatKhau { get; set; }
+
+        [Required]
+        public int IdVaiTro { get; set; }
+
+        public decimal LuongCoBan { get; set; }
+        public string TrangThaiLamViec { get; set; } = "Đang làm việc";
+        public string? SoDienThoai { get; set; }
+        public string? Email { get; set; }
+        public string? DiaChi { get; set; }
+        public DateTime NgayVaoLam { get; set; }
+        public bool XoaAnhDaiDien { get; set; } = false;
+    }
+
+    public class RoleLookupDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyNhapKhoDto.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyNhapKhoGridDto
+    {
+        public int IdPhieuNhap { get; set; }
+        public DateTime ThoiGianTao { get; set; }
+        public string TenNhaCungCap { get; set; } = string.Empty;
+        public string TenNhanVien { get; set; } = string.Empty;
+        public decimal TongTien { get; set; }
+        public string TrangThai { get; set; } = string.Empty;
+    }
+
+    public class QuanLyNhapKhoDetailDto
+    {
+        public int IdPhieuNhap { get; set; }
+        public int IdNhaCungCap { get; set; }
+        public string? GhiChu { get; set; }
+        public decimal TienHang { get; set; }
+        public decimal GiamGia { get; set; }
+        public decimal TongTien { get; set; }
+        public List<QuanLyChiTietNhapKhoDto> ChiTiet { get; set; } = new();
+        public string? HoaDonDinhKem { get; set; }
+    }
+
+    public class QuanLyChiTietNhapKhoDto
+    {
+        public int IdNguyenLieu { get; set; }
+        public string TenNguyenLieu { get; set; } = string.Empty;
+        public decimal SoLuong { get; set; }
+        public decimal DonGiaNhap { get; set; }
+        public decimal ThanhTien => SoLuong * DonGiaNhap;
+    }
+
+    public class QuanLyNhapKhoSaveDto
+    {
+        public int IdNhaCungCap { get; set; }
+        public decimal GiamGia { get; set; }
+        public string? GhiChu { get; set; }
+        public List<QuanLyChiTietNhapKhoSaveDto> ChiTiet { get; set; } = new();
+        public string? FileDinhKemBase64 { get; set; }
+        public string? TenFileDinhKem { get; set; }
+    }
+
+    public class QuanLyChiTietNhapKhoSaveDto
+    {
+        public int IdNguyenLieu { get; set; }
+        public decimal SoLuong { get; set; }
+        public decimal DonGiaNhap { get; set; }
+    }
+
+    public class LookupNhapKhoDto { public int Id { get; set; } public string Ten { get; set; } = string.Empty; }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyPhanQuyenDto.cs
+================================================================================
+﻿using System.Collections.Generic;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    // DTO hiển thị danh sách nhân viên bên cột trái
+    public class PhanQuyen_NhanVienDto
+    {
+        public int IdNhanVien { get; set; }
+        public string HoTen { get; set; } = string.Empty;
+        public string TenVaiTro { get; set; } = string.Empty;
+    }
+
+    // DTO hiển thị danh sách quyền bên cột phải
+    public class PhanQuyen_QuyenDto
+    {
+        public string IdQuyen { get; set; } = string.Empty;
+        public string TenQuyen { get; set; } = string.Empty;
+        public string NhomQuyen { get; set; } = string.Empty;
+    }
+
+    // DTO dùng để gửi danh sách các quyền đã tick lên API để lưu
+    public class PhanQuyen_SaveRequestDto
+    {
+        public List<string> SelectedQuyenIds { get; set; } = new List<string>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLySanPhamDto.cs
+================================================================================
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLySanPhamGridDto
+    {
+        public int IdSanPham { get; set; }
+        public string TenSanPham { get; set; } = string.Empty;
+        public decimal GiaBan { get; set; }
+        public bool TrangThaiKinhDoanh { get; set; }
+        public string TenDanhMuc { get; set; } = string.Empty;
+        public string? HinhAnh { get; set; }
+    }
+    public class QuanLySanPhamDetailDto
+    {
+        public int IdSanPham { get; set; }
+        public string TenSanPham { get; set; } = string.Empty;
+        public decimal GiaBan { get; set; }
+        public int IdDanhMuc { get; set; }
+        public string NhomIn { get; set; } = "Khác";
+        public bool TrangThaiKinhDoanh { get; set; } = true;
+        public string? MoTa { get; set; }
+        public string? HinhAnh { get; set; }
+    }
+    public class LookupDanhMucDto { public int Id { get; set; } public string Ten { get; set; } = string.Empty; }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLySuCoBanDto.cs
+================================================================================
+﻿using System;
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLySuCoBanDto
+    {
+        public int IdThongBao { get; set; }
+        public string NoiDung { get; set; } = string.Empty;
+        public DateTime ThoiGianTao { get; set; }
+        public string TenNhanVienTao { get; set; } = string.Empty;
+        public bool DaXem { get; set; }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyTongQuanDto.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyTongQuanDto
+    {
+        public decimal TongDoanhThuHomNay { get; set; }
+        public int TongDonHangHomNay { get; set; }
+        public string SanPhamBanChayHomNay { get; set; } = string.Empty;
+
+        // Dữ liệu cho biểu đồ 30 ngày
+        public List<QuanLyTongQuanChartPoint> DoanhThu30Ngay { get; set; } = new List<QuanLyTongQuanChartPoint>();
+    }
+
+    public class QuanLyTongQuanChartPoint
+    {
+        public DateTime Ngay { get; set; }
+        public decimal TongTien { get; set; }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyTonKhoDto.cs
+================================================================================
+﻿namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    public class QuanLyTonKhoDto
+    {
+        public int IdNguyenLieu { get; set; }
+        public string TenNguyenLieu { get; set; } = string.Empty;
+        public decimal TonKho { get; set; }
+        public string DonViTinh { get; set; } = string.Empty;
+        public decimal TonKhoToiThieu { get; set; }
+        public string TinhTrang { get; set; } = string.Empty; // Sắp hết, Hết hàng, Đủ dùng
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelApp\QuanLy\QuanLyXuatHuyDto.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+
+namespace CafebookModel.Model.ModelApp.QuanLy
+{
+    // DTO cho Grid hiển thị danh sách Phiếu Hủy
+    public class QuanLyXuatHuyGridDto
+    {
+        public int IdPhieuXuatHuy { get; set; }
+        public DateTime ThoiGianTao { get; set; }
+        public string TenNhanVien { get; set; } = string.Empty;
+        public string LyDoHuy { get; set; } = string.Empty;
+    }
+
+    // DTO Chi tiết 1 Phiếu Hủy (khi bấm xem)
+    public class QuanLyXuatHuyDetailDto
+    {
+        public int IdPhieuXuatHuy { get; set; }
+        public string LyDoHuy { get; set; } = string.Empty;
+        public List<QuanLyChiTietXuatHuyDto> ChiTiet { get; set; } = new();
+    }
+
+    public class QuanLyChiTietXuatHuyDto
+    {
+        public int IdNguyenLieu { get; set; }
+        public string TenNguyenLieu { get; set; } = string.Empty;
+        public decimal SoLuong { get; set; }
+        public string LyDoChiTiet { get; set; } = string.Empty;
+    }
+
+    // DTO Dùng để Gửi dữ liệu tạo phiếu mới từ Client lên Server
+    public class QuanLyXuatHuySaveDto
+    {
+        public string LyDoHuy { get; set; } = string.Empty;
+        public List<QuanLyChiTietXuatHuySaveDto> ChiTiet { get; set; } = new();
+    }
+
+    public class QuanLyChiTietXuatHuySaveDto
+    {
+        public int IdNguyenLieu { get; set; }
+        public decimal SoLuong { get; set; }
+        public string LyDoChiTiet { get; set; } = string.Empty;
+    }
+
+    // DTO cho ComboBox chọn Nguyên liệu
+    public class LookupXuatHuyDto
+    {
+        public int Id { get; set; }
+        public string Ten { get; set; } = string.Empty;
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\Ban.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Ban")]
+    public class Ban
+    {
+        [Key]
+        public int IdBan { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string SoBan { get; set; } = string.Empty;
+        public int SoGhe { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+
+        public int? IdKhuVuc { get; set; }
+        [ForeignKey("IdKhuVuc")]
+        public virtual KhuVuc? KhuVuc { get; set; }
+
+        public virtual ICollection<HoaDon> HoaDons { get; set; } = new List<HoaDon>();
+        public virtual ICollection<PhieuDatBan> PhieuDatBans { get; set; } = new List<PhieuDatBan>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\BangChamCong.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("BangChamCong")]
+    public class BangChamCong
+    {
+        [Key]
+        public int IdChamCong { get; set; }
+        public int IdLichLamViec { get; set; }
+        public DateTime? GioVao { get; set; }
+        public DateTime? GioRa { get; set; }
+
+        // --- SỬA LỖI TỪ double? SANG decimal? VÀ THÊM TYPE ---
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal? SoGioLam { get; set; }
+
+        [ForeignKey("IdLichLamViec")]
+        public virtual LichLamViec LichLamViec { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\CaiDat.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("CaiDat")]
+    public class CaiDat
+    {
+        [Key]
+        [StringLength(100)]
+        public string TenCaiDat { get; set; } = string.Empty;
+        [Required]
+        public string GiaTri { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? MoTa { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\CaLamViec.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("CaLamViec")]
+    public class CaLamViec
+    {
+        [Key]
+        public int IdCa { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string TenCa { get; set; } = string.Empty;
+
+        public TimeSpan GioBatDau { get; set; }
+
+        public TimeSpan GioKetThuc { get; set; }
+
+        public virtual ICollection<LichLamViec> LichLamViecs { get; set; } = new List<LichLamViec>();
+
+        // BỔ SUNG LIÊN KẾT ĐẾN BẢNG NHU CẦU
+        public virtual ICollection<NhuCauCaLam> NhuCauCaLams { get; set; } = new List<NhuCauCaLam>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\ChatLichSu.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChatLichSu")]
+    public class ChatLichSu
+    {
+        [Key]
+        public long IdChat { get; set; }
+        public int? IdKhachHang { get; set; }
+        public int? IdNhanVien { get; set; }
+        [Required]
+        public string NoiDungHoi { get; set; } = string.Empty;
+        [Required]
+        public string NoiDungTraLoi { get; set; } = string.Empty;
+        public DateTime ThoiGian { get; set; }
+        [StringLength(50)]
+        public string? LoaiChat { get; set; }
+
+        // === CẬP NHẬT (THEO FSD MỚI) ===
+        [StringLength(100)]
+        public string? GuestSessionId { get; set; } // Hỗ trợ khách vãng lai
+
+        [StringLength(20)]
+        public string? LoaiTinNhan { get; set; } // "KhachHang", "AI", "NhanVien"
+
+        public int? IdThongBaoHoTro { get; set; }
+        // === KẾT THÚC CẬP NHẬT ===
+
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang? KhachHang { get; set; }
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien? NhanVien { get; set; }
+
+        [ForeignKey("IdThongBaoHoTro")]
+        public virtual ThongBaoHoTro? ThongBaoHoTro { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\ChiTietHoaDon.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietHoaDon")]
+    public class ChiTietHoaDon
+    {
+        [Key]
+        public int IdChiTietHoaDon { get; set; }
+        public int IdHoaDon { get; set; }
+        public int IdSanPham { get; set; }
+        public int SoLuong { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal DonGia { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal ThanhTien { get; set; }
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+        [ForeignKey("IdSanPham")]
+        public virtual SanPham SanPham { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\ChiTietKiemKho.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietKiemKho")]
+    public class ChiTietKiemKho
+    {
+        public int IdPhieuKiemKho { get; set; }
+        public int IdNguyenLieu { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TonKhoHeThong { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TonKhoThucTe { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal ChenhLech { get; set; }
+        [StringLength(255)]
+        public string? LyDoChenhLech { get; set; }
+
+        [ForeignKey("IdPhieuKiemKho")]
+        public virtual PhieuKiemKho PhieuKiemKho { get; set; } = null!;
+        [ForeignKey("IdNguyenLieu")]
+        public virtual NguyenLieu NguyenLieu { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\ChiTietNhapKho.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietNhapKho")]
+    public class ChiTietNhapKho
+    {
+        public int IdPhieuNhapKho { get; set; }
+        public int IdNguyenLieu { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoLuongNhap { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal DonGiaNhap { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal ThanhTien { get; set; }
+
+        [ForeignKey("IdPhieuNhapKho")]
+        public virtual PhieuNhapKho PhieuNhapKho { get; set; } = null!;
+        [ForeignKey("IdNguyenLieu")]
+        public virtual NguyenLieu NguyenLieu { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\ChiTietPhieuThue.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietPhieuThue")]
+    public class ChiTietPhieuThue
+    {
+        public int IdPhieuThueSach { get; set; }
+        public int IdSach { get; set; }
+        public DateTime NgayHenTra { get; set; }
+        public DateTime? NgayTraThucTe { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TienCoc { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? TienPhatTraTre { get; set; }
+
+        [ForeignKey("IdPhieuThueSach")]
+        public virtual PhieuThueSach PhieuThueSach { get; set; } = null!;
+        [ForeignKey("IdSach")]
+        public virtual Sach Sach { get; set; } = null!;
+
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\ChiTietPhieuTra.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietPhieuTra")]
+    public class ChiTietPhieuTra
+    {
+        public int IdPhieuTra { get; set; }
+        public int IdSach { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TienPhat { get; set; }
+
+        // Navigation properties
+        [ForeignKey("IdPhieuTra")]
+        public virtual PhieuTraSach PhieuTraSach { get; set; } = null!;
+
+        [ForeignKey("IdSach")]
+        public virtual Sach Sach { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\ChiTietPhuThuHoaDon.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietPhuThuHoaDon")]
+    public class ChiTietPhuThuHoaDon
+    {
+        public int IdHoaDon { get; set; }
+        public int IdPhuThu { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoTien { get; set; }
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+        [ForeignKey("IdPhuThu")]
+        public virtual PhuThu PhuThu { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\ChiTietXuatHuy.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ChiTietXuatHuy")]
+    public class ChiTietXuatHuy
+    {
+        public int IdPhieuXuatHuy { get; set; }
+        public int IdNguyenLieu { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoLuong { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal DonGiaVon { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal ThanhTien { get; set; }
+
+        [ForeignKey("IdPhieuXuatHuy")]
+        public virtual PhieuXuatHuy PhieuXuatHuy { get; set; } = null!;
+        [ForeignKey("IdNguyenLieu")]
+        public virtual NguyenLieu NguyenLieu { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\DanhGia.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DanhGia")]
+    public class DanhGia
+    {
+        [Key]
+        public int idDanhGia { get; set; }
+
+        [ForeignKey("KhachHang")]
+        public int idKhachHang { get; set; }
+        public virtual KhachHang? KhachHang { get; set; }
+
+        [ForeignKey("SanPham")]
+        public int? idSanPham { get; set; }
+        public virtual SanPham? SanPham { get; set; }
+
+        [ForeignKey("HoaDon")]
+        public int idHoaDon { get; set; }
+        public virtual HoaDon? HoaDon { get; set; }
+
+        [Range(1, 5)]
+        public int SoSao { get; set; }
+
+        [Column(TypeName = "nvarchar(max)")]
+        public string? BinhLuan { get; set; }
+
+        [Column(TypeName = "nvarchar(max)")]
+        public string? HinhAnhURL { get; set; }
+
+        [Required]
+        // CHỈ CÓ MỘT DÒNG NÀY
+        public DateTime NgayTao { get; set; }
+
+        [Required]
+        [Column(TypeName = "nvarchar(50)")]
+        public string TrangThai { get; set; } = "Hiển thị";
+
+        public virtual ICollection<PhanHoiDanhGia> PhanHoiDanhGias { get; set; } = new List<PhanHoiDanhGia>();
+
+        public DanhGia()
+        {
+            // Constructor gán giá trị cho thuộc tính NgayTao ở trên
+            this.NgayTao = DateTime.Now;
+        }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\DanhMuc.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DanhMuc")]
+    public class DanhMuc
+    {
+        [Key]
+        public int IdDanhMuc { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string TenDanhMuc { get; set; } = string.Empty;
+        public int? IdDanhMucCha { get; set; }
+
+        [ForeignKey("IdDanhMucCha")]
+        public virtual DanhMuc? DanhMucCha { get; set; }
+        public virtual ICollection<DanhMuc> DanhMucCons { get; set; } = new List<DanhMuc>();
+        public virtual ICollection<SanPham> SanPhams { get; set; } = new List<SanPham>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\DeXuatSach.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DeXuatSach")]
+    public class DeXuatSach
+    {
+        public int IdSachGoc { get; set; }
+        public int IdSachDeXuat { get; set; }
+        public double DoLienQuan { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string LoaiDeXuat { get; set; } = string.Empty;
+
+        [ForeignKey("IdSachGoc")]
+        public virtual Sach SachGoc { get; set; } = null!;
+        [ForeignKey("IdSachDeXuat")]
+        public virtual Sach SachDeXuat { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\DeXuatSanPham.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DeXuatSanPham")]
+    public class DeXuatSanPham
+    {
+        public int IdSanPhamGoc { get; set; }
+        public int IdSanPhamDeXuat { get; set; }
+        public double DoLienQuan { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string LoaiDeXuat { get; set; } = string.Empty;
+
+        [ForeignKey("IdSanPhamGoc")]
+        public virtual SanPham SanPhamGoc { get; set; } = null!;
+        [ForeignKey("IdSanPhamDeXuat")]
+        public virtual SanPham SanPhamDeXuat { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\DinhLuong.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DinhLuong")]
+    public class DinhLuong
+    {
+        public int IdSanPham { get; set; }
+        public int IdNguyenLieu { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoLuongSuDung { get; set; } // <-- ĐÃ ĐỔI TÊN
+
+        public int IdDonViSuDung { get; set; } // <-- THÊM MỚI
+
+        [ForeignKey("IdSanPham")]
+        public virtual SanPham SanPham { get; set; } = null!;
+        [ForeignKey("IdNguyenLieu")]
+        public virtual NguyenLieu NguyenLieu { get; set; } = null!;
+
+        [ForeignKey("IdDonViSuDung")] // <-- THÊM MỚI
+        public virtual DonViChuyenDoi DonViSuDung { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\DonViChuyenDoi.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DonViChuyenDoi")]
+    public class DonViChuyenDoi
+    {
+        [Key]
+        public int IdChuyenDoi { get; set; }
+
+        public int IdNguyenLieu { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string TenDonVi { get; set; } = string.Empty;
+
+        [Column(TypeName = "decimal(18, 6)")]
+        public decimal GiaTriQuyDoi { get; set; }
+
+        public bool LaDonViCoBan { get; set; }
+
+        [ForeignKey("IdNguyenLieu")]
+        public virtual NguyenLieu NguyenLieu { get; set; } = null!;
+        public virtual ICollection<DinhLuong> DinhLuongs { get; set; } = new List<DinhLuong>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\DonXinNghi.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("DonXinNghi")]
+    public class DonXinNghi
+    {
+        [Key]
+        public int IdDonXinNghi { get; set; }
+        public int IdNhanVien { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string LoaiDon { get; set; } = string.Empty;
+        [Required]
+        [StringLength(500)]
+        public string LyDo { get; set; } = string.Empty;
+        public DateTime NgayBatDau { get; set; }
+        public DateTime NgayKetThuc { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+        public int? IdNguoiDuyet { get; set; }
+        public DateTime? NgayDuyet { get; set; }
+        [StringLength(255)]
+        public string? GhiChuPheDuyet { get; set; }
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+        [ForeignKey("IdNguoiDuyet")]
+        public virtual NhanVien? NguoiDuyet { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\GiaoDichThanhToan.cs
+================================================================================
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("GiaoDichThanhToan")]
+    public class GiaoDichThanhToan
+    {
+        [Key]
+        public int IdGiaoDich { get; set; }
+        public int IdHoaDon { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string MaGiaoDichNgoai { get; set; } = string.Empty; // Sẽ lưu mã VNPay ở đây
+        [Required]
+        [StringLength(50)]
+        public string CongThanhToan { get; set; } = string.Empty; // Lưu chữ "VNPay"
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoTien { get; set; }
+        public DateTime ThoiGianGiaoDich { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string TrangThai { get; set; } = string.Empty;
+        [StringLength(50)]
+        public string? MaLoi { get; set; }
+        [StringLength(500)]
+        public string? MoTaLoi { get; set; }
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\HoaDon.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("HoaDon")]
+    public class HoaDon
+    {
+        [Key]
+        public int IdHoaDon { get; set; }
+        public int? IdBan { get; set; }
+        public int? IdNhanVien { get; set; } // Nhân viên order/tạo đơn
+        public int? IdKhachHang { get; set; }
+        public DateTime ThoiGianTao { get; set; }
+        public DateTime? ThoiGianThanhToan { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongTienGoc { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal GiamGia { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongPhuThu { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public decimal ThanhTien { get; set; }
+        [StringLength(50)]
+        public string? PhuongThucThanhToan { get; set; }
+        public string? GhiChu { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string LoaiHoaDon { get; set; } = string.Empty;
+        [StringLength(100)]
+        public string? TrangThaiGiaoHang { get; set; }
+        [StringLength(500)]
+        public string? DiaChiGiaoHang { get; set; }
+        [StringLength(20)]
+        public string? SoDienThoaiGiaoHang { get; set; }
+
+        public int? IdNguoiGiaoHang { get; set; } // Sẽ lưu IdNhanVien của Shipper
+
+        [ForeignKey("IdBan")]
+        public virtual Ban? Ban { get; set; }
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien? NhanVienTao { get; set; } // Map với InverseProperty NhanVienTao
+
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang? KhachHang { get; set; }
+
+        [ForeignKey("IdNguoiGiaoHang")]
+        public virtual NhanVien? NhanVienGiaoHang { get; set; } // Map với InverseProperty NhanVienGiaoHang
+
+        public virtual ICollection<ChiTietHoaDon> ChiTietHoaDons { get; set; } = new List<ChiTietHoaDon>();
+        public virtual ICollection<NhatKyHuyMon> NhatKyHuyMons { get; set; } = new List<NhatKyHuyMon>();
+        public virtual ICollection<GiaoDichThanhToan> GiaoDichThanhToans { get; set; } = new List<GiaoDichThanhToan>();
+        public virtual ICollection<ChiTietPhuThuHoaDon> ChiTietPhuThuHoaDons { get; set; } = new List<ChiTietPhuThuHoaDon>();
+        public virtual ICollection<HoaDon_KhuyenMai> HoaDonKhuyenMais { get; set; } = new List<HoaDon_KhuyenMai>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\HoaDon_KhuyenMai.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("HoaDon_KhuyenMai")]
+    public class HoaDon_KhuyenMai
+    {
+        public int IdHoaDon { get; set; }
+        public int IdKhuyenMai { get; set; }
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+        [ForeignKey("IdKhuyenMai")]
+        public virtual KhuyenMai KhuyenMai { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\KhachHang.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("KhachHang")]
+    public class KhachHang
+    {
+        [Key]
+        public int IdKhachHang { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string HoTen { get; set; } = string.Empty;
+        [StringLength(20)]
+        public string? SoDienThoai { get; set; }
+        [StringLength(100)]
+        public string? Email { get; set; }
+        [StringLength(500)]
+        public string? DiaChi { get; set; }
+        public int DiemTichLuy { get; set; }
+        [StringLength(100)]
+        public string? TenDangNhap { get; set; }
+        [StringLength(255)]
+        public string? MatKhau { get; set; }
+        public DateTime NgayTao { get; set; }
+        public bool BiKhoa { get; set; }
+        public string? AnhDaiDien { get; set; }
+        public bool TaiKhoanTam { get; set; }
+
+        // --- ĐÃ FIX LỖI TẠI ĐÂY ---
+        // Xóa 2 dòng HoaDonsTao và HoaDonsGiao bị sai.
+        // Thay bằng một danh sách HoaDons chuẩn của Khách Hàng.
+        public virtual ICollection<HoaDon> HoaDons { get; set; } = new List<HoaDon>();
+
+        public virtual ICollection<PhieuDatBan> PhieuDatBans { get; set; } = new List<PhieuDatBan>();
+        public virtual ICollection<PhieuThueSach> PhieuThueSachs { get; set; } = new List<PhieuThueSach>();
+        public virtual ICollection<ChatLichSu> ChatLichSus { get; set; } = new List<ChatLichSu>();
+        public virtual ICollection<DanhGia> DanhGias { get; set; } = new List<DanhGia>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\KhuVuc.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("KhuVuc")]
+    public class KhuVuc
+    {
+        [Key]
+        public int IdKhuVuc { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string TenKhuVuc { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? MoTa { get; set; }
+
+        public virtual ICollection<Ban> Bans { get; set; } = new List<Ban>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\KhuyenMai.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("KhuyenMai")]
+    public class KhuyenMai
+    {
+        [Key]
+        public int IdKhuyenMai { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string MaKhuyenMai { get; set; } = string.Empty;
+        [Required]
+        [StringLength(255)]
+        public string TenChuongTrinh { get; set; } = string.Empty;
+        public string? MoTa { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string LoaiGiamGia { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal GiaTriGiam { get; set; }
+        public DateTime NgayBatDau { get; set; }
+        public DateTime NgayKetThuc { get; set; }
+        [StringLength(500)]
+        public string? DieuKienApDung { get; set; } // Mô tả cho DataGrid
+        public int? SoLuongConLai { get; set; }
+
+        // --- CÁC CỘT MỚI ---
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty; // Hoạt động, Tạm dừng, Hết hạn
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? GiamToiDa { get; set; }
+        public int? IdSanPhamApDung { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? HoaDonToiThieu { get; set; }
+        public TimeSpan? GioBatDau { get; set; }
+        public TimeSpan? GioKetThuc { get; set; }
+        [StringLength(50)]
+        public string? NgayTrongTuan { get; set; }
+
+        [ForeignKey("IdSanPhamApDung")]
+        public virtual SanPham? SanPhamApDung { get; set; }
+
+        public virtual ICollection<HoaDon_KhuyenMai> HoaDonKhuyenMais { get; set; } = new List<HoaDon_KhuyenMai>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\LichLamViec.cs
+================================================================================
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("LichLamViec")]
+    public class LichLamViec
+    {
+        [Key] public int IdLichLamViec { get; set; }
+        public int IdNhanVien { get; set; }
+        public int IdCa { get; set; }
+        public DateTime NgayLam { get; set; }
+
+        [StringLength(50)]
+        public string TrangThai { get; set; } = "Đã duyệt";
+
+        // BỔ SUNG CỘT GHI CHÚ NHIỆM VỤ CÁ NHÂN
+        [StringLength(255)]
+        public string? GhiChu { get; set; }
+
+        [ForeignKey("IdNhanVien")] public virtual NhanVien NhanVien { get; set; } = null!;
+        [ForeignKey("IdCa")] public virtual CaLamViec CaLamViec { get; set; } = null!;
+        public virtual ICollection<BangChamCong> BangChamCongs { get; set; } = new List<BangChamCong>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\NguyenLieu.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NguyenLieu")]
+    public class NguyenLieu
+    {
+        [Key]
+        public int IdNguyenLieu { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string TenNguyenLieu { get; set; } = string.Empty;
+        [Required]
+        [StringLength(50)]
+        public string DonViTinh { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TonKho { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TonKhoToiThieu { get; set; }
+
+        public virtual ICollection<DinhLuong> DinhLuongs { get; set; } = new List<DinhLuong>();
+        public virtual ICollection<ChiTietNhapKho> ChiTietNhapKhos { get; set; } = new List<ChiTietNhapKho>();
+        public virtual ICollection<ChiTietKiemKho> ChiTietKiemKhos { get; set; } = new List<ChiTietKiemKho>();
+        public virtual ICollection<ChiTietXuatHuy> ChiTietXuatHuys { get; set; } = new List<ChiTietXuatHuy>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\NhaCungCap.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhaCungCap")]
+    public class NhaCungCap
+    {
+        [Key]
+        public int IdNhaCungCap { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string TenNhaCungCap { get; set; } = string.Empty;
+        [StringLength(20)]
+        public string? SoDienThoai { get; set; }
+        [StringLength(500)]
+        public string? DiaChi { get; set; }
+        [StringLength(100)]
+        public string? Email { get; set; }
+
+        public virtual ICollection<PhieuNhapKho> PhieuNhapKhos { get; set; } = new List<PhieuNhapKho>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\NhanVien.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhanVien")]
+    public class NhanVien
+    {
+        [Key]
+        public int IdNhanVien { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string HoTen { get; set; } = string.Empty;
+        [Required]
+        [StringLength(20)]
+        public string SoDienThoai { get; set; } = string.Empty;
+        [StringLength(100)]
+        public string? Email { get; set; }
+        [StringLength(500)]
+        public string? DiaChi { get; set; }
+        public DateTime NgayVaoLam { get; set; }
+        public int IdVaiTro { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal LuongCoBan { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThaiLamViec { get; set; } = string.Empty;
+        [Required]
+        [StringLength(100)]
+        public string TenDangNhap { get; set; } = string.Empty;
+        [Required]
+        [StringLength(255)]
+        public string MatKhau { get; set; } = string.Empty;
+        public string? AnhDaiDien { get; set; }
+
+        [ForeignKey("IdVaiTro")]
+        public virtual VaiTro VaiTro { get; set; } = null!;
+
+        // --- ĐÃ FIX LỖI KHÓA NGOẠI ---
+        [InverseProperty("NhanVienTao")]
+        public virtual ICollection<HoaDon> HoaDonsTao { get; set; } = new List<HoaDon>();
+
+        [InverseProperty("NhanVienGiaoHang")]
+        public virtual ICollection<HoaDon> HoaDonsGiao { get; set; } = new List<HoaDon>();
+
+        public virtual ICollection<NhatKyHuyMon> NhatKyHuyMons { get; set; } = new List<NhatKyHuyMon>();
+        public virtual ICollection<PhieuNhapKho> PhieuNhapKhos { get; set; } = new List<PhieuNhapKho>();
+        public virtual ICollection<PhieuKiemKho> PhieuKiemKhos { get; set; } = new List<PhieuKiemKho>();
+        public virtual ICollection<PhieuXuatHuy> PhieuXuatHuys { get; set; } = new List<PhieuXuatHuy>();
+        public virtual ICollection<PhieuThueSach> PhieuThueSachs { get; set; } = new List<PhieuThueSach>();
+        public virtual ICollection<LichLamViec> LichLamViecs { get; set; } = new List<LichLamViec>();
+
+        [InverseProperty("NhanVien")]
+        public virtual ICollection<PhieuLuong> PhieuLuongs { get; set; } = new List<PhieuLuong>();
+
+        [InverseProperty("NguoiPhat")]
+        public virtual ICollection<PhieuLuong> PhieuLuongsDaPhat { get; set; } = new List<PhieuLuong>();
+
+        [InverseProperty("NhanVien")]
+        public virtual ICollection<DonXinNghi> DonXinNghis { get; set; } = new List<DonXinNghi>();
+
+        [InverseProperty("NguoiDuyet")]
+        public virtual ICollection<DonXinNghi> DonXinNghiNguoiDuyets { get; set; } = new List<DonXinNghi>();
+
+        public virtual ICollection<ChatLichSu> ChatLichSus { get; set; } = new List<ChatLichSu>();
+        public virtual ICollection<PhieuTraSach> PhieuTraSachs { get; set; } = new List<PhieuTraSach>();
+        [NotMapped]
+        public virtual ICollection<PhieuThuongPhat> PhieuThuongPhatNguoiTaos { get; set; } = new List<PhieuThuongPhat>();
+        // Thêm property này vào class NhanVien
+        public virtual ICollection<NhanVien_Quyen> NhanVienQuyens { get; set; } = new List<NhanVien_Quyen>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\NhanVien_Quyen.cs
+================================================================================
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhanVien_Quyen")]
+    public class NhanVien_Quyen
+    {
+        [Key, Column(Order = 0)]
+        public int IdNhanVien { get; set; }
+
+        [Key, Column(Order = 1)]
+        [StringLength(50)]
+        public string IdQuyen { get; set; } = string.Empty;
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien? NhanVien { get; set; }
+
+        [ForeignKey("IdQuyen")]
+        public virtual Quyen? Quyen { get; set; }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\NhatKyHeThong.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhatKyHeThong")]
+    public class NhatKyHeThong
+    {
+        [Key]
+        public int IdNhatKy { get; set; }
+
+        public int? IdNhanVien { get; set; } // Người thực hiện thao tác
+
+        [Required]
+        [StringLength(50)]
+        public string HanhDong { get; set; } = string.Empty; // THÊM MỚI, CẬP NHẬT, XÓA, ĐĂNG NHẬP
+
+        [Required]
+        [StringLength(100)]
+        public string BangBiAnhHuong { get; set; } = string.Empty; // Tên bảng (VD: SanPham, HoaDon)
+
+        [StringLength(100)]
+        public string? KhoaChinh { get; set; } // ID của dòng dữ liệu bị tác động
+
+        public string? DuLieuCu { get; set; } // Giá trị JSON trước khi thay đổi
+
+        public string? DuLieuMoi { get; set; } // Giá trị JSON sau khi thay đổi
+
+        public DateTime ThoiGian { get; set; } = DateTime.Now;
+
+        [StringLength(50)]
+        public string? DiaChiIP { get; set; }
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien? NhanVien { get; set; }
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\NhatKyHuyMon.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhatKyHuyMon")]
+    public class NhatKyHuyMon
+    {
+        [Key]
+        public int IdNhatKy { get; set; }
+        public int IdHoaDon { get; set; }
+        public int IdSanPham { get; set; }
+        public int SoLuongHuy { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string LyDo { get; set; } = string.Empty;
+        public int IdNhanVienHuy { get; set; }
+        public DateTime ThoiGianHuy { get; set; }
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+        [ForeignKey("IdSanPham")]
+        public virtual SanPham SanPham { get; set; } = null!;
+        [ForeignKey("IdNhanVienHuy")]
+        public virtual NhanVien NhanVienHuy { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\NhaXuatBan.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhaXuatBan")]
+    public class NhaXuatBan
+    {
+        [Key]
+        public int IdNhaXuatBan { get; set; }
+        public string TenNhaXuatBan { get; set; } = null!;
+        public string? MoTa { get; set; }
+        public virtual ICollection<SachNhaXuatBan> SachNhaXuatBans { get; set; } = new List<SachNhaXuatBan>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\NhuCauCaLam.cs
+================================================================================
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("NhuCauCaLam")]
+    public class NhuCauCaLam
+    {
+        [Key]
+        public int IdNhuCau { get; set; }
+
+        public DateTime NgayLam { get; set; }
+
+        public int IdCa { get; set; }
+
+        public int IdVaiTro { get; set; }
+
+        public int SoLuongCan { get; set; } = 1;
+
+        [StringLength(50)]
+        public string LoaiYeuCau { get; set; } = "Tất cả"; // Full-time, Part-time, Tất cả
+
+        [StringLength(255)]
+        public string? GhiChu { get; set; }
+
+        [ForeignKey("IdCa")]
+        public virtual CaLamViec CaLamViec { get; set; } = null!;
+
+        [ForeignKey("IdVaiTro")]
+        public virtual VaiTro VaiTro { get; set; } = null!;
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\PhanHoiDanhGia.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhanHoiDanhGia")]
+    public class PhanHoiDanhGia
+    {
+        [Key]
+        public int idPhanHoi { get; set; }
+
+        [ForeignKey("DanhGia")]
+        public int idDanhGia { get; set; }
+        public virtual DanhGia? DanhGia { get; set; }
+
+        [ForeignKey("NhanVien")]
+        public int idNhanVien { get; set; }
+        public virtual NhanVien? NhanVien { get; set; }
+
+        [Required]
+        [Column(TypeName = "nvarchar(max)")]
+        public string NoiDung { get; set; } = null!;
+
+        [Required]
+        // CHỈ CÓ MỘT DÒNG NÀY
+        public DateTime NgayTao { get; set; }
+
+        public PhanHoiDanhGia()
+        {
+            // Constructor gán giá trị cho thuộc tính NgayTao ở trên
+            this.NgayTao = DateTime.Now;
+        }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\PhieuDatBan.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuDatBan")]
+    public class PhieuDatBan
+    {
+        [Key]
+        public int IdPhieuDatBan { get; set; }
+        public int? IdKhachHang { get; set; }
+        public int IdBan { get; set; }
+        [StringLength(100)]
+        public string? HoTenKhach { get; set; }
+        [StringLength(20)]
+        public string? SdtKhach { get; set; }
+        public DateTime ThoiGianDat { get; set; }
+        public int SoLuongKhach { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang? KhachHang { get; set; }
+        [ForeignKey("IdBan")]
+        public virtual Ban Ban { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\PhieuKiemKho.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuKiemKho")]
+    public class PhieuKiemKho
+    {
+        [Key]
+        public int IdPhieuKiemKho { get; set; }
+        public int IdNhanVienKiem { get; set; }
+        public DateTime NgayKiem { get; set; }
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+
+        [ForeignKey("IdNhanVienKiem")]
+        public virtual NhanVien NhanVienKiem { get; set; } = null!;
+
+        public virtual ICollection<ChiTietKiemKho> ChiTietKiemKhos { get; set; } = new List<ChiTietKiemKho>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\PhieuLuong.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuLuong")]
+    public class PhieuLuong
+    {
+        [Key]
+        public int IdPhieuLuong { get; set; }
+        public int IdNhanVien { get; set; }
+        public int Thang { get; set; }
+        public int Nam { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal LuongCoBan { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongGioLam { get; set; }
+
+        // --- SỬA LỖI KHỚP VỚI CSDL (cho phép NULL) ---
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? TienThuong { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? KhauTru { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal ThucLanh { get; set; }
+        public DateTime NgayTao { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+
+        // --- SỬA LỖI KHỚP VỚI CSDL (thêm cột mới) ---
+        public DateTime? NgayPhatLuong { get; set; }
+        public int? IdNguoiPhat { get; set; }
+        [ForeignKey("IdNguoiPhat")]
+        public virtual NhanVien? NguoiPhat { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\PhieuNhapKho.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuNhapKho")]
+    public class PhieuNhapKho
+    {
+        [Key]
+        public int IdPhieuNhapKho { get; set; }
+        public int? IdNhaCungCap { get; set; }
+        public int IdNhanVien { get; set; }
+        public DateTime NgayNhap { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongTien { get; set; }
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+
+        [ForeignKey("IdNhaCungCap")]
+        public virtual NhaCungCap? NhaCungCap { get; set; }
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+        public string? HoaDonDinhKem { get; set; }
+        public virtual ICollection<ChiTietNhapKho> ChiTietNhapKhos { get; set; } = new List<ChiTietNhapKho>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\PhieuThueSach.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuThueSach")]
+    public class PhieuThueSach
+    {
+        [Key]
+        public int IdPhieuThueSach { get; set; }
+        public int IdKhachHang { get; set; }
+        public int? IdNhanVien { get; set; }
+        public DateTime NgayThue { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongTienCoc { get; set; }
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang KhachHang { get; set; } = null!;
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien? NhanVien { get; set; }
+        public virtual ICollection<ChiTietPhieuThue> ChiTietPhieuThues { get; set; } = new List<ChiTietPhieuThue>();
+        public virtual ICollection<PhieuTraSach> PhieuTraSachs { get; set; } = new List<PhieuTraSach>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\PhieuThuongPhat.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuThuongPhat")]
+    public class PhieuThuongPhat
+    {
+        [Key]
+        public int IdPhieuThuongPhat { get; set; }
+
+        public int IdNhanVien { get; set; }
+
+        public int IdNguoiTao { get; set; }
+
+        public DateTime NgayTao { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal SoTien { get; set; }
+
+        [Required]
+        [StringLength(500)]
+        public string LyDo { get; set; } = string.Empty;
+
+        public int? IdPhieuLuong { get; set; }
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+
+        [ForeignKey("IdNguoiTao")]
+        public virtual NhanVien NguoiTao { get; set; } = null!;
+
+        [ForeignKey("IdPhieuLuong")]
+        public virtual PhieuLuong? PhieuLuong { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\PhieuTraSach.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuTraSach")]
+    public class PhieuTraSach
+    {
+        [Key]
+        public int IdPhieuTra { get; set; }
+
+        public int IdPhieuThueSach { get; set; }
+        public int IdNhanVien { get; set; }
+        public DateTime NgayTra { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongPhiThue { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongTienPhat { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongTienCocHoan { get; set; }
+
+        public int DiemTichLuy { get; set; }
+
+        // Navigation properties
+        [ForeignKey("IdPhieuThueSach")]
+        public virtual PhieuThueSach PhieuThueSach { get; set; } = null!;
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien NhanVien { get; set; } = null!;
+
+        public virtual ICollection<ChiTietPhieuTra> ChiTietPhieuTras { get; set; } = new List<ChiTietPhieuTra>();
+
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\PhieuXuatHuy.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhieuXuatHuy")]
+    public class PhieuXuatHuy
+    {
+        [Key]
+        public int IdPhieuXuatHuy { get; set; }
+        public int IdNhanVienXuat { get; set; }
+        public DateTime NgayXuatHuy { get; set; }
+        [Required]
+        [StringLength(500)]
+        public string LyDoXuatHuy { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal TongGiaTriHuy { get; set; }
+
+        [ForeignKey("IdNhanVienXuat")]
+        public virtual NhanVien NhanVienXuat { get; set; } = null!;
+
+        public virtual ICollection<ChiTietXuatHuy> ChiTietXuatHuys { get; set; } = new List<ChiTietXuatHuy>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\PhuThu.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("PhuThu")]
+    public class PhuThu
+    {
+        [Key]
+        public int IdPhuThu { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string TenPhuThu { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal GiaTri { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string LoaiGiaTri { get; set; } = string.Empty;
+
+        public virtual ICollection<ChiTietPhuThuHoaDon> ChiTietPhuThuHoaDons { get; set; } = new List<ChiTietPhuThuHoaDon>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\Quyen.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Quyen")]
+    public class Quyen
+    {
+        [Key]
+        [StringLength(100)]
+        public string IdQuyen { get; set; } = string.Empty;
+        [Required]
+        [StringLength(255)]
+        public string TenQuyen { get; set; } = string.Empty;
+        [Required]
+        [StringLength(100)]
+        public string NhomQuyen { get; set; } = string.Empty;
+
+        // XÓA dòng này (nếu có): 
+        // public virtual ICollection<VaiTro_Quyen> VaiTroQuyens { get; set; } = new List<VaiTro_Quyen>();
+
+        // THÊM dòng này:
+        public virtual ICollection<NhanVien_Quyen> NhanVienQuyens { get; set; } = new List<NhanVien_Quyen>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\Sach.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Sach")]
+    public class Sach
+    {
+        [Key]
+        public int IdSach { get; set; }
+        public string TenSach { get; set; } = null!;
+        public int? NamXuatBan { get; set; }
+        public string? MoTa { get; set; }
+        public int SoLuongTong { get; set; }
+        public int SoLuongHienCo { get; set; }
+        public string? AnhBia { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? GiaBia { get; set; }
+        public string? ViTri { get; set; }
+        public virtual ICollection<SachTacGia> SachTacGias { get; set; } = new List<SachTacGia>();
+        public virtual ICollection<SachTheLoai> SachTheLoais { get; set; } = new List<SachTheLoai>();
+        public virtual ICollection<SachNhaXuatBan> SachNhaXuatBans { get; set; } = new List<SachNhaXuatBan>();
+        public virtual ICollection<ChiTietPhieuThue> ChiTietPhieuThues { get; set; } = new List<ChiTietPhieuThue>();
+        [InverseProperty("SachGoc")]
+        public virtual ICollection<DeXuatSach> DeXuatSachGocs { get; set; } = new List<DeXuatSach>();
+        [InverseProperty("SachDeXuat")]
+        public virtual ICollection<DeXuatSach> DeXuatSachDeXuats { get; set; } = new List<DeXuatSach>();
+        public virtual ICollection<ChiTietPhieuTra> ChiTietPhieuTras { get; set; } = new List<ChiTietPhieuTra>();
+        [NotMapped]
+        public virtual ICollection<DeXuatSach> DeXuatSachs { get; set; } = new List<DeXuatSach>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\Sach_NhaXuatBan.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Sach_NhaXuatBan")]
+    public class SachNhaXuatBan
+    {
+        public int IdSach { get; set; }
+        public virtual Sach Sach { get; set; } = null!;
+        public int IdNhaXuatBan { get; set; }
+        public virtual NhaXuatBan NhaXuatBan { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\Sach_TacGia.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Sach_TacGia")]
+    public class SachTacGia
+    {
+        public int IdSach { get; set; }
+        public virtual Sach Sach { get; set; } = null!;
+        public int IdTacGia { get; set; }
+        public virtual TacGia TacGia { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\Sach_TheLoai.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("Sach_TheLoai")]
+    public class SachTheLoai
+    {
+        public int IdSach { get; set; }
+        public virtual Sach Sach { get; set; } = null!;
+        public int IdTheLoai { get; set; }
+        public virtual TheLoai TheLoai { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\SanPham.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("SanPham")]
+    public class SanPham
+    {
+        [Key]
+        public int IdSanPham { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string TenSanPham { get; set; } = string.Empty;
+        public int IdDanhMuc { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal GiaBan { get; set; }
+        public string? MoTa { get; set; }
+        public bool TrangThaiKinhDoanh { get; set; }
+        public string? HinhAnh { get; set; } // Base64
+        [StringLength(50)]
+        public string? NhomIn { get; set; }
+
+        [ForeignKey("IdDanhMuc")]
+        public virtual DanhMuc DanhMuc { get; set; } = null!;
+
+        public virtual ICollection<ChiTietHoaDon> ChiTietHoaDons { get; set; } = new List<ChiTietHoaDon>();
+        public virtual ICollection<NhatKyHuyMon> NhatKyHuyMons { get; set; } = new List<NhatKyHuyMon>();
+        public virtual ICollection<DinhLuong> DinhLuongs { get; set; } = new List<DinhLuong>();
+        public virtual ICollection<DeXuatSanPham> DeXuatSanPhamGocs { get; set; } = new List<DeXuatSanPham>();
+        public virtual ICollection<DeXuatSanPham> DeXuatSanPhamDeXuats { get; set; } = new List<DeXuatSanPham>();
+        public virtual ICollection<DanhGia> DanhGias { get; set; } = new List<DanhGia>();
+        [NotMapped]
+        public virtual ICollection<DeXuatSanPham> DeXuatSanPhams { get; set; } = new List<DeXuatSanPham>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\TacGia.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("TacGia")]
+    public class TacGia
+    {
+        [Key]
+        public int IdTacGia { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string TenTacGia { get; set; } = string.Empty;
+        public string? GioiThieu { get; set; }
+        public virtual ICollection<SachTacGia> SachTacGias { get; set; } = new List<SachTacGia>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\TheLoai.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("TheLoai")]
+    public class TheLoai
+    {
+        [Key]
+        public int IdTheLoai { get; set; }
+        public string TenTheLoai { get; set; } = null!;
+        public string? MoTa { get; set; }
+        public virtual ICollection<SachTheLoai> SachTheLoais { get; set; } = new List<SachTheLoai>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\ThongBao.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ThongBao")]
+    public class ThongBao
+    {
+        [Key]
+        public int IdThongBao { get; set; }
+
+        public int? IdNhanVienTao { get; set; }
+
+        [Required]
+        [StringLength(500)]
+        public string NoiDung { get; set; } = string.Empty;
+
+        public DateTime ThoiGianTao { get; set; }
+
+        [StringLength(50)]
+        public string? LoaiThongBao { get; set; }
+
+        public int? IdLienQuan { get; set; } // Sẽ là idBan
+
+        public bool DaXem { get; set; }
+
+        [ForeignKey("IdNhanVienTao")]
+        public virtual NhanVien? NhanVienTao { get; set; }
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\ThongBaoHoTro.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("ThongBaoHoTro")]
+    public class ThongBaoHoTro
+    {
+        [Key]
+        public int IdThongBao { get; set; }
+
+        // ======================================
+        // === SỬA LỖI CS0266 TẠI ĐÂY ===
+        // ======================================
+        // 1. Xóa [Required]
+        // 2. Thêm dấu '?' để cho phép NULL
+        public int? IdKhachHang { get; set; }
+        // ======================================
+
+        [StringLength(100)]
+        public string? GuestSessionId { get; set; } // Hỗ trợ khách vãng lai
+
+        public string? NoiDungYeuCau { get; set; }
+
+        [Required]
+        public DateTime ThoiGianTao { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty;
+
+        public int? IdNhanVien { get; set; }
+
+        public DateTime? ThoiGianPhanHoi { get; set; }
+
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+
+        // Navigation Properties
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang? KhachHang { get; set; } // Thêm '?'
+
+        [ForeignKey("IdNhanVien")]
+        public virtual NhanVien? NhanVien { get; set; }
+
+        public virtual ICollection<ChatLichSu> ChatLichSus { get; set; } = new List<ChatLichSu>();
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\TrangThaiCheBien.cs
+================================================================================
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("TrangThaiCheBien")]
+    public class TrangThaiCheBien
+    {
+        [Key]
+        public int IdTrangThaiCheBien { get; set; }
+
+        public int IdChiTietHoaDon { get; set; }
+        public int IdHoaDon { get; set; }
+        public int IdSanPham { get; set; }
+
+        [Required]
+        [StringLength(255)]
+        public string TenMon { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string SoBan { get; set; } = string.Empty;
+
+        public int SoLuong { get; set; }
+
+        [StringLength(500)]
+        public string? GhiChu { get; set; }
+
+        [StringLength(50)]
+        public string? NhomIn { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string TrangThai { get; set; } = string.Empty; // Chờ làm, Đang làm, Hoàn thành
+
+        public DateTime ThoiGianGoi { get; set; }
+        public DateTime? ThoiGianBatDau { get; set; }
+        public DateTime? ThoiGianHoanThanh { get; set; }
+
+        // Khóa ngoại
+        [ForeignKey("IdChiTietHoaDon")]
+        public virtual ChiTietHoaDon ChiTietHoaDon { get; set; } = null!;
+
+        [ForeignKey("IdHoaDon")]
+        public virtual HoaDon HoaDon { get; set; } = null!;
+
+        [ForeignKey("IdSanPham")]
+        public virtual SanPham SanPham { get; set; } = null!;
+    }
+}
+
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\ModelEntities\VaiTro.cs
+================================================================================
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CafebookModel.Model.ModelEntities
+{
+    [Table("VaiTro")]
+    public class VaiTro
+    {
+        [Key]
+        public int IdVaiTro { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string TenVaiTro { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string? MoTa { get; set; }
+
+        public virtual ICollection<NhanVien> NhanViens { get; set; } = new List<NhanVien>();
+
+        // BỔ SUNG LIÊN KẾT ĐẾN BẢNG NHU CẦU
+        public virtual ICollection<NhuCauCaLam> NhuCauCaLams { get; set; } = new List<NhuCauCaLam>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Model\Shared\AuthDTOs.cs
+================================================================================
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace CafebookModel.Model.Shared
+{
+    public class LoginRequest
+    {
+        [Required(ErrorMessage = "Tên đăng nhập không được để trống")]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Mật khẩu không được để trống")]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class LoginResponse
+    {
+        public string Token { get; set; } = string.Empty;
+        public int IdNhanVien { get; set; }
+        public string HoTen { get; set; } = string.Empty;
+        public string TenVaiTro { get; set; } = string.Empty;
+        public string? AnhDaiDien { get; set; }
+
+        // Danh sách quyền lấy từ bảng VaiTro_Quyen để phân quyền UI
+        public List<string> Quyen { get; set; } = new List<string>();
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Utils\HinhAnhPaths.cs
+================================================================================
+﻿// Tập tin: CafebookModel/Utils/HinhAnhPaths.cs
+using System.IO; // Thêm
+
+namespace CafebookModel.Utils
+{
+    public static class HinhAnhPaths
+    {
+        // --- WPF Pack URIs (Defaults/Fallbacks) ---
+        public const string DefaultAvatar = "/Assets/Images/default-avatar.png";
+        public const string DefaultBookCover = "/Assets/Images/default-book-cover.png";
+        public const string DefaultFoodIcon = "/Assets/Images/default-food-icon.png";
+
+        // --- Server Relative URL Paths (Dùng /) ---
+        public const string UrlAvatarNV = "/images/avatars/avatarNV";
+        public const string UrlAvatarKH = "/images/avatars/avatarKH";
+        public const string UrlBooks = "/images/books";
+        public const string UrlFoods = "/images/foods";
+        public const string UrlBuildnhapkho = "/images/BuildNhapKho";
+    }
+}
+
+================================================================================
+FILE: E:/Tai Lieu Hoc Tap/N19 KLTN 032026/Cafebook/CafebookModel\Utils\SlugifyUtil.cs
+================================================================================
+﻿// Tập tin: CafebookModel/Utils/SlugifyUtil.cs
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+
+namespace CafebookModel.Utils
+{
+    public static class SlugifyUtil
+    {
+        // Hàm này sẽ chuyển "Cà Phê Sữa Đá" -> "ca-phe-sua-da"
+        public static string GenerateSlug(this string phrase)
+        {
+            if (string.IsNullOrEmpty(phrase)) return "file";
+
+            // 1. Chuyển đổi ký tự có dấu thành không dấu
+            string str = phrase.ToLower().Trim();
+            str = str.RemoveDiacritics();
+
+            // 2. Thay thế khoảng trắng và ký tự đặc biệt
+            str = Regex.Replace(str, @"[^a-z0-9\s-]", ""); // Xóa ký tự lạ
+            str = Regex.Replace(str, @"\s+", "-"); // Thay khoảng trắng bằng -
+            str = Regex.Replace(str, @"-+", "-"); // Gộp nhiều dấu -
+            str = str.Trim('-');
+
+            if (string.IsNullOrEmpty(str)) return "file";
+
+            return str;
+        }
+
+        // Hàm helper để bỏ dấu tiếng Việt
+        private static string RemoveDiacritics(this string text)
+        {
+            var normalizedString = text.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c); 
+                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+            return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
+        }
+    }
+}

@@ -1,14 +1,185 @@
 ﻿<Page x:Class="AppCafebookApi.View.quanly.pages.QuanLyNhapKhoView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:AppCafebookApi.View.quanly.pages"
-      mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="QuanLyNhapKhoView">
+      Title="Quản lý Nhập Kho" FontFamily="Segoe UI" Background="#FFF8E1" Loaded="Page_Loaded">
 
-    <Grid>
-        
+    <Page.Resources>
+        <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="DarkBrownBrush" Color="#4E342E"/>
+        <SolidColorBrush x:Key="BorderGrayBrush" Color="#BDBDBD"/>
+
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#6F4E37"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="MaterialInput" TargetType="Control">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource MaterialInput}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource MaterialInput}"/>
+    </Page.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="QUẢN LÝ NHẬP KHO" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+            <Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="500"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="Lịch sử Nhập Kho" FontSize="18" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                        <TextBlock Text="Tìm kiếm:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBox x:Name="txtSearch" Width="150" TextChanged="TxtSearch_TextChanged"/>
+                        <Button x:Name="btnLamMoiForm" Content="➕ Tạo Phiếu Mới" Style="{StaticResource ActionBtn}" Background="#4CAF50" Margin="15,0,0,0" Click="BtnLamMoiForm_Click"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="dgPhieuNhap" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0" Background="Transparent" SelectionChanged="DgPhieuNhap_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mã Phiếu" Binding="{Binding IdPhieuNhap}" Width="80"/>
+                            <DataGridTextColumn Header="Thời gian" Binding="{Binding ThoiGianTao, StringFormat='dd/MM/yyyy HH:mm'}" Width="140"/>
+                            <DataGridTextColumn Header="Nhà Cung Cấp" Binding="{Binding TenNhaCungCap}" Width="*"/>
+                            <DataGridTextColumn Header="Tổng tiền" Binding="{Binding TongTien, StringFormat=N0}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20">
+                <StackPanel x:Name="formChiTiet" IsEnabled="False">
+                    <TextBlock x:Name="lblTitle" Text="Tạo Phiếu Nhập Kho" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,15"/>
+
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.2*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1.5*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Margin="0,0,5,0">
+                            <TextBlock Text="Nhà Cung Cấp (*)" FontWeight="SemiBold"/>
+                            <ComboBox x:Name="cmbNhaCungCap" DisplayMemberPath="Ten" SelectedValuePath="Id" IsEditable="True" IsTextSearchEnabled="False" StaysOpenOnEdit="True" KeyUp="CmbNhaCungCap_KeyUp"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="5,0,5,0">
+                            <TextBlock Text="Ghi chú" FontWeight="SemiBold"/>
+                            <TextBox x:Name="txtGhiChu"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Margin="5,0,0,0">
+                            <TextBlock Text="Chứng từ gốc (Hóa đơn)" FontWeight="SemiBold"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                <Button x:Name="btnDinhKem" Content="📎 Đính kèm" Style="{StaticResource ActionBtn}" Background="#607D8B" Padding="10,5" Click="BtnDinhKem_Click"/>
+                                <Button x:Name="btnXemDinhKem" Content="👁 Xem File" Style="{StaticResource ActionBtn}" Background="#00BCD4" Padding="10,5" Visibility="Collapsed" Click="BtnXemDinhKem_Click"/>
+                                <TextBlock x:Name="txtTenFileDinhKem" Text="Chưa có" VerticalAlignment="Center" Margin="10,0,0,0" FontStyle="Italic" Foreground="Gray" MaxWidth="120" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Background="#F5F5F5" CornerRadius="6" Padding="10" Margin="0,0,0,15">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="Nguyên liệu (*)" Grid.Row="0" Grid.Column="0" FontWeight="SemiBold" Foreground="DimGray" Margin="0,0,5,2"/>
+                            <TextBlock Text="Số lượng" Grid.Row="0" Grid.Column="1" FontWeight="SemiBold" Foreground="DimGray" Margin="0,0,5,2"/>
+                            <TextBlock Text="Đơn giá (VNĐ)" Grid.Row="0" Grid.Column="2" FontWeight="SemiBold" Foreground="DimGray" Margin="0,0,5,2"/>
+
+                            <ComboBox x:Name="cmbNguyenLieu" Grid.Row="1" Grid.Column="0" DisplayMemberPath="Ten" SelectedValuePath="Id" Margin="0,0,5,0" IsEditable="True" IsTextSearchEnabled="False" StaysOpenOnEdit="True" KeyUp="CmbNguyenLieu_KeyUp"/>
+                            <TextBox x:Name="txtSoLuong" Grid.Row="1" Grid.Column="1" Margin="0,0,5,0"/>
+                            <TextBox x:Name="txtDonGia" Grid.Row="1" Grid.Column="2" Margin="0,0,5,0"/>
+                            <Button x:Name="btnThemNL" Grid.Row="1" Grid.Column="3" Content="➕ Thêm" Style="{StaticResource ActionBtn}" Background="#2196F3" Padding="10,5" Click="BtnThemNL_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <DataGrid x:Name="dgChiTiet" Height="200" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0" Background="#FAFAFA" Margin="0,0,0,15">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nguyên Liệu" Binding="{Binding TenNguyenLieu}" Width="*"/>
+                            <DataGridTextColumn Header="SL" Binding="{Binding SoLuong, StringFormat=N2}" Width="60"/>
+                            <DataGridTextColumn Header="Đơn giá" Binding="{Binding DonGiaNhap, StringFormat=N0}" Width="80"/>
+                            <DataGridTextColumn Header="Thành tiền" Binding="{Binding ThanhTien, StringFormat=N0}" Width="90"/>
+                            <DataGridTemplateColumn Width="50">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="🗑" Background="Transparent" BorderThickness="0" Foreground="Red" Cursor="Hand" Click="BtnXoaNL_Click"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Tiền hàng:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="txtTienHang" Text="0" FontSize="16" Foreground="#1976D2" FontWeight="Bold"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Giảm giá (VNĐ):" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <TextBox x:Name="txtGiamGia" Text="0" TextChanged="TxtGiamGia_TextChanged"/>
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="Tổng Cần Trả: " FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="txtTongCong" Text="0" FontSize="22" FontWeight="Bold" Foreground="#D32F2F" Margin="10,0,20,0" VerticalAlignment="Center"/>
+
+                        <Button x:Name="btnXuatFile" Content="📥 XUẤT FILE" Style="{StaticResource ActionBtn}" Background="#FF9800" Padding="20,10" Margin="0,0,10,0" Visibility="Collapsed" Click="BtnXuatFile_Click"/>
+                        <Button x:Name="btnLuu" Content="💾 LƯU PHIẾU NHẬP" Style="{StaticResource ActionBtn}" Background="#4CAF50" Padding="20,10" Click="BtnLuu_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
+            <TextBlock Text="Đang xử lý..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+        </Border>
     </Grid>
 </Page>

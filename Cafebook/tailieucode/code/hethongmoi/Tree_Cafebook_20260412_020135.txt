@@ -1,0 +1,401 @@
+Project: Cafebook
+├── AppCafebookApi
+│   ├── App.xaml
+│   ├── App.xaml.cs
+│   ├── AppCafebookApi.csproj
+│   ├── AppCafebookApi.csproj.user
+│   ├── Assets
+│   │   ├── images
+│   │   │   ├── default-avatar.png
+│   │   │   ├── default-book-cover.png
+│   │   │   └── default-food-icon.png
+│   │   ├── logo.ico
+│   │   └── logo.png
+│   ├── Fonts
+│   │   └── Font Awesome 6 Free-Solid-900.otf
+│   ├── Services
+│   │   ├── ApiClient.cs
+│   │   ├── AppConfigManager.cs
+│   │   ├── AuthService.cs
+│   │   └── HinhAnhHelper.cs
+│   ├── Utils
+│   │   └── Class1.cs
+│   ├── View
+│   │   ├── Common
+│   │   │   ├── CaiDatServerWindow.xaml
+│   │   │   ├── CaiDatServerWindow.xaml.cs
+│   │   │   ├── ChonKhongGianWindow.xaml
+│   │   │   ├── ChonKhongGianWindow.xaml.cs
+│   │   │   ├── ChonKhuyenMaiWindow.xaml
+│   │   │   ├── ChonKhuyenMaiWindow.xaml.cs
+│   │   │   ├── HoaDonPreviewWindow.xaml
+│   │   │   ├── HoaDonPreviewWindow.xaml.cs
+│   │   │   ├── InputBoxWindow.xaml
+│   │   │   ├── InputBoxWindow.xaml.cs
+│   │   │   ├── InputDialogWindow.xaml
+│   │   │   ├── InputDialogWindow.xaml.cs
+│   │   │   ├── PhieuGiaoHangPreviewWindow.xaml
+│   │   │   ├── PhieuGiaoHangPreviewWindow.xaml.cs
+│   │   │   ├── PhieuGoiMonPreviewWindow.xaml
+│   │   │   ├── PhieuGoiMonPreviewWindow.xaml.cs
+│   │   │   ├── PhieuLuongPreviewWindow.xaml
+│   │   │   ├── PhieuLuongPreviewWindow.xaml.cs
+│   │   │   ├── PhieuThuePreviewWindow.xaml
+│   │   │   ├── PhieuThuePreviewWindow.xaml.cs
+│   │   │   ├── PhieuTraPreviewWindow.xaml
+│   │   │   ├── PhieuTraPreviewWindow.xaml.cs
+│   │   │   ├── WelcomeWindow.xaml
+│   │   │   └── WelcomeWindow.xaml.cs
+│   │   ├── ManHinhDangNhap.xaml
+│   │   ├── ManHinhDangNhap.xaml.cs
+│   │   ├── nhanvien
+│   │   │   ├── ManHinhNhanVien.xaml
+│   │   │   ├── ManHinhNhanVien.xaml.cs
+│   │   │   └── pages
+│   │   │       ├── ChamCongView.xaml
+│   │   │       ├── ChamCongView.xaml.cs
+│   │   │       ├── CheBienView.xaml
+│   │   │       ├── CheBienView.xaml.cs
+│   │   │       ├── DatBanView.xaml
+│   │   │       ├── DatBanView.xaml.cs
+│   │   │       ├── GiaoHangView.xaml
+│   │   │       ├── GiaoHangView.xaml.cs
+│   │   │       ├── GoiMonView.xaml
+│   │   │       ├── GoiMonView.xaml.cs
+│   │   │       ├── LichLamViecView.xaml
+│   │   │       ├── LichLamViecView.xaml.cs
+│   │   │       ├── PhieuLuongView.xaml
+│   │   │       ├── PhieuLuongView.xaml.cs
+│   │   │       ├── SoDoBanView.xaml
+│   │   │       ├── SoDoBanView.xaml.cs
+│   │   │       ├── ThanhToanView.xaml
+│   │   │       ├── ThanhToanView.xaml.cs
+│   │   │       ├── ThongTinCaNhanView.xaml
+│   │   │       ├── ThongTinCaNhanView.xaml.cs
+│   │   │       ├── ThueSachView.xaml
+│   │   │       └── ThueSachView.xaml.cs
+│   │   └── quanly
+│   │       ├── ManHinhQuanly.xaml
+│   │       ├── ManHinhQuanly.xaml.cs
+│   │       └── pages
+│   │           ├── BaoCaoNhanSuView.xaml
+│   │           ├── BaoCaoNhanSuView.xaml.cs
+│   │           ├── CaiDatNhanSuView.xaml
+│   │           ├── CaiDatNhanSuView.xaml.cs
+│   │           ├── QuanLyBanView.xaml
+│   │           ├── QuanLyBanView.xaml.cs
+│   │           ├── QuanLyBaoCaoDoanhThuView.xaml
+│   │           ├── QuanLyBaoCaoDoanhThuView.xaml.cs
+│   │           ├── QuanLyBaoCaoHieuSuatView.xaml
+│   │           ├── QuanLyBaoCaoHieuSuatView.xaml.cs
+│   │           ├── QuanLyBaoCaoTonKhoNguyenLieuView.xaml
+│   │           ├── QuanLyBaoCaoTonKhoNguyenLieuView.xaml.cs
+│   │           ├── QuanLyBaoCaoTonKhoSachView.xaml
+│   │           ├── QuanLyBaoCaoTonKhoSachView.xaml.cs
+│   │           ├── QuanLyCaiDatHeThongView.xaml
+│   │           ├── QuanLyCaiDatHeThongView.xaml.cs
+│   │           ├── QuanLyDanhMucView.xaml
+│   │           ├── QuanLyDanhMucView.xaml.cs
+│   │           ├── QuanLyDinhLuongView.xaml
+│   │           ├── QuanLyDinhLuongView.xaml.cs
+│   │           ├── QuanLyDonHangView.xaml
+│   │           ├── QuanLyDonHangView.xaml.cs
+│   │           ├── QuanLyDonViChuyenDoiView.xaml
+│   │           ├── QuanLyDonViChuyenDoiView.xaml.cs
+│   │           ├── QuanLyDonXinNghiView.xaml
+│   │           ├── QuanLyDonXinNghiView.xaml.cs
+│   │           ├── QuanLyKhachHangView.xaml
+│   │           ├── QuanLyKhachHangView.xaml.cs
+│   │           ├── QuanLyKhuVucView.xaml
+│   │           ├── QuanLyKhuVucView.xaml.cs
+│   │           ├── QuanLyKhuyenMaiView.xaml
+│   │           ├── QuanLyKhuyenMaiView.xaml.cs
+│   │           ├── QuanLyKiemKhoView.xaml
+│   │           ├── QuanLyKiemKhoView.xaml.cs
+│   │           ├── QuanLyLichLamViecView.xaml
+│   │           ├── QuanLyLichLamViecView.xaml.cs
+│   │           ├── QuanLyLuongView.xaml
+│   │           ├── QuanLyLuongView.xaml.cs
+│   │           ├── QuanLyNguoiGiaoHangView.xaml
+│   │           ├── QuanLyNguoiGiaoHangView.xaml.cs
+│   │           ├── QuanLyNguyenLieuView.xaml
+│   │           ├── QuanLyNguyenLieuView.xaml.cs
+│   │           ├── QuanLyNhaCungCapView.xaml
+│   │           ├── QuanLyNhaCungCapView.xaml.cs
+│   │           ├── QuanLyNhanVienView.xaml
+│   │           ├── QuanLyNhanVienView.xaml.cs
+│   │           ├── QuanLyNhapKhoView.xaml
+│   │           ├── QuanLyNhapKhoView.xaml.cs
+│   │           ├── QuanLyPhanQuyenView.xaml
+│   │           ├── QuanLyPhanQuyenView.xaml.cs
+│   │           ├── QuanLyPhatLuongView.xaml
+│   │           ├── QuanLyPhatLuongView.xaml.cs
+│   │           ├── QuanLyPhuThuView.xaml
+│   │           ├── QuanLyPhuThuView.xaml.cs
+│   │           ├── QuanLySachView.xaml
+│   │           ├── QuanLySachView.xaml.cs
+│   │           ├── QuanLySanPhamView.xaml
+│   │           ├── QuanLySanPhamView.xaml.cs
+│   │           ├── QuanLySuCoBanView.xaml
+│   │           ├── QuanLySuCoBanView.xaml.cs
+│   │           ├── QuanLyTonKhoView.xaml
+│   │           ├── QuanLyTonKhoView.xaml.cs
+│   │           ├── QuanLyTongQuanView.xaml
+│   │           ├── QuanLyTongQuanView.xaml.cs
+│   │           ├── QuanLyXuatHuyView.xaml
+│   │           └── QuanLyXuatHuyView.xaml.cs
+│   └── logo.ico
+├── Cafebook.slnLaunch.user
+├── Cafebook.slnx
+├── CafebookApi
+│   ├── CafebookApi.csproj
+│   ├── CafebookApi.csproj.user
+│   ├── CafebookApi.http
+│   ├── Controllers
+│   │   ├── App
+│   │   │   ├── NhanVien
+│   │   │   └── QuanLy
+│   │   │       ├── QuanLyBanController.cs
+│   │   │       ├── QuanLyDanhMucController.cs
+│   │   │       ├── QuanLyDinhLuongController.cs
+│   │   │       ├── QuanLyDonViChuyenDoiController.cs
+│   │   │       ├── QuanLyDonXinNghiController.cs
+│   │   │       ├── QuanLyKhoController.cs
+│   │   │       ├── QuanLyKhuVucController.cs
+│   │   │       ├── QuanLyKiemKhoController.cs
+│   │   │       ├── QuanLyLichLamViecController.cs
+│   │   │       ├── QuanLyNguyenLieuController.cs
+│   │   │       ├── QuanLyNhaCungCapController.cs
+│   │   │       ├── QuanLyNhanVienController.cs
+│   │   │       ├── QuanLyNhapKhoController.cs
+│   │   │       ├── QuanLyPhanQuyenController.cs
+│   │   │       ├── QuanLySanPhamController.cs
+│   │   │       ├── QuanLySuCoBanController.cs
+│   │   │       ├── QuanLyTongQuanController.cs
+│   │   │       └── QuanLyXuatHuyController.cs
+│   │   ├── Shared
+│   │   │   └── AuthController.cs
+│   │   └── Web
+│   │       ├── KhachHang
+│   │       └── NhanVien
+│   ├── Data
+│   │   └── CafebookDbContext.cs
+│   ├── Hubs
+│   ├── Program.cs
+│   ├── Properties
+│   │   └── launchSettings.json
+│   ├── Services
+│   ├── appsettings.Development.json
+│   ├── appsettings.json
+│   └── wwwroot
+│       ├── images
+│       │   ├── BuildNhapKho
+│       │   │   ├── 20260412003310_6d85_phieunhapkho20260412000949.png
+│       │   │   ├── 20260412003742_e9f0_phieunhapkho20260412000949.png
+│       │   │   └── 20260412012825_b258_phieunhapkho20260412000949.png
+│       │   ├── anhdanhgia
+│       │   │   ├── monan
+│       │   │   └── sach
+│       │   ├── anhgiaohang
+│       │   ├── avatars
+│       │   │   ├── avatarKH
+│       │   │   └── avatarNV
+│       │   ├── books
+│       │   └── foods
+│       │       ├── cafe-en-639115174391118843.jpg
+│       │       └── tra-sua-639115178005448401.jpg
+│       └── uploads
+│           └── avatars
+│               ├── 087a1d4e-9bbf-481e-a3c2-9987867ee688_Screenshot_20251127-173850_Chrome~2.jpg
+│               ├── 20116814-cff1-4ff5-9a14-8d0faf93df4f_Screenshot_20251118_184842.jpg
+│               └── e63284a3-728f-44d3-b044-ff8a1940a108_Screenshot_20251127-173850_Chrome~2.jpg
+├── CafebookModel
+│   ├── CafebookModel.csproj
+│   ├── Model
+│   │   ├── ModelApi
+│   │   ├── ModelApp
+│   │   │   ├── NhanVien
+│   │   │   └── QuanLy
+│   │   │       ├── QuanLyBanDto.cs
+│   │   │       ├── QuanLyDanhMucDto.cs
+│   │   │       ├── QuanLyDinhLuongDto.cs
+│   │   │       ├── QuanLyDonViChuyenDoiDto.cs
+│   │   │       ├── QuanLyDonXinNghiDto.cs
+│   │   │       ├── QuanLyKhuVucDto.cs
+│   │   │       ├── QuanLyKiemKhoDto.cs
+│   │   │       ├── QuanLyLichLamViecDto.cs
+│   │   │       ├── QuanLyNguyenLieuDto.cs
+│   │   │       ├── QuanLyNhaCungCapDto.cs
+│   │   │       ├── QuanLyNhanVienDto.cs
+│   │   │       ├── QuanLyNhapKhoDto.cs
+│   │   │       ├── QuanLyPhanQuyenDto.cs
+│   │   │       ├── QuanLySanPhamDto.cs
+│   │   │       ├── QuanLySuCoBanDto.cs
+│   │   │       ├── QuanLyTonKhoDto.cs
+│   │   │       ├── QuanLyTongQuanDto.cs
+│   │   │       └── QuanLyXuatHuyDto.cs
+│   │   ├── ModelEntities
+│   │   │   ├── Ban.cs
+│   │   │   ├── BangChamCong.cs
+│   │   │   ├── CaLamViec.cs
+│   │   │   ├── CaiDat.cs
+│   │   │   ├── ChatLichSu.cs
+│   │   │   ├── ChiTietHoaDon.cs
+│   │   │   ├── ChiTietKiemKho.cs
+│   │   │   ├── ChiTietNhapKho.cs
+│   │   │   ├── ChiTietPhieuThue.cs
+│   │   │   ├── ChiTietPhieuTra.cs
+│   │   │   ├── ChiTietPhuThuHoaDon.cs
+│   │   │   ├── ChiTietXuatHuy.cs
+│   │   │   ├── DanhGia.cs
+│   │   │   ├── DanhMuc.cs
+│   │   │   ├── DeXuatSach.cs
+│   │   │   ├── DeXuatSanPham.cs
+│   │   │   ├── DinhLuong.cs
+│   │   │   ├── DonViChuyenDoi.cs
+│   │   │   ├── DonXinNghi.cs
+│   │   │   ├── GiaoDichThanhToan.cs
+│   │   │   ├── HoaDon.cs
+│   │   │   ├── HoaDon_KhuyenMai.cs
+│   │   │   ├── KhachHang.cs
+│   │   │   ├── KhuVuc.cs
+│   │   │   ├── KhuyenMai.cs
+│   │   │   ├── LichLamViec.cs
+│   │   │   ├── NguyenLieu.cs
+│   │   │   ├── NhaCungCap.cs
+│   │   │   ├── NhaXuatBan.cs
+│   │   │   ├── NhanVien.cs
+│   │   │   ├── NhanVien_Quyen.cs
+│   │   │   ├── NhatKyHeThong.cs
+│   │   │   ├── NhatKyHuyMon.cs
+│   │   │   ├── NhuCauCaLam.cs
+│   │   │   ├── PhanHoiDanhGia.cs
+│   │   │   ├── PhieuDatBan.cs
+│   │   │   ├── PhieuKiemKho.cs
+│   │   │   ├── PhieuLuong.cs
+│   │   │   ├── PhieuNhapKho.cs
+│   │   │   ├── PhieuThueSach.cs
+│   │   │   ├── PhieuThuongPhat.cs
+│   │   │   ├── PhieuTraSach.cs
+│   │   │   ├── PhieuXuatHuy.cs
+│   │   │   ├── PhuThu.cs
+│   │   │   ├── Quyen.cs
+│   │   │   ├── Sach.cs
+│   │   │   ├── Sach_NhaXuatBan.cs
+│   │   │   ├── Sach_TacGia.cs
+│   │   │   ├── Sach_TheLoai.cs
+│   │   │   ├── SanPham.cs
+│   │   │   ├── TacGia.cs
+│   │   │   ├── TheLoai.cs
+│   │   │   ├── ThongBao.cs
+│   │   │   ├── ThongBaoHoTro.cs
+│   │   │   ├── TrangThaiCheBien.cs
+│   │   │   └── VaiTro.cs
+│   │   ├── ModelWeb
+│   │   │   ├── KhachHang
+│   │   │   └── Nhanvien
+│   │   └── Shared
+│   │       └── AuthDTOs.cs
+│   └── Utils
+│       ├── HinhAnhPaths.cs
+│       └── SlugifyUtil.cs
+├── DatabaseCafebook
+│   ├── CafebookDB.mdf
+│   ├── CafebookDB_log.ldf
+│   ├── CafebookDBbackup.bak
+│   └── Cafebookbakup.sql
+├── SettingCafebook
+│   └── AppConfig.json
+├── WebCafebookApi
+│   ├── Pages
+│   │   ├── Account
+│   │   ├── Error.cshtml
+│   │   ├── Error.cshtml.cs
+│   │   ├── Index.cshtml
+│   │   ├── Index.cshtml.cs
+│   │   ├── Privacy.cshtml
+│   │   ├── Privacy.cshtml.cs
+│   │   ├── Shared
+│   │   │   ├── _Layout.cshtml
+│   │   │   ├── _Layout.cshtml.css
+│   │   │   └── _ValidationScriptsPartial.cshtml
+│   │   ├── _ViewImports.cshtml
+│   │   ├── _ViewStart.cshtml
+│   │   └── employee
+│   ├── Program.cs
+│   ├── Properties
+│   │   └── launchSettings.json
+│   ├── Services
+│   ├── WebCafebookApi.csproj
+│   ├── appsettings.Development.json
+│   ├── appsettings.json
+│   └── wwwroot
+│       ├── css
+│       │   └── site.css
+│       ├── favicon.ico
+│       ├── images
+│       ├── js
+│       │   └── site.js
+│       └── lib
+│           ├── bootstrap
+│           │   └── LICENSE
+│           ├── jquery
+│           │   └── LICENSE.txt
+│           ├── jquery-validation
+│           │   └── LICENSE.md
+│           └── jquery-validation-unobtrusive
+│               ├── LICENSE.txt
+│               ├── jquery.validate.unobtrusive.js
+│               └── jquery.validate.unobtrusive.min.js
+└── tailieucode
+    ├── Giay xac nhan thuc tap.docx
+    ├── KE HOACH TOT NGHIEP THANG 06-2026.pdf
+    ├── SQL
+    │   ├── [NhatKyHeThong].sql
+    │   ├── backup.sql
+    │   ├── data.sql
+    │   ├── datacautruc.sql
+    │   ├── datanew.sql
+    │   ├── quyen.sql
+    │   ├── quyenhethong.sql
+    │   ├── sqltongcu.sql
+    │   └── sqltongnew.sql
+    ├── User case
+    │   ├── 31_10.drawio
+    │   ├── Usercasse.txt
+    │   └── phan1cautraloi.txt
+    ├── appcancai
+    │   ├── SQL2025-SSEI-Expr.exe
+    │   ├── vs_Professional.exe
+    │   └── vs_SSMS.exe
+    ├── canxuly.txt
+    ├── code
+    │   ├── hethongcu
+    │   │   ├── Code_Project_20260407_112141.txt
+    │   │   └── Tree_Project_20260407_112141.txt
+    │   └── hethongmoi
+    │       ├── Code_CafebookModel_20260411_223305.txt
+    │       ├── Code_CafebookModel_20260412_020120.txt
+    │       ├── Code_Cafebook_20260408_075301.txt
+    │       ├── Code_N19 KLTN 032026_20260411_170458.txt
+    │       ├── Tree_CafebookModel_20260411_223305.txt
+    │       ├── Tree_CafebookModel_20260412_020120.txt
+    │       ├── Tree_Cafebook_20260408_075301.txt
+    │       └── Tree_N19 KLTN 032026_20260411_170458.txt
+    ├── filehethongxuat
+    │   ├── BaoCaoDoanhThu_20260411_1623.xlsx
+    │   ├── BaoCaoDoanhThu_20260411_1624.xlsx
+    │   ├── DSDonHang_20260411_1621.xlsx
+    │   ├── DSSP_20260411_1618.xlsx
+    │   ├── DSSP_20260412_0134.xlsx
+    │   ├── DS_KhuyenMai_11042026_162237.xlsx
+    │   ├── DanhSachSanPham_20260412_013911.csv
+    │   ├── DanhSachSanPham_20260412_014122.csv
+    │   ├── DanhSachSanPham_20260412_015625.xlsx
+    │   ├── FormDangKyLich_Cafebook.xlsx
+    │   └── PhieuNhapKho_20260412_000949.png
+    ├── notechat
+    │   ├── nhatkynangcap.txt
+    │   └── note.txt
+    └── tailieu
+        └── 01-Proposal-Nhom19.docx

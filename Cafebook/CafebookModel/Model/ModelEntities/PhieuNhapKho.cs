@@ -28,7 +28,7 @@ namespace CafebookModel.Model.ModelEntities
         public virtual NhaCungCap? NhaCungCap { get; set; }
         [ForeignKey("IdNhanVien")]
         public virtual NhanVien NhanVien { get; set; } = null!;
-
+        public string? HoaDonDinhKem { get; set; }
         public virtual ICollection<ChiTietNhapKho> ChiTietNhapKhos { get; set; } = new List<ChiTietNhapKho>();
     }
 }

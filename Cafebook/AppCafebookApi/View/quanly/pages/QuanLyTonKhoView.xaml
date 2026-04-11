@@ -1,14 +1,119 @@
 ﻿<Page x:Class="AppCafebookApi.View.quanly.pages.QuanLyTonKhoView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:AppCafebookApi.View.quanly.pages"
-      mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="QuanLyTonKhoView">
+      Title="Quản lý Tồn Kho" FontFamily="Segoe UI" Background="#FFF8E1" Loaded="Page_Loaded">
 
-    <Grid>
-        
+    <Page.Resources>
+        <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="ActionRedBrush" Color="#D32F2F"/>
+        <SolidColorBrush x:Key="SuccessGreenBrush" Color="#388E3C"/>
+        <SolidColorBrush x:Key="WarningOrangeBrush" Color="#F57C00"/>
+
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#6F4E37"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="StockDataGridRowStyle" TargetType="DataGridRow">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding TinhTrang}" Value="Hết hàng">
+                    <Setter Property="Background" Value="#FFEBEE"/>
+                    <Setter Property="Foreground" Value="#D32F2F"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding TinhTrang}" Value="Sắp hết">
+                    <Setter Property="Background" Value="#FFF3E0"/>
+                    <Setter Property="Foreground" Value="#E65100"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="QUẢN LÝ TỒN KHO" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="btnNavNL" Content="📦 Nguyên liệu" Style="{StaticResource ActionBtn}" Background="#1976D2" Margin="0,0,8,0" Click="BtnNavNL_Click"/>
+                <Button x:Name="btnNavNhap" Content="📥 Nhập kho" Style="{StaticResource ActionBtn}" Background="#388E3C" Margin="0,0,8,0" Click="BtnNavNhap_Click"/>
+                <Button x:Name="btnNavXuat" Content="📤 Xuất hủy" Style="{StaticResource ActionBtn}" Background="#D32F2F" Margin="0,0,8,0" Click="BtnNavXuat_Click"/>
+                <Button x:Name="btnNavKiem" Content="📋 Kiểm kho" Style="{StaticResource ActionBtn}" Background="#F57C00" Margin="0,0,8,0" Click="BtnNavKiem_Click"/>
+                <Button x:Name="btnNavNCC" Content="🏢 Nhà cung cấp" Style="{StaticResource ActionBtn}" Background="#7B1FA2" Margin="0,0,8,0" Click="BtnNavNCC_Click"/>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="Danh sách Tồn Kho Thực Tế" FontSize="18" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                        <TextBlock Text="Tìm kiếm:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBox x:Name="txtSearch" Width="200" Padding="5" BorderThickness="0,0,0,1" TextChanged="TxtSearch_TextChanged"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1" x:Name="dgTonKho" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource StockDataGridRowStyle}" BorderThickness="0" Background="Transparent">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mã NL" Binding="{Binding IdNguyenLieu}" Width="60"/>
+                            <DataGridTextColumn Header="Tên Nguyên liệu" Binding="{Binding TenNguyenLieu}" Width="*"/>
+                            <DataGridTextColumn Header="Tồn hiện tại" Binding="{Binding TonKho, StringFormat=N2}" Width="100"/>
+                            <DataGridTextColumn Header="ĐVT" Binding="{Binding DonViTinh}" Width="80"/>
+                            <DataGridTextColumn Header="Tình trạng" Binding="{Binding TinhTrang}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="15">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="⚠️ Cảnh báo mức tồn kho thấp" FontSize="18" FontWeight="Bold" Foreground="{StaticResource ActionRedBrush}" Margin="0,0,0,15"/>
+                    <DataGrid Grid.Row="1" x:Name="dgCanhBao" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource StockDataGridRowStyle}" BorderThickness="0" Background="Transparent">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Tên Nguyên liệu" Binding="{Binding TenNguyenLieu}" Width="*"/>
+                            <DataGridTextColumn Header="Tồn" Binding="{Binding TonKho, StringFormat=N2}" Width="60"/>
+                            <DataGridTextColumn Header="Ngưỡng" Binding="{Binding TonKhoToiThieu, StringFormat=N2}" Width="70"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
+            <TextBlock Text="Đang tải dữ liệu..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+        </Border>
     </Grid>
 </Page>

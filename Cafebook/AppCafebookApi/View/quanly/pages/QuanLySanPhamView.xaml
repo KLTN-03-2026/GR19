@@ -58,13 +58,19 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
                         <TextBlock Text="Tìm kiếm:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                         <TextBox x:Name="txtSearchSanPham" Width="150" Style="{StaticResource InputStyle}" TextChanged="Filter_Changed"/>
                         <TextBlock Text="Danh mục:" VerticalAlignment="Center" Margin="15,0,5,0"/>
-                        <ComboBox x:Name="cmbFilterDanhMuc" Width="150" Style="{StaticResource InputStyle}" DisplayMemberPath="Ten" SelectedValuePath="Id" SelectionChanged="Filter_Changed" IsEditable="True" IsTextSearchEnabled="True"/>
+
+                        <ComboBox x:Name="cmbFilterDanhMuc" Width="150" Style="{StaticResource InputStyle}" DisplayMemberPath="Ten" SelectedValuePath="Id" SelectionChanged="Filter_Changed" IsEditable="True" IsTextSearchEnabled="False" KeyUp="CmbFilterDanhMuc_KeyUp"/>
+
                         <Button x:Name="btnLamMoiForm" Content="➕ Thêm mới" Style="{StaticResource ActionBtn}" Background="#4CAF50" Margin="15,0,0,0" Click="BtnLamMoiForm_Click"/>
+
+                        <Button x:Name="btnXuatExcel" Content="📥 Xuất Excel" Style="{StaticResource ActionBtn}" Background="#2E7D32" Margin="10,0,0,0" Click="BtnXuatExcel_Click"/>
                     </StackPanel>
+
                     <DataGrid x:Name="dgSanPham" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" SelectionChanged="DgSanPham_SelectionChanged" BorderThickness="0" Background="Transparent">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Tên Sản Phẩm" Binding="{Binding TenSanPham}" Width="*"/>
@@ -93,10 +99,13 @@
                                 <Button x:Name="btnXoaAnh" Content="🗑 Xóa ảnh" Style="{StaticResource ActionBtn}" Background="#F44336" Click="BtnXoaAnh_Click"/>
                             </StackPanel>
                         </Grid>
+
                         <TextBlock Text="Tên Sản Phẩm (*)" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtTenSanPham" Style="{StaticResource InputStyle}" Margin="0,0,0,10"/>
+
                         <TextBlock Text="Danh Mục (*)" FontWeight="SemiBold"/>
-                        <ComboBox x:Name="cmbDanhMuc" Style="{StaticResource InputStyle}" DisplayMemberPath="Ten" SelectedValuePath="Id" IsEditable="True" IsTextSearchEnabled="True" Margin="0,0,0,10"/>
+                        <ComboBox x:Name="cmbDanhMuc" Style="{StaticResource InputStyle}" DisplayMemberPath="Ten" SelectedValuePath="Id" IsEditable="True" IsTextSearchEnabled="False" Margin="0,0,0,10" KeyUp="CmbDanhMuc_KeyUp"/>
+
                         <TextBlock Text="Đơn Giá (*)" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtDonGia" Style="{StaticResource InputStyle}" Margin="0,0,0,10"/>
                         <Grid Margin="0,0,0,10">
