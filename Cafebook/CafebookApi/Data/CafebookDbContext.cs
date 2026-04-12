@@ -71,10 +71,7 @@ namespace CafebookApi.Data
         public DbSet<TrangThaiCheBien> TrangThaiCheBiens { get; set; }
         public DbSet<VaiTro> VaiTros { get; set; }
         public DbSet<NhuCauCaLam> NhuCauCaLams { get; set; }
-        // XÓA dòng này:
-        // public virtual DbSet<VaiTro_Quyen> VaiTroQuyens { get; set; }
-
-        // THÊM dòng này:
+        public DbSet<NguoiGiaoHang> NguoiGiaoHangs { get; set; }
         public virtual DbSet<NhanVien_Quyen> NhanVienQuyens { get; set; }
         public DbSet<NhatKyHeThong> NhatKyHeThongs { get; set; } // Bảng mới thêm
         #endregion

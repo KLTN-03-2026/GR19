@@ -26,11 +26,27 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            // BẢO MẬT LỚP 2: Quyền tổng truy cập
-            if (!AuthService.CoQuyen("QL_TON_KHO")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
+            // BẢO MẬT LỚP 1: Chìa khóa Cổng
+            bool hasAnyPermission = AuthService.CoQuyen("FULL_QL", "QL_TON_KHO", "QL_NGUYEN_LIEU", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP", "QL_DON_VI_CHUYEN_DOI");
+            if (!hasAnyPermission)
+            {
+                MessageBox.Show("Bạn không có quyền truy cập phân hệ Kho!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack();
+                return;
+            }
 
             ApplyPermissions();
-            await LoadTonKhoAsync();
+
+            // BẢO MẬT LỚP 2: Chìa khóa Phòng (Xem danh sách Tồn kho)
+            if (AuthService.CoQuyen("FULL_QL", "QL_TON_KHO"))
+            {
+                await LoadTonKhoAsync();
+            }
+            else
+            {
+                if (FindName("GridDuLieuKho") is Grid gridData) gridData.Visibility = Visibility.Collapsed;
+                if (FindName("txtThongBaoKhongCoQuyen") is Border txtThongBao) txtThongBao.Visibility = Visibility.Visible;
+            }
         }
 
         private void ApplyPermissions()
@@ -76,11 +92,25 @@ namespace AppCafebookApi.View.quanly.pages
         // ==========================================
         // ĐIỀU HƯỚNG MÔ ĐUN CON (Bảo mật Lớp 2)
         // ==========================================
-        private void BtnNavNL_Click(object sender, RoutedEventArgs e) { if (AuthService.CoQuyen("QL_NGUYEN_LIEU")) this.NavigationService?.Navigate(new QuanLyNguyenLieuView()); }
-        private void BtnNavNhap_Click(object sender, RoutedEventArgs e) { if (AuthService.CoQuyen("QL_NHAP_KHO")) this.NavigationService?.Navigate(new QuanLyNhapKhoView()); }
-        private void BtnNavXuat_Click(object sender, RoutedEventArgs e) { if (AuthService.CoQuyen("QL_XUAT_HUY")) this.NavigationService?.Navigate(new QuanLyXuatHuyView()); }
-        private void BtnNavKiem_Click(object sender, RoutedEventArgs e) { if (AuthService.CoQuyen("QL_KIEM_KHO")) this.NavigationService?.Navigate(new QuanLyKiemKhoView()); }
-        private void BtnNavNCC_Click(object sender, RoutedEventArgs e) { if (AuthService.CoQuyen("QL_NHA_CUNG_CAP")) this.NavigationService?.Navigate(new QuanLyNhaCungCapView()); }
-        // private void BtnNavBaoCao_Click(object sender, RoutedEventArgs e) { this.NavigationService?.Navigate(new BaoCaoTonKhoNguyenLieuPreviewWindow()); }
+        private void BtnNavNL_Click(object sender, RoutedEventArgs e) {
+            if (AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU")) 
+                this.NavigationService?.Navigate(new QuanLyNguyenLieuView()); 
+        }
+        private void BtnNavNhap_Click(object sender, RoutedEventArgs e) { 
+            if (AuthService.CoQuyen("FULL_QL", "QL_NHAP_KHO")) 
+                this.NavigationService?.Navigate(new QuanLyNhapKhoView()); 
+        }
+        private void BtnNavXuat_Click(object sender, RoutedEventArgs e) { 
+            if (AuthService.CoQuyen("FULL_QL", "QL_XUAT_HUY")) 
+                this.NavigationService?.Navigate(new QuanLyXuatHuyView()); 
+        }
+        private void BtnNavKiem_Click(object sender, RoutedEventArgs e) { 
+            if (AuthService.CoQuyen("FULL_QL", "QL_KIEM_KHO")) 
+                this.NavigationService?.Navigate(new QuanLyKiemKhoView()); 
+        }
+        private void BtnNavNCC_Click(object sender, RoutedEventArgs e) { 
+            if (AuthService.CoQuyen("FULL_QL", "QL_NHA_CUNG_CAP")) 
+                this.NavigationService?.Navigate(new QuanLyNhaCungCapView()); 
+        }
     }
 }

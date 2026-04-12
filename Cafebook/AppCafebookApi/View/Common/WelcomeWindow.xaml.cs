@@ -45,11 +45,30 @@ namespace AppCafebookApi.View.Common
             {
                 txtUserGreeting.Text = $"Xin chào, {_user.HoTen}";
 
-                // Tải ảnh đại diện
+                // --- BẮT ĐẦU FIX LỖI TẢI ẢNH ĐẠI DIỆN ---
+                string avatarPath = _user.AnhDaiDien ?? string.Empty;
+
+                // Nếu chuỗi không rỗng và chưa có "http", ta sẽ nối URL của Server vào
+                if (!string.IsNullOrEmpty(avatarPath) && !avatarPath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    string baseUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
+
+                    // Nếu CSDL chỉ lưu tên file (vd: "abc.jpg"), ta sẽ tự động ghép thêm đường dẫn thư mục chứa avatar
+                    if (!avatarPath.Contains("/"))
+                    {
+                        avatarPath = $"{HinhAnhPaths.UrlAvatarNV}/{avatarPath}";
+                    }
+
+                    // Nối Server URL với đường dẫn file
+                    avatarPath = $"{baseUrl.TrimEnd('/')}/{avatarPath.TrimStart('/')}";
+                }
+
+                // Gọi helper truyền URL chuẩn
                 BitmapImage avatar = HinhAnhHelper.LoadImage(
-                    _user.AnhDaiDien ?? string.Empty,
+                    avatarPath,
                     HinhAnhPaths.DefaultAvatar
                 );
+                // --- KẾT THÚC FIX LỖI TẢI ẢNH ---
 
                 if (avatar != null)
                 {
@@ -89,7 +108,7 @@ namespace AppCafebookApi.View.Common
                 new ManHinhNhanVien().Show();
             }
 
-            // Đóng Welcome Window
+            // Đóng cửa sổ Welcome
             this.Close();
         }
     }

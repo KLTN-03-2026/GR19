@@ -58,16 +58,44 @@ namespace AppCafebookApi.View.quanly
                 txtAdminName.Text = currentUser.HoTen;
                 txtUserRole.Text = currentUser.TenVaiTro;
 
-                // Load ảnh đại diện
+                // --- BẮT ĐẦU LOGIC CHUẨN TỪ MÀN HÌNH COMMON ---
+                string avatarPath = currentUser.AnhDaiDien ?? string.Empty;
+
+                if (!string.IsNullOrEmpty(avatarPath) && !avatarPath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    string baseUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
+
+                    if (!avatarPath.Contains("/"))
+                    {
+                        avatarPath = $"{HinhAnhPaths.UrlAvatarNV}/{avatarPath}";
+                    }
+
+                    avatarPath = $"{baseUrl.TrimEnd('/')}/{avatarPath.TrimStart('/')}";
+                }
+
+                // Gọi helper truyền URL chuẩn
                 BitmapImage avatarImage = HinhAnhHelper.LoadImage(
-                    currentUser.AnhDaiDien ?? string.Empty,
+                    avatarPath,
                     HinhAnhPaths.DefaultAvatar
                 );
+                // --- KẾT THÚC LOGIC CHUẨN ---
 
+                // Đổ ảnh vào Border
                 AvatarBorder.Background = new ImageBrush(avatarImage)
                 {
                     Stretch = Stretch.UniformToFill
                 };
+
+                // Xử lý ẩn/hiện cái Icon mặc định (nằm dưới lớp ảnh)
+                if (AvatarBorder.Child != null)
+                {
+                    // Nếu có đường dẫn ảnh thật -> Ẩn icon đi
+                    if (!string.IsNullOrEmpty(currentUser.AnhDaiDien))
+                        AvatarBorder.Child.Visibility = Visibility.Collapsed;
+                    // Nếu không có -> Hiện icon
+                    else
+                        AvatarBorder.Child.Visibility = Visibility.Visible;
+                }
             }
 
             // 2. CHẠY HÀM ẨN/HIỆN MENU (PHÂN QUYỀN CẤP 1)
@@ -108,13 +136,13 @@ namespace AppCafebookApi.View.quanly
             }
 
             // GOM NHÓM QUYỀN: Kiểm tra mảng quyền bằng hàm CoQuyen
-            btnTongQuan.Visibility = AuthService.CoQuyen("QL_TONG_QUAN") ? Visibility.Visible : Visibility.Collapsed;
+            btnTongQuan.Visibility = AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN", "QL_BAO_CAO_TON_KHO_SACH", "QL_BAO_CAO_TON_KHO_NL", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_BAO_CAO_DOANH_THU", "CM_CAI_DAT") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnBan.Visibility = AuthService.CoQuyen("QL_BAN") ? Visibility.Visible : Visibility.Collapsed;
+            btnBan.Visibility = AuthService.CoQuyen("FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnSanPham.Visibility = AuthService.CoQuyen("QL_SAN_PHAM", "QL_NGUYEN_LIEU", "QL_DON_VI_CHUYEN_DOI") ? Visibility.Visible : Visibility.Collapsed;
+            btnSanPham.Visibility = AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM", "QL_DANH_MUC", "QL_DINH_LUONG") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnKho.Visibility = AuthService.CoQuyen("QL_TON_KHO", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP") ? Visibility.Visible : Visibility.Collapsed;
+            btnKho.Visibility = AuthService.CoQuyen("FULL_QL", "QL_TON_KHO", "QL_NGUYEN_LIEU", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP", "QL_DON_VI_CHUYEN_DOI") ? Visibility.Visible : Visibility.Collapsed;
 
             btnDonHang.Visibility = AuthService.CoQuyen("QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG") ? Visibility.Visible : Visibility.Collapsed;
 
@@ -122,7 +150,7 @@ namespace AppCafebookApi.View.quanly
 
             btnLuong.Visibility = AuthService.CoQuyen("QL_LUONG", "QL_PHAT_LUONG") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnNhanSu.Visibility = AuthService.CoQuyen("QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_VAI_TRO", "QL_DON_XIN_NGHI", "QL_LICH_LAM_VIEC", "QL_CAI_DAT_NHAN_SU", "QL_BAO_CAO_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
+            btnNhanSu.Visibility = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
 
             btnKhachHang.Visibility = AuthService.CoQuyen("QL_KHACH_HANG", "QL_KHUYEN_MAI") ? Visibility.Visible : Visibility.Collapsed;
         }
@@ -148,22 +176,23 @@ namespace AppCafebookApi.View.quanly
             // Ánh xạ Nút -> Nhóm Quyền -> Page đích (ĐÃ BỎ HOÀN TOÀN NÚT ĐÁNH GIÁ)
             if (clickedButton == btnTongQuan)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN");
+                // Cho phép chuyển trang nếu có 1 trong các quyền này
+                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN", "QL_BAO_CAO_TON_KHO_SACH", "QL_BAO_CAO_TON_KHO_NL", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_BAO_CAO_DOANH_THU", "CM_CAI_DAT");
                 pageToNavigate = new QuanLyTongQuanView();
             }
             else if (clickedButton == btnBan)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_BAN");
+                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC");
                 pageToNavigate = new QuanLyBanView();
             }
             else if (clickedButton == btnSanPham)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM", "QL_NGUYEN_LIEU", "QL_DON_VI_CHUYEN_DOI");
+                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM", "QL_DANH_MUC", "QL_DINH_LUONG");
                 pageToNavigate = new QuanLySanPhamView();
             }
             else if (clickedButton == btnKho)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_TON_KHO", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP");
+                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_TON_KHO", "QL_NGUYEN_LIEU", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP", "QL_DON_VI_CHUYEN_DOI");
                 pageToNavigate = new QuanLyTonKhoView();
             }
             else if (clickedButton == btnDonHang)
@@ -183,8 +212,7 @@ namespace AppCafebookApi.View.quanly
             }
             else if (clickedButton == btnNhanSu)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_VAI_TRO", "QL_DON_XIN_NGHI", "QL_LICH_LAM_VIEC", "QL_CAI_DAT_NHAN_SU", "QL_BAO_CAO_NHAN_SU");
-                // Mở trang đầu tiên của Menu Nhân sự (VD: Danh sách Nhân Viên)
+                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU");
                 pageToNavigate = new QuanLyNhanVienView();
             }
             else if (clickedButton == btnKhachHang)

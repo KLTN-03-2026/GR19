@@ -41,21 +41,35 @@ namespace AppCafebookApi.View.quanly.pages
         public QuanLyNhanVienView()
         {
             InitializeComponent();
+            AutoWireEvents();
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-            {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
+            bool hasAnyHRQuyen = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU");
+
+            if (!hasAnyHRQuyen)
+            {
+                MessageBox.Show("Từ chối truy cập!");
+                this.NavigationService?.GoBack();
+                return;
             }
 
-            AutoWireEvents();
             ApplyPermissions();
-            await LoadDanhSachVaiTro();
-            await LoadDanhSachNhanVien();
 
-            BtnLamMoiForm_Click(null, null);
+            if (AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN"))
+            {
+                await LoadDanhSachVaiTro();
+                await LoadDanhSachNhanVien();
+            }
+            else
+            {
+                if (FindName("GridDuLieuNhanVien") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Collapsed;
+                if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Visible;
+            }
         }
 
         private void AutoWireEvents()
@@ -114,32 +128,41 @@ namespace AppCafebookApi.View.quanly.pages
             }
         }
 
+        // =========================================================================
+        // NÂNG CẤP MÀU SẮC DÒNG HIỆN TẠI
+        // =========================================================================
         private void DgNhanVien_LoadingRow(object? sender, DataGridRowEventArgs e)
         {
             if (e.Row.DataContext is QuanLyNhanVienGridDto rowData && AuthService.CurrentUser != null)
             {
                 if (rowData.IdNhanVien == AuthService.CurrentUser.IdNhanVien)
                 {
+                    // Tài khoản đang đăng nhập: In đậm, nền cam nhạt, chữ nâu đỏ nổi bật
                     e.Row.FontWeight = FontWeights.Bold;
-                    e.Row.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E8F5E9"));
+                    e.Row.Background = new SolidColorBrush(Color.FromRgb(255, 243, 224)); // #FFF3E0
+                    e.Row.Foreground = new SolidColorBrush(Color.FromRgb(216, 67, 21));  // #D84315
                 }
                 else
                 {
-                    e.Row.FontWeight = FontWeights.Normal;
+                    // Xóa style để trả về mặc định cho các dòng khác
+                    e.Row.ClearValue(Control.FontWeightProperty);
                     e.Row.ClearValue(Control.BackgroundProperty);
+                    e.Row.ClearValue(Control.ForegroundProperty);
                 }
             }
         }
 
         private void ApplyPermissions()
         {
-            if (AuthService.CoQuyen("FULL_QL")) return;
+            if (FindName("btnPhanQuyen") is Button b1) b1.Visibility = AuthService.CoQuyen("FULL_QL", "QL_PHAN_QUYEN") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnGoToBaoCao") is Button b2) b2.Visibility = AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnGoToHieuSuat") is Button b3) b3.Visibility = AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnGoToLichLamViec") is Button b4) b4.Visibility = AuthService.CoQuyen("FULL_QL", "QL_LICH_LAM_VIEC") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnGoToDonXinNghi") is Button b5) b5.Visibility = AuthService.CoQuyen("FULL_QL", "QL_DON_XIN_NGHI") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnGoToCaiDat") is Button b7) b7.Visibility = AuthService.CoQuyen("FULL_QL", "QL_CAI_DAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
 
-            if (FindName("btnPhanQuyen") is Button btnPhanQuyen) btnPhanQuyen.Visibility = AuthService.CoQuyen("QL_PHAN_QUYEN") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnGoToDonXinNghi") is Button btnNghi) btnNghi.Visibility = AuthService.CoQuyen("QL_DON_XIN_NGHI") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnGoToLichLamViec") is Button btnLich) btnLich.Visibility = AuthService.CoQuyen("QL_LICH_LAM_VIEC") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnGoToBaoCao") is Button btnBaoCao) btnBaoCao.Visibility = AuthService.CoQuyen("QL_BAO_CAO_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnGoToCaiDat") is Button btnCaiDat) btnCaiDat.Visibility = AuthService.CoQuyen("QL_CAI_DAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
+            bool canEdit = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN");
+            if (FindName("btnLamMoiForm") is Button btnLamMoi) btnLamMoi.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async Task LoadDanhSachVaiTro()
@@ -196,6 +219,9 @@ namespace AppCafebookApi.View.quanly.pages
         private void Filter_Changed(object sender, TextChangedEventArgs e) { ApplyFilter(); }
         private void Filter_Changed(object sender, SelectionChangedEventArgs e) { ApplyFilter(); }
 
+        // =========================================================================
+        // NÂNG CẤP GHIM TÀI KHOẢN HIỆN TẠI LÊN ĐẦU
+        // =========================================================================
         private void ApplyFilter()
         {
             if (_allNhanVienList == null) return;
@@ -216,6 +242,17 @@ namespace AppCafebookApi.View.quanly.pages
             {
                 var selectedRoleName = (cmbFilter.SelectedItem as RoleLookupDto)?.Name;
                 query = query.Where(x => x.TenVaiTro == selectedRoleName);
+            }
+
+            // Sắp xếp: Ai đang đăng nhập thì đẩy lên đầu, những người còn lại xếp theo bảng chữ cái
+            if (AuthService.CurrentUser != null)
+            {
+                int currentId = AuthService.CurrentUser.IdNhanVien;
+                query = query.OrderByDescending(x => x.IdNhanVien == currentId).ThenBy(x => x.HoTen);
+            }
+            else
+            {
+                query = query.OrderBy(x => x.HoTen);
             }
 
             if (FindName("dgNhanVien") is DataGrid dg) dg.ItemsSource = query.ToList();
@@ -250,9 +287,10 @@ namespace AppCafebookApi.View.quanly.pages
 
                         _currentAvatarFilePath = null;
                         _deleteAvatarRequest = false;
-                        string avatarUrl = string.IsNullOrEmpty(detail.AnhDaiDienUrl) ? "" : AppConfigManager.GetApiServerUrl() + detail.AnhDaiDienUrl;
 
+                        string avatarUrl = string.IsNullOrEmpty(detail.AnhDaiDienUrl) ? "" : AppConfigManager.GetApiServerUrl() + detail.AnhDaiDienUrl;
                         var imgSrc = HinhAnhHelper.LoadImage(avatarUrl, HinhAnhPaths.DefaultAvatar);
+
                         if (FindName("AvatarPreview") is ImageBrush i1) i1.ImageSource = imgSrc;
 
                         UpdateUIState();
@@ -332,7 +370,6 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            // --- BẮT ĐẦU: KIỂM TRA BẮT BUỘC TRÊN GIAO DIỆN ---
             TextBox? txtHoTen = FindName("txtHoTen") as TextBox;
             TextBox? txtTDN = FindName("txtTenDangNhap") as TextBox;
             TextBox? txtSDT = FindName("txtSoDienThoai") as TextBox;
@@ -362,7 +399,6 @@ namespace AppCafebookApi.View.quanly.pages
                 MessageBox.Show("Vui lòng phân công Vai trò cho nhân viên.", "Nhắc nhở nhập liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            // --- KẾT THÚC: KIỂM TRA BẮT BUỘC ---
 
             try
             {
@@ -480,41 +516,48 @@ namespace AppCafebookApi.View.quanly.pages
             }
         }
 
-        // ========================================================================
-        // Navigation Chuyển trang Menu
-        // ========================================================================
+        private void BtnQuayLai_Click(object sender, RoutedEventArgs e) => this.NavigationService?.GoBack();
+
         private void BtnPhanQuyen_Click(object sender, RoutedEventArgs e)
         {
             if (!AuthService.CoQuyen("FULL_QL", "QL_PHAN_QUYEN"))
-            {
-                MessageBox.Show("Bạn không có quyền truy cập Phân Quyền!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            { MessageBox.Show("Không có quyền truy cập Phân quyền!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyPhanQuyenView());
         }
 
         private void BtnGoToBaoCao_Click(object sender, RoutedEventArgs e)
         {
+            if (!AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_NHAN_SU"))
+            { MessageBox.Show("Bạn không có quyền Xem Báo cáo Nhân sự!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new BaoCaoNhanSuView());
         }
 
         private void BtnGoToLichLamViec_Click(object sender, RoutedEventArgs e)
         {
+            if (!AuthService.CoQuyen("FULL_QL", "QL_LICH_LAM_VIEC"))
+            { MessageBox.Show("Bạn không có quyền Xếp Lịch làm việc!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyLichLamViecView());
         }
 
         private void BtnGoToDonXinNghi_Click(object sender, RoutedEventArgs e)
         {
+            if (!AuthService.CoQuyen("FULL_QL", "QL_DON_XIN_NGHI"))
+            { MessageBox.Show("Bạn không có quyền Duyệt Đơn xin nghỉ!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyDonXinNghiView());
         }
 
         private void BtnGoToCaiDat_Click(object sender, RoutedEventArgs e)
         {
+            if (!AuthService.CoQuyen("FULL_QL", "QL_CAI_DAT_NHAN_SU"))
+            { MessageBox.Show("Bạn không có quyền Cài đặt tham số Nhân sự!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new CaiDatNhanSuView());
         }
 
         private void BtnGoToHieuSuat_Click(object sender, RoutedEventArgs e)
         {
+            if (!AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU"))
+            { MessageBox.Show("Bạn không có quyền Xem Báo cáo Hiệu suất!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+            this.NavigationService?.Navigate(new BaoCaoNhanSuView());
         }
     }
 }

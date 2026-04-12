@@ -1,5 +1,6 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelApp.QuanLy;
+using CafebookModel.Utils; // Kéo thư viện Utils
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -62,7 +63,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                 IdNhanVien = nv.IdNhanVien,
                 HoTen = nv.HoTen,
                 TenDangNhap = nv.TenDangNhap,
-                IdVaiTro = nv.IdVaiTro,
+                IdVaiTro = nv.IdVaiTro, // ĐÃ XÓA '?? 0' Ở ĐÂY
                 LuongCoBan = nv.LuongCoBan,
                 TrangThaiLamViec = nv.TrangThaiLamViec,
                 SoDienThoai = nv.SoDienThoai,
@@ -90,7 +91,6 @@ namespace CafebookApi.Controllers.App.QuanLy
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] QuanLyNhanVienSaveRequestDto request, IFormFile? AnhDaiDienUpload)
         {
-            // 1. KIỂM TRA BẮT BUỘC NHẬP 100% CÁC TRƯỜNG
             if (string.IsNullOrWhiteSpace(request.HoTen)) return BadRequest("Họ tên không được để trống!");
             if (string.IsNullOrWhiteSpace(request.TenDangNhap)) return BadRequest("Tên đăng nhập không được để trống!");
             if (string.IsNullOrWhiteSpace(request.MatKhau)) return BadRequest("Mật khẩu không được để trống khi thêm mới!");
@@ -98,22 +98,14 @@ namespace CafebookApi.Controllers.App.QuanLy
             if (string.IsNullOrWhiteSpace(request.Email)) return BadRequest("Email không được để trống!");
             if (string.IsNullOrWhiteSpace(request.DiaChi)) return BadRequest("Địa chỉ không được để trống!");
 
-            // Chuẩn hóa chuỗi (Xóa khoảng trắng 2 đầu)
             string tenDangNhap = request.TenDangNhap.Trim();
             string soDienThoai = request.SoDienThoai.Trim();
             string email = request.Email.Trim();
 
-            // 2. KIỂM TRA TRÙNG LẶP TRONG CSDL
-            if (await _context.NhanViens.AnyAsync(n => n.TenDangNhap == tenDangNhap))
-                return BadRequest("Tên đăng nhập này đã tồn tại trên hệ thống!");
+            if (await _context.NhanViens.AnyAsync(n => n.TenDangNhap == tenDangNhap)) return BadRequest("Tên đăng nhập này đã tồn tại trên hệ thống!");
+            if (await _context.NhanViens.AnyAsync(n => n.SoDienThoai == soDienThoai)) return BadRequest("Số điện thoại này đã được cấp cho nhân viên khác!");
+            if (await _context.NhanViens.AnyAsync(n => n.Email == email)) return BadRequest("Email này đã được cấp cho nhân viên khác!");
 
-            if (await _context.NhanViens.AnyAsync(n => n.SoDienThoai == soDienThoai))
-                return BadRequest("Số điện thoại này đã được cấp cho nhân viên khác!");
-
-            if (await _context.NhanViens.AnyAsync(n => n.Email == email))
-                return BadRequest("Email này đã được cấp cho nhân viên khác!");
-
-            // 3. THÊM MỚI
             var entity = new NhanVienEntity
             {
                 HoTen = request.HoTen.Trim(),
@@ -128,9 +120,10 @@ namespace CafebookApi.Controllers.App.QuanLy
                 NgayVaoLam = request.NgayVaoLam
             };
 
+            // LƯU ẢNH CHUẨN SLUG
             if (AnhDaiDienUpload != null)
             {
-                entity.AnhDaiDien = await SaveImageAsync(AnhDaiDienUpload);
+                entity.AnhDaiDien = await SaveImageAsync(AnhDaiDienUpload, entity.HoTen);
             }
 
             _context.NhanViens.Add(entity);
@@ -144,29 +137,20 @@ namespace CafebookApi.Controllers.App.QuanLy
             var entity = await _context.NhanViens.FindAsync(id);
             if (entity == null) return NotFound("Không tìm thấy nhân viên");
 
-            // 1. KIỂM TRA BẮT BUỘC NHẬP 100% CÁC TRƯỜNG
             if (string.IsNullOrWhiteSpace(request.HoTen)) return BadRequest("Họ tên không được để trống!");
             if (string.IsNullOrWhiteSpace(request.TenDangNhap)) return BadRequest("Tên đăng nhập không được để trống!");
             if (string.IsNullOrWhiteSpace(request.SoDienThoai)) return BadRequest("Số điện thoại không được để trống!");
             if (string.IsNullOrWhiteSpace(request.Email)) return BadRequest("Email không được để trống!");
             if (string.IsNullOrWhiteSpace(request.DiaChi)) return BadRequest("Địa chỉ không được để trống!");
 
-            // Chuẩn hóa chuỗi
             string tenDangNhap = request.TenDangNhap.Trim();
             string soDienThoai = request.SoDienThoai.Trim();
             string email = request.Email.Trim();
 
-            // 2. KIỂM TRA TRÙNG LẶP (Loại trừ chính nhân viên đang sửa)
-            if (await _context.NhanViens.AnyAsync(n => n.TenDangNhap == tenDangNhap && n.IdNhanVien != id))
-                return BadRequest("Tên đăng nhập này đã tồn tại trên hệ thống!");
+            if (await _context.NhanViens.AnyAsync(n => n.TenDangNhap == tenDangNhap && n.IdNhanVien != id)) return BadRequest("Tên đăng nhập này đã tồn tại trên hệ thống!");
+            if (await _context.NhanViens.AnyAsync(n => n.SoDienThoai == soDienThoai && n.IdNhanVien != id)) return BadRequest("Số điện thoại này đã được cấp cho nhân viên khác!");
+            if (await _context.NhanViens.AnyAsync(n => n.Email == email && n.IdNhanVien != id)) return BadRequest("Email này đã được cấp cho nhân viên khác!");
 
-            if (await _context.NhanViens.AnyAsync(n => n.SoDienThoai == soDienThoai && n.IdNhanVien != id))
-                return BadRequest("Số điện thoại này đã được cấp cho nhân viên khác!");
-
-            if (await _context.NhanViens.AnyAsync(n => n.Email == email && n.IdNhanVien != id))
-                return BadRequest("Email này đã được cấp cho nhân viên khác!");
-
-            // 3. CẬP NHẬT THÔNG TIN
             entity.HoTen = request.HoTen.Trim();
             entity.TenDangNhap = tenDangNhap;
             entity.IdVaiTro = request.IdVaiTro;
@@ -182,6 +166,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                 entity.MatKhau = request.MatKhau;
             }
 
+            // XỬ LÝ ẢNH
             if (request.XoaAnhDaiDien && !string.IsNullOrEmpty(entity.AnhDaiDien))
             {
                 DeleteOldImage(entity.AnhDaiDien);
@@ -190,7 +175,7 @@ namespace CafebookApi.Controllers.App.QuanLy
             else if (AnhDaiDienUpload != null)
             {
                 if (!string.IsNullOrEmpty(entity.AnhDaiDien)) DeleteOldImage(entity.AnhDaiDien);
-                entity.AnhDaiDien = await SaveImageAsync(AnhDaiDienUpload);
+                entity.AnhDaiDien = await SaveImageAsync(AnhDaiDienUpload, entity.HoTen);
             }
 
             await _context.SaveChangesAsync();
@@ -227,17 +212,22 @@ namespace CafebookApi.Controllers.App.QuanLy
             return Ok(new { Message = "Đã xóa nhân viên" });
         }
 
-        private async Task<string> SaveImageAsync(IFormFile file)
+        // ĐÃ NÂNG CẤP LƯU THEO TÊN
+        private async Task<string> SaveImageAsync(IFormFile file, string hoTen)
         {
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "avatars");
-            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            var folderPath = Path.Combine(_env.WebRootPath, "images", "avatars", "avatarNV");
+            if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+
+            string extension = Path.GetExtension(file.FileName);
+            string safeName = hoTen.GenerateSlug();
+            string uniqueFileName = $"{DateTime.Now:yyyyMMddHHmmss}_{safeName}{extension}";
+
+            var filePath = Path.Combine(folderPath, uniqueFileName);
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(fileStream);
             }
-            return $"/uploads/avatars/{uniqueFileName}";
+            return $"{HinhAnhPaths.UrlAvatarNV}/{uniqueFileName}";
         }
 
         private void DeleteOldImage(string imagePath)

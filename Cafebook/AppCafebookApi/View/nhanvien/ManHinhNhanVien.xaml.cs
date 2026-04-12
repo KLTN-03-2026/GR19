@@ -1,5 +1,6 @@
 ﻿using AppCafebookApi.Services;
 using AppCafebookApi.View.nhanvien.pages;
+using AppCafebookApi.View.quanly.pages;
 using CafebookModel.Utils;
 using System;
 using System.Diagnostics;
@@ -44,34 +45,70 @@ namespace AppCafebookApi.View.nhanvien
             //_sidebarTimer.Tick += async (s, e) => await CheckTrangThaiChamCongAsync();
         }
 
-        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // Lấy thông tin user từ AuthService
             var currentUser = AuthService.CurrentUser;
             if (currentUser != null)
             {
-                // Sử dụng đúng tên txtUserName và AvatarBorder của file XAML
-                txtUserName.Text = currentUser.HoTen;
+                txtUserName.Text = currentUser.HoTen; // Đổi từ txtAdminName
                 txtUserRole.Text = currentUser.TenVaiTro;
 
-                BitmapImage avatar = HinhAnhHelper.LoadImage(currentUser.AnhDaiDien ?? string.Empty, HinhAnhPaths.DefaultAvatar);
-                AvatarBorder.Background = new ImageBrush(avatar) { Stretch = Stretch.UniformToFill };
+                // --- BẮT ĐẦU LOGIC CHUẨN (Copy y hệt từ màn hình Quản lý) ---
+                string avatarPath = currentUser.AnhDaiDien ?? string.Empty;
+
+                if (!string.IsNullOrEmpty(avatarPath) && !avatarPath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    string baseUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
+
+                    if (!avatarPath.Contains("/"))
+                    {
+                        avatarPath = $"{HinhAnhPaths.UrlAvatarNV}/{avatarPath}";
+                    }
+
+                    avatarPath = $"{baseUrl.TrimEnd('/')}/{avatarPath.TrimStart('/')}";
+                }
+
+                // Gọi helper truyền URL chuẩn
+                BitmapImage avatarImage = HinhAnhHelper.LoadImage(
+                    avatarPath,
+                    HinhAnhPaths.DefaultAvatar
+                );
+                // --- KẾT THÚC LOGIC CHUẨN ---
+
+                // Đổ ảnh vào Border
+                AvatarBorder.Background = new ImageBrush(avatarImage)
+                {
+                    Stretch = Stretch.UniformToFill
+                };
+
+                // Xử lý ẩn/hiện cái Icon mặc định (nằm dưới lớp ảnh)
+                if (AvatarBorder.Child != null)
+                {
+                    // Nếu có đường dẫn ảnh thật -> Ẩn icon đi
+                    if (!string.IsNullOrEmpty(currentUser.AnhDaiDien))
+                        AvatarBorder.Child.Visibility = Visibility.Collapsed;
+                    // Nếu không có -> Hiện icon
+                    else
+                        AvatarBorder.Child.Visibility = Visibility.Visible;
+                }
             }
 
-            // Phân quyền
+            // Gọi hàm phân quyền
             ApplyPermissions();
 
-            // Mở trang đầu tiên (nếu có quyền mở Sơ đồ bàn, thì mở nó mặc định)
+            // Mở trang Sơ đồ bàn đầu tiên nếu có quyền
             if (btnSoDoBan.Visibility == Visibility.Visible)
             {
                 btnSoDoBan.IsChecked = true;
-                BtnSoDoBan_Click(btnSoDoBan, new RoutedEventArgs());
+
+                // Gán nút hiện tại để HandleNavigation xử lý đúng
+                if (currentNavButton != null) currentNavButton.IsChecked = false;
+                currentNavButton = btnSoDoBan;
+
+                MainFrame.Navigate(new SoDoBanView());
             }
-
-            // Kích hoạt theo dõi nhân viên
-           // await CheckTrangThaiChamCongAsync();
-            _sidebarTimer.Start();
         }
-
         // =================================================================================
         // HÀM PHÂN QUYỀN 
         // =================================================================================

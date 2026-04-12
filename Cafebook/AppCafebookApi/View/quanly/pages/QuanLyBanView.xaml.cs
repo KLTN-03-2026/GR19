@@ -27,20 +27,39 @@ namespace AppCafebookApi.View.quanly.pages
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-            if (!AuthService.CoQuyen("QL_BAN")) { MessageBox.Show("Từ chối!"); this.NavigationService?.GoBack(); return; }
-            ApplyPermissions(); await LoadDataAsync();
+
+            // 1. CHÌA KHÓA CỔNG
+            bool hasAnyPermission = AuthService.CoQuyen("FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC");
+            if (!hasAnyPermission)
+            {
+                MessageBox.Show("Bạn không có quyền truy cập phân hệ Bàn & Khu vực!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack();
+                return;
+            }
+
+            ApplyPermissions();
+
+            // 2. CHÌA KHÓA PHÒNG
+            if (AuthService.CoQuyen("FULL_QL", "QL_BAN"))
+            {
+                await LoadDataAsync();
+            }
+            else
+            {
+                if (FindName("GridDuLieuBan") is Grid gridData) gridData.Visibility = Visibility.Collapsed;
+                if (FindName("txtThongBaoKhongCoQuyen") is Border txtThongBao) txtThongBao.Visibility = Visibility.Visible;
+            }
         }
 
         private void ApplyPermissions()
         {
-            bool canEdit = AuthService.CoQuyen("QL_BAN");
-            if (FindName("btnThemMoi") is Button b1) b1.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnLuu") is Button b2) b2.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnXoa") is Button b3) b3.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnNavKhuVuc") is Button b1) b1.Visibility = AuthService.CoQuyen("FULL_QL", "QL_KHU_VUC") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnNavSuCo") is Button b2) b2.Visibility = AuthService.CoQuyen("FULL_QL", "QL_SU_CO_BAN") ? Visibility.Visible : Visibility.Collapsed;
 
-            // Ẩn hiện menu chức năng
-            if (FindName("btnNavKhuVuc") is Button n1) n1.Visibility = AuthService.CoQuyen("QL_KHU_VUC") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnNavSuCo") is Button n2) n2.Visibility = AuthService.CoQuyen("QL_SU_CO_BAN") ? Visibility.Visible : Visibility.Collapsed;
+            bool canEdit = AuthService.CoQuyen("FULL_QL", "QL_BAN");
+            if (FindName("btnThem") is Button btnThem) btnThem.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnLuu") is Button btnLuu) btnLuu.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnXoa") is Button btnXoa) btnXoa.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async Task LoadDataAsync()
@@ -49,17 +68,19 @@ namespace AppCafebookApi.View.quanly.pages
             if (overlay != null) overlay.Visibility = Visibility.Visible;
             try
             {
-                var kv = await httpClient.GetFromJsonAsync<List<LookupKhuVucDto>>("api/app/quanly-ban/lookup-khuvuc");
-                if (kv != null)
+                var kvs = await httpClient.GetFromJsonAsync<List<LookupKhuVucDto>>("api/app/quanly-ban/lookup-khuvuc");
+                if (kvs != null)
                 {
-                    _lookupKv = kv;
-                    if (FindName("cmbKhuVuc") is ComboBox cb1) cb1.ItemsSource = _lookupKv;
-                    if (FindName("cmbFilterKV") is ComboBox cb2)
+                    _lookupKv = kvs;
+                    if (FindName("cmbKhuVuc") is ComboBox cb) cb.ItemsSource = _lookupKv;
+                    if (FindName("cmbFilterKhuVuc") is ComboBox cbF)
                     {
-                        var filters = new List<LookupKhuVucDto> { new LookupKhuVucDto { IdKhuVuc = 0, TenKhuVuc = "Tất cả" } };
-                        filters.AddRange(_lookupKv); cb2.ItemsSource = filters; cb2.SelectedIndex = 0;
+                        var list = new List<LookupKhuVucDto> { new LookupKhuVucDto { IdKhuVuc = 0, TenKhuVuc = "Tất cả" } };
+                        list.AddRange(_lookupKv);
+                        cbF.ItemsSource = list; cbF.SelectedIndex = 0;
                     }
                 }
+
                 var bans = await httpClient.GetFromJsonAsync<List<QuanLyBanGridDto>>("api/app/quanly-ban");
                 if (bans != null) { _dataList = bans; FilterData(); }
             }
@@ -67,13 +88,14 @@ namespace AppCafebookApi.View.quanly.pages
             finally { if (overlay != null) overlay.Visibility = Visibility.Collapsed; }
         }
 
-        private void Filter_Changed(object sender, RoutedEventArgs e) => FilterData();
+        private void Filter_Changed(object sender, SelectionChangedEventArgs e) => FilterData();
+
         private void FilterData()
         {
-            if (!(FindName("dgBan") is DataGrid dg)) return;
+            if (FindName("dgBan") is not DataGrid dg) return;
             var q = _dataList.AsEnumerable();
-            if (FindName("cmbFilterKV") is ComboBox cb && cb.SelectedValue is int idKv && idKv > 0) q = q.Where(x => x.IdKhuVuc == idKv);
-            if (FindName("txtSearch") is TextBox txt && !string.IsNullOrEmpty(txt.Text)) q = q.Where(x => x.SoBan.ToLower().Contains(txt.Text.ToLower()));
+            int idKv = (FindName("cmbFilterKhuVuc") as ComboBox)?.SelectedValue as int? ?? 0;
+            if (idKv > 0) q = q.Where(x => x.IdKhuVuc == idKv);
             dg.ItemsSource = q.ToList();
         }
 
@@ -83,44 +105,54 @@ namespace AppCafebookApi.View.quanly.pages
             {
                 _selectedItem = item; _isAdding = false;
                 if (FindName("formChiTiet") is StackPanel form) form.IsEnabled = true;
-                if (FindName("lblTitle") is TextBlock title) title.Text = "Chi tiết Bàn";
+                if (FindName("lblTitle") is TextBlock t) t.Text = "Sửa Bàn";
+
                 if (FindName("txtSoBan") is TextBox t1) t1.Text = item.SoBan;
+                if (FindName("cmbKhuVuc") is ComboBox cb) cb.SelectedValue = item.IdKhuVuc;
                 if (FindName("txtSoGhe") is TextBox t2) t2.Text = item.SoGhe.ToString();
+                if (FindName("cmbTrangThai") is ComboBox cbt) cbt.Text = item.TrangThai;
                 if (FindName("txtGhiChu") is TextBox t3) t3.Text = item.GhiChu;
-                if (FindName("cmbKhuVuc") is ComboBox c1) c1.SelectedValue = item.IdKhuVuc;
-                if (FindName("cmbTrangThai") is ComboBox c2) c2.Text = string.IsNullOrEmpty(item.TrangThai) ? "Trống" : item.TrangThai;
-                if (FindName("btnLichSu") is Button bl) bl.Visibility = Visibility.Visible;
             }
         }
 
-        private void BtnThemMoi_Click(object sender, RoutedEventArgs e)
+        private void BtnLamMoi_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("QL_BAN")) return;
             _selectedItem = new QuanLyBanGridDto(); _isAdding = true;
             if (FindName("dgBan") is DataGrid dg) dg.SelectedItem = null;
             if (FindName("formChiTiet") is StackPanel form) form.IsEnabled = true;
-            if (FindName("lblTitle") is TextBlock title) title.Text = "Thêm Bàn Mới";
+            if (FindName("lblTitle") is TextBlock t) t.Text = "Thêm Bàn Mới";
+
             if (FindName("txtSoBan") is TextBox t1) t1.Text = "";
-            if (FindName("txtSoGhe") is TextBox t2) t2.Text = "2";
+            if (FindName("cmbKhuVuc") is ComboBox cb) cb.SelectedItem = null;
+            if (FindName("txtSoGhe") is TextBox t2) t2.Text = "4";
+            if (FindName("cmbTrangThai") is ComboBox cbt) cbt.SelectedIndex = 0;
             if (FindName("txtGhiChu") is TextBox t3) t3.Text = "";
-            if (FindName("btnLichSu") is Button bl) bl.Visibility = Visibility.Collapsed;
         }
 
         private async void BtnLuu_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("QL_BAN") || _selectedItem == null) return;
-
-            string so = (FindName("txtSoBan") as TextBox)?.Text.Trim() ?? "";
+            if (!AuthService.CoQuyen("FULL_QL", "QL_BAN")) return;
+            string soBan = (FindName("txtSoBan") as TextBox)?.Text.Trim() ?? "";
             int idKv = (FindName("cmbKhuVuc") as ComboBox)?.SelectedValue as int? ?? 0;
-            if (string.IsNullOrEmpty(so) || idKv == 0) { MessageBox.Show("Nhập đủ Số bàn và Khu vực!"); return; }
-            int.TryParse((FindName("txtSoGhe") as TextBox)?.Text, out int ghe);
 
-            var dto = new QuanLyBanSaveDto { SoBan = so, SoGhe = ghe, IdKhuVuc = idKv, TrangThai = (FindName("cmbTrangThai") as ComboBox)?.Text ?? "Trống", GhiChu = (FindName("txtGhiChu") as TextBox)?.Text };
+            if (string.IsNullOrEmpty(soBan) || idKv == 0) { MessageBox.Show("Nhập Số Bàn và chọn Khu vực!"); return; }
+
+            int.TryParse((FindName("txtSoGhe") as TextBox)?.Text, out int soGhe);
+
+            var dto = new QuanLyBanSaveDto
+            {
+                SoBan = soBan,
+                IdKhuVuc = idKv,
+                SoGhe = soGhe,
+                TrangThai = (FindName("cmbTrangThai") as ComboBox)?.Text ?? "Trống",
+                GhiChu = (FindName("txtGhiChu") as TextBox)?.Text
+            };
+
             var overlay = FindName("LoadingOverlay") as Border;
             if (overlay != null) overlay.Visibility = Visibility.Visible;
             try
             {
-                HttpResponseMessage res = _isAdding ? await httpClient.PostAsJsonAsync("api/app/quanly-ban", dto) : await httpClient.PutAsJsonAsync($"api/app/quanly-ban/{_selectedItem.IdBan}", dto);
+                var res = _isAdding ? await httpClient.PostAsJsonAsync("api/app/quanly-ban", dto) : await httpClient.PutAsJsonAsync($"api/app/quanly-ban/{_selectedItem!.IdBan}", dto);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }
@@ -129,8 +161,8 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnXoa_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("QL_BAN") || _selectedItem == null || _isAdding) return;
-            if (MessageBox.Show("Xóa bàn?", "Xác nhận", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
+            if (!AuthService.CoQuyen("FULL_QL", "QL_BAN") || _selectedItem == null || _isAdding) return;
+            if (MessageBox.Show("Xóa bàn này?", "Xác nhận", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
 
             var overlay = FindName("LoadingOverlay") as Border;
             if (overlay != null) overlay.Visibility = Visibility.Visible;
@@ -145,7 +177,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnLichSu_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("QL_BAN") || _selectedItem == null || _isAdding) return;
+            if (!AuthService.CoQuyen("FULL_QL", "QL_BAN") || _selectedItem == null || _isAdding) return;
             try
             {
                 var his = await httpClient.GetFromJsonAsync<QuanLyBanHistoryDto>($"api/app/quanly-ban/{_selectedItem.IdBan}/history");
@@ -157,14 +189,15 @@ namespace AppCafebookApi.View.quanly.pages
         // ĐIỀU HƯỚNG (BẢO MẬT LỚP 2)
         private void BtnNavKhuVuc_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("QL_KHU_VUC")) this.NavigationService?.Navigate(new QuanLyKhuVucView());
-            else MessageBox.Show("Bạn không có quyền!");
+            if (AuthService.CoQuyen("FULL_QL", "QL_KHU_VUC")) this.NavigationService?.Navigate(new QuanLyKhuVucView());
+            else MessageBox.Show("Bạn không có quyền truy cập!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         private void BtnNavSuCo_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("QL_SU_CO_BAN")) this.NavigationService?.Navigate(new QuanLySuCoBanView());
-            else MessageBox.Show("Bạn không có quyền!");
+            if (AuthService.CoQuyen("FULL_QL", "QL_SU_CO_BAN")) this.NavigationService?.Navigate(new QuanLySuCoBanView());
+            else MessageBox.Show("Bạn không có quyền truy cập!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+
     }
 }

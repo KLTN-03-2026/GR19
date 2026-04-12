@@ -47,7 +47,7 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1">
+        <Grid x:Name="GridDuLieuSanPham" Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="420"/>
@@ -137,6 +137,26 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
+
+            <Border x:Name="txtThongBaoKhongCoQuyen" 
+                Grid.Row="1" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center" 
+                Background="White" 
+                CornerRadius="15" 
+                Padding="60,40" 
+                Visibility="Collapsed">
+                <Border.Effect>
+                    <DropShadowEffect ShadowDepth="4" BlurRadius="25" Opacity="0.1" Color="Black"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="🛡️" FontSize="75" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                    <TextBlock Text="TRUY CẬP BỊ HẠN CHẾ" FontSize="22" FontWeight="Bold" Foreground="#D32F2F" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="Bạn không có quyền quản lý danh sách sản phẩm." FontSize="16" Foreground="#424242" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Vui lòng sử dụng các nút chức năng phía trên thanh công cụ." FontSize="15" Foreground="Gray" FontStyle="Italic" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+            
             <Border x:Name="LoadingOverlay" Grid.ColumnSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
                 <TextBlock Text="Đang xử lý..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
             </Border>

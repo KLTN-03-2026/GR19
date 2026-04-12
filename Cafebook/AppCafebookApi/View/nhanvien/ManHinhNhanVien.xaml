@@ -10,7 +10,8 @@
         Icon="/Assets/logo.ico"        
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
-        WindowState="Maximized">
+        WindowState="Maximized"
+        Loaded="Window_Loaded">
 
     <Window.Resources>
         <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
@@ -115,7 +116,18 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Margin="20">
-                    <Border x:Name="AvatarBorder" Height="70" Width="70" Background="{StaticResource LightCreamBrush}" CornerRadius="35" Margin="0,0,0,10">
+                    <Border x:Name="AvatarBorder"
+                            Height="70" Width="70"
+                            Background="{StaticResource LightCreamBrush}"
+                            CornerRadius="35"
+                            Margin="0,0,0,10">
+                        <Viewbox Margin="12,10,18,20">
+                            <Path Data="{StaticResource IconProfile}" Fill="{StaticResource PrimaryBrownBrush}">
+                                <Path.RenderTransform>
+                                    <TranslateTransform Y="1.5" />
+                                </Path.RenderTransform>
+                            </Path>
+                        </Viewbox>
                     </Border>
                     <TextBlock x:Name="txtUserName" Text="Tên Nhân Viên" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource WhiteTextBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
                     <TextBlock x:Name="txtUserRole" Text="Nhân viên" FontSize="13" Foreground="{StaticResource SubtleWhiteTextBrush}" HorizontalAlignment="Center"/>

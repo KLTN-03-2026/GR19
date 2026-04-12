@@ -12,45 +12,31 @@
         <SolidColorBrush x:Key="BorderGrayBrush" Color="#BDBDBD"/>
         <SolidColorBrush x:Key="BackgroundHoverBrush" Color="#F5F5F5"/>
 
-        <Geometry x:Key="IconAddTable">M4,6H20V8H4V6M4,10H20V12H4V10M4,14H11V16H4V14M19,16V19H16V21H14V19H11V16H14V14H16V16H19Z</Geometry>
-        <Geometry x:Key="IconSave">M17,3H5C3.89,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V7L17,3M15,9H5V5H15V9M12,19C10.34,19 9,17.66 9,16C9,14.34 10.34,13 12,13C13.66,13 15,14.34 15,16C15,17.66 13.66,19 12,19Z</Geometry>
-        <Geometry x:Key="IconDelete">M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19V4M6,19C6,20.1 6.9,21 8,21H16C17.1,21 18,20.1 18,19V7H6V19Z</Geometry>
-        <Geometry x:Key="IconHistory">M13.5,8H12V13L16.28,15.54L17,14.33L13.5,12.25V8M13,3C8.03,3 4,7.03 4,12C4,16.97 8.03,21 13,21C17.97,21 22,16.97 22,12C22,7.03 17.97,3 13,3M13,19C9.13,19 6,15.87 6,12C6,8.13 9.13,5 13,5C16.87,5 20,8.13 20,12C20,15.87 16.87,19 13,19Z</Geometry>
-
         <Style x:Key="ActionButton" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource PrimaryBrownBrush}"/>
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="Padding" Value="12,8"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.85"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
+
         <Style x:Key="DeleteButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
             <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
-        </Style>
-        <Style x:Key="MaterialTextBox" TargetType="TextBox">
-            <Setter Property="Padding" Value="8,10"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-        </Style>
-        <Style x:Key="MaterialComboBox" TargetType="ComboBox">
-            <Setter Property="Padding" Value="8,10"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
         </Style>
     </Page.Resources>
 
@@ -61,106 +47,107 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="QUẢN LÝ SƠ ĐỒ BÀN" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="btnNavKhuVuc" Style="{StaticResource ActionButton}" Background="#1976D2" Margin="0,0,10,0" Click="BtnNavKhuVuc_Click">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Quản lý Khu vực"/>
-                    </StackPanel>
-                </Button>
-                <Button x:Name="btnNavSuCo" Style="{StaticResource ActionButton}" Background="#FF9800" Click="BtnNavSuCo_Click">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Xem Sự cố Bàn"/>
-                    </StackPanel>
-                </Button>
+            <TextBlock Text="QUẢN LÝ SƠ ĐỒ BÀN" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button x:Name="btnNavKhuVuc" Content="🗺 Quản lý Khu vực" Style="{StaticResource ActionButton}" Background="#1976D2" Margin="0,0,5,0" Click="BtnNavKhuVuc_Click"/>
+                <Button x:Name="btnNavSuCo" Content="🛠 Quản lý Sự cố" Style="{StaticResource ActionButton}" Background="#FF9800" Margin="0,0,15,0" Click="BtnNavSuCo_Click"/>
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1">
+        <Grid x:Name="GridDuLieuBan" Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="400"/>
+                <ColumnDefinition Width="380"/>
             </Grid.ColumnDefinitions>
 
-            <Border Background="White" CornerRadius="8" Margin="0,0,10,0" Padding="15">
+            <Border Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                        <TextBlock Text="Khu vực:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                        <ComboBox x:Name="cmbFilterKV" Width="150" DisplayMemberPath="TenKhuVuc" SelectedValuePath="IdKhuVuc" Style="{StaticResource MaterialComboBox}" SelectionChanged="Filter_Changed"/>
-                        <TextBlock Text="Tìm bàn:" VerticalAlignment="Center" Margin="15,0,5,0"/>
-                        <TextBox x:Name="txtSearch" Width="150" Style="{StaticResource MaterialTextBox}" TextChanged="Filter_Changed"/>
-                        <Button x:Name="btnThemMoi" Margin="15,0,0,0" Style="{StaticResource ActionButton}" Background="#4CAF50" Click="BtnThemMoi_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource IconAddTable}" Fill="White" Width="16" Height="16" Margin="0,0,5,0" Stretch="Uniform"/>
-                                <TextBlock Text="Thêm mới"/>
-                            </StackPanel>
-                        </Button>
+                        <TextBlock Text="Khu vực:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ComboBox x:Name="cmbFilterKhuVuc" Width="150" DisplayMemberPath="TenKhuVuc" SelectedValuePath="IdKhuVuc" SelectionChanged="Filter_Changed" Padding="5"/>
+                        <Button x:Name="btnThem" Content="➕ Thêm mới" Style="{StaticResource ActionButton}" Background="#4CAF50" Margin="15,0,0,0" Click="BtnLamMoi_Click"/>
                     </StackPanel>
-                    <DataGrid x:Name="dgBan" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" SelectionChanged="DgBan_SelectionChanged" BorderThickness="0" Background="Transparent">
+
+                    <DataGrid x:Name="dgBan" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
+                              SelectionMode="Single" SelectionChanged="DgBan_SelectionChanged"
+                              BorderThickness="0" Background="Transparent" AlternatingRowBackground="#FAFAFA">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Số Bàn" Binding="{Binding SoBan}" Width="100"/>
-                            <DataGridTextColumn Header="Khu Vực" Binding="{Binding TenKhuVuc}" Width="150"/>
-                            <DataGridTextColumn Header="Số Ghế" Binding="{Binding SoGhe}" Width="80"/>
+                            <DataGridTextColumn Header="Số Bàn" Binding="{Binding SoBan}" Width="80"/>
+                            <DataGridTextColumn Header="Khu vực" Binding="{Binding TenKhuVuc}" Width="120"/>
+                            <DataGridTextColumn Header="Số Ghế" Binding="{Binding SoGhe}" Width="70"/>
                             <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="*"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
             </Border>
 
-            <Border Background="White" CornerRadius="8" Grid.Column="1" Padding="20">
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20">
                 <StackPanel x:Name="formChiTiet" IsEnabled="False">
-                    <TextBlock x:Name="lblTitle" Text="Chi tiết Bàn" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,20"/>
+                    <TextBlock x:Name="lblTitle" Text="Thông tin Bàn" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,20"/>
 
-                    <TextBlock Text="Thuộc Khu Vực" FontWeight="SemiBold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,5"/>
-                    <ComboBox x:Name="cmbKhuVuc" DisplayMemberPath="TenKhuVuc" SelectedValuePath="IdKhuVuc" Style="{StaticResource MaterialComboBox}"/>
+                    <TextBlock Text="Số Bàn (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtSoBan" Padding="8" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="0,0,0,1" Margin="0,0,0,15"/>
 
-                    <TextBlock Text="Số Bàn (Tên bàn)" FontWeight="SemiBold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,15,0,5"/>
-                    <TextBox x:Name="txtSoBan" Style="{StaticResource MaterialTextBox}"/>
+                    <TextBlock Text="Khu vực (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox x:Name="cmbKhuVuc" DisplayMemberPath="TenKhuVuc" SelectedValuePath="IdKhuVuc" Padding="8" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="0,0,0,1" Margin="0,0,0,15"/>
 
-                    <TextBlock Text="Số Ghế" FontWeight="SemiBold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,15,0,5"/>
-                    <TextBox x:Name="txtSoGhe" Style="{StaticResource MaterialTextBox}"/>
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,5,0">
+                            <TextBlock Text="Số Ghế" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <TextBox x:Name="txtSoGhe" Padding="8" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="0,0,0,1"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                            <TextBlock Text="Trạng thái" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <ComboBox x:Name="cmbTrangThai" Padding="8" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="0,0,0,1">
+                                <ComboBoxItem Content="Trống"/>
+                                <ComboBoxItem Content="Đang phục vụ"/>
+                                <ComboBoxItem Content="Đã đặt trước"/>
+                                <ComboBoxItem Content="Bảo trì"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
 
-                    <TextBlock Text="Trạng thái (Khóa Bàn)" FontWeight="SemiBold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,15,0,5"/>
-                    <ComboBox x:Name="cmbTrangThai" Style="{StaticResource MaterialComboBox}">
-                        <ComboBoxItem Content="Trống"/>
-                        <ComboBoxItem Content="Đang phục vụ"/>
-                        <ComboBoxItem Content="Bảo trì"/>
-                        <ComboBoxItem Content="Tạm ngưng"/>
-                    </ComboBox>
-
-                    <TextBlock Text="Ghi chú" FontWeight="SemiBold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,15,0,5"/>
-                    <TextBox x:Name="txtGhiChu" Style="{StaticResource MaterialTextBox}" Height="60" TextWrapping="Wrap" AcceptsReturn="True"/>
-
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,25,0,0">
-                        <Button x:Name="btnLichSu" Click="BtnLichSu_Click" Margin="0,0,10,0" Style="{StaticResource ActionButton}" Background="#42A5F5" Visibility="Collapsed">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource IconHistory}" Fill="White" Width="18" Height="18" Margin="0,0,5,0" Stretch="Uniform"/>
-                                <TextBlock Text="Lịch sử"/>
-                            </StackPanel>
-                        </Button>
-                        <Button x:Name="btnLuu" Click="BtnLuu_Click" Margin="0,0,10,0" Style="{StaticResource ActionButton}">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource IconSave}" Fill="White" Width="18" Height="18" Margin="0,0,5,0" Stretch="Uniform"/>
-                                <TextBlock Text="Lưu"/>
-                            </StackPanel>
-                        </Button>
-                        <Button x:Name="btnXoa" Click="BtnXoa_Click" Style="{StaticResource DeleteButton}">
-                            <StackPanel Orientation="Horizontal">
-                                <Path Data="{StaticResource IconDelete}" Fill="White" Width="18" Height="18" Margin="0,0,5,0" Stretch="Uniform"/>
-                                <TextBlock Text="Xóa"/>
-                            </StackPanel>
-                        </Button>
+                    <TextBlock Text="Ghi chú" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtGhiChu" Height="60" TextWrapping="Wrap" AcceptsReturn="True" Padding="8" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" Margin="0,0,0,20"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="btnLichSu" Content="📜 Lịch sử" Style="{StaticResource ActionButton}" Background="#9E9E9E" Margin="0,0,10,0" Click="BtnLichSu_Click"/>
+                        <Button x:Name="btnLuu" Content="💾 Lưu" Style="{StaticResource ActionButton}" Margin="0,0,10,0" Click="BtnLuu_Click"/>
+                        <Button x:Name="btnXoa" Content="🗑 Xóa" Style="{StaticResource DeleteButton}" Click="BtnXoa_Click"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
-
-            <Border x:Name="LoadingOverlay" Grid.ColumnSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
-                <TextBlock Text="Đang xử lý..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
-            </Border>
         </Grid>
+
+        <Border x:Name="txtThongBaoKhongCoQuyen" 
+                Grid.Row="1" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center" 
+                Background="White" 
+                CornerRadius="15" 
+                Padding="60,40" 
+                Visibility="Collapsed">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="4" BlurRadius="25" Opacity="0.1" Color="Black"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="🛡️" FontSize="75" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                <TextBlock Text="TRUY CẬP BỊ HẠN CHẾ" FontSize="22" FontWeight="Bold" Foreground="#D32F2F" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock Text="Bạn không có quyền quản lý sơ đồ bàn." FontSize="16" Foreground="#424242" HorizontalAlignment="Center"/>
+                <TextBlock Text="Vui lòng sử dụng các nút chức năng phía trên thanh công cụ." FontSize="15" Foreground="Gray" FontStyle="Italic" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
+            <TextBlock Text="Đang xử lý..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+        </Border>
     </Grid>
 </Page>

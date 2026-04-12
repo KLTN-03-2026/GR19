@@ -34,19 +34,46 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-            if (!AuthService.CoQuyen("QL_SAN_PHAM")) { MessageBox.Show("Từ chối!"); this.NavigationService?.GoBack(); return; }
-            ApplyPermissions(); await LoadDataAsync();
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
+            // 1. CHÌA KHÓA CỔNG
+            bool hasAccess = AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM", "QL_DANH_MUC", "QL_DINH_LUONG");
+            if (!hasAccess)
+            {
+                MessageBox.Show("Từ chối truy cập phân hệ Sản phẩm!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack();
+                return;
+            }
+
+            ApplyPermissions();
+
+            // 2. CHÌA KHÓA PHÒNG
+            if (AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM"))
+            {
+                if (FindName("GridDuLieuSanPham") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
+                if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Collapsed;
+                await LoadDataAsync();
+            }
+            else
+            {
+                if (FindName("GridDuLieuSanPham") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Collapsed;
+                if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Visible;
+            }
         }
 
         private void ApplyPermissions()
         {
-            bool canEdit = AuthService.CoQuyen("QL_SAN_PHAM");
+            // Nút điều hướng Menu Header
+            if (FindName("btnNavDanhMuc") is Button b4) b4.Visibility = AuthService.CoQuyen("FULL_QL", "QL_DANH_MUC") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnNavDinhLuong") is Button b5) b5.Visibility = AuthService.CoQuyen("FULL_QL", "QL_DINH_LUONG") ? Visibility.Visible : Visibility.Collapsed;
+
+            // Quyền thao tác và Xuất Excel
+            bool canEdit = AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM");
+            if (FindName("btnXuatExcel") is Button btnXuat) btnXuat.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnLamMoiForm") is Button b1) b1.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnLuu") is Button b2) b2.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnXoa") is Button b3) b3.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnNavDanhMuc") is Button b4) b4.Visibility = AuthService.CoQuyen("QL_DANH_MUC") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnNavDinhLuong") is Button b5) b5.Visibility = AuthService.CoQuyen("QL_DINH_LUONG") ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async Task LoadDataAsync()

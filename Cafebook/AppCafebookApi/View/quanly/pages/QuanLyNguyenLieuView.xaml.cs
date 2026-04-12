@@ -29,23 +29,44 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            // BẢO MẬT LỚP 2
-            if (!AuthService.CoQuyen("QL_NGUYEN_LIEU")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
+            // 1. KIỂM TRA CHÌA KHÓA CỔNG (Cho phép vào nếu có 1 trong các quyền liên quan)
+            bool hasAccess = AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU", "QL_DON_VI_CHUYEN_DOI");
+            if (!hasAccess)
+            {
+                MessageBox.Show("Bạn không có quyền truy cập module này!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack();
+                return;
+            }
 
-            ApplyPermissions();
-            await LoadDataAsync();
+            ApplyPermissions(); // Xử lý ẩn hiện nút "Đơn vị quy đổi"
+
+            // 2. KIỂM TRA QUYỀN QUẢN LÝ NGUYÊN LIỆU (Ẩn hiện dữ liệu chính)
+            if (AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU"))
+            {
+                // Có quyền -> Hiện dữ liệu và Load
+                if (FindName("GridDuLieuNL") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
+                if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Collapsed;
+                await LoadDataAsync();
+            }
+            else
+            {
+                // Không có quyền NL -> Ẩn dữ liệu, hiện khiên bảo mật (nhưng vẫn để Header để bấm Đơn vị quy đổi)
+                if (FindName("GridDuLieuNL") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Collapsed;
+                if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Visible;
+            }
         }
 
         private void ApplyPermissions()
         {
-            // BẢO MẬT LỚP 1 VÀ FINDNAME
-            bool canEdit = AuthService.CoQuyen("QL_NGUYEN_LIEU");
-            if (FindName("btnThemMoi") is Button b1) b1.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
+            // Nút Quản lý Đơn vị quy đổi (Cấp quyền riêng)
+            if (FindName("btnQuanLyDVT") is Button btnDVT)
+                btnDVT.Visibility = AuthService.CoQuyen("FULL_QL", "QL_DON_VI_CHUYEN_DOI") ? Visibility.Visible : Visibility.Collapsed;
+
+            // Các nút thao tác trên Nguyên liệu
+            bool canEdit = AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU");
+            if (FindName("btnLamMoiForm") is Button b1) b1.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnLuu") is Button b2) b2.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnXoa") is Button b3) b3.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
-
-            // Quyền truy cập Đơn vị Quy đổi
-            if (FindName("btnQuanLyDVT") is Button b4) b4.Visibility = AuthService.CoQuyen("QL_DON_VI_CHUYEN_DOI") ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async Task LoadDataAsync()

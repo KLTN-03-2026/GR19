@@ -4,9 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:AppCafebookApi.View.quanly.pages"
-      
       xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
-      
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1100"
       Title="DashboardView"
@@ -20,46 +18,49 @@
         <SolidColorBrush x:Key="WhiteTextBrush" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="TextGrayBrush" Color="#757575"/>
         <SolidColorBrush x:Key="BorderGrayBrush" Color="#E0E0E0"/>
-        <SolidColorBrush x:Key="SubtleGrayBrush" Color="#F5F5F5"/>
-        <SolidColorBrush x:Key="ActionGreenBrush" Color="#66BB6A"/>
-        <SolidColorBrush x:Key="ActionBlueBrush" Color="#42A5F5"/>
-        <SolidColorBrush x:Key="ActionOrangeBrush" Color="#FFA726"/>
 
-        <Geometry x:Key="IconRevenue">M11.8,10.9C11.4,11.2 10.8,11.5 10,11.5C8.6,11.5 7.5,10.4 7.5,9C7.5,7.6 8.6,6.5 10,6.5C10.8,6.5 11.4,6.8 11.8,7.1L12.9,6C12,5.2 11,4.5 10,4.5C7.2,4.5 5,6.7 5,9.5C5,12.3 7.2,14.5 10,14.5C11,14.5 12,13.8 12.9,13L11.8,10.9M12,3H1V1H12V3M12,21H1V19H12V21M17.5,12.5A1.5,1.5 0 0,1 16,11A1.5,1.5 0 0,1 17.5,9.5A1.5,1.5 0 0,1 19,11A1.5,1.5 0 0,1 17.5,12.5M15.5,17H19.5V15H15.5V17Z</Geometry>
-        <Geometry x:Key="IconOrder">M17,17H7V15H17M17,13H7V11H17M17,9H7V7H17M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3Z</Geometry>
-        <Geometry x:Key="IconStar">M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z</Geometry>
-        <Geometry x:Key="IconDownload">M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z</Geometry>
-        <Geometry x:Key="IconSettings">M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,10A2,2 0 0,0 10,12A2,2 0 0,0 12,14A2,2 0 0,0 14,12A2,2 0 0,0 12,10M12,22C11.6,22 11.2,21.9 10.8,21.7L9.1,20.9C5.1,19.3 2,15.2 2,10.9V5L12,2L22,5V10.9C22,15.2 18.9,19.3 14.9,20.9L13.2,21.7C12.8,21.9 12.4,22 12,22Z</Geometry>
+        <Geometry x:Key="IconMoney">M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10V14A2,2 0 0,1 9,16H19A2,2 0 0,1 21,14V10A2,2 0 0,1 19,8H9M1,10H3V20H19V22H1V10Z</Geometry>
+        <Geometry x:Key="IconCart">M17,18C15.89,18 15,18.89 15,20A2,2 0 0,0 17,22A2,2 0 0,0 19,20C19,18.89 18.1,18 17,18M1,2V4H3L6.6,11.59L5.24,14.04C5.09,14.32 5,14.65 5,15A2,2 0 0,0 7,17H19V15H7.42A0.25,0.25 0 0,1 7.17,14.75C7.17,14.7 7.18,14.66 7.2,14.63L8.1,13H15.55C16.3,13 16.96,12.58 17.3,11.97L20.88,5.5C20.95,5.34 21,5.17 21,5A1,1 0 0,0 20,4H5.21L4.27,2M7,18C5.89,18 5,18.89 5,20A2,2 0 0,0 7,22A2,2 0 0,0 9,20C9,18.89 8.1,18 7,18Z</Geometry>
+        <Geometry x:Key="IconBook">M18,22A2,2 0 0,0 20,20V4C20,2.89 19.1,2 18,2H12V9L9.5,7.5L7,9V2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18Z</Geometry>
+        <Geometry x:Key="IconUser">M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z</Geometry>
 
-        <Style x:Key="KpiCard" TargetType="Border">
+        <Geometry x:Key="IconViewReport">M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z</Geometry>
+        <Geometry x:Key="IconSettings">M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.98C19.47,12.66 19.5,12.34 19.5,12C19.5,11.66 19.47,11.34 19.43,11.02L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.97 19.05,5.05L16.56,6.05C16.04,5.65 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.65 7.44,6.05L4.95,5.05C4.73,4.97 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11.02C4.53,11.34 4.5,11.66 4.5,12C4.5,12.34 4.53,12.66 4.57,12.98L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.35 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.35 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.98Z</Geometry>
+
+        <Style x:Key="StatCardBorder" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource WhiteTextBrush}"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="20"/>
-            <Setter Property="Margin" Value="0,0,20,0"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect ShadowDepth="1" Color="#000" Opacity="0.08" BlurRadius="20"/>
+                    <DropShadowEffect ShadowDepth="2" Color="#000" Opacity="0.05" BlurRadius="10"/>
                 </Setter.Value>
             </Setter>
         </Style>
+
         <Style x:Key="ReportButton" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource SubtleGrayBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource DarkBrownBrush}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Background" Value="{StaticResource WhiteTextBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrownBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="15,12"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6">
-                            <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource BorderGrayBrush}"/>
+                                <Setter TargetName="border" Property="Background" Value="#F5F5F5"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBrownBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#E0E0E0"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -68,181 +69,224 @@
         </Style>
     </Page.Resources>
 
-    <Grid x:Name="MainPanel" Background="{StaticResource LightCreamBrush}" Margin="10" >
-        <Grid.RenderTransform>
-            <TranslateTransform Y="20"/>
-        </Grid.RenderTransform>
-        <Grid.Triggers>
-            <EventTrigger RoutedEvent="Loaded">
-                <BeginStoryboard>
-                    <Storyboard>
-                        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.5"/>
-                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" To="0" Duration="0:0:0.5">
-                            <DoubleAnimation.EasingFunction>
-                                <BackEase EasingMode="EaseOut" Amplitude="0.2"/>
-                            </DoubleAnimation.EasingFunction>
-                        </DoubleAnimation>
-                    </Storyboard>
-                </BeginStoryboard>
-            </EventTrigger>
-        </Grid.Triggers>
+    <Grid Background="{StaticResource LightCreamBrush}">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+            <TextBlock Text="TỔNG QUAN &amp; BÁO CÁO" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" Margin="0,0,0,20"/>
 
-        <TextBlock Grid.Row="0" Text="Tổng quan Hôm nay" FontSize="28" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,10,0,20"/>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="300"/>
+                </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <Border Grid.Column="0" Style="{StaticResource KpiCard}">
-                <Grid>
-                    <Path Data="{StaticResource IconRevenue}" Fill="{StaticResource ActionGreenBrush}" Width="48" Height="48" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Top" Opacity="0.1"/>
+                <ScrollViewer x:Name="GridDuLieuTongQuan" Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,15,0">
                     <StackPanel>
-                        <TextBlock x:Name="lblDoanhThu" Text="0 VND" FontSize="26" FontWeight="Bold" Foreground="{StaticResource ActionGreenBrush}"/>
-                        <TextBlock Text="DOANH THU" FontSize="14" Foreground="{StaticResource TextGrayBrush}" Margin="0,5,0,0"/>
+                        <UniformGrid Columns="2">
+                            <Border Style="{StaticResource StatCardBorder}" Margin="0,0,10,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="DOANH THU HÔM NAY" FontSize="12" Foreground="{StaticResource TextGrayBrush}" FontWeight="Bold"/>
+                                        <TextBlock x:Name="txtDoanhThu" Text="0 đ" FontSize="24" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#E3F2FD" Width="40" Height="40" CornerRadius="20" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <Viewbox Width="20" Height="20">
+                                            <Path Data="{StaticResource IconMoney}" Fill="#1976D2"/>
+                                        </Viewbox>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <Border Style="{StaticResource StatCardBorder}" Margin="10,0,0,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="ĐƠN HÀNG MỚI" FontSize="12" Foreground="{StaticResource TextGrayBrush}" FontWeight="Bold"/>
+                                        <TextBlock x:Name="txtDonHang" Text="0" FontSize="24" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#E8F5E9" Width="40" Height="40" CornerRadius="20" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <Viewbox Width="20" Height="20">
+                                            <Path Data="{StaticResource IconCart}" Fill="#388E3C"/>
+                                        </Viewbox>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <Border Style="{StaticResource StatCardBorder}" Margin="0,10,10,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="SẢN PHẨM BÁN CHẠY" FontSize="12" Foreground="{StaticResource TextGrayBrush}" FontWeight="Bold"/>
+                                        <TextBlock x:Name="txtSPBanChay" Text="---" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock x:Name="txtSLBanChay" Text="0 đã bán" FontSize="12" Foreground="{StaticResource TextGrayBrush}"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#FFF3E0" Width="40" Height="40" CornerRadius="20" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <Viewbox Width="20" Height="20">
+                                            <Path Data="{StaticResource IconBook}" Fill="#F57C00"/>
+                                        </Viewbox>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <Border Style="{StaticResource StatCardBorder}" Margin="10,10,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="NHÂN VIÊN CA NÀY" FontSize="12" Foreground="{StaticResource TextGrayBrush}" FontWeight="Bold"/>
+                                        <TextBlock x:Name="txtNhanVien" Text="0" FontSize="24" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#F3E5F5" Width="40" Height="40" CornerRadius="20" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <Viewbox Width="20" Height="20">
+                                            <Path Data="{StaticResource IconUser}" Fill="#7B1FA2"/>
+                                        </Viewbox>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </UniformGrid>
+
+                        <Border Background="{StaticResource WhiteTextBrush}" CornerRadius="8" Padding="20" Margin="0,15,0,0">
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="2" Color="#000" Opacity="0.05" BlurRadius="10"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock Text="DOANH THU 30 NGÀY QUA" FontSize="16" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,15"/>
+                                <lvc:CartesianChart Height="250" Series="{Binding SeriesCollection}">
+                                    <lvc:CartesianChart.AxisX>
+                                        <lvc:Axis Labels="{Binding Labels}"/>
+                                    </lvc:CartesianChart.AxisX>
+                                    <lvc:CartesianChart.AxisY>
+                                        <lvc:Axis LabelFormatter="{Binding YFormatter}"/>
+                                    </lvc:CartesianChart.AxisY>
+                                </lvc:CartesianChart>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                </Grid>
-            </Border>
-            <Border Grid.Column="1" Style="{StaticResource KpiCard}">
-                <Grid>
-                    <Path Data="{StaticResource IconOrder}" Fill="{StaticResource ActionBlueBrush}" Width="48" Height="48" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Top" Opacity="0.1"/>
+                </ScrollViewer>
+
+                <Border x:Name="txtThongBaoKhongCoQuyen" 
+                        Grid.Column="0" 
+                        HorizontalAlignment="Center" 
+                        VerticalAlignment="Center" 
+                        Background="White" 
+                        CornerRadius="15" 
+                        Padding="60,40" 
+                        Visibility="Collapsed">
+                    <Border.Effect>
+                        <DropShadowEffect ShadowDepth="4" BlurRadius="25" Opacity="0.1" Color="Black"/>
+                    </Border.Effect>
+
                     <StackPanel>
-                        <TextBlock x:Name="lblDonHang" Text="0" FontSize="26" FontWeight="Bold" Foreground="{StaticResource ActionBlueBrush}"/>
-                        <TextBlock Text="ĐƠN HÀNG" FontSize="14" Foreground="{StaticResource TextGrayBrush}" Margin="0,5,0,0"/>
+                        <TextBlock Text="🛡️" FontSize="75" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                        <TextBlock Text="TRUY CẬP BỊ HẠN CHẾ" FontSize="22" FontWeight="Bold" Foreground="#D32F2F" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBlock Text="Bạn không có quyền xem Dashboard Tổng quan." FontSize="16" Foreground="#424242" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Vui lòng sử dụng các nút chức năng báo cáo bên phải." FontSize="15" Foreground="Gray" FontStyle="Italic" HorizontalAlignment="Center" Margin="0,5,0,0"/>
                     </StackPanel>
-                </Grid>
-            </Border>
-            <Border Grid.Column="2" Style="{StaticResource KpiCard}" Margin="0">
-                <Grid>
-                    <Path Data="{StaticResource IconStar}" Fill="{StaticResource ActionOrangeBrush}" Width="48" Height="48" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Top" Opacity="0.1"/>
+                </Border>
+
+                <Border Grid.Column="1" Background="{StaticResource WhiteTextBrush}" CornerRadius="8" Padding="20">
+                    <Border.Effect>
+                        <DropShadowEffect ShadowDepth="2" Color="#000" Opacity="0.05" BlurRadius="10"/>
+                    </Border.Effect>
                     <StackPanel>
-                        <TextBlock x:Name="lblSanPhamBanChay" Text="Chưa có" FontSize="22" FontWeight="Bold" Foreground="{StaticResource ActionOrangeBrush}" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="SẢN PHẨM BÁN CHẠY" FontSize="14" Foreground="{StaticResource TextGrayBrush}" Margin="0,5,0,0"/>
+                        <TextBlock Text="CHỨC NĂNG NHANH" FontSize="16" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,20"/>
+
+                        <Button x:Name="btnXemDoanhThu" Style="{StaticResource ReportButton}" Margin="0,0,0,10" Click="BtnXemDoanhThu_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
+                                    <Path Data="{StaticResource IconViewReport}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                </Viewbox>
+                                <TextBlock Grid.Column="1" Text="Xem Báo cáo Doanh thu" VerticalAlignment="Center" Margin="0,1,0,0"/>
+                            </Grid>
+                        </Button>
+
+                        <Button x:Name="btnXemSach" Style="{StaticResource ReportButton}" Margin="0,0,0,10" Click="BtnXemSach_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
+                                    <Path Data="{StaticResource IconViewReport}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                </Viewbox>
+                                <TextBlock Grid.Column="1" Text="Xem Báo cáo Kho Sách" VerticalAlignment="Center" Margin="0,1,0,0"/>
+                            </Grid>
+                        </Button>
+
+                        <Button x:Name="btnXemNguyenLieu" Style="{StaticResource ReportButton}" Margin="0,0,0,10" Click="BtnXemNguyenLieu_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
+                                    <Path Data="{StaticResource IconViewReport}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                </Viewbox>
+                                <TextBlock Grid.Column="1" Text="Xem Báo cáo Kho Nguyên liệu" VerticalAlignment="Center" Margin="0,1,0,0"/>
+                            </Grid>
+                        </Button>
+
+                        <Button x:Name="btnXemNhanSu" Style="{StaticResource ReportButton}" Margin="0,0,0,10" Click="BtnXemNhanSu_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
+                                    <Path Data="{StaticResource IconViewReport}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                </Viewbox>
+                                <TextBlock Grid.Column="1" Text="Xem Báo cáo Nhân sự" VerticalAlignment="Center" Margin="0,1,0,0"/>
+                            </Grid>
+                        </Button>
+
+                        <Button x:Name="btnXemHieuSuat" Style="{StaticResource ReportButton}" Margin="0,0,0,10" Click="BtnXemHieuSuat_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
+                                    <Path Data="{StaticResource IconViewReport}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                </Viewbox>
+                                <TextBlock Grid.Column="1" Text="Xem Báo cáo Hiệu suất KPI" VerticalAlignment="Center" Margin="0,1,0,0"/>
+                            </Grid>
+                        </Button>
+
+                        <Button x:Name="btnCaiDat" Style="{StaticResource ReportButton}" Margin="0,10,0,0" Click="BtnCaiDat_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
+                                    <Path Data="{StaticResource IconSettings}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                </Viewbox>
+                                <TextBlock Grid.Column="1" Text="Cài đặt hệ thống" VerticalAlignment="Center" Margin="0,1,0,0"/>
+                            </Grid>
+                        </Button>
                     </StackPanel>
-                </Grid>
-            </Border>
-        </Grid>
-
-        <Grid Grid.Row="2" Margin="0,20,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*"/>
-                <ColumnDefinition Width="1*"/>
-            </Grid.ColumnDefinitions>
-
-            <Border Grid.Column="0" Style="{StaticResource KpiCard}" Margin="0,0,20,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="Doanh thu 30 ngày qua" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource DarkBrownBrush}"/>
-
-                    <lvc:CartesianChart Grid.Row="1" Margin="0,15,0,0" Series="{Binding SeriesCollection}">
-                        <lvc:CartesianChart.Resources>
-                            <Style TargetType="lvc:LineSeries">
-                                <Setter Property="Stroke" Value="{StaticResource PrimaryBrownBrush}"/>
-                                <Setter Property="Fill" Value="#406F4E37"/>
-                                <Setter Property="StrokeThickness" Value="3"/>
-                                <Setter Property="PointGeometry" Value="{x:Null}"/>
-                            </Style>
-                            <Style TargetType="lvc:DefaultTooltip">
-                                <Setter Property="Background" Value="{StaticResource DarkBrownBrush}"/>
-                                <Setter Property="Foreground" Value="{StaticResource WhiteTextBrush}"/>
-                                <Setter Property="CornerRadius" Value="4"/>
-                            </Style>
-                        </lvc:CartesianChart.Resources>
-                        <lvc:CartesianChart.AxisX>
-                            <lvc:Axis Title="Ngày" Labels="{Binding Labels}">
-                                <lvc:Axis.Separator>
-                                    <lvc:Separator Stroke="#E0E0E0" StrokeThickness="1"/>
-                                </lvc:Axis.Separator>
-                            </lvc:Axis>
-                        </lvc:CartesianChart.AxisX>
-                        <lvc:CartesianChart.AxisY>
-                            <lvc:Axis Title="Doanh thu" LabelFormatter="{Binding YFormatter}">
-                                <lvc:Axis.Separator>
-                                    <lvc:Separator Stroke="#E0E0E0" StrokeThickness="1"/>
-                                </lvc:Axis.Separator>
-                            </lvc:Axis>
-                        </lvc:CartesianChart.AxisY>
-                    </lvc:CartesianChart>
-
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="1" Style="{StaticResource KpiCard}" Margin="0">
-                <StackPanel>
-                    <TextBlock Text="Báo cáo &amp; Tác vụ" x:Name="txtBaoCaoTacVu" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource DarkBrownBrush}"/>
-                    <Button x:Name="btnExportRevenue" Style="{StaticResource ReportButton}" Click="BtnExportRevenue_Click">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
-                                <Path Data="{StaticResource IconDownload}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                            </Viewbox>
-                            <TextBlock Grid.Column="1" Text="Xuất Báo cáo Doanh thu" VerticalAlignment="Center" Margin="0,1,0,0"/>
-                        </Grid>
-                    </Button>
-                    <Button x:Name="btnExportTonKhoSach" Style="{StaticResource ReportButton}" Click="BtnExportTonKhoSach_Click">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
-                                <Path Data="{StaticResource IconDownload}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                            </Viewbox>
-                            <TextBlock Grid.Column="1" Text="Xuất Tồn kho Sách" VerticalAlignment="Center" Margin="0,1,0,0"/>
-                        </Grid>
-                    </Button>
-                    <Button x:Name="btnExportNguyenLieu" Style="{StaticResource ReportButton}" Click="BtnExportNguyenLieu_Click">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
-                                <Path Data="{StaticResource IconDownload}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                            </Viewbox>
-                            <TextBlock Grid.Column="1" Text="Xuất Tồn kho Nguyên liệu" VerticalAlignment="Center" Margin="0,1,0,0"/>
-                        </Grid>
-                    </Button>
-                    <Button x:Name="btnExportPerformance" Style="{StaticResource ReportButton}" Click="BtnExportPerformance_Click">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
-                                <Path Data="{StaticResource IconDownload}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                            </Viewbox>
-                            <TextBlock Grid.Column="1" Text="Xuất Hiệu suất NV" VerticalAlignment="Center" Margin="0,1,0,0"/>
-                        </Grid>
-                    </Button>
-                    <Button x:Name="btnCaiDat" Style="{StaticResource ReportButton}" Margin="0,20,0,0" Click="BtnCaiDat_Click">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,10,0">
-                                <Path Data="{StaticResource IconSettings}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                            </Viewbox>
-                            <TextBlock Grid.Column="1" Text="Cài đặt thông tin hiển thị" VerticalAlignment="Center" Margin="0,1,0,0"/>
-                        </Grid>
-                    </Button>
-                </StackPanel>
-            </Border>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </Page>
