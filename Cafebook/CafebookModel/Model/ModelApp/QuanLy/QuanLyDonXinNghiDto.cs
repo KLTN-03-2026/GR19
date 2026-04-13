@@ -21,4 +21,12 @@ namespace CafebookModel.Model.ModelApp.QuanLy
         public int IdNguoiDuyet { get; set; }
         public string? GhiChuPheDuyet { get; set; }
     }
+
+    // THÊM MỚI: DTO hiển thị danh sách ca làm việc sẽ bị hủy
+    public class AffectedShiftDto
+    {
+        public int IdLichLamViec { get; set; }
+        public DateTime NgayLam { get; set; }
+        public string TenCa { get; set; } = string.Empty;
+    }
 }

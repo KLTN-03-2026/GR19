@@ -16,7 +16,6 @@ namespace AppCafebookApi.View.quanly.pages
     public partial class QuanLyDonXinNghiView : Page
     {
         private static readonly HttpClient httpClient;
-
         private List<QuanLyDonXinNghiGridDto> _allDonNghiList = new List<QuanLyDonXinNghiGridDto>();
         private QuanLyDonXinNghiGridDto? _selectedDon = null;
 
@@ -26,17 +25,12 @@ namespace AppCafebookApi.View.quanly.pages
             httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
         }
 
-        public QuanLyDonXinNghiView()
-        {
-            InitializeComponent();
-        }
+        public QuanLyDonXinNghiView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-            {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-            }
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_DON_XIN_NGHI"))
             {
@@ -45,21 +39,9 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            ApplyPermissions();
-            cmbTrangThaiFilter.SelectedIndex = 1; // "Chờ duyệt"
             await LoadDataFromServerAsync();
-            ResetForm();
         }
 
-        private void ApplyPermissions()
-        {
-            if (FindName("btnGoToBaoCao") is Button btnBC)
-                btnBC.Visibility = AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        // ========================================================================
-        // NGHIỆP VỤ TẢI VÀ LỌC DỮ LIỆU
-        // ========================================================================
         private async Task LoadDataFromServerAsync()
         {
             if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
@@ -72,70 +54,56 @@ namespace AppCafebookApi.View.quanly.pages
                     ApplyClientFilter();
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi tải danh sách đơn: {ex.Message}", "Lỗi API");
-            }
-            finally
-            {
-                if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed;
-            }
+            catch { }
+            finally { if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed; }
         }
 
-        private void Filters_Changed(object sender, RoutedEventArgs e)
-        {
-            ApplyClientFilter();
-        }
+        private void Filters_Changed(object sender, RoutedEventArgs e) => ApplyClientFilter();
+        private void Filters_Changed(object sender, TextChangedEventArgs e) => ApplyClientFilter();
+        private void Filters_Changed(object sender, SelectionChangedEventArgs e) => ApplyClientFilter();
 
         private void ApplyClientFilter()
         {
             if (_allDonNghiList == null) return;
-
             var filtered = _allDonNghiList.AsEnumerable();
 
-            // Lọc trạng thái
-            string trangThai = (cmbTrangThaiFilter.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Tất cả";
-            if (trangThai != "Tất cả")
+            if (FindName("cmbTrangThaiFilter") is ComboBox cmb && cmb.SelectedItem is ComboBoxItem item)
             {
-                filtered = filtered.Where(d => d.TrangThai == trangThai);
+                string trangThai = item.Content.ToString() ?? "Tất cả";
+                if (trangThai != "Tất cả") filtered = filtered.Where(d => d.TrangThai == trangThai);
             }
 
-            // Lọc tìm kiếm (real-time)
-            string search = txtSearchNhanVien.Text?.Trim().ToLower() ?? "";
+            string search = (FindName("txtSearchNhanVien") as TextBox)?.Text?.Trim().ToLower() ?? "";
             if (!string.IsNullOrEmpty(search))
             {
                 filtered = filtered.Where(d => d.TenNhanVien.ToLower().Contains(search) || d.LyDo.ToLower().Contains(search));
             }
 
-            dgDonXinNghi.ItemsSource = filtered.ToList();
+            if (FindName("dgDonXinNghi") is DataGrid dg) dg.ItemsSource = filtered.ToList();
             ResetForm();
         }
 
-        // ========================================================================
-        // TƯƠNG TÁC GIAO DIỆN
-        // ========================================================================
         private void DgDonXinNghi_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is DataGrid dg && dg.SelectedItem is QuanLyDonXinNghiGridDto selected)
+            if (FindName("dgDonXinNghi") is DataGrid dg && dg.SelectedItem is QuanLyDonXinNghiGridDto selected)
             {
                 _selectedDon = selected;
+                if (FindName("formChiTiet") is StackPanel form) form.IsEnabled = true;
 
-                txtDetailNhanVien.Text = selected.TenNhanVien;
-                txtDetailLoaiDon.Text = selected.LoaiDon;
-                txtDetailNgay.Text = $"{selected.NgayBatDau:dd/MM/yyyy} - {selected.NgayKetThuc:dd/MM/yyyy}";
-                txtDetailLyDo.Text = selected.LyDo;
+                if (FindName("txtDetailNhanVien") is TextBox t1) t1.Text = selected.TenNhanVien;
+                if (FindName("txtDetailLoaiDon") is TextBox t2) t2.Text = selected.LoaiDon;
+                if (FindName("txtDetailNgay") is TextBox t3) t3.Text = $"{selected.NgayBatDau:dd/MM/yyyy} - {selected.NgayKetThuc:dd/MM/yyyy}";
+                if (FindName("txtDetailLyDo") is TextBox t4) t4.Text = selected.LyDo;
 
                 if (selected.TrangThai == "Chờ duyệt")
                 {
-                    txtGhiChuPheDuyet.Text = "";
-                    txtGhiChuPheDuyet.IsReadOnly = false;
-                    formDuyetDon.Visibility = Visibility.Visible;
+                    if (FindName("txtGhiChuPheDuyet") is TextBox t5) { t5.Text = ""; t5.IsReadOnly = false; }
+                    if (FindName("formDuyetDon") is StackPanel p1) p1.Visibility = Visibility.Visible;
                 }
                 else
                 {
-                    txtGhiChuPheDuyet.Text = selected.GhiChuPheDuyet ?? "(Không có ghi chú)";
-                    txtGhiChuPheDuyet.IsReadOnly = true;
-                    formDuyetDon.Visibility = Visibility.Collapsed;
+                    if (FindName("txtGhiChuPheDuyet") is TextBox t6) { t6.Text = selected.GhiChuPheDuyet ?? "(Không có ghi chú)"; t6.IsReadOnly = true; }
+                    if (FindName("formDuyetDon") is StackPanel p2) p2.Visibility = Visibility.Collapsed;
                 }
             }
         }
@@ -143,20 +111,62 @@ namespace AppCafebookApi.View.quanly.pages
         private void ResetForm()
         {
             _selectedDon = null;
-            dgDonXinNghi.SelectedItem = null;
+            if (FindName("dgDonXinNghi") is DataGrid dg) dg.SelectedItem = null;
+            if (FindName("formChiTiet") is StackPanel form) form.IsEnabled = false;
 
-            txtDetailNhanVien.Text = "";
-            txtDetailLoaiDon.Text = "";
-            txtDetailNgay.Text = "";
-            txtDetailLyDo.Text = "";
-            txtGhiChuPheDuyet.Text = "";
-
-            formDuyetDon.Visibility = Visibility.Collapsed;
+            if (FindName("txtDetailNhanVien") is TextBox t1) t1.Text = "";
+            if (FindName("txtDetailLoaiDon") is TextBox t2) t2.Text = "";
+            if (FindName("txtDetailNgay") is TextBox t3) t3.Text = "";
+            if (FindName("txtDetailLyDo") is TextBox t4) t4.Text = "";
+            if (FindName("txtGhiChuPheDuyet") is TextBox t5) t5.Text = "";
+            if (FindName("formDuyetDon") is StackPanel p) p.Visibility = Visibility.Collapsed;
         }
 
-        // ========================================================================
-        // DUYỆT / TỪ CHỐI / XÓA
-        // ========================================================================
+        // HIỂN THỊ POPUP DUYỆT ĐƠN & DANH SÁCH CA BỊ HỦY
+        private async void BtnDuyet_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedDon == null) return;
+
+            if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
+            try
+            {
+                var affectedShifts = await httpClient.GetFromJsonAsync<List<AffectedShiftDto>>($"api/app/quanly-donxinnghi/affected-shifts/{_selectedDon.IdDonXinNghi}");
+
+                if (affectedShifts != null)
+                {
+                    if (FindName("dgAffectedShifts") is DataGrid dgShifts) dgShifts.ItemsSource = affectedShifts;
+
+                    if (FindName("dgAffectedShifts") is DataGrid dg) dg.Visibility = affectedShifts.Any() ? Visibility.Visible : Visibility.Collapsed;
+                    if (FindName("txtNoShifts") is TextBlock txtNo) txtNo.Visibility = affectedShifts.Any() ? Visibility.Collapsed : Visibility.Visible;
+
+                    if (FindName("PopupConfirmShifts") is Border popup) popup.Visibility = Visibility.Visible;
+                }
+            }
+            catch { MessageBox.Show("Không thể tải danh sách ca làm việc bị trùng. Vui lòng thử lại."); }
+            finally { if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed; }
+        }
+
+        // TẮT POPUP
+        private void BtnCancelPopup_Click(object sender, RoutedEventArgs e)
+        {
+            if (FindName("PopupConfirmShifts") is Border popup) popup.Visibility = Visibility.Collapsed;
+        }
+
+        // CHÍNH THỨC XÁC NHẬN DUYỆT & XÓA CA TỪ POPUP
+        private async void BtnConfirmApprove_Click(object sender, RoutedEventArgs e)
+        {
+            if (FindName("PopupConfirmShifts") is Border popup) popup.Visibility = Visibility.Collapsed;
+            await HandleAction("Duyệt", "approve");
+        }
+
+        // TỪ CHỐI ĐƠN
+        private async void BtnTuChoi_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Xác nhận TỪ CHỐI đơn này?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                await HandleAction("Từ chối", "reject");
+        }
+
+        // HÀM GỌI API CHUNG
         private async Task HandleAction(string actionName, string urlSegment)
         {
             if (_selectedDon == null) return;
@@ -164,7 +174,7 @@ namespace AppCafebookApi.View.quanly.pages
             var actionDto = new QuanLyDonXinNghiActionDto
             {
                 IdNguoiDuyet = AuthService.CurrentUser?.IdNhanVien ?? 0,
-                GhiChuPheDuyet = txtGhiChuPheDuyet.Text
+                GhiChuPheDuyet = (FindName("txtGhiChuPheDuyet") as TextBox)?.Text
             };
 
             if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
@@ -176,66 +186,9 @@ namespace AppCafebookApi.View.quanly.pages
                     MessageBox.Show($"Đã {actionName} đơn thành công!", "Thông báo");
                     await LoadDataFromServerAsync();
                 }
-                else
-                {
-                    MessageBox.Show($"Lỗi: {await response.Content.ReadAsStringAsync()}");
-                }
+                else MessageBox.Show($"Lỗi: {await response.Content.ReadAsStringAsync()}");
             }
-            finally
-            {
-                if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed;
-            }
-        }
-
-        private async void BtnDuyet_Click(object sender, RoutedEventArgs e)
-        {
-            if (MessageBox.Show("Xác nhận DUYỆT đơn này?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-            {
-                await HandleAction("Duyệt", "approve");
-            }
-        }
-
-        private async void BtnTuChoi_Click(object sender, RoutedEventArgs e)
-        {
-            if (MessageBox.Show("Xác nhận TỪ CHỐI đơn này?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-            {
-                await HandleAction("Từ chối", "reject");
-            }
-        }
-
-        private async void BtnXoa_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedDon == null) return;
-
-            if (MessageBox.Show("Xác nhận XÓA đơn này?", "Xóa", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-            {
-                if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
-                try
-                {
-                    var response = await httpClient.DeleteAsync($"api/app/quanly-donxinnghi/{_selectedDon.IdDonXinNghi}");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Xóa đơn thành công!", "Thông báo");
-                        await LoadDataFromServerAsync();
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Lỗi: {await response.Content.ReadAsStringAsync()}");
-                    }
-                }
-                finally
-                {
-                    if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed;
-                }
-            }
-        }
-
-        // ========================================================================
-        // ĐIỀU HƯỚNG
-        // ========================================================================
-        private void BtnGoToBaoCao_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Chức năng đang được phát triển.");
+            finally { if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed; }
         }
 
         private void BtnQuayLai_Click(object sender, RoutedEventArgs e)

@@ -15,19 +15,15 @@ namespace CafebookApi.Controllers.App.QuanLy
     {
         private readonly CafebookDbContext _context;
 
-        public QuanLyDonXinNghiController(CafebookDbContext context)
-        {
-            _context = context;
-        }
+        public QuanLyDonXinNghiController(CafebookDbContext context) { _context = context; }
 
-        // Lấy danh sách Đơn Xin Nghỉ
         [HttpGet("search")]
         public async Task<IActionResult> Search()
         {
             var result = await _context.DonXinNghis
                 .Include(d => d.NhanVien)
                 .Include(d => d.NguoiDuyet)
-                .OrderByDescending(d => d.NgayBatDau)
+                .OrderByDescending(d => d.IdDonXinNghi) // Đơn mới nhất lên đầu
                 .Select(d => new QuanLyDonXinNghiGridDto
                 {
                     IdDonXinNghi = d.IdDonXinNghi,
@@ -37,15 +33,36 @@ namespace CafebookApi.Controllers.App.QuanLy
                     NgayKetThuc = d.NgayKetThuc,
                     LyDo = d.LyDo,
                     TrangThai = d.TrangThai,
-                    TenNguoiDuyet = d.NguoiDuyet != null ? d.NguoiDuyet.HoTen : null,
+                    TenNguoiDuyet = d.NguoiDuyet != null ? d.NguoiDuyet.HoTen : "",
                     NgayDuyet = d.NgayDuyet,
                     GhiChuPheDuyet = d.GhiChuPheDuyet
                 }).ToListAsync();
-
             return Ok(result);
         }
 
-        // Duyệt đơn (Kèm tự động xóa lịch làm việc bị trùng)
+        // THÊM MỚI: API Xem trước các ca làm việc bị ảnh hưởng
+        [HttpGet("affected-shifts/{idDon}")]
+        public async Task<IActionResult> GetAffectedShifts(int idDon)
+        {
+            var don = await _context.DonXinNghis.FindAsync(idDon);
+            if (don == null) return NotFound("Không tìm thấy đơn.");
+
+            var affectedShifts = await _context.LichLamViecs
+                .Include(l => l.CaLamViec)
+                .Where(l => l.IdNhanVien == don.IdNhanVien
+                         && l.NgayLam.Date >= don.NgayBatDau.Date
+                         && l.NgayLam.Date <= don.NgayKetThuc.Date)
+                .OrderBy(l => l.NgayLam)
+                .Select(l => new AffectedShiftDto
+                {
+                    IdLichLamViec = l.IdLichLamViec,
+                    NgayLam = l.NgayLam,
+                    TenCa = l.CaLamViec != null ? l.CaLamViec.TenCa : "Ca không xác định"
+                }).ToListAsync();
+
+            return Ok(affectedShifts);
+        }
+
         [HttpPut("approve/{idDon}")]
         public async Task<IActionResult> ApproveDon(int idDon, [FromBody] QuanLyDonXinNghiActionDto dto)
         {
@@ -58,31 +75,19 @@ namespace CafebookApi.Controllers.App.QuanLy
             don.GhiChuPheDuyet = dto.GhiChuPheDuyet;
             don.NgayDuyet = DateTime.Now;
 
-            // Xử lý xóa lịch làm việc trùng với ngày nghỉ
-            var conflictingSchedules = await _context.LichLamViecs
-                .Where(l => l.IdNhanVien == don.IdNhanVien &&
-                            l.NgayLam >= don.NgayBatDau.Date &&
-                            l.NgayLam <= don.NgayKetThuc.Date)
+            // XÓA CA LÀM VIỆC TỰ ĐỘNG
+            var caLamHuy = await _context.LichLamViecs
+                .Where(l => l.IdNhanVien == don.IdNhanVien
+                         && l.NgayLam.Date >= don.NgayBatDau.Date
+                         && l.NgayLam.Date <= don.NgayKetThuc.Date)
                 .ToListAsync();
 
-            foreach (var lich in conflictingSchedules)
-            {
-                if (await _context.BangChamCongs.AnyAsync(c => c.IdLichLamViec == lich.IdLichLamViec))
-                {
-                    return Conflict($"Không thể duyệt. Nhân viên đã chấm công ngày {lich.NgayLam:dd/MM/yyyy}.");
-                }
-            }
-
-            if (conflictingSchedules.Any())
-            {
-                _context.LichLamViecs.RemoveRange(conflictingSchedules);
-            }
+            if (caLamHuy.Any()) _context.LichLamViecs.RemoveRange(caLamHuy);
 
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Duyệt đơn thành công và đã tự động cập nhật lịch làm việc." });
+            return Ok(new { message = "Duyệt đơn thành công." });
         }
 
-        // Từ chối đơn
         [HttpPut("reject/{idDon}")]
         public async Task<IActionResult> RejectDon(int idDon, [FromBody] QuanLyDonXinNghiActionDto dto)
         {
@@ -97,21 +102,6 @@ namespace CafebookApi.Controllers.App.QuanLy
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Từ chối đơn thành công." });
-        }
-
-        // Xóa đơn (Hủy yêu cầu)
-        [HttpDelete("{idDon}")]
-        public async Task<IActionResult> DeleteDon(int idDon)
-        {
-            var don = await _context.DonXinNghis.FindAsync(idDon);
-            if (don == null) return NotFound();
-
-            if (don.TrangThai != "Chờ duyệt")
-                return Conflict("Chỉ có thể xóa đơn đang ở trạng thái Chờ duyệt.");
-
-            _context.DonXinNghis.Remove(don);
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Xóa đơn thành công." });
         }
     }
 }
