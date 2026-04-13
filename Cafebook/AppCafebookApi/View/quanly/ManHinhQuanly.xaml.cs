@@ -146,7 +146,7 @@ namespace AppCafebookApi.View.quanly
 
             btnDonHang.Visibility = AuthService.CoQuyen("QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnSach.Visibility = AuthService.CoQuyen("QL_SACH") ? Visibility.Visible : Visibility.Collapsed;
+            btnSach.Visibility = AuthService.CoQuyen("FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH") ? Visibility.Visible : Visibility.Collapsed;
 
             btnLuong.Visibility = AuthService.CoQuyen("QL_LUONG", "QL_PHAT_LUONG") ? Visibility.Visible : Visibility.Collapsed;
 
@@ -202,7 +202,7 @@ namespace AppCafebookApi.View.quanly
             }
             else if (clickedButton == btnSach)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_SACH");
+                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH");
                 pageToNavigate = new QuanLySachView();
             }
             else if (clickedButton == btnLuong)

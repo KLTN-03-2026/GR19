@@ -3,53 +3,45 @@ ban nhớ là mình đang nâng cấp lại từ hệ thống sẵn có chứ kh
 đọc kỹ để biết phải nâng cấp cái gì và còn lại giữ nguyên mọi logic tính năng thiết kế giao diện
 
 1. Kiến trúc & Quy ước đặt tên (Clean Architecture):
-
 Đổi tên file 
-
 DTO Chuyên biệt: Phải tạo các file DTO độc lập, chỉ chứa những dữ liệu thực sự cần thiết cho giao diện này để tối ưu băng thông. Tuyệt đối không dùng chung hay bê nguyên các DTO/Entity từ hệ thống cũ nếu có dữ liệu thừa.
 
 2. Quản lý URL API (Dynamic URL):
-
 KHÔNG hardcode URL (như http://localhost...).
-
 Luôn sử dụng AppConfigManager.GetApiServerUrl() để khởi tạo HttpClient.BaseAddress.
 
 3. Bảo mật 2 Lớp (Two-Layer Security):
-
 Lớp 2 (Chặn truy cập Page/API): Tại sự kiện Page_Loaded hoặc sự kiện xử lý (Click), phải kiểm tra mã quyền tổng của chức năng (Ví dụ: AuthService.CoQuyen("QL_...")). Nếu không có quyền, hiện MessageBox từ chối và chặn thực thi / gọi NavigationService.GoBack(). Luôn nhớ gắn Bearer Token vào HttpClient.
-
 Lớp 1 (Ẩn/Hiện UI): Viết hàm ApplyPermissions() để kiểm tra từng quyền chi tiết. Tự động ẩn/hiện (Visibility.Collapsed / Visible) các Nút bấm, TextBlock tiêu đề, hoặc Menu tương ứng nếu người dùng không có quyền.
 
 4. Kỹ thuật Bảo vệ Giao diện (FindName Protection):
-
 TUYỆT ĐỐI KHÔNG gọi trực tiếp tên của UI Control từ XAML trong code C# (Ví dụ: Không dùng txtDoanhThu.Text = ...).
-
 BẮT BUỘC sử dụng FindName kèm kiểm tra null để gán dữ liệu.
-
 Cú pháp bắt buộc: if (FindName("TenControlXAML") is TextBlock txt) { txt.Text = ...; }. Điều này giúp hệ thống không bị crash nếu file XAML bị thay đổi thiết kế hoặc xóa mất control.
 
 5. Vị trí lưu trữ:
-
 nếu là chức năng Quản lý:
-
 Vị trí lưu: CafebookModel/Model/ModelApp/QuanLy\
-
 Vị trí lưu: CafebookApi/Controllers/App/QuanLy\
-
 nếu là chức năng Nhân viên:
-
 Vị trí lưu: CafebookModel/Model/ModelApp/Nhanvien\
-
 Vị trí lưu: CafebookApi/Controllers/App/Nhanvien\
-
 Vị trí lưu: CafebookModel/Model/ModelWeb/Nhanvien\
-
 Vị trí lưu: CafebookApi/Controllers/Web/Nhanvien\
-
 nếu là chức năng khách hàng:
-
 Vị trí lưu: CafebookModel/Model/ModelWeb/KhachHang\
-
 Vị trí lưu: CafebookApi/Controllers/Web/KhachHang\
-
 còn nếu là chức năng chung nhân viên quản lý:
+Vị trí lưu: CafebookApi/Controllers/Shared
+Vị trí lưu: CafebookModel/Model/Shared
+/////////////////
+giờ phát triển tính năng Quản lý sách Quản lý lịch sử thuê sách, quản lý danh mục sách
+//////////////////
+ở các page thêm các nút ở phía trên cùng kèm tên page đó bên trái :
+<Grid Grid.Row="0" Margin="0,0,0,20">
+<TextBlock Text="Tên Các Page" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+<Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
+</Grid>
+//////////////////
+ở quản lý đầu tiên chính (không có nút quay lại) còn ở các trang con có nút quay lại.
+các icon viết lại bỏ trong Conttent="" , các màu kèm bo cong các góc của nút, hiệu ứng ẩn hiện các chức năng.

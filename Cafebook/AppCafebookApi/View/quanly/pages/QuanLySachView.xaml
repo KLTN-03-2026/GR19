@@ -1,14 +1,251 @@
 ﻿<Page x:Class="AppCafebookApi.View.quanly.pages.QuanLySachView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:AppCafebookApi.View.quanly.pages"
-      mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="QuanLySachView">
+      Title="Quản lý Sách" FontFamily="Segoe UI" Background="#FFF8E1" Loaded="Page_Loaded">
 
-    <Grid>
-        
+    <Page.Resources>
+        <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="DarkBrownBrush" Color="#4E342E"/>
+        <SolidColorBrush x:Key="BorderGrayBrush" Color="#BDBDBD"/>
+
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#6F4E37"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DeleteBtn" TargetType="Button" BasedOn="{StaticResource ActionBtn}">
+            <Setter Property="Background" Value="#F44336"/>
+        </Style>
+
+        <Style x:Key="MaterialInput" TargetType="Control">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource MaterialInput}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource MaterialInput}"/>
+
+        <Style x:Key="SuggestListBoxItem" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="QUẢN LÝ SÁCH" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="btnNavDanhMuc" Content="📂 Danh Mục Sách" Style="{StaticResource ActionBtn}" Background="#2196F3" Margin="0,0,10,0" Click="BtnNavDanhMuc_Click"/>
+                <Button x:Name="btnNavLichSu" Content="📜 Lịch Sử Thuê Sách" Style="{StaticResource ActionBtn}" Background="#9C27B0" Click="BtnNavLichSu_Click"/>
+            </StackPanel>
+        </Grid>
+
+        <Grid x:Name="GridDuLieuSach" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="420"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Tìm kiếm:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBox x:Name="txtSearch" Width="150" TextChanged="Filters_Changed" Tag="Tên, tác giả..."/>
+
+                        <TextBlock Text="Thể loại:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+                        <ComboBox x:Name="cmbFilterTheLoai" Width="120" DisplayMemberPath="Ten" SelectedValuePath="Ten" SelectionChanged="Filters_Changed"/>
+
+                        <TextBlock Text="Tác giả:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+                        <ComboBox x:Name="cmbFilterTacGia" Width="120" DisplayMemberPath="Ten" SelectedValuePath="Ten" SelectionChanged="Filters_Changed"/>
+                    </StackPanel>
+
+                    <Grid Grid.Row="1" Margin="0,0,0,15">
+                        <Button x:Name="btnLamMoiForm" Content="➕ Thêm Sách Mới" Style="{StaticResource ActionBtn}" Background="#4CAF50" HorizontalAlignment="Right" Click="BtnLamMoiForm_Click"/>
+                    </Grid>
+
+                    <DataGrid x:Name="dgSach" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0" Background="Transparent" SelectionChanged="DgSach_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mã" Binding="{Binding IdSach}" Width="40"/>
+                            <DataGridTextColumn Header="Tên Sách" Binding="{Binding TenSach}" Width="*"/>
+                            <DataGridTextColumn Header="Thể loại" Binding="{Binding TenTheLoai}" Width="100"/>
+                            <DataGridTextColumn Header="Tác giả" Binding="{Binding TenTacGia}" Width="100"/>
+                            <DataGridTextColumn Header="Tổng SL" Binding="{Binding SoLuongTong}" Width="60"/>
+                            <DataGridTextColumn Header="Sẵn có" Binding="{Binding SoLuongHienCo}" Width="60"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="0,0,0,15">
+                        <StackPanel x:Name="formChiTiet" IsEnabled="False" Margin="0,0,5,0">
+                            <TextBlock x:Name="lblFormTitle" Text="Thông tin Sách" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,15"/>
+
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" Width="90" Height="130" Background="#F5F5F5" CornerRadius="4" Cursor="Hand" MouseLeftButtonDown="BorderAnhBia_Click">
+                                    <Grid>
+                                        <Image x:Name="AvatarPreview" Stretch="UniformToFill">
+                                            <Image.Clip>
+                                                <RectangleGeometry Rect="0,0,90,130" RadiusX="4" RadiusY="4"/>
+                                            </Image.Clip>
+                                        </Image>
+                                        <TextBlock x:Name="txtUploadHint" Text="📷 Chọn ảnh" Foreground="Gray" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                                    </Grid>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Tên Sách (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                    <TextBox x:Name="txtTenSach" Margin="0,0,0,10"/>
+                                    <Button x:Name="btnXoaAnh" Content="🗑 Xóa ảnh bìa" Foreground="#D32F2F" Background="Transparent" BorderThickness="0" HorizontalAlignment="Left" Click="BtnXoaAnh_Click"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="Tác giả (*)" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                            <TextBlock Text="Gõ để tìm kiếm và thêm. Cần thêm dấu phẩy (,) sau mỗi tác giả." FontSize="11" FontStyle="Italic" Foreground="Gray" Margin="0,0,0,5"/>
+                            <Grid Margin="0,0,0,10">
+                                <TextBox x:Name="txtTacGiaList" TextChanged="TxtAutoSuggest_TextChanged" Tag="TacGia" TextWrapping="Wrap"/>
+                                <Popup x:Name="popTacGia" PlacementTarget="{Binding ElementName=txtTacGiaList}" StaysOpen="False" MaxHeight="150" Width="{Binding ElementName=txtTacGiaList, Path=ActualWidth}">
+                                    <Border Background="White" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" CornerRadius="4">
+                                        <ListBox x:Name="lstTacGia" Tag="TacGia" DisplayMemberPath="Ten" ItemContainerStyle="{StaticResource SuggestListBoxItem}" SelectionChanged="LstSuggest_SelectionChanged" BorderThickness="0"/>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+
+                            <TextBlock Text="Thể loại (*)" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                            <TextBlock Text="Gõ để tìm kiếm và thêm. Cần thêm dấu phẩy (,) sau mỗi thể loại." FontSize="11" FontStyle="Italic" Foreground="Gray" Margin="0,0,0,5"/>
+                            <Grid Margin="0,0,0,10">
+                                <TextBox x:Name="txtTheLoaiList" TextChanged="TxtAutoSuggest_TextChanged" Tag="TheLoai" TextWrapping="Wrap"/>
+                                <Popup x:Name="popTheLoai" PlacementTarget="{Binding ElementName=txtTheLoaiList}" StaysOpen="False" MaxHeight="150" Width="{Binding ElementName=txtTheLoaiList, Path=ActualWidth}">
+                                    <Border Background="White" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" CornerRadius="4">
+                                        <ListBox x:Name="lstTheLoai" Tag="TheLoai" DisplayMemberPath="Ten" ItemContainerStyle="{StaticResource SuggestListBoxItem}" SelectionChanged="LstSuggest_SelectionChanged" BorderThickness="0"/>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,5,0">
+                                    <TextBlock Text="Nhà xuất bản" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                    <Grid>
+                                        <TextBox x:Name="txtNXBList" TextChanged="TxtAutoSuggest_TextChanged" Tag="NXB"/>
+                                        <Popup x:Name="popNXB" PlacementTarget="{Binding ElementName=txtNXBList}" StaysOpen="False" MaxHeight="150" Width="{Binding ElementName=txtNXBList, Path=ActualWidth}">
+                                            <Border Background="White" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" CornerRadius="4">
+                                                <ListBox x:Name="lstNXB" Tag="NXB" DisplayMemberPath="Ten" ItemContainerStyle="{StaticResource SuggestListBoxItem}" SelectionChanged="LstSuggest_SelectionChanged" BorderThickness="0"/>
+                                            </Border>
+                                        </Popup>
+                                    </Grid>
+                                    <TextBlock Text="Ngăn cách bằng dấu (,)" FontSize="10" FontStyle="Italic" Foreground="Gray" Margin="0,3,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                    <TextBlock Text="Vị trí (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                    <TextBox x:Name="txtViTri"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,5,0">
+                                    <TextBlock Text="Năm XB" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                    <TextBox x:Name="txtNamXuatBan"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="5,0,5,0">
+                                    <TextBlock Text="Giá bìa/thuê (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                    <TextBox x:Name="txtGiaBia"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Margin="5,0,0,0">
+                                    <TextBlock Text="Tổng kho (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                    <TextBox x:Name="txtSoLuongTong"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="Mô tả tóm tắt" FontWeight="SemiBold" Margin="0,5"/>
+                            <TextBox x:Name="txtMoTa" MinHeight="100" TextWrapping="Wrap" AcceptsReturn="True"/>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="btnLuu" Content="💾 Lưu Sách" Style="{StaticResource ActionBtn}" Background="#2196F3" Margin="0,0,10,0" Click="BtnLuu_Click"/>
+                        <Button x:Name="btnXoa" Content="🗑 Xóa" Style="{StaticResource DeleteBtn}" Click="BtnXoa_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border x:Name="txtThongBaoKhongCoQuyen" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" CornerRadius="15" Padding="60,40" Visibility="Collapsed">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="4" BlurRadius="25" Opacity="0.1" Color="Black"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="🛡️" FontSize="75" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                <TextBlock Text="TRUY CẬP BỊ HẠN CHẾ" FontSize="22" FontWeight="Bold" Foreground="#D32F2F" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock Text="Bạn không có quyền quản lý Sách." FontSize="16" Foreground="#424242" HorizontalAlignment="Center"/>
+                <TextBlock Text="Vui lòng sử dụng các nút chức năng phía trên thanh công cụ." FontSize="15" Foreground="Gray" FontStyle="Italic" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
+            <TextBlock Text="Đang xử lý..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+        </Border>
     </Grid>
 </Page>

@@ -82,36 +82,44 @@ namespace CafebookApi.Data
 
             // 1. Cấu hình Khóa chính phức hợp cho các bảng trung gian
             //modelBuilder.Entity<NhanVien_Quyen>().HasKey(vq => new { vq.IdNhanVien, vq.IdQuyen });
-            modelBuilder.Entity<HoaDon_KhuyenMai>().HasKey(hk => new { hk.IdHoaDon, hk.IdKhuyenMai });
-            modelBuilder.Entity<DinhLuong>().HasKey(d => new { d.IdSanPham, d.IdNguyenLieu });
-            modelBuilder.Entity<DeXuatSach>().HasKey(d => new { d.IdSachGoc, d.IdSachDeXuat, d.LoaiDeXuat });
-            modelBuilder.Entity<DeXuatSanPham>().HasKey(d => new { d.IdSanPhamGoc, d.IdSanPhamDeXuat, d.LoaiDeXuat });
-            modelBuilder.Entity<ChiTietPhuThuHoaDon>().HasKey(c => new { c.IdHoaDon, c.IdPhuThu });
-            modelBuilder.Entity<ChiTietNhapKho>().HasKey(c => new { c.IdPhieuNhapKho, c.IdNguyenLieu });
-            modelBuilder.Entity<ChiTietKiemKho>().HasKey(c => new { c.IdPhieuKiemKho, c.IdNguyenLieu });
-            modelBuilder.Entity<ChiTietXuatHuy>().HasKey(c => new { c.IdPhieuXuatHuy, c.IdNguyenLieu });
-            modelBuilder.Entity<ChiTietPhieuThue>().HasKey(c => new { c.IdPhieuThueSach, c.IdSach });
-            modelBuilder.Entity<ChiTietPhieuTra>().HasKey(c => new { c.IdPhieuTra, c.IdSach });
-            modelBuilder.Entity<SachTacGia>().HasKey(s => new { s.IdSach, s.IdTacGia });
-            modelBuilder.Entity<SachTheLoai>().HasKey(s => new { s.IdSach, s.IdTheLoai });
-            modelBuilder.Entity<SachNhaXuatBan>().HasKey(s => new { s.IdSach, s.IdNhaXuatBan });
-            // THÊM ĐOẠN CẤU HÌNH MỚI NÀY:
+            modelBuilder.Entity<HoaDon_KhuyenMai>()
+                .HasKey(hk => new { hk.IdHoaDon, hk.IdKhuyenMai });
+            modelBuilder.Entity<DinhLuong>()
+                .HasKey(d => new { d.IdSanPham, d.IdNguyenLieu });
+            modelBuilder.Entity<DeXuatSach>()
+                .HasKey(d => new { d.IdSachGoc, d.IdSachDeXuat, d.LoaiDeXuat });
+            modelBuilder.Entity<DeXuatSanPham>()
+                .HasKey(d => new { d.IdSanPhamGoc, d.IdSanPhamDeXuat, d.LoaiDeXuat });
+            modelBuilder.Entity<ChiTietPhuThuHoaDon>()
+                .HasKey(c => new { c.IdHoaDon, c.IdPhuThu });
+            modelBuilder.Entity<ChiTietNhapKho>()
+                .HasKey(c => new { c.IdPhieuNhapKho, c.IdNguyenLieu });
+            modelBuilder.Entity<ChiTietKiemKho>()
+                .HasKey(c => new { c.IdPhieuKiemKho, c.IdNguyenLieu });
+            modelBuilder.Entity<ChiTietXuatHuy>()
+                .HasKey(c => new { c.IdPhieuXuatHuy, c.IdNguyenLieu });
+            modelBuilder.Entity<ChiTietPhieuThue>()
+                .HasKey(c => new { c.IdPhieuThueSach, c.IdSach });
+            modelBuilder.Entity<ChiTietPhieuTra>()
+                .HasKey(c => new { c.IdPhieuTra, c.IdSach });
+            modelBuilder.Entity<SachTacGia>()
+                    .HasKey(st => new { st.IdSach, st.IdTacGia });
+            modelBuilder.Entity<SachTheLoai>()
+                .HasKey(st => new { st.IdSach, st.IdTheLoai });
+            modelBuilder.Entity<SachNhaXuatBan>()
+                .HasKey(sn => new { sn.IdSach, sn.IdNhaXuatBan });
             modelBuilder.Entity<NhanVien_Quyen>()
                 .HasKey(nq => new { nq.IdNhanVien, nq.IdQuyen });
-
             modelBuilder.Entity<NhanVien_Quyen>()
                 .HasOne(nq => nq.NhanVien)
                 .WithMany(n => n.NhanVienQuyens)
                 .HasForeignKey(nq => nq.IdNhanVien)
                 .OnDelete(DeleteBehavior.Cascade);
-
             modelBuilder.Entity<NhanVien_Quyen>()
                 .HasOne(nq => nq.Quyen)
                 .WithMany(q => q.NhanVienQuyens)
                 .HasForeignKey(nq => nq.IdQuyen)
-                .OnDelete(DeleteBehavior.Cascade);
-        
-            // Cấu hình rõ ràng cho DeXuatSanPham
+                .OnDelete(DeleteBehavior.Cascade);        
             modelBuilder.Entity<DeXuatSanPham>(entity =>
                 {
                     entity.HasKey(e => new { e.IdSanPhamGoc, e.IdSanPhamDeXuat, e.LoaiDeXuat });
@@ -126,8 +134,6 @@ namespace CafebookApi.Data
                         .HasForeignKey(d => d.IdSanPhamDeXuat)
                         .OnDelete(DeleteBehavior.NoAction);
                 });
-
-            // Cấu hình rõ ràng cho DeXuatSach
             modelBuilder.Entity<DeXuatSach>(entity =>
             {
                 entity.HasKey(e => new { e.IdSachGoc, e.IdSachDeXuat, e.LoaiDeXuat });
@@ -142,8 +148,6 @@ namespace CafebookApi.Data
                     .HasForeignKey(d => d.IdSachDeXuat)
                     .OnDelete(DeleteBehavior.NoAction);
             });
-
-            // 2. Cấu hình quan hệ NhanVien - HoaDon (2 khóa ngoại cùng trỏ về 1 bảng)
             modelBuilder.Entity<HoaDon>(entity =>
             {
                 entity.HasOne(d => d.NhanVienTao)
@@ -156,8 +160,6 @@ namespace CafebookApi.Data
                     .HasForeignKey(d => d.IdNguoiGiaoHang)
                     .OnDelete(DeleteBehavior.NoAction);
             });
-
-            // 3. Xử lý các quan hệ vòng (Cascade Delete) để tránh lỗi SQL
             modelBuilder.Entity<DonXinNghi>()
                 .HasOne(d => d.NguoiDuyet)
                 .WithMany(n => n.DonXinNghiNguoiDuyets)
@@ -175,7 +177,6 @@ namespace CafebookApi.Data
                 .WithMany(nv => nv.NhatKyHuyMons)
                 .HasForeignKey(n => n.IdNhanVienHuy)
                 .OnDelete(DeleteBehavior.NoAction);
-            // Dán vào cuối hàm OnModelCreating trong CafebookDbContext.cs
             modelBuilder.Entity<DeXuatSanPham>()
                 .HasOne(d => d.SanPhamGoc)
                 .WithMany()
