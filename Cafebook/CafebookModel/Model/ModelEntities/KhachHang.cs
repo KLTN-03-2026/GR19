@@ -31,12 +31,11 @@ namespace CafebookModel.Model.ModelEntities
         public bool BiKhoa { get; set; }
         public string? AnhDaiDien { get; set; }
         public bool TaiKhoanTam { get; set; }
-
-        // --- ĐÃ FIX LỖI TẠI ĐÂY ---
-        // Xóa 2 dòng HoaDonsTao và HoaDonsGiao bị sai.
-        // Thay bằng một danh sách HoaDons chuẩn của Khách Hàng.
+        public bool DaXoa { get; set; }
+        [StringLength(500)]
+        public string? LyDoKhoa { get; set; }
+        public DateTime? ThoiGianMoKhoa { get; set; }
         public virtual ICollection<HoaDon> HoaDons { get; set; } = new List<HoaDon>();
-
         public virtual ICollection<PhieuDatBan> PhieuDatBans { get; set; } = new List<PhieuDatBan>();
         public virtual ICollection<PhieuThueSach> PhieuThueSachs { get; set; } = new List<PhieuThueSach>();
         public virtual ICollection<ChatLichSu> ChatLichSus { get; set; } = new List<ChatLichSu>();

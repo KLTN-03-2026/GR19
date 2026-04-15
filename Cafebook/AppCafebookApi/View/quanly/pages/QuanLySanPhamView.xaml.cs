@@ -346,7 +346,13 @@ namespace AppCafebookApi.View.quanly.pages
             }
         }
 
-        private void BtnNavDanhMuc_Click(object sender, RoutedEventArgs e) { if (AuthService.CoQuyen("QL_DANH_MUC")) this.NavigationService?.Navigate(new QuanLyDanhMucView()); }
-        private void BtnNavDinhLuong_Click(object sender, RoutedEventArgs e) { if (AuthService.CoQuyen("QL_DINH_LUONG")) this.NavigationService?.Navigate(new QuanLyDinhLuongView()); }
+        private void BtnNavDanhMuc_Click(object sender, RoutedEventArgs e) { 
+            if (AuthService.CoQuyen("QL_DANH_MUC")) 
+                this.NavigationService?.Navigate(new QuanLyDanhMucView()); 
+        }
+        private void BtnNavDinhLuong_Click(object sender, RoutedEventArgs e) {
+            if (AuthService.CoQuyen("QL_DINH_LUONG")) 
+                this.NavigationService?.Navigate(new QuanLyDinhLuongView()); 
+        }
     }
 }

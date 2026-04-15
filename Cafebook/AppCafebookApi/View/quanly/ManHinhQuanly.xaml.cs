@@ -152,7 +152,7 @@ namespace AppCafebookApi.View.quanly
 
             btnNhanSu.Visibility = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnKhachHang.Visibility = AuthService.CoQuyen("QL_KHACH_HANG", "QL_KHUYEN_MAI") ? Visibility.Visible : Visibility.Collapsed;
+            btnKhachHang.Visibility = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI") ? Visibility.Visible : Visibility.Collapsed;
         }
 
         // =================================================================================
