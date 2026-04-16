@@ -31,15 +31,23 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
+            // Kiểm tra quyền tổng quát để vào trang
             if (!AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT"))
             {
                 MessageBox.Show("Từ chối truy cập module Quản lý Lương!");
                 this.NavigationService?.GoBack(); return;
             }
 
+            // Xử lý ẩn/hiện nội dung chính của Quản lý Lương
             bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_LUONG");
             if (FindName("GridDuLieu") is Grid g) g.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;
+            if (FindName("BtnNavChamCong") is Button btnChamCong)
+                btnChamCong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("BtnNavPhatLuong") is Button btnPhatLuong)
+                btnPhatLuong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_PHAT_LUONG") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("BtnNavThuongPhat") is Button btnThuongPhat)
+                btnThuongPhat.Visibility = AuthService.CoQuyen("FULL_QL", "QL_THUONG_PHAT") ? Visibility.Visible : Visibility.Collapsed;
 
             if (hasQuyen)
             {
@@ -241,20 +249,19 @@ namespace AppCafebookApi.View.quanly.pages
                 finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
             }
         }
-        //"FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT"
-        //private void BtnNavChamCong_Click(object sender, RoutedEventArgs e) => MessageBox.Show("Module đang phát triển.");
-        // private void BtnNavPhatLuong_Click(object sender, RoutedEventArgs e) => MessageBox.Show("Module đang phát triển.");
-        //private void BtnNavThuongPhat_Click(object sender, RoutedEventArgs e) => MessageBox.Show("Module đang phát triển.");
+
         private void BtnNavChamCong_Click(object sender, RoutedEventArgs e)
         {
             if (AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG"))
                 this.NavigationService?.Navigate(new QuanLyChamCongView());
         }
+
         private void BtnNavPhatLuong_Click(object sender, RoutedEventArgs e)
         {
             if (AuthService.CoQuyen("FULL_QL", "QL_PHAT_LUONG"))
                 this.NavigationService?.Navigate(new QuanLyPhatLuongView());
         }
+
         private void BtnNavThuongPhat_Click(object sender, RoutedEventArgs e)
         {
             if (AuthService.CoQuyen("FULL_QL", "QL_THUONG_PHAT"))

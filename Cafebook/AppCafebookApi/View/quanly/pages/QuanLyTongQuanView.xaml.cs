@@ -187,7 +187,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (AuthService.CoQuyen("FULL_QL", "CM_CAI_DAT"))
             {
-                this.NavigationService?.Navigate(new QuanLyCaiDatHeThongView());
+                this.NavigationService?.Navigate(new QuanLyCaiDatView());
             }
             else
             {
