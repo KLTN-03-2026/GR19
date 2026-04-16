@@ -1,0 +1,192 @@
+﻿<Page x:Class="AppCafebookApi.View.quanly.pages.QuanLyChamCongView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Lịch sử Chấm công" FontFamily="Segoe UI" Background="#FFF8E1" Loaded="Page_Loaded">
+
+    <Page.Resources>
+        <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="DarkBrownBrush" Color="#4E342E"/>
+        <SolidColorBrush x:Key="BorderGrayBrush" Color="#BDBDBD"/>
+
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#6F4E37"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="MaterialInput" TargetType="Control">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource MaterialInput}"/>
+        <Style TargetType="DatePicker" BasedOn="{StaticResource MaterialInput}"/>
+
+        <Style x:Key="SuggestListBoxItem" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="LỊCH SỬ CHẤM CÔNG" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+            <Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
+        </Grid>
+
+        <Grid x:Name="GridDuLieu" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="380"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="Từ:" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
+                        <DatePicker x:Name="dpFilterTuNgay" Width="110"/>
+
+                        <TextBlock Text="Đến:" VerticalAlignment="Center" Margin="10,0,5,0" FontWeight="SemiBold"/>
+                        <DatePicker x:Name="dpFilterDenNgay" Width="110"/>
+
+                        <TextBlock Text="Nhân viên:" VerticalAlignment="Center" Margin="15,0,5,0" FontWeight="SemiBold"/>
+                        <Grid>
+                            <TextBox x:Name="txtFilterNhanVien" Width="140" TextChanged="TxtFilterNhanVien_TextChanged" Tag="Gõ để tìm..."/>
+                            <Popup x:Name="popNhanVien" PlacementTarget="{Binding ElementName=txtFilterNhanVien}" StaysOpen="False" MaxHeight="150" Width="{Binding ElementName=txtFilterNhanVien, Path=ActualWidth}">
+                                <Border Background="White" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" CornerRadius="4">
+                                    <ListBox x:Name="lstNhanVien" DisplayMemberPath="HoTen" ItemContainerStyle="{StaticResource SuggestListBoxItem}" SelectionChanged="LstNhanVien_SelectionChanged" BorderThickness="0"/>
+                                </Border>
+                            </Popup>
+                        </Grid>
+
+                        <Button x:Name="btnLoc" Content="🔍 Lọc tuần" Style="{StaticResource ActionBtn}" Background="#2196F3" Margin="10,0,0,0" Padding="15,6" Click="BtnLoc_Click"/>
+                        <Button x:Name="btnLamMoi" Content="Làm mới" Style="{StaticResource ActionBtn}" Background="Gray" Margin="5,0,0,0" Padding="15,6" Click="BtnLamMoi_Click"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="dgChamCong" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0" Background="Transparent" SelectionChanged="DgChamCong_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ngày" Binding="{Binding NgayLam, StringFormat='dd/MM/yyyy'}" Width="85"/>
+                            <DataGridTextColumn Header="Nhân viên" Binding="{Binding TenNhanVien}" Width="*"/>
+                            <DataGridTextColumn Header="Ca (BĐ-KT)" Binding="{Binding TenCa}" Width="100"/>
+                            <DataGridTextColumn Header="Vào" Binding="{Binding GioVao, StringFormat='hh\\:mm'}" Width="50"/>
+                            <DataGridTextColumn Header="Ra" Binding="{Binding GioRa, StringFormat='hh\\:mm'}" Width="50"/>
+                            <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="100">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20">
+                <StackPanel x:Name="formChiTiet" IsEnabled="False">
+                    <TextBlock Text="ĐIỀU CHỈNH CHẤM CÔNG" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,20"/>
+                    <TextBlock Text="* Chỉ điều chỉnh khi hệ thống lỗi hoặc nhân viên quên chấm." FontSize="11" FontStyle="Italic" Foreground="#D32F2F" Margin="0,-15,0,15"/>
+
+                    <TextBlock Text="Nhân viên:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="lblTenNhanVien" Text="..." Foreground="#2196F3" FontWeight="Bold" FontSize="16" Margin="0,0,0,15"/>
+
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,5,0">
+                            <TextBlock Text="Ngày làm:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="lblNgayLam" Text="..." FontSize="14"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                            <TextBlock Text="Thông tin ca:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="lblCaLam" Text="..." FontSize="14"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Background="#F9F9F9" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" CornerRadius="6" Padding="15" Margin="0,0,0,20">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,5,0">
+                                <TextBlock Text="Giờ vào (hh:mm)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <TextBox x:Name="txtGioVao" ToolTip="Ví dụ: 08:30"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                <TextBlock Text="Giờ ra (hh:mm)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <TextBox x:Name="txtGioRa" ToolTip="Ví dụ: 17:00"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Text="Lý do điều chỉnh (Ghi chú)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtGhiChu" Height="80" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,20"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="btnLuu" Content="💾 Lưu Điều Chỉnh" Style="{StaticResource ActionBtn}" Background="#4CAF50" Padding="20,10" Click="BtnLuu_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border x:Name="txtThongBaoKhongCoQuyen" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" CornerRadius="15" Padding="60,40" Visibility="Collapsed">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="4" BlurRadius="25" Opacity="0.1" Color="Black"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="🛡️" FontSize="75" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                <TextBlock Text="TRUY CẬP BỊ HẠN CHẾ" FontSize="22" FontWeight="Bold" Foreground="#D32F2F" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock Text="Bạn không có quyền quản lý Chấm công." FontSize="16" Foreground="#424242" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
+            <TextBlock Text="Đang xử lý..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+        </Border>
+    </Grid>
+</Page>

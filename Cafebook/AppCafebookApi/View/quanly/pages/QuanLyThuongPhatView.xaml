@@ -1,0 +1,183 @@
+﻿<Page x:Class="AppCafebookApi.View.quanly.pages.QuanLyThuongPhatView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Quản lý Thưởng Phạt" FontFamily="Segoe UI" Background="#FFF8E1" Loaded="Page_Loaded">
+
+    <Page.Resources>
+        <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="DarkBrownBrush" Color="#4E342E"/>
+        <SolidColorBrush x:Key="BorderGrayBrush" Color="#BDBDBD"/>
+
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#6F4E37"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DeleteBtn" TargetType="Button" BasedOn="{StaticResource ActionBtn}">
+            <Setter Property="Background" Value="#F44336"/>
+        </Style>
+
+        <Style x:Key="MaterialInput" TargetType="Control">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource MaterialInput}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource MaterialInput}"/>
+        <Style TargetType="DatePicker" BasedOn="{StaticResource MaterialInput}"/>
+    </Page.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="LỊCH SỬ THƯỞNG PHẠT NHÂN VIÊN" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+            <Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
+        </Grid>
+
+        <Grid x:Name="GridDuLieu" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="380"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="Từ:" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
+                        <DatePicker x:Name="dpFilterTuNgay" Width="110"/>
+
+                        <TextBlock Text="Đến:" VerticalAlignment="Center" Margin="10,0,5,0" FontWeight="SemiBold"/>
+                        <DatePicker x:Name="dpFilterDenNgay" Width="110"/>
+
+                        <TextBlock Text="Nhân viên:" VerticalAlignment="Center" Margin="15,0,5,0" FontWeight="SemiBold"/>
+                        <ComboBox x:Name="cmbFilterNhanVien" Width="150" DisplayMemberPath="HoTen" SelectedValuePath="IdNhanVien"/>
+
+                        <Button x:Name="btnLoc" Content="🔍 Lọc" Style="{StaticResource ActionBtn}" Background="#2196F3" Margin="10,0,0,0" Padding="15,6" Click="BtnLoc_Click"/>
+                        <Button x:Name="btnLamMoiForm" Content="➕ Thêm Mới" Style="{StaticResource ActionBtn}" Background="#4CAF50" Margin="15,0,0,0" HorizontalAlignment="Right" Click="BtnLamMoiForm_Click"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="dgThuongPhat" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0" Background="Transparent" SelectionChanged="DgThuongPhat_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ngày tạo" Binding="{Binding NgayTao, StringFormat='dd/MM/yyyy'}" Width="90"/>
+                            <DataGridTextColumn Header="Loại" Binding="{Binding Loai}" Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Loai}" Value="Thưởng">
+                                                <Setter Property="Foreground" Value="#4CAF50"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Loai}" Value="Phạt">
+                                                <Setter Property="Foreground" Value="#F44336"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Số tiền" Binding="{Binding SoTien, StringFormat=N0}" Width="90"/>
+                            <DataGridTextColumn Header="Lý do" Binding="{Binding LyDo}" Width="*"/>
+                            <DataGridTextColumn Header="Người tạo" Binding="{Binding TenNguoiTao}" Width="120"/>
+                            <DataGridTextColumn Header="Trạng thái" Binding="{Binding DaChot}" Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Chưa chốt"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DaChot}" Value="True">
+                                                <Setter Property="Text" Value="Đã chốt"/>
+                                                <Setter Property="Foreground" Value="Gray"/>
+                                                <Setter Property="FontStyle" Value="Italic"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20">
+                <StackPanel x:Name="formChiTiet" IsEnabled="False">
+                    <TextBlock x:Name="lblFormTitle" Text="Cập nhật Thưởng / Phạt" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,20"/>
+
+                    <TextBlock Text="Nhân viên nhận (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox x:Name="cmbNhanVien" DisplayMemberPath="HoTen" SelectedValuePath="IdNhanVien" Margin="0,0,0,15"/>
+
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,5,0">
+                            <TextBlock Text="Loại (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <ComboBox x:Name="cmbLoai">
+                                <ComboBoxItem Content="Thưởng" IsSelected="True"/>
+                                <ComboBoxItem Content="Phạt"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                            <TextBlock Text="Ngày áp dụng (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <DatePicker x:Name="dpNgayTao"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Số tiền (VNĐ) (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtSoTien" Margin="0,0,0,15" ToolTip="Nhập số dương, hệ thống tự xử lý Thưởng/Phạt"/>
+
+                    <TextBlock Text="Lý do / Căn cứ (*)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtLyDo" Height="80" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,20"/>
+
+                    <TextBlock x:Name="txtCanhBaoChot" Text="⚠️ Khoản này đã được chốt vào Phiếu Lương, bạn không thể Sửa hoặc Xóa." Foreground="#D32F2F" FontStyle="Italic" FontWeight="SemiBold" Margin="0,0,0,15" Visibility="Collapsed" TextWrapping="Wrap"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="btnLuu" Content="💾 Lưu Lại" Style="{StaticResource ActionBtn}" Background="#2196F3" Margin="0,0,10,0" Click="BtnLuu_Click"/>
+                        <Button x:Name="btnXoa" Content="🗑 Xóa" Style="{StaticResource DeleteBtn}" Click="BtnXoa_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border x:Name="txtThongBaoKhongCoQuyen" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" CornerRadius="15" Padding="60,40" Visibility="Collapsed">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="4" BlurRadius="25" Opacity="0.1" Color="Black"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="🛡️" FontSize="75" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                <TextBlock Text="TRUY CẬP BỊ HẠN CHẾ" FontSize="22" FontWeight="Bold" Foreground="#D32F2F" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock Text="Bạn không có quyền quản lý Thưởng phạt." FontSize="16" Foreground="#424242" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
+            <TextBlock Text="Đang xử lý..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+        </Border>
+    </Grid>
+</Page>

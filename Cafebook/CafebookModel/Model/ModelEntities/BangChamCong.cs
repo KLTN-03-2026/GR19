@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CafebookModel.Model.ModelEntities
 {
@@ -12,15 +8,26 @@ namespace CafebookModel.Model.ModelEntities
     public class BangChamCong
     {
         [Key]
+        [Column("idChamCong")]
         public int IdChamCong { get; set; }
+
+        [Column("idLichLamViec")]
         public int IdLichLamViec { get; set; }
+
+        [Column("gioVao")]
         public DateTime? GioVao { get; set; }
+
+        [Column("gioRa")]
         public DateTime? GioRa { get; set; }
 
-        // --- SỬA LỖI TỪ double? SANG decimal? VÀ THÊM TYPE ---
-        [Column(TypeName = "decimal(18, 2)")]
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-        public decimal? SoGioLam { get; set; }
+        [Column("soGioLam")]
+        public double? SoGioLam { get; set; }
+
+        // BỔ SUNG CỘT GHI CHÚ SỬA
+        [Column("ghiChuSua")]
+        [StringLength(500)]
+        public string? GhiChuSua { get; set; }
 
         [ForeignKey("IdLichLamViec")]
         public virtual LichLamViec LichLamViec { get; set; } = null!;

@@ -144,11 +144,11 @@ namespace AppCafebookApi.View.quanly
 
             btnKho.Visibility = AuthService.CoQuyen("FULL_QL", "QL_TON_KHO", "QL_NGUYEN_LIEU", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP", "QL_DON_VI_CHUYEN_DOI") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnDonHang.Visibility = AuthService.CoQuyen("QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG") ? Visibility.Visible : Visibility.Collapsed;
+            btnDonHang.Visibility = AuthService.CoQuyen("FULL_QL", "QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG") ? Visibility.Visible : Visibility.Collapsed;
 
             btnSach.Visibility = AuthService.CoQuyen("FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnLuong.Visibility = AuthService.CoQuyen("QL_LUONG", "QL_PHAT_LUONG") ? Visibility.Visible : Visibility.Collapsed;
+            btnLuong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT") ? Visibility.Visible : Visibility.Collapsed;
 
             btnNhanSu.Visibility = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
 
@@ -163,7 +163,6 @@ namespace AppCafebookApi.View.quanly
             var clickedButton = sender as ToggleButton;
             if (clickedButton == null) return;
 
-            // Chặn click lại nút đang mở
             if (clickedButton == currentNavButton)
             {
                 clickedButton.IsChecked = true;
@@ -173,10 +172,8 @@ namespace AppCafebookApi.View.quanly
             Page? pageToNavigate = null;
             bool hasPermission = false;
 
-            // Ánh xạ Nút -> Nhóm Quyền -> Page đích (ĐÃ BỎ HOÀN TOÀN NÚT ĐÁNH GIÁ)
             if (clickedButton == btnTongQuan)
             {
-                // Cho phép chuyển trang nếu có 1 trong các quyền này
                 hasPermission = AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN", "QL_BAO_CAO_TON_KHO_SACH", "QL_BAO_CAO_TON_KHO_NL", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_BAO_CAO_DOANH_THU", "CM_CAI_DAT");
                 pageToNavigate = new QuanLyTongQuanView();
             }
@@ -207,7 +204,7 @@ namespace AppCafebookApi.View.quanly
             }
             else if (clickedButton == btnLuong)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG");
+                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT");
                 pageToNavigate = new QuanLyLuongView();
             }
             else if (clickedButton == btnNhanSu)
@@ -221,7 +218,6 @@ namespace AppCafebookApi.View.quanly
                 pageToNavigate = new QuanLyKhachHangView();
             }
 
-            // Xử lý nếu được phép truy cập
             if (hasPermission && pageToNavigate != null)
             {
                 UpdateSelectedButton(clickedButton);
@@ -229,7 +225,6 @@ namespace AppCafebookApi.View.quanly
             }
             else
             {
-                // Trả về UI trạng thái cũ và hiện cảnh báo
                 clickedButton.IsChecked = false;
                 if (currentNavButton != null) currentNavButton.IsChecked = true;
 
