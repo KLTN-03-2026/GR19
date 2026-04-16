@@ -44,7 +44,7 @@ namespace AppCafebookApi.View.quanly.pages
             }
 
             // 1. KIỂM TRA CHÌA KHÓA CỔNG
-            bool hasAnyPermission = AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN", "QL_BAO_CAO_TON_KHO_SACH", "QL_BAO_CAO_TON_KHO_NL", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_BAO_CAO_DOANH_THU", "CM_CAI_DAT");
+            bool hasAnyPermission = AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN", "QL_BAO_CAO_TON_KHO_SACH", "QL_BAO_CAO_TON_KHO_NL", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_BAO_CAO_DOANH_THU", "CM_CAI_DAT", "CM_NHAT_KY_HE_THONG");
 
             if (!hasAnyPermission)
             {
@@ -75,6 +75,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("btnXemNhanSu") is Button b4) b4.Visibility = AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnXemHieuSuat") is Button b5) b5.Visibility = AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnCaiDat") is Button b6) b6.Visibility = AuthService.CoQuyen("FULL_QL", "CM_CAI_DAT") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnNhatKyHeThong") is Button b7) b7.Visibility = AuthService.CoQuyen("FULL_QL", "CM_NHAT_KY_HE_THONG") ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async Task LoadDashboardData()
@@ -192,6 +193,18 @@ namespace AppCafebookApi.View.quanly.pages
             else
             {
                 MessageBox.Show("Bạn không có quyền truy cập Cài đặt hệ thống!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void BtnNhatKyHeThong_Click(object sender, RoutedEventArgs e)
+        {
+            if (AuthService.CoQuyen("FULL_QL", "CM_NHAT_KY_HE_THONG"))
+            {
+                this.NavigationService?.Navigate(new QuanLyNhatKyView());
+            }
+            else
+            {
+                MessageBox.Show("Bạn không có quyền truy cập Nhật ký hệ thống!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
     }

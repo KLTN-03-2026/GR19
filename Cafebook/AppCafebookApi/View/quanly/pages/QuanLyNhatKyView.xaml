@@ -1,0 +1,186 @@
+﻿<Page x:Class="AppCafebookApi.View.quanly.pages.QuanLyNhatKyView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Nhật ký hệ thống" FontFamily="Segoe UI" Background="#FFF8E1" Loaded="Page_Loaded">
+
+    <Page.Resources>
+        <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="DarkBrownBrush" Color="#4E342E"/>
+        <SolidColorBrush x:Key="BorderGrayBrush" Color="#BDBDBD"/>
+
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#6F4E37"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="MaterialInput" TargetType="Control">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource MaterialInput}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource MaterialInput}"/>
+        <Style TargetType="DatePicker" BasedOn="{StaticResource MaterialInput}"/>
+    </Page.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="NHẬT KÝ HỆ THỐNG (SYSTEM LOGS)" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+            <Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
+        </Grid>
+
+        <Grid x:Name="GridDuLieu" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="6*"/>
+                <ColumnDefinition Width="4*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="Từ ngày:" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
+                        <DatePicker x:Name="dpTuNgay" Width="110"/>
+
+                        <TextBlock Text="Đến:" VerticalAlignment="Center" Margin="15,0,5,0" FontWeight="SemiBold"/>
+                        <DatePicker x:Name="dpDenNgay" Width="110"/>
+
+                        <TextBlock Text="Hành động:" VerticalAlignment="Center" Margin="15,0,5,0" FontWeight="SemiBold"/>
+                        <ComboBox x:Name="cmbHanhDong" Width="110">
+                            <ComboBoxItem Content="Tất cả" IsSelected="True"/>
+                            <ComboBoxItem Content="ĐĂNG NHẬP"/>
+                            <ComboBoxItem Content="THÊM MỚI"/>
+                            <ComboBoxItem Content="CẬP NHẬT"/>
+                            <ComboBoxItem Content="XÓA"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="Bảng dữ liệu:" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
+                        <ComboBox x:Name="cmbBangAnhHuong" Width="150" Margin="0,0,15,0"/>
+
+                        <TextBlock Text="Nhân viên:" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtKeyword" Width="150" Tag="Tên NV..." Margin="0,0,15,0"/>
+
+                        <Button x:Name="btnLoc" Content="🔍 Lọc Dữ Liệu" Style="{StaticResource ActionBtn}" Background="#2196F3" Click="BtnLoc_Click"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="dgNhatKy" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="1" BorderBrush="#EEEEEE" Background="Transparent" SelectionChanged="DgNhatKy_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Thời gian" Binding="{Binding ThoiGian, StringFormat='dd/MM/yyyy HH:mm:ss'}" Width="130"/>
+                            <DataGridTextColumn Header="Hành động" Binding="{Binding HanhDong}" Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HanhDong}" Value="ĐĂNG NHẬP">
+                                                <Setter Property="Foreground" Value="#00BCD4"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HanhDong}" Value="THÊM MỚI">
+                                                <Setter Property="Foreground" Value="#4CAF50"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HanhDong}" Value="CẬP NHẬT">
+                                                <Setter Property="Foreground" Value="#FF9800"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HanhDong}" Value="XÓA">
+                                                <Setter Property="Foreground" Value="#F44336"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Người thao tác" Binding="{Binding TenNhanVien}" Width="*"/>
+                            <DataGridTextColumn Header="Bảng" Binding="{Binding BangBiAnhHuong}" Width="120"/>
+                            <DataGridTextColumn Header="IP" Binding="{Binding DiaChiIP}" Width="90"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="15">
+                <Grid x:Name="panelChiTiet" IsEnabled="False">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                        <TextBlock Text="CHI TIẾT DỮ LIỆU" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}"/>
+                        <TextBlock x:Name="lblThongTinChung" Text="Chọn 1 dòng bên trái để xem chi tiết..." Foreground="Gray" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <Border Grid.Row="1" Background="#FFF3E0" BorderBrush="#90CAF9" BorderThickness="1" CornerRadius="4" Margin="0,0,0,10" Padding="10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="DỮ LIỆU TRƯỚC KHI ĐỔI (Dữ liệu cũ)" FontWeight="Bold" Foreground="#1565C0" Margin="0,0,0,5"/>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <TextBlock x:Name="txtDuLieuCu" Text="..." FontFamily="Consolas" FontSize="12" Foreground="#424242" TextWrapping="Wrap"/>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="2" Background="#E8F5E9" BorderBrush="#A5D6A7" BorderThickness="1" CornerRadius="4" Padding="10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="DỮ LIỆU SAU KHI ĐỔI (Dữ liệu mới)" FontWeight="Bold" Foreground="#2E7D32" Margin="0,0,0,5"/>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <TextBlock x:Name="txtDuLieuMoi" Text="..." FontFamily="Consolas" FontSize="12" Foreground="#424242" TextWrapping="Wrap"/>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border x:Name="txtThongBaoKhongCoQuyen" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" CornerRadius="15" Padding="60,40" Visibility="Collapsed">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="4" BlurRadius="25" Opacity="0.1" Color="Black"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="🛡️" FontSize="75" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                <TextBlock Text="TRUY CẬP BỊ HẠN CHẾ" FontSize="22" FontWeight="Bold" Foreground="#D32F2F" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock Text="Chỉ Quản trị viên mới được quyền xem Nhật ký Hệ thống." FontSize="16" Foreground="#424242" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
+            <TextBlock Text="Đang xử lý..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
+        </Border>
+    </Grid>
+</Page>
