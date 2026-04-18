@@ -8,6 +8,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+// --- FIX LỖI: Khai báo bí danh (Alias) chỉ định rõ ràng class Entity ---
+using NhanVienEntity = CafebookModel.Model.ModelEntities.NhanVien;
+
 namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-luong")]
@@ -52,7 +55,8 @@ namespace CafebookApi.Controllers.App.QuanLy
 
             var rawData = await (from l in _context.Set<LichLamViec>()
                                  join b in _context.Set<BangChamCong>() on l.IdLichLamViec equals b.IdLichLamViec
-                                 join nv in _context.Set<NhanVien>() on l.IdNhanVien equals nv.IdNhanVien
+                                 // SỬ DỤNG BÍ DANH TẠI ĐÂY ĐỂ FIX LỖI JOIN CS1941 & CS0118
+                                 join nv in _context.Set<NhanVienEntity>() on l.IdNhanVien equals nv.IdNhanVien
                                  join c in _context.Set<CaLamViec>() on l.IdCa equals c.IdCa
                                  where l.NgayLam >= tuNgay.Date && l.NgayLam <= denNgay.Date
                                  select new { l.IdNhanVien, nv.HoTen, nv.LuongCoBan, b.GioVao, b.GioRa, c.GioBatDau, c.GioKetThuc }).ToListAsync();

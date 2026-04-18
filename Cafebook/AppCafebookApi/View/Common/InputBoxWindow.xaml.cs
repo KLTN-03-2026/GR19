@@ -1,28 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// Tập tin: AppCafebookApi/View/Common/InputBoxWindow.xaml.cs (ĐÃ SỬA)
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
-namespace AppCafebookApi.View.Common
+namespace AppCafebookApi.View.Common // (Hoặc .common tùy theo thư mục của bạn)
 {
-    /// <summary>
-    /// Interaction logic for InputBoxWindow.xaml
-    /// </summary>
-    public partial class InputBoxWindow : Page
+    public partial class InputBoxWindow : Window
     {
-        public InputBoxWindow()
+        public string InputText { get; private set; }
+
+        public InputBoxWindow(string title, string prompt, string defaultValue = "")
         {
             InitializeComponent();
+            this.Title = title;
+            lblPrompt.Text = prompt;
+            txtInput.Text = defaultValue;
+            InputText = defaultValue;
+        }
+
+        // SỬA: Đã xóa chữ 'D' bị thừa
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            txtInput.Focus();
+            txtInput.SelectAll();
+        }
+
+        private void BtnOk_Click(object sender, RoutedEventArgs e)
+        {
+            InputText = txtInput.Text;
+            this.DialogResult = true;
+            this.Close();
+        }
+
+        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
         }
     }
 }

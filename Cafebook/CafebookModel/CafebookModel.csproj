@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Model\ModelApi\" />
-    <Folder Include="Model\ModelApp\NhanVien\" />
     <Folder Include="Model\ModelWeb\KhachHang\" />
     <Folder Include="Model\ModelWeb\Nhanvien\" />
   </ItemGroup>

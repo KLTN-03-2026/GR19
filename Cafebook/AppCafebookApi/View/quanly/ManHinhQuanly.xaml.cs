@@ -220,9 +220,22 @@ namespace AppCafebookApi.View.quanly
 
             try
             {
-                string roles = AuthService.CoQuyen("FULL_QL", "FULL_QL", "QL_THONG_BAO") ? "FULL_QL" : "NV_PHUC_VU";
+                // 1. Quét danh sách các quyền nghiệp vụ hiện tại của user để API phân loại chính xác
+                var myRoles = new List<string>();
+                if (AuthService.CoQuyen("FULL_QL")) myRoles.Add("FULL_QL");
+                if (AuthService.CoQuyen("QL_BAN")) myRoles.Add("QL_BAN");
+                if (AuthService.CoQuyen("QL_SU_CO_BAN")) myRoles.Add("QL_SU_CO_BAN");
+                if (AuthService.CoQuyen("QL_DON_HANG")) myRoles.Add("QL_DON_HANG");
+                if (AuthService.CoQuyen("QL_TON_KHO")) myRoles.Add("QL_TON_KHO");
+                if (AuthService.CoQuyen("QL_DON_XIN_NGHI")) myRoles.Add("QL_DON_XIN_NGHI");
+                if (AuthService.CoQuyen("QL_LICH_LAM_VIEC")) myRoles.Add("QL_LICH_LAM_VIEC");
 
-                string url = $"api/shared/thongbao/my-notifications?userId={AuthService.CurrentUser.IdNhanVien}&userRoles={roles}";
+                string roles = string.Join(",", myRoles);
+                string rName = Uri.EscapeDataString(AuthService.CurrentUser.TenVaiTro ?? "");
+
+                // 2. PHẢI CÓ THAM SỐ roleName để API không báo lỗi 400
+                string url = $"api/shared/thongbao/my-notifications?userId={AuthService.CurrentUser.IdNhanVien}&userRoles={roles}&roleName={rName}";
+
                 var response = await httpClient.GetFromJsonAsync<SharedThongBaoResponseDto>(url);
 
                 if (response != null)
@@ -242,7 +255,7 @@ namespace AppCafebookApi.View.quanly
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Lỗi load thông báo: {ex.Message}");
+                Debug.WriteLine($"Lỗi load thông báo QL: {ex.Message}");
             }
         }
 
@@ -250,7 +263,6 @@ namespace AppCafebookApi.View.quanly
         {
             if (sender is Button btn && btn.Tag is SharedThongBaoItemDto tb)
             {
-                // ĐÃ FIX: Không chuyển thành Đã xem nếu là thông báo Thủ công từ Quản lý
                 bool isManualAdminNotice = tb.LoaiThongBao == "ThongBaoQuanLy" || tb.LoaiThongBao == "ThongBaoNhanVien" || tb.LoaiThongBao == "ThongBaoToanNhanVien";
 
                 if (!tb.DaXem && !isManualAdminNotice)
@@ -266,32 +278,26 @@ namespace AppCafebookApi.View.quanly
 
                 popThongBao.IsOpen = false;
 
-                // Chuẩn bị dữ liệu hiển thị lên Popup Chi tiết
                 lblDetailSender.Text = $"Người gửi: {tb.TenNhanVienTao}";
                 lblDetailTime.Text = $"Gửi lúc: {tb.ThoiGianTao:dd/MM/yyyy HH:mm}";
                 txtDetailContent.Text = tb.NoiDung;
 
-                _targetPageForNotification = null;
-
-                // Xác định trang liên kết
-                if (tb.LoaiThongBao == "SuCoBan" || tb.LoaiThongBao == "DatBan")
-                    _targetPageForNotification = new QuanLyBanView();
-                else if (tb.LoaiThongBao == "HetHang" || tb.LoaiThongBao == "CanhBaoKho" || tb.LoaiThongBao == "Kho")
-                    _targetPageForNotification = new QuanLyTonKhoView();
-                else if (tb.LoaiThongBao == "DonXinNghi")
-                    _targetPageForNotification = new QuanLyNhanVienView();
+                // XÁC ĐỊNH TRANG ĐIỀU HƯỚNG DÀNH CHO QUẢN LÝ
+                _targetPageForNotification = tb.LoaiThongBao switch
+                {
+                    "SuCoBan" => new QuanLySuCoBanView(),
+                    "HetHang" or "CanhBaoKho" or "Kho" => new QuanLyTonKhoView(),
+                    "DangKyLichMoi" => new QuanLyLichLamViecView(),
+                    "DonXinNghi" => new QuanLyDonXinNghiView(),
+                    "DonHangMoi" => new QuanLyDonHangView(),
+                    "ThongBaoQuanLy" or "ThongBaoNhanVien" or "ThongBaoToanNhanVien" => null,
+                    _ => null
+                };
 
                 // Ẩn/Hiện nút "Đi tới trang"
                 btnDetailGoTo.Visibility = _targetPageForNotification != null ? Visibility.Visible : Visibility.Collapsed;
-
-                // Mở khung Overlay chi tiết cực đẹp
                 DetailThongBaoOverlay.Visibility = Visibility.Visible;
             }
-        }
-
-        private void BtnDetailClose_Click(object sender, RoutedEventArgs e)
-        {
-            DetailThongBaoOverlay.Visibility = Visibility.Collapsed;
         }
 
         private void BtnDetailGoTo_Click(object sender, RoutedEventArgs e)
@@ -299,10 +305,20 @@ namespace AppCafebookApi.View.quanly
             DetailThongBaoOverlay.Visibility = Visibility.Collapsed;
             if (_targetPageForNotification != null)
             {
+                // Cập nhật trạng thái của nút Sidebar cho Quản lý
+                if (_targetPageForNotification is QuanLyBanView) UpdateSelectedButton(btnBan);
+                else if (_targetPageForNotification is QuanLyTonKhoView) UpdateSelectedButton(btnKho);
+                else if (_targetPageForNotification is QuanLyDonHangView) UpdateSelectedButton(btnDonHang);
+                else if (_targetPageForNotification is QuanLyLichLamViecView || _targetPageForNotification is QuanLyDonXinNghiView) UpdateSelectedButton(btnNhanSu);
+
                 MainFrame.Navigate(_targetPageForNotification);
             }
         }
 
+        private void BtnDetailClose_Click(object sender, RoutedEventArgs e)
+        {
+            DetailThongBaoOverlay.Visibility = Visibility.Collapsed;
+        }
         private void BtnMoQuanLyThongBao_Click(object sender, RoutedEventArgs e)
         {
             // Bảo vệ lớp 2: Chặn ngay nếu không có quyền

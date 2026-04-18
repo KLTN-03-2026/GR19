@@ -20,7 +20,7 @@ namespace AppCafebookApi.View.quanly.pages
         private QuanLyThongBaoGridDto? _selectedItem = null;
 
         // Danh sách TẤT CẢ các loại thông báo dùng cho bộ lọc
-        private readonly List<string> _allTypes = new() { "Tất cả", "SuCoBan", "HetHang", "DonXinNghi", "Kho", "DatBan", "CanhBaoKho", "PhieuGoiMon", "DonHangMoi", "PhanHoiKhachHang", "ThongBaoNhanVien", "ThongBaoQuanLy", "ThongBaoToanNhanVien" };
+        private readonly List<string> _allTypes = new() { "Tất cả", "SuCoBan", "HetHang", "DonXinNghi", "Kho", "DatBan", "CanhBaoKho", "PhieuGoiMon", "DonHangMoi", "PhanHoiKhachHang","DangKyLichMoi", "ThongBaoNhanVien", "ThongBaoQuanLy", "ThongBaoToanNhanVien" };
 
         // Danh sách THỦ CÔNG chỉ dành cho Tạo Mới
         private readonly List<string> _manualTypes = new() { "ThongBaoNhanVien", "ThongBaoQuanLy", "ThongBaoToanNhanVien" };

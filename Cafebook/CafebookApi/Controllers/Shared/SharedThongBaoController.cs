@@ -22,33 +22,46 @@ namespace CafebookApi.Controllers.Shared
         }
 
         [HttpGet("my-notifications")]
-        public async Task<IActionResult> GetMyNotifications([FromQuery] int userId, [FromQuery] string userRoles)
+        public async Task<IActionResult> GetMyNotifications([FromQuery] int userId, [FromQuery] string? userRoles, [FromQuery] string? roleName)
         {
-            // userRoles là chuỗi phân cách dấu phẩy, ví dụ: "FULL_QL,QL_THONG_BAO" hoặc "NV_PHUC_VU"
             var roles = string.IsNullOrEmpty(userRoles) ? new List<string>() : userRoles.Split(',').ToList();
-            bool isManager = roles.Contains("FULL_QL") || roles.Contains("QL_THONG_BAO");
 
-            // Phân loại thông báo được phép xem
-            var allowedTypes = new List<string> { "HeThong", "ThongBaoToanNhanVien" };
-
-            if (isManager)
-            {
-                allowedTypes.AddRange(new[] { "SuCoBan", "HetHang", "DonXinNghi", "Kho", "DatBan", "CanhBaoKho", "PhanHoiKhachHang", "ThongBaoQuanLy", "ThongBaoNhanVien", "DonHangMoi" });
-            }
-            else
-            {
-                // Giả lập quyền nhân viên thường (Phục vụ/Pha chế)
-                allowedTypes.AddRange(new[] { "PhieuGoiMon", "DatBan", "DonHangMoi", "ThongBaoNhanVien" });
-            }
+            // 1. KIỂM TRA QUYỀN TOÀN QUYỀN
+            bool showAll = roles.Contains("FULL_QL") || roles.Contains("FULL_NV");
 
             var query = _context.Set<ThongBao>().Include(t => t.NhanVienTao).AsNoTracking().AsQueryable();
 
-            // Chỉ lấy thông báo thuộc loại được phép xem
-            query = query.Where(t => t.LoaiThongBao != null && allowedTypes.Contains(t.LoaiThongBao));
+            if (!showAll)
+            {
+                var allowedTypes = new List<string> { "ThongBaoToanNhanVien" };
+
+                if (roleName == "Nhân viên") allowedTypes.Add("ThongBaoNhanVien");
+                if (roleName == "Quản lý") allowedTypes.Add("ThongBaoQuanLy");
+
+                if (roles.Contains("QL_BAN") || roles.Contains("NV_DAT_BAN") || roles.Contains("QL_SU_CO_BAN"))
+                    allowedTypes.AddRange(new[] { "DatBan", "SuCoBan" });
+
+                if (roles.Contains("NV_CHE_BIEN") || roles.Contains("NV_GOI_MON"))
+                    allowedTypes.Add("PhieuGoiMon");
+
+                if (roles.Contains("QL_DON_HANG") || roles.Contains("NV_GIAO_HANG"))
+                    allowedTypes.Add("DonHangMoi");
+
+                if (roles.Contains("QL_TON_KHO"))
+                    allowedTypes.AddRange(new[] { "HetHang", "CanhBaoKho", "Kho" });
+
+                if (roles.Contains("QL_DON_XIN_NGHI"))
+                    allowedTypes.Add("DonXinNghi");
+
+                if (roles.Contains("QL_LICH_LAM_VIEC"))
+                    allowedTypes.Add("DangKyLichMoi");
+
+                query = query.Where(t => t.LoaiThongBao != null && allowedTypes.Contains(t.LoaiThongBao));
+            }
 
             var notifications = await query
                 .OrderByDescending(t => t.ThoiGianTao)
-                .Take(20) // Lấy 20 cái mới nhất cho Popup
+                .Take(20)
                 .Select(t => new SharedThongBaoItemDto
                 {
                     IdThongBao = t.IdThongBao,

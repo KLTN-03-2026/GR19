@@ -1,14 +1,23 @@
-﻿<Page x:Class="AppCafebookApi.View.Common.InputDialogWindow"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:AppCafebookApi.View.Common"
-      mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="InputDialogWindow">
+﻿<Window x:Class="AppCafebookApi.View.common.InputDialogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Nhập thông tin" Height="200" Width="400" 
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="#FFF8E1" FontFamily="Segoe UI">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-    <Grid>
-        
+        <TextBlock x:Name="txtMessage" Text="Vui lòng nhập:" FontSize="16" FontWeight="SemiBold" Foreground="#4E342E" Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+        <TextBox x:Name="txtInput" Grid.Row="1" FontSize="16" Padding="5" VerticalContentAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True"/>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button Content="Hủy" Width="80" Height="35" Margin="0,0,10,0" Background="#E0E0E0" BorderThickness="0" Cursor="Hand" Click="BtnCancel_Click"/>
+            <Button Content="Xác nhận" Width="100" Height="35" Background="#D27D2D" Foreground="White" BorderThickness="0" Cursor="Hand" Click="BtnOk_Click"/>
+        </StackPanel>
     </Grid>
-</Page>
+</Window>

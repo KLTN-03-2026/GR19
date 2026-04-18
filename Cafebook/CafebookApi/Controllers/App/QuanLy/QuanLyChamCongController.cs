@@ -8,6 +8,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+// --- FIX LỖI: Khai báo bí danh (Alias) chỉ định rõ ràng class Entity ---
+using NhanVienEntity = CafebookModel.Model.ModelEntities.NhanVien;
+
 namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-chamcong")]
@@ -21,7 +24,8 @@ namespace CafebookApi.Controllers.App.QuanLy
         [HttpGet("nhanvien-lookup")]
         public async Task<IActionResult> GetNhanVienLookup()
         {
-            var list = await _context.Set<NhanVien>().AsNoTracking()
+            // SỬ DỤNG BÍ DANH TẠI ĐÂY
+            var list = await _context.Set<NhanVienEntity>().AsNoTracking()
                 .OrderBy(nv => nv.HoTen)
                 .Select(nv => new ChamCongNhanVienLookupDto { IdNhanVien = nv.IdNhanVien, HoTen = nv.HoTen })
                 .ToListAsync();
@@ -33,7 +37,8 @@ namespace CafebookApi.Controllers.App.QuanLy
         {
             var query = from b in _context.Set<BangChamCong>()
                         join l in _context.Set<LichLamViec>() on b.IdLichLamViec equals l.IdLichLamViec
-                        join nv in _context.Set<NhanVien>() on l.IdNhanVien equals nv.IdNhanVien
+                        // SỬ DỤNG BÍ DANH TẠI ĐÂY ĐỂ FIX LỖI JOIN CS1941
+                        join nv in _context.Set<NhanVienEntity>() on l.IdNhanVien equals nv.IdNhanVien
                         join c in _context.Set<CaLamViec>() on l.IdCa equals c.IdCa
                         select new { b, l, nv, c };
 
