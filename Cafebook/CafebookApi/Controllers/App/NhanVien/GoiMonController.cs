@@ -35,9 +35,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         // ========================================================
         // HÀM KIỂM TRA ĐỒNG BỘ BẾP (Quyết định mở khóa Thanh toán)
         // ========================================================
-        // ========================================================
-        // HÀM KIỂM TRA ĐỒNG BỘ BẾP (Quyết định mở khóa Thanh toán)
-        // ========================================================
         private async Task<bool> CheckChoPhepThanhToan(int idHoaDon)
         {
             // Lấy danh sách món trong Hóa Đơn hiện tại (kèm theo Số lượng và Ghi chú)
@@ -418,22 +415,36 @@ namespace CafebookApi.Controllers.App.NhanVien
         {
             try
             {
-                await CreateOrUpdateCheBienItems(idHoaDon);
-                var hoaDon = await _context.HoaDons.Include(h => h.Ban).FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon);
-                string soBan = hoaDon?.Ban?.SoBan ?? hoaDon?.LoaiHoaDon ?? "Hóa đơn";
-                _context.ThongBaos.Add(new ThongBao
+                // 1. Nhận kết quả xem có bao nhiêu món THỰC SỰ được thêm mới hoặc cập nhật
+                int itemsUpdated = await CreateOrUpdateCheBienItems(idHoaDon);
+
+                // 2. CHỈ tạo thông báo nếu có sự thay đổi đẩy xuống bếp
+                if (itemsUpdated > 0)
                 {
-                    IdNhanVienTao = idNhanVien,
-                    NoiDung = $"Phiếu gọi món mới cho [{soBan}].",
-                    ThoiGianTao = DateTime.Now,
-                    LoaiThongBao = "PhieuGoiMon",
-                    IdLienQuan = idHoaDon,
-                    DaXem = false
-                });
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Đã gửi phiếu gọi món và thông báo cho bếp." });
+                    var hoaDon = await _context.HoaDons.Include(h => h.Ban).FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon);
+                    string soBan = hoaDon?.Ban?.SoBan ?? hoaDon?.LoaiHoaDon ?? "Hóa đơn";
+
+                    _context.ThongBaos.Add(new ThongBao
+                    {
+                        IdNhanVienTao = idNhanVien,
+                        NoiDung = $"Phiếu gọi món mới cho [{soBan}].",
+                        ThoiGianTao = DateTime.Now,
+                        LoaiThongBao = "PhieuGoiMon",
+                        IdLienQuan = idHoaDon,
+                        DaXem = false
+                    });
+
+                    await _context.SaveChangesAsync();
+                    return Ok(new { message = "Đã gửi phiếu gọi món và thông báo cho bếp." });
+                }
+
+                // 3. Nếu không có món nào mới (chỉ là in lại phiếu), trả về OK nhưng KHÔNG ghi thông báo
+                return Ok(new { message = "Đã in phiếu (Không có món mới cần thông báo bếp)." });
             }
-            catch (Exception ex) { return StatusCode(500, $"Lỗi khi in và gửi bếp: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi in và gửi bếp: {ex.Message}");
+            }
         }
 
         [HttpGet("print-data/{idHoaDon}")]

@@ -3,12 +3,326 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:AppCafebookApi.View.nhanvien.pages"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="CheBienView">
+      d:DesignHeight="750" d:DesignWidth="1200"
+      Title="CheBienView"
+      FontFamily="Segoe UI"
+      Background="#FFF8E1"
+      Loaded="Page_Loaded" Unloaded="Page_Unloaded">
+
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <SolidColorBrush x:Key="ActionGreenBrush" Color="#66BB6A"/>
+        <SolidColorBrush x:Key="CafeBrown" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="CafeOrange" Color="#D27D2D"/>
+        <SolidColorBrush x:Key="CafeCream" Color="#FFF8E1"/>
+        <SolidColorBrush x:Key="TextGray" Color="#757575"/>
+
+        <Style x:Key="KitchenCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect ShadowDepth="2" BlurRadius="10" Opacity="0.25"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect ShadowDepth="4" BlurRadius="15" Color="#6F4E37" Opacity="0.4"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <ScaleTransform ScaleX="1.03" ScaleY="1.03"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,8"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="18"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
 
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="White" Padding="15" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="👨‍🍳 Màn Hình Chế Biến" FontSize="22" FontWeight="Bold" Foreground="{StaticResource CafeBrown}"/>
+                    <TextBlock x:Name="lblLastUpdated" Text="(Đang tải...)" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="{StaticResource TextGray}" FontStyle="Italic"/>
+                </StackPanel>
+
+                <Button x:Name="btnLichSu" Grid.Column="1" ToolTip="Xem các món đã hoàn thành" 
+                        Style="{StaticResource ActionButton}" Background="#757575" 
+                        Click="BtnLichSu_Click" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🕒" Margin="0,0,8,0" FontSize="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Lịch Sử Hôm Nay" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <TabControl x:Name="MainTabs" Grid.Row="1" Margin="10" Background="Transparent" BorderThickness="0" SelectedIndex="0">
+
+            <TabItem Header="🍹 Pha Chế (Đồ Uống)">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="icPhaChe">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource KitchenCard}" Width="280"
+                                        MouseLeftButtonDown="Border_CongThuc_Click"
+                                        ToolTip="Click để xem công thức">
+                                    <StackPanel Margin="10">
+                                        <TextBlock Text="{Binding SoBan}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource CafeOrange}"/>
+                                        <TextBlock Margin="0,5,0,0">
+                                            <Run Text="{Binding TenMon}" FontSize="18" FontWeight="SemiBold"/>
+                                            <Run Text=" (x" FontSize="18" FontWeight="Bold"/>
+                                            <Run Text="{Binding SoLuong}" FontSize="18" FontWeight="Bold"/>
+                                            <Run Text=")" FontSize="18" FontWeight="Bold"/>
+                                        </TextBlock>
+
+                                        <TextBlock Text="{Binding GhiChu}" FontStyle="Italic" Foreground="Red" Margin="0,5,0,0" TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="Text" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </Trigger>
+                                                        <Trigger Property="Text" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+
+                                        <TextBlock Margin="0,10,0,0" Foreground="{StaticResource TextGray}">
+                                            <Run Text="{Binding ThoiGianGoiDisplay, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <Run Text="{Binding ThoiGianCho, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold"/>
+                                        </TextBlock>
+                                        <Button Content="Bắt đầu làm" Style="{StaticResource ActionButton}" Background="#42A5F5" Margin="0,10,0,0"
+                                                Click="BtnStartItem_Click"
+                                                Visibility="{Binding IsChoLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <Button Content="Hoàn thành" Style="{StaticResource ActionButton}" Background="#66BB6A" Margin="0,10,0,0"
+                                                Click="BtnCompleteItem_Click"
+                                                Visibility="{Binding IsDangLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="🍳 Bếp (Món Ăn)">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="icBep">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource KitchenCard}" Width="280"
+                                        MouseLeftButtonDown="Border_CongThuc_Click"
+                                        ToolTip="Click để xem công thức">
+                                    <StackPanel Margin="10">
+                                        <TextBlock Text="{Binding SoBan}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource CafeOrange}"/>
+                                        <TextBlock Margin="0,5,0,0">
+                                            <Run Text="{Binding TenMon}" FontSize="18" FontWeight="SemiBold"/>
+                                            <Run Text=" (x" FontSize="18" FontWeight="Bold"/>
+                                            <Run Text="{Binding SoLuong}" FontSize="18" FontWeight="Bold"/>
+                                            <Run Text=")" FontSize="18" FontWeight="Bold"/>
+                                        </TextBlock>
+
+                                        <TextBlock Text="{Binding GhiChu}" FontStyle="Italic" Foreground="Red" Margin="0,5,0,0" TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="Text" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </Trigger>
+                                                        <Trigger Property="Text" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+
+                                        <TextBlock Margin="0,10,0,0" Foreground="{StaticResource TextGray}">
+                                            <Run Text="{Binding ThoiGianGoiDisplay, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <Run Text="{Binding ThoiGianCho, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold"/>
+                                        </TextBlock>
+                                        <Button Content="Bắt đầu làm" Style="{StaticResource ActionButton}" Background="#42A5F5" Margin="0,10,0,0"
+                                                Click="BtnStartItem_Click"
+                                                Visibility="{Binding IsChoLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <Button Content="Hoàn thành" Style="{StaticResource ActionButton}" Background="#66BB6A" Margin="0,10,0,0"
+                                                Click="BtnCompleteItem_Click"
+                                                Visibility="{Binding IsDangLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+
+        <Grid x:Name="panelLichSu" Grid.Row="1" Margin="10" Visibility="Collapsed" Background="White">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="#F5F5F5" Padding="10" CornerRadius="8,8,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="300"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button x:Name="btnDongLichSu" Grid.Column="0" ToolTip="Quay lại Màn hình Chế biến" 
+                            Style="{StaticResource ActionButton}" Background="{StaticResource TextGray}" 
+                            Click="BtnDongLichSu_Click" Margin="0,0,15,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⬅" Margin="0,0,5,0" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Quay Lại" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <TextBlock Grid.Column="1" Text="Danh sách các món đã hoàn thành trong ngày" 
+                               VerticalAlignment="Center" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource CafeBrown}"/>
+
+                    <Border Grid.Column="2" Background="White" CornerRadius="5" BorderBrush="#E0E0E0" BorderThickness="1" Padding="5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="🔍" VerticalAlignment="Center" Margin="5,0,5,0" Foreground="{StaticResource TextGray}"/>
+                            <TextBox x:Name="txtTimKiemLichSu" Grid.Column="1" BorderThickness="0" VerticalAlignment="Center" 
+                                     Background="Transparent" FontSize="14" TextChanged="TxtTimKiemLichSu_TextChanged"
+                                     Tag="Tìm tên món, số bàn..."/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <DataGrid x:Name="dgLichSu" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
+                      HeadersVisibility="Column" Background="White" BorderThickness="1,0,1,1" BorderBrush="#E0E0E0"
+                      RowHeight="40" FontSize="14" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEEEEE">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Thời gian gọi" Binding="{Binding ThoiGianGoiDisplay}" Width="120"/>
+                    <DataGridTextColumn Header="Số Bàn / Mã HĐ" Binding="{Binding SoBan}" Width="150" FontWeight="Bold"/>
+                    <DataGridTextColumn Header="Tên Món" Binding="{Binding TenMon}" Width="*"/>
+                    <DataGridTextColumn Header="Số Lượng" Binding="{Binding SoLuong}" Width="100" FontWeight="Bold"/>
+                    <DataGridTextColumn Header="Khu Vực" Binding="{Binding NhomIn}" Width="120"/>
+                    <DataGridTextColumn Header="Trạng Thái" Binding="{Binding TrangThai}" Width="120" Foreground="{StaticResource ActionGreenBrush}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#66000000" Visibility="Collapsed">
+            <TextBlock Text="Đang tải..." HorizontalAlignment="Center" VerticalAlignment="Center"
+                       FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+        </Border>
+
+        <Grid x:Name="CongThucOverlay" Grid.RowSpan="2" Background="#80000000" Visibility="Collapsed">
+            <Border VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Background="White" CornerRadius="10" Width="420" MaxHeight="500"
+                    Padding="10">
+                <Border.Effect>
+                    <DropShadowEffect ShadowDepth="3" BlurRadius="15" Opacity="0.3"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" BorderBrush="#EEE" BorderThickness="0,0,0,1">
+                        <TextBlock x:Name="lblCongThucTenMon" Text="Công thức: Món ABC"
+                                   FontSize="18" FontWeight="Bold" Foreground="{StaticResource CafeBrown}"
+                                   Padding="10,8"/>
+                    </Border>
+
+                    <ListView x:Name="lvCongThuc" Grid.Row="1" Margin="5" BorderThickness="0">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Nguyên Liệu" DisplayMemberBinding="{Binding TenNguyenLieu}" Width="180"/>
+                                <GridViewColumn Header="Số Lượng" DisplayMemberBinding="{Binding SoLuongSuDung}" Width="80"/>
+                                <GridViewColumn Header="Đơn Vị" DisplayMemberBinding="{Binding TenDonVi}" Width="100"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <Button x:Name="BtnCloseCongThuc" Grid.Row="2" Content="Đóng"
+                            Style="{StaticResource ActionButton}" Background="#757575"
+                            Margin="10" Width="80" HorizontalAlignment="Right"
+                            Click="BtnCloseCongThuc_Click"/>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Page>
