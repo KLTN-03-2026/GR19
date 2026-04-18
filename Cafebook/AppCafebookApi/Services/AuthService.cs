@@ -25,6 +25,17 @@ namespace AppCafebookApi.Services
             }
         }
 
+        public static void ReloadHttpClient()
+        {
+            string? serverUrl = AppConfigManager.GetApiServerUrl();
+            if (!string.IsNullOrEmpty(serverUrl))
+            {
+                // Bắt buộc phải tạo mới HttpClient vì cái cũ không cho phép đổi BaseAddress nữa
+                _httpClient = new HttpClient();
+                _httpClient.BaseAddress = new Uri(serverUrl);
+            }
+        }
+
         public static async Task<LoginResponse?> LoginAsync(LoginRequest request)
         {
             if (_httpClient.BaseAddress == null) InitializeHttpClient();

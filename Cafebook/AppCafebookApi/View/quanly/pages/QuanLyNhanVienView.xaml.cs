@@ -529,7 +529,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (!AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_NHAN_SU"))
             { MessageBox.Show("Bạn không có quyền Xem Báo cáo Nhân sự!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-            this.NavigationService?.Navigate(new BaoCaoNhanSuView());
+            this.NavigationService?.Navigate(new QuanLyBaoCaoNhanSuView());
         }
 
         private void BtnGoToLichLamViec_Click(object sender, RoutedEventArgs e)
@@ -545,19 +545,19 @@ namespace AppCafebookApi.View.quanly.pages
             { MessageBox.Show("Bạn không có quyền Duyệt Đơn xin nghỉ!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyDonXinNghiView());
         }
-
+        
         private void BtnGoToCaiDat_Click(object sender, RoutedEventArgs e)
         {
             if (!AuthService.CoQuyen("FULL_QL", "QL_CAI_DAT_NHAN_SU"))
             { MessageBox.Show("Bạn không có quyền Cài đặt tham số Nhân sự!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-            this.NavigationService?.Navigate(new CaiDatNhanSuView());
+         //   this.NavigationService?.Navigate(new CaiDatNhanSuView());
         }
-
+        
         private void BtnGoToHieuSuat_Click(object sender, RoutedEventArgs e)
         {
             if (!AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU"))
             { MessageBox.Show("Bạn không có quyền Xem Báo cáo Hiệu suất!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-            this.NavigationService?.Navigate(new BaoCaoNhanSuView());
+            this.NavigationService?.Navigate(new QuanLyBaoCaoHieuSuatView());
         }
     }
 }

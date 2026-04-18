@@ -21,8 +21,27 @@
         <Style TargetType="ProgressBar">
             <Setter Property="Background" Value="#E0D8C6"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryBrownBrush}"/>
             <Setter Property="Height" Value="6"/>
+            <Setter Property="Foreground">
+                <Setter.Value>
+                    <SolidColorBrush Color="#6F4E37"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="(ProgressBar.Foreground).(SolidColorBrush.Opacity)"
+                                             From="0.2" To="1.0" Duration="0:0:0.6" 
+                                             AutoReverse="True" RepeatBehavior="Forever">
+                                <DoubleAnimation.EasingFunction>
+                                    <SineEase EasingMode="EaseInOut"/>
+                                </DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
@@ -98,7 +117,11 @@
                                    Foreground="{StaticResource DarkTextBrush}" Opacity="0.7"
                                    Margin="0,6,0,12"/>
 
-                        <ProgressBar Width="280" IsIndeterminate="True" HorizontalAlignment="Left"/>
+                        <ProgressBar Width="280" IsIndeterminate="True" HorizontalAlignment="Left">
+                            <ProgressBar.Clip>
+                                <RectangleGeometry Rect="0,0,280,6" RadiusX="3" RadiusY="3"/>
+                            </ProgressBar.Clip>
+                        </ProgressBar>
                     </StackPanel>
                 </StackPanel>
             </Grid>

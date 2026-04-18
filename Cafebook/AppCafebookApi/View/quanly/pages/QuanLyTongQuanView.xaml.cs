@@ -23,7 +23,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         static QuanLyTongQuanView()
         {
-            string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
+            string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:";
             httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
         }
 
@@ -164,7 +164,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_NHAN_SU"))
             {
-                this.NavigationService?.Navigate(new BaoCaoNhanSuView());
+                this.NavigationService?.Navigate(new QuanLyBaoCaoNhanSuView());
             }
             else
             {
@@ -195,7 +195,19 @@ namespace AppCafebookApi.View.quanly.pages
                 MessageBox.Show("Bạn không có quyền truy cập Cài đặt hệ thống!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
-
+        /*
+        private void BtnThongBao_Click(object sender, RoutedEventArgs e)
+        {
+            if (AuthService.CoQuyen("FULL_QL", "QL_THONG_BAO"))
+            {
+                this.NavigationService?.Navigate(new QuanLyThongBaoView());
+            }
+            else
+            {
+                MessageBox.Show("Bạn không có quyền truy cập Quản lý thông báo!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+        */
         private void BtnNhatKyHeThong_Click(object sender, RoutedEventArgs e)
         {
             if (AuthService.CoQuyen("FULL_QL", "CM_NHAT_KY_HE_THONG"))

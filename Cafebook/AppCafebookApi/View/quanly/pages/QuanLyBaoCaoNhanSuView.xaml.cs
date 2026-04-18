@@ -16,11 +16,11 @@ using System.Windows.Shapes;
 namespace AppCafebookApi.View.quanly.pages
 {
     /// <summary>
-    /// Interaction logic for CaiDatNhanSuView.xaml
+    /// Interaction logic for QuanLyBaoCaoNhanSuView.xaml
     /// </summary>
-    public partial class CaiDatNhanSuView : Page
+    public partial class QuanLyBaoCaoNhanSuView : Page
     {
-        public CaiDatNhanSuView()
+        public QuanLyBaoCaoNhanSuView()
         {
             InitializeComponent();
         }

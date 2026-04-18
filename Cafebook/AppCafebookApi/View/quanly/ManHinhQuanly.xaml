@@ -19,6 +19,7 @@
         <SolidColorBrush x:Key="WhiteTextBrush" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="SubtleWhiteTextBrush" Color="#BCAAA4"/>
         <SolidColorBrush x:Key="HoverBrownBrush" Color="#8D6E63"/>
+        <SolidColorBrush x:Key="BorderGrayBrush" Color="#E0E0E0"/>
 
         <Geometry x:Key="IconDashboard">M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z</Geometry>
         <Geometry x:Key="IconCoffee">M16,5H14V3H12V5H10A3,3 0 0,0 7,8V14H18V8A3,3 0 0,0 15,5M20,19H4V17H20V19Z</Geometry>
@@ -34,8 +35,6 @@
         <Geometry x:Key="IconProfile">M12,12A5,5 0 0,1 7,7A5,5 0 0,1 12,2A5,5 0 0,1 17,7A5,5 0 0,1 12,12M12,14C14.67,14 20,15.33 20,18V20H4V18C4,15.33 9.33,14 12,14Z</Geometry>
         <Geometry x:Key="IconLeave">M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.89 20.1,3 19,3M19,19H5V10H19V19M10,14V12H7V14H10M14,14V12H11V14H14M18,14V12H15V14H18Z</Geometry>
         <Geometry x:Key="IconPayroll">M20,6H4V4H20V6M20,10H4V8H20V10M18,14H6V12H18V14M18,18H6V16H18V18M19,20H5C3.89,20 3,19.1 3,18V3C3,1.89 3.89,1 5,1H19C20.1,1 21,1.89 21,3V18C21,19.1 20.1,20 19,20Z</Geometry>
-
-        <Geometry x:Key="IconReview">M12,17.27L18.18,21L17,14.64L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7,14.64L5.82,21L12,17.27Z</Geometry>
 
         <Style x:Key="NavToggleButton" TargetType="ToggleButton">
             <Setter Property="Background" Value="Transparent"/>
@@ -102,6 +101,27 @@
             </Setter>
         </Style>
 
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -152,22 +172,103 @@
 
                 <StackPanel Grid.Row="2" VerticalAlignment="Bottom" Margin="0,0,0,5">
                     <Separator Margin="15" Background="{StaticResource HoverBrownBrush}"/>
-                    <Button x:Name="btnThongBao" Style="{StaticResource FooterButton}" Click="BtnThongBao_Click" ToolTip="Xem thông báo mới">
+
+                    <Button x:Name="btnThongBao" Style="{StaticResource FooterButton}" Click="BtnThongBao_Click">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Viewbox Grid.Column="0" Width="16" Height="16" Margin="0,0,15,0">
-                                <Path Data="{StaticResource IconNotification}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-                            </Viewbox>
+
+                            <Grid Grid.Column="0" Margin="0,0,15,0">
+                                <Viewbox Width="16" Height="16">
+                                    <Path Data="{StaticResource IconNotification}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                </Viewbox>
+                                <Border x:Name="BadgeThongBao" Background="{StaticResource AccentOrangeBrush}" CornerRadius="10" 
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" 
+                                        Margin="0,-5,-8,0" Padding="4,1" Visibility="Collapsed">
+                                    <TextBlock x:Name="txtBadgeCount" Text="0" Foreground="White" FontSize="9" FontWeight="Bold"/>
+                                </Border>
+                            </Grid>
+
                             <TextBlock Grid.Column="1" Text="Thông báo" VerticalAlignment="Center" Margin="0,1,0,0"/>
-                            <Border Grid.Column="2" x:Name="BadgeThongBao" Background="Red" CornerRadius="10" Padding="5,1" MinWidth="20" Visibility="Collapsed" VerticalAlignment="Center">
-                                <TextBlock x:Name="lblSoThongBao" Text="0" Foreground="White" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
                         </Grid>
                     </Button>
+
+                    <Popup x:Name="popThongBao" PlacementTarget="{Binding ElementName=btnThongBao}" Placement="Right" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade" HorizontalOffset="10" VerticalOffset="-150">
+                        <Border Background="White" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1" CornerRadius="8" Width="380" MaxHeight="500">
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="4" BlurRadius="15" Opacity="0.15" Color="Black"/>
+                            </Border.Effect>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Border Grid.Row="0" BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="0,0,0,1" Padding="15">
+                                    <TextBlock Text="Danh sách Thông báo" FontWeight="Bold" FontSize="16" Foreground="{StaticResource PrimaryBrownBrush}"/>
+                                </Border>
+
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="380">
+                                    <ItemsControl x:Name="lstThongBao">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
+                                                    <Button Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Padding="15,10" Cursor="Hand" Click="ThongBaoItem_Click" Tag="{Binding}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{StaticResource AccentOrangeBrush}" Margin="0,5,10,0" VerticalAlignment="Top">
+                                                                <Ellipse.Style>
+                                                                    <Style TargetType="Ellipse">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding DaXem}" Value="False">
+                                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Ellipse.Style>
+                                                            </Ellipse>
+
+                                                            <StackPanel Grid.Column="1">
+                                                                <TextBlock Text="{Binding NoiDung}" TextWrapping="Wrap" FontSize="13" Foreground="{StaticResource DarkBrownBrush}">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding DaXem}" Value="False">
+                                                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+
+                                                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                                                    <TextBlock Text="{Binding TenNhanVienTao, StringFormat='Từ: \{0\}'}" FontSize="11" FontWeight="SemiBold" Foreground="#2196F3" Margin="0,0,10,0"/>
+                                                                    <TextBlock Text="{Binding ThoiGianTao, StringFormat='lúc dd/MM/yyyy HH:mm'}" FontSize="11" Foreground="Gray"/>
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Button>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+
+                                <Border Grid.Row="2" Background="#F9F9F9" CornerRadius="0,0,8,8" Padding="10">
+                                    <Button x:Name="btnQuanLyThongBao" Content="Tới màn hình Quản lý Thông báo" Background="Transparent" BorderThickness="0" Foreground="#2196F3" FontWeight="SemiBold" Cursor="Hand" Click="BtnMoQuanLyThongBao_Click"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Popup>
+
                     <Button x:Name="btnDangXuat" Style="{StaticResource FooterButton}" Click="BtnDangXuat_Click"
                             Background="{StaticResource AccentOrangeBrush}"
                             Foreground="{StaticResource WhiteTextBrush}">
@@ -191,6 +292,39 @@
                 <DropShadowEffect ShadowDepth="2" Direction="270" Color="Black" Opacity="0.1" BlurRadius="10"/>
             </Border.Effect>
             <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden"/>
+        </Border>
+
+        <Border x:Name="DetailThongBaoOverlay" Grid.ColumnSpan="2" Background="#80000000" Visibility="Collapsed" Panel.ZIndex="200">
+            <Border Background="White" CornerRadius="10" Width="450" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="25">
+                <Border.Effect>
+                    <DropShadowEffect ShadowDepth="5" BlurRadius="20" Opacity="0.3"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="CHI TIẾT THÔNG BÁO" FontSize="18" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" Margin="0,0,0,15"/>
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Width="40" Height="40" CornerRadius="20" Background="#E3F2FD" Margin="0,0,15,0">
+                            <TextBlock Text="👤" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock x:Name="lblDetailSender" Text="Người gửi: ..." FontWeight="Bold" FontSize="14" Foreground="#1565C0"/>
+                            <TextBlock x:Name="lblDetailTime" Text="Thời gian: ..." FontSize="12" Foreground="Gray"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Background="#F5F5F5" CornerRadius="5" Padding="15" Margin="0,0,0,25">
+                        <TextBlock x:Name="txtDetailContent" Text="..." TextWrapping="Wrap" FontSize="14" Foreground="#424242"/>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="btnDetailClose" Content="Đóng" Style="{StaticResource ActionBtn}" Background="Gray" Margin="0,0,10,0" Click="BtnDetailClose_Click"/>
+                        <Button x:Name="btnDetailGoTo" Content="Đi tới trang 🡒" Style="{StaticResource ActionBtn}" Background="#4CAF50" Click="BtnDetailGoTo_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
         </Border>
 
     </Grid>
