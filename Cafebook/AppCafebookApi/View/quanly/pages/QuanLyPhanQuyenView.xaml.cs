@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,26 +19,56 @@ namespace AppCafebookApi.View.quanly.pages
     {
         private static readonly HttpClient httpClient;
 
-        // Class Wrapper dùng để Binding Checkbox lên giao diện
-        public class QuyenWrapper
+        // Class Wrapper dùng để Binding Checkbox lên giao diện (Thêm INotifyPropertyChanged)
+        public class QuyenWrapper : INotifyPropertyChanged
         {
             public string IdQuyen { get; set; } = string.Empty;
             public string TenQuyen { get; set; } = string.Empty;
-            public bool IsSelected { get; set; }
+
+            private bool _isSelected;
+            public bool IsSelected
+            {
+                get => _isSelected;
+                set { _isSelected = value; OnPropertyChanged(); }
+            }
+
+            private Visibility _visibility = Visibility.Visible;
+            public Visibility Visibility
+            {
+                get => _visibility;
+                set { _visibility = value; OnPropertyChanged(); }
+            }
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+            protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
 
-        public class NhomQuyenWrapper
+        public class NhomQuyenWrapper : INotifyPropertyChanged
         {
             public string NhomName { get; set; } = string.Empty;
             public List<QuyenWrapper> Quyens { get; set; } = new List<QuyenWrapper>();
+
+            private Visibility _visibility = Visibility.Visible;
+            public Visibility Visibility
+            {
+                get => _visibility;
+                set { _visibility = value; OnPropertyChanged(); }
+            }
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+            protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
 
-        // Danh sách gốc chứa toàn bộ nhân viên tải từ Server
         private List<PhanQuyen_NhanVienDto> _allNhanViens = new List<PhanQuyen_NhanVienDto>();
-
         private List<NhomQuyenWrapper> _danhSachNhomQuyen = new List<NhomQuyenWrapper>();
         private PhanQuyen_NhanVienDto? _selectedNhanVien = null;
-
+        private string _currentRoleScope = string.Empty;
         static QuanLyPhanQuyenView()
         {
             string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
@@ -67,24 +99,26 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async Task LoadDataAsync()
         {
-            LoadingOverlay.Visibility = Visibility.Visible;
+            var loadingOverlay = this.FindName("LoadingOverlay") as Border;
+            if (loadingOverlay != null) loadingOverlay.Visibility = Visibility.Visible;
+
             try
             {
-                // 1. Tải danh sách Nhân viên
                 var nhanViens = await httpClient.GetFromJsonAsync<List<PhanQuyen_NhanVienDto>>("api/app/quanly-phanquyen/nhanvien");
                 if (nhanViens != null)
                 {
                     _allNhanViens = nhanViens;
-
-                    // Tự động trích xuất các Vai Trò có trong danh sách để nạp vào ComboBox
                     var roles = new List<string> { "Tất cả" };
                     roles.AddRange(_allNhanViens.Select(n => n.TenVaiTro).Distinct());
 
-                    cmbRoleFilter.ItemsSource = roles;
-                    cmbRoleFilter.SelectedIndex = 0; // Trigger hàm SelectionChanged -> Gọi ApplyFilter()
+                    var cmbRoleFilter = this.FindName("cmbRoleFilter") as ComboBox;
+                    if (cmbRoleFilter != null)
+                    {
+                        cmbRoleFilter.ItemsSource = roles;
+                        cmbRoleFilter.SelectedIndex = 0;
+                    }
                 }
 
-                // 2. Tải danh sách tất cả Quyền và nhóm lại
                 var allQuyen = await httpClient.GetFromJsonAsync<List<PhanQuyen_QuyenDto>>("api/app/quanly-phanquyen/quyen");
                 if (allQuyen != null)
                 {
@@ -96,7 +130,8 @@ namespace AppCafebookApi.View.quanly.pages
                             Quyens = g.Select(q => new QuyenWrapper { IdQuyen = q.IdQuyen, TenQuyen = q.TenQuyen, IsSelected = false }).ToList()
                         }).ToList();
 
-                    icNhomQuyen.ItemsSource = _danhSachNhomQuyen;
+                    var icNhomQuyen = this.FindName("icNhomQuyen") as ItemsControl;
+                    if (icNhomQuyen != null) icNhomQuyen.ItemsSource = _danhSachNhomQuyen;
                 }
             }
             catch (Exception ex)
@@ -105,95 +140,136 @@ namespace AppCafebookApi.View.quanly.pages
             }
             finally
             {
-                LoadingOverlay.Visibility = Visibility.Collapsed;
+                if (loadingOverlay != null) loadingOverlay.Visibility = Visibility.Collapsed;
             }
         }
 
         // ==========================================================
-        // CÁC HÀM XỬ LÝ TÌM KIẾM VÀ LỌC
+        // XỬ LÝ LỌC NHÂN VIÊN
         // ==========================================================
-        private void TxtSearchNhanVien_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            ApplyFilter();
-        }
+        private void TxtSearchNhanVien_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilterNhanVien();
+        private void CmbRoleFilter_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyFilterNhanVien();
 
-        private void CmbRoleFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ApplyFilterNhanVien()
         {
-            ApplyFilter();
-        }
+            var txtSearchNhanVien = this.FindName("txtSearchNhanVien") as TextBox;
+            var cmbRoleFilter = this.FindName("cmbRoleFilter") as ComboBox;
+            var dgNhanVien = this.FindName("dgNhanVien") as DataGrid;
 
-        private void ApplyFilter()
-        {
-            if (_allNhanViens == null || _allNhanViens.Count == 0) return;
+            if (txtSearchNhanVien == null || cmbRoleFilter == null || dgNhanVien == null || _allNhanViens == null) return;
 
             var filteredList = _allNhanViens.AsEnumerable();
-
-            // 1. Lọc theo chữ nhập vào (Tìm theo Họ Tên)
             string keyword = txtSearchNhanVien.Text?.Trim().ToLower() ?? "";
-            if (!string.IsNullOrEmpty(keyword))
-            {
-                filteredList = filteredList.Where(n => n.HoTen.ToLower().Contains(keyword));
-            }
 
-            // 2. Lọc theo Combo Vai Trò
+            if (!string.IsNullOrEmpty(keyword))
+                filteredList = filteredList.Where(n => n.HoTen.ToLower().Contains(keyword));
+
             string selectedRole = cmbRoleFilter.SelectedItem as string ?? "";
             if (!string.IsNullOrEmpty(selectedRole) && selectedRole != "Tất cả")
-            {
                 filteredList = filteredList.Where(n => n.TenVaiTro == selectedRole);
-            }
 
-            // 3. Đổ dữ liệu đã lọc lên DataGrid
             dgNhanVien.ItemsSource = filteredList.ToList();
         }
 
         // ==========================================================
-        // CÁC HÀM XỬ LÝ QUYỀN VÀ LƯU DỮ LIỆU
+        // XỬ LÝ TÌM KIẾM & LỌC QUYỀN THEO YÊU CẦU
+        // ==========================================================
+        private void TxtSearchQuyen_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilterQuyen();
+        private void CmbFilterQuyen_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyFilterQuyen();
+        private void QuyenCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            // Nếu đang ở chế độ lọc "Quyền đã cấp/chưa cấp" thì khi tick phải ẩn/hiện ngay
+            var cmb = this.FindName("cmbFilterQuyen") as ComboBox;
+            if (cmb != null && cmb.SelectedIndex != 0) ApplyFilterQuyen();
+        }
+
+        private void ApplyFilterQuyen()
+        {
+            var txtSearch = this.FindName("txtSearchQuyen") as TextBox;
+            var cmbFilter = this.FindName("cmbFilterQuyen") as ComboBox;
+            if (txtSearch == null || cmbFilter == null) return;
+
+            string keyword = txtSearch.Text?.Trim().ToLower() ?? "";
+            int filterMode = cmbFilter.SelectedIndex;
+
+            foreach (var nhom in _danhSachNhomQuyen)
+            {
+                bool hasVisibleQuyen = false;
+                foreach (var q in nhom.Quyens)
+                {
+                    // 1. Lọc theo Scope của Vai trò (Theo yêu cầu của bạn)
+                    bool matchRoleScope = true;
+                    if (_currentRoleScope == "Nhân viên")
+                        matchRoleScope = q.IdQuyen.StartsWith("NV_") || q.IdQuyen.StartsWith("FULL_") || q.IdQuyen.StartsWith("CM_");
+                    else if (_currentRoleScope == "Quản lý")
+                        matchRoleScope = q.IdQuyen.StartsWith("QL_") || q.IdQuyen.StartsWith("FULL_") || q.IdQuyen.StartsWith("CM_");
+
+                    // 2. Lọc theo từ khóa tìm kiếm
+                    bool matchKeyword = string.IsNullOrEmpty(keyword) || q.TenQuyen.ToLower().Contains(keyword);
+
+                    // 3. Lọc theo trạng thái Checkbox
+                    bool matchStatus = (filterMode == 0) || (filterMode == 1 && q.IsSelected) || (filterMode == 2 && !q.IsSelected);
+
+                    if (matchRoleScope && matchKeyword && matchStatus)
+                    {
+                        q.Visibility = Visibility.Visible;
+                        hasVisibleQuyen = true;
+                    }
+                    else q.Visibility = Visibility.Collapsed;
+                }
+                nhom.Visibility = hasVisibleQuyen ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        // ==========================================================
+        // CÁC THAO TÁC NHANH (CHỌN TẤT CẢ)
+        // ==========================================================
+
+        private void BtnChonTatCa_Click(object sender, RoutedEventArgs e)
+        {
+            // Chỉ chọn những quyền đang HIỂN THỊ (đã qua lọc vai trò và tìm kiếm)
+            foreach (var nhom in _danhSachNhomQuyen.Where(n => n.Visibility == Visibility.Visible))
+                foreach (var q in nhom.Quyens.Where(q => q.Visibility == Visibility.Visible))
+                    q.IsSelected = true;
+        }
+
+        private void BtnBoChonTatCa_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var nhom in _danhSachNhomQuyen)
+                foreach (var q in nhom.Quyens)
+                    q.IsSelected = false;
+            ApplyFilterQuyen();
+        }
+
+        // ==========================================================
+        // LOAD QUYỀN KHI CHỌN NHÂN VIÊN VÀ LƯU
         // ==========================================================
         private async void DgNhanVien_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (dgNhanVien.SelectedItem is PhanQuyen_NhanVienDto selected)
+            var dg = this.FindName("dgNhanVien") as DataGrid;
+            if (dg?.SelectedItem is PhanQuyen_NhanVienDto selected)
             {
                 _selectedNhanVien = selected;
-                txtTenNhanVienChon.Text = $"Đang cấu hình quyền cho: {selected.HoTen} ({selected.TenVaiTro})";
-                btnLuu.IsEnabled = true;
+                _currentRoleScope = selected.TenVaiTro; // Cập nhật scope để lọc quyền
 
-                // Reset toàn bộ checkbox về false
-                foreach (var nhom in _danhSachNhomQuyen)
-                    foreach (var q in nhom.Quyens)
-                        q.IsSelected = false;
+                var txtInfo = this.FindName("txtTenNhanVienChon") as TextBlock;
+                var btnLuu = this.FindName("btnLuu") as Button;
+                if (txtInfo != null) txtInfo.Text = $"Đang cấu hình cho: {selected.HoTen} ({selected.TenVaiTro})";
+                if (btnLuu != null) btnLuu.IsEnabled = true;
 
-                // Call API lấy danh sách quyền của người này
-                LoadingOverlay.Visibility = Visibility.Visible;
+                // Tải quyền từ Server
+                var loading = this.FindName("LoadingOverlay") as Border;
+                if (loading != null) loading.Visibility = Visibility.Visible;
                 try
                 {
-                    var userQuyenIds = await httpClient.GetFromJsonAsync<List<string>>($"api/app/quanly-phanquyen/nhanvien/{selected.IdNhanVien}/quyen");
-                    if (userQuyenIds != null)
-                    {
-                        // Tick các quyền tương ứng
-                        foreach (var nhom in _danhSachNhomQuyen)
-                        {
-                            foreach (var q in nhom.Quyens)
-                            {
-                                if (userQuyenIds.Contains(q.IdQuyen))
-                                {
-                                    q.IsSelected = true;
-                                }
-                            }
-                        }
-                    }
+                    var activeIds = await httpClient.GetFromJsonAsync<List<string>>($"api/app/quanly-phanquyen/nhanvien/{selected.IdNhanVien}/quyen");
+                    foreach (var nhom in _danhSachNhomQuyen)
+                        foreach (var q in nhom.Quyens)
+                            q.IsSelected = activeIds?.Contains(q.IdQuyen) ?? false;
 
-                    // Refresh UI binding
-                    icNhomQuyen.ItemsSource = null;
-                    icNhomQuyen.ItemsSource = _danhSachNhomQuyen;
+                    ApplyFilterQuyen(); // Tự động lọc hiển thị theo vai trò vừa chọn
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Lỗi tải quyền: {ex.Message}");
-                }
-                finally
-                {
-                    LoadingOverlay.Visibility = Visibility.Collapsed;
-                }
+                finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
             }
         }
 
@@ -201,7 +277,6 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (_selectedNhanVien == null) return;
 
-            // Lấy ra tất cả các ID Quyền đã được tick
             var selectedIds = new List<string>();
             foreach (var nhom in _danhSachNhomQuyen)
             {
@@ -214,7 +289,9 @@ namespace AppCafebookApi.View.quanly.pages
                 }
             }
 
-            LoadingOverlay.Visibility = Visibility.Visible;
+            var loadingOverlay = this.FindName("LoadingOverlay") as Border;
+            if (loadingOverlay != null) loadingOverlay.Visibility = Visibility.Visible;
+
             try
             {
                 var req = new PhanQuyen_SaveRequestDto { SelectedQuyenIds = selectedIds };
@@ -235,7 +312,7 @@ namespace AppCafebookApi.View.quanly.pages
             }
             finally
             {
-                LoadingOverlay.Visibility = Visibility.Collapsed;
+                if (loadingOverlay != null) loadingOverlay.Visibility = Visibility.Collapsed;
             }
         }
 

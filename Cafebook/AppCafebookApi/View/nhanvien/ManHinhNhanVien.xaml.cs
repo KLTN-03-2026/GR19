@@ -134,6 +134,11 @@ namespace AppCafebookApi.View.nhanvien
                 hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THUE_SACH");
                 pageToNavigate = new ThueSachView();
             }
+            else if (clickedButton == btnGiaoHang)
+            {
+                hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_GIAO_HANG");
+                pageToNavigate = new GiaoHangView();
+            }
             else if (clickedButton == btnThongTinCaNhan)
             {
                 hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THONG_TIN");

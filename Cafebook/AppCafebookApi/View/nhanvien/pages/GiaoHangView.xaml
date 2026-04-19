@@ -3,12 +3,344 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:AppCafebookApi.View.nhanvien.pages"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="GiaoHangView">
+      d:DesignHeight="750" d:DesignWidth="1200"
+      Title="Quản lý Giao Hàng"
+      FontFamily="Segoe UI" Background="#FFF8E1" Loaded="Page_Loaded">
 
-    <Grid>
-        
+    <Page.Triggers>
+        <EventTrigger RoutedEvent="Page.Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.4"/>
+
+                    <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,30,0,0" To="0" Duration="0:0:0.5">
+                        <ThicknessAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </ThicknessAnimation.EasingFunction>
+                    </ThicknessAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Page.Triggers>
+
+    <Page.Resources>
+        <SolidColorBrush x:Key="PrimaryBrown" Color="#6F4E37"/>
+        <SolidColorBrush x:Key="DarkBrown" Color="#4E342E"/>
+        <SolidColorBrush x:Key="AccentOrange" Color="#D27D2D"/>
+        <SolidColorBrush x:Key="TextMain" Color="#333333"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#757575"/>
+        <SolidColorBrush x:Key="BorderGray" Color="#E0E0E0"/>
+        <SolidColorBrush x:Key="SuccessGreen" Color="#4CAF50"/>
+        <SolidColorBrush x:Key="DangerRed" Color="#E53935"/>
+        <SolidColorBrush x:Key="InfoBlue" Color="#1E88E5"/>
+        <SolidColorBrush x:Key="WarningYellow" Color="#FFB300"/>
+        <SolidColorBrush x:Key="LightCreamBrush" Color="#FFF8E1"/>
+        <SolidColorBrush x:Key="StatusGreenBrush" Color="#66BB6A"/>
+
+
+        <CollectionViewSource x:Key="ShippersSource" />
+
+        <Style x:Key="MaterialButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrown}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource AccentOrange}"/>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#D27D2D" Opacity="0.4" BlurRadius="8" ShadowDepth="3"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource DarkBrown}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SuccessButton" TargetType="Button" BasedOn="{StaticResource MaterialButton}">
+            <Setter Property="Background" Value="{StaticResource SuccessGreen}"/>
+        </Style>
+
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource MaterialButton}">
+            <Setter Property="Background" Value="{StaticResource DangerRed}"/>
+        </Style>
+
+        <Style x:Key="MaterialTextBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderGray}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#FAFAFA"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentOrange}"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="2"/>
+                                <Setter TargetName="border" Property="Background" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="BtnChuyenBepStyle" TargetType="Button" BasedOn="{StaticResource MaterialButton}">
+            <Setter Property="Background" Value="{StaticResource WarningYellow}"/>
+            <Setter Property="Foreground" Value="{StaticResource DarkBrown}"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Chờ xác nhận">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="{x:Null}">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BtnHoanThanhStyle" TargetType="Button" BasedOn="{StaticResource SuccessButton}">
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Đang giao">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
+
+    <Grid Margin="25">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="White" CornerRadius="12" Padding="20,15" Margin="0,0,0,20">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.04" BlurRadius="15" ShadowDepth="3"/>
+            </Border.Effect>
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="ĐƠN ĐẶT HÀNG ONLINE" FontSize="24" FontWeight="Black" Foreground="{StaticResource PrimaryBrown}" VerticalAlignment="Center"/>
+                    <TextBlock Text=" | Ship Nội Bộ" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="btnConfirmAll" Content="✓ Xác nhận tất cả đơn chờ" Style="{StaticResource SuccessButton}" Click="BtnConfirmAll_Click" Margin="0,0,10,0"/>
+                    <Button x:Name="btnRefresh" Content="🔄 Làm mới" Style="{StaticResource MaterialButton}" Background="#E0E0E0" Foreground="{StaticResource TextMain}" Click="BtnRefresh_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="15" Margin="0,0,0,20">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.04" BlurRadius="15" ShadowDepth="3"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="250"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="🔍 Tìm kiếm:" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource DarkBrown}" Margin="0,0,10,0"/>
+                    <Grid Width="350">
+                        <TextBox x:Name="txtSearch" Style="{StaticResource MaterialTextBox}" TextChanged="TxtSearch_TextChanged"/>
+                        <TextBlock IsHitTestVisible="False" Text="Nhập Tên, SĐT khách hoặc Mã HĐ..." VerticalAlignment="Center" Margin="12,0,0,0" Foreground="#BDBDBD" FontSize="14">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=txtSearch}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock Text="🏷 Lọc trạng thái:" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource DarkBrown}" Margin="0,0,10,0"/>
+                    <ComboBox x:Name="cmbStatusFilter" Width="130" FontSize="14" Padding="10,8" SelectedIndex="1" SelectionChanged="CmbStatusFilter_SelectionChanged">
+                        <ComboBoxItem Content="Tất cả"/>
+                        <ComboBoxItem Content="Chờ xác nhận"/>
+                        <ComboBoxItem Content="Đang chuẩn bị"/>
+                        <ComboBoxItem Content="Chờ lấy hàng"/>
+                        <ComboBoxItem Content="Đang giao"/>
+                        <ComboBoxItem Content="Hoàn thành"/>
+                        <ComboBoxItem Content="Đã Hủy"/>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Background="White" CornerRadius="12" Padding="10">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.06" BlurRadius="20" ShadowDepth="5"/>
+            </Border.Effect>
+            <DataGrid x:Name="dgGiaoHang" AutoGenerateColumns="False" CanUserAddRows="False"
+                      BorderThickness="0" Background="Transparent" RowHeight="85" HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F0F0F0">
+
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#F9F5F0"/>
+                        <Setter Property="Foreground" Value="{StaticResource DarkBrown}"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="FontSize" Value="14"/>
+                        <Setter Property="Padding" Value="10,12"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,2"/>
+                        <Setter Property="BorderBrush" Value="{StaticResource AccentOrange}"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Mã Đơn" Binding="{Binding IdHoaDon, StringFormat=HD000000}" IsReadOnly="True" FontWeight="Black" Foreground="{StaticResource PrimaryBrown}" Width="90"/>
+                    <DataGridTextColumn Header="Thời gian" Binding="{Binding ThoiGianTao, StringFormat=dd/MM/yyyy HH:mm}" IsReadOnly="True" Foreground="{StaticResource TextMuted}" Width="130"/>
+
+                    <DataGridTemplateColumn Header="Thông tin khách hàng" Width="2*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="5,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding TenKhachHang}" FontWeight="Bold" FontSize="15" Foreground="{StaticResource TextMain}"/>
+                                    <TextBlock Text="{Binding SoDienThoaiGiaoHang, StringFormat=📞 {0}}" Foreground="{StaticResource InfoBlue}" FontWeight="SemiBold" Margin="0,4,0,2"/>
+                                    <TextBlock Text="{Binding DiaChiGiaoHang, StringFormat=📍 {0}}" Foreground="{StaticResource TextMuted}" FontSize="13" TextWrapping="Wrap" MaxHeight="38" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Tổng tiền" Binding="{Binding ThanhTien, StringFormat={}{0:N0} đ}" IsReadOnly="True" FontWeight="Black" Foreground="{StaticResource DangerRed}" FontSize="15" Width="120"/>
+
+                    <DataGridTemplateColumn Header="Trạng thái" Width="140">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="20" Padding="12,6" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#F5F5F5"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Hoàn thành">
+                                                    <Setter Property="Background" Value="#E8F5E9"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Đang giao">
+                                                    <Setter Property="Background" Value="#E3F2FD"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Chờ lấy hàng">
+                                                    <Setter Property="Background" Value="#E0F7FA"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Đang chuẩn bị">
+                                                    <Setter Property="Background" Value="#FFF3E0"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Chờ xác nhận">
+                                                    <Setter Property="Background" Value="#FFF9C4"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Đã hủy">
+                                                    <Setter Property="Background" Value="#FFEBEE"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding TrangThaiGiaoHang, FallbackValue='Chờ xác nhận'}" FontWeight="Bold" FontSize="13">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#757575"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Hoàn thành">
+                                                        <Setter Property="Foreground" Value="#2E7D32"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Đang giao">
+                                                        <Setter Property="Foreground" Value="#1565C0"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Chờ lấy hàng">
+                                                        <Setter Property="Foreground" Value="#00838F"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Đang chuẩn bị">
+                                                        <Setter Property="Foreground" Value="#EF6C00"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Chờ xác nhận">
+                                                        <Setter Property="Foreground" Value="#F57F17"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding TrangThaiGiaoHang}" Value="Đã hủy">
+                                                        <Setter Property="Foreground" Value="#C62828"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Shipper Nội Bộ" Width="180">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ComboBox ItemsSource="{Binding Source={StaticResource ShippersSource}}"
+                                          SelectedValue="{Binding IdNguoiGiaoHang, UpdateSourceTrigger=PropertyChanged}"
+                                          DisplayMemberPath="TenNguoiGiaoHang"
+                                          SelectedValuePath="IdNguoiGiaoHang"
+                                          SelectionChanged="CmbNguoiGiaoHang_SelectionChanged"
+                                          VerticalAlignment="Center" Padding="8,6" Margin="5"
+                                          Background="#FAFAFA" BorderBrush="{StaticResource BorderGray}" BorderThickness="1"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Tác vụ" Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <Button x:Name="btnChuyenCheBien" Content="🍳 Nhận đơn" Style="{StaticResource BtnChuyenBepStyle}" Click="BtnChuyenCheBien_Click" Tag="{Binding IdHoaDon}" Margin="3"/>
+                                    <Button x:Name="btnHoanThanh" Content="✓ Hoàn tất" Style="{StaticResource BtnHoanThanhStyle}" Click="BtnHoanThanh_Click" Tag="{Binding IdHoaDon}" Margin="3"/>
+                                    <Button Content="🖨 In" Style="{StaticResource MaterialButton}" Background="{StaticResource InfoBlue}" Padding="10,6" Click="BtnInPhieu_Click" Tag="{Binding IdHoaDon}" Margin="3"/>
+                                    <Button Content="✕ Hủy" Style="{StaticResource DangerButton}" Padding="10,6" Click="BtnHuyDon_Click" Tag="{Binding IdHoaDon}" Margin="3"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="3" Background="#99FFFFFF" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="6" Foreground="{StaticResource AccentOrange}" BorderThickness="0" Background="#E0E0E0"/>
+                <TextBlock Text="Đang xử lý..." FontWeight="Bold" FontSize="16" Foreground="{StaticResource PrimaryBrown}" Margin="0,15,0,0" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
     </Grid>
 </Page>

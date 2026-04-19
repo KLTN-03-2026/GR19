@@ -39,7 +39,7 @@
 
         <Grid Grid.Row="0" Margin="0,0,0,20">
             <TextBlock Text="CẤP QUYỀN TRUY CẬP CHO TÀI KHOẢN" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
-            <Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
+            <Button x:Name="btnQuayLai" Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
         </Grid>
 
         <Grid Grid.Row="1">
@@ -72,8 +72,7 @@
                         <TextBox x:Name="txtSearchNhanVien" Grid.Column="0" Padding="5,6" FontSize="13" 
                                  BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1"
                                  TextChanged="TxtSearchNhanVien_TextChanged"/>
-
-                        <TextBlock IsHitTestVisible="False" Text="🔍 Nhập tên..." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="8,0,0,0" Foreground="Gray" FontSize="12" Grid.Column="0">
+                        <TextBlock IsHitTestVisible="False" Text="🔍 Nhập tên..." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="8,0,0,0" Foreground="Gray" FontSize="12">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -103,11 +102,9 @@
             </Border>
 
             <Border Grid.Column="2" Background="White" CornerRadius="8" Padding="20">
-                <Border.Effect>
-                    <DropShadowEffect Color="Black" BlurRadius="10" Opacity="0.1" ShadowDepth="1"/>
-                </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -116,19 +113,62 @@
 
                     <TextBlock Text="2. Thiết lập Quyền hạn" FontSize="16" FontWeight="SemiBold" Foreground="#4E342E"/>
                     <TextBlock x:Name="txtTenNhanVienChon" Grid.Row="1" Text="Vui lòng chọn nhân viên ở danh sách bên trái..." 
-                               FontSize="14" Foreground="#D27D2D" FontStyle="Italic" Margin="0,5,0,15"/>
+                   FontSize="14" Foreground="#D27D2D" FontStyle="Italic" Margin="0,5,0,15"/>
 
-                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <Grid Grid.Row="2" Margin="0,0,0,15">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="150"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox x:Name="txtSearchQuyen" Grid.Row="0" Grid.Column="0" Padding="5,6" FontSize="13" 
+                     BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1"
+                     TextChanged="TxtSearchQuyen_TextChanged"/>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" IsHitTestVisible="False" Text="🔍 Tìm tên quyền..." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="8,0,0,0" Foreground="Gray" FontSize="12">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text.Length, ElementName=txtSearchQuyen}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <ComboBox x:Name="cmbFilterQuyen" Grid.Row="0" Grid.Column="2" Padding="5" FontSize="13"
+                      BorderBrush="{StaticResource BorderGrayBrush}" BorderThickness="1"
+                      SelectionChanged="CmbFilterQuyen_SelectionChanged">
+                            <ComboBoxItem Content="Tất cả quyền" IsSelected="True"/>
+                            <ComboBoxItem Content="Quyền đã cấp"/>
+                            <ComboBoxItem Content="Quyền chưa cấp"/>
+                        </ComboBox>
+
+                        <WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,10,0,0">
+                            <Button x:Name="btnChonTatCa" Content="Chọn tất cả hiển thị" Style="{StaticResource ActionBtn}" Background="#2196F3" Padding="10,5" Margin="0,0,10,0" Click="BtnChonTatCa_Click"/>
+                            <Button x:Name="btnBoChonTatCa" Content="Bỏ chọn tất cả" Style="{StaticResource ActionBtn}" Background="#F44336" Padding="10,5" Margin="0,0,10,0" Click="BtnBoChonTatCa_Click"/>
+                        </WrapPanel>
+                    </Grid>
+
+                    <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
                         <ItemsControl x:Name="icNhomQuyen">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Margin="0,0,0,15">
+                                    <StackPanel Margin="0,0,0,0" Visibility="{Binding Visibility}">
                                         <TextBlock Text="{Binding NhomName}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource PrimaryBrownBrush}" Margin="0,0,0,8"/>
                                         <ItemsControl ItemsSource="{Binding Quyens}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <CheckBox Content="{Binding TenQuyen}" IsChecked="{Binding IsSelected}" Tag="{Binding IdQuyen}"
-                                                              Margin="15,4,0,4" FontSize="14" Cursor="Hand"/>
+                                                    <CheckBox Content="{Binding TenQuyen}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Tag="{Binding IdQuyen}"
+                                                  Margin="15,4,0,4" FontSize="14" Cursor="Hand" Visibility="{Binding Visibility}"
+                                                  Checked="QuyenCheckBox_Changed" Unchecked="QuyenCheckBox_Changed"/>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
@@ -138,8 +178,8 @@
                         </ItemsControl>
                     </ScrollViewer>
 
-                    <Button x:Name="btnLuu" Grid.Row="3" Content="LƯU CẤU HÌNH QUYỀN" Style="{StaticResource ActionBtn}" 
-                            HorizontalAlignment="Right" Margin="0,15,0,0" Width="180" Height="40" Click="BtnLuu_Click" IsEnabled="False"/>
+                    <Button x:Name="btnLuu" Grid.Row="4" Content="LƯU CẤU HÌNH" Style="{StaticResource ActionBtn}" 
+                HorizontalAlignment="Right" Margin="0,15,0,0" Width="150" Height="35" Click="BtnLuu_Click" IsEnabled="False"/>
                 </Grid>
             </Border>
         </Grid>
