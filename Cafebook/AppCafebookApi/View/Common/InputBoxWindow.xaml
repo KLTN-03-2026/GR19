@@ -5,11 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AppCafebookApi.View.Common"
         mc:Ignorable="d"
-        Title="Input Box" Height="220" Width="400"
-        WindowStyle="ToolWindow"
+        Title="Input Box" Height="230" Width="400"
         WindowStartupLocation="CenterScreen"
-        Background="#F5F5F5"
+        Topmost="True"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
         Loaded="Window_Loaded">
+
     <Window.Resources>
         <SolidColorBrush x:Key="PrimaryBrown" Color="#4E342E"/>
         <SolidColorBrush x:Key="AccentOrange" Color="#D84315"/>
@@ -55,22 +59,44 @@
         </Style>
 
         <Style x:Key="CafeTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="MinHeight" Value="38"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#D7CCC8"/>
             <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#3E2723"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
                         <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" 
-                            BorderThickness="1" Background="{TemplateBinding Background}" 
-                            CornerRadius="6">
-                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                        BorderThickness="1" Background="{TemplateBinding Background}" 
+                        CornerRadius="6">
+                            <Grid>
+                                <TextBlock x:Name="WaterMark"
+                                   Text="{TemplateBinding Tag}"
+                                   Foreground="#BCAAA4"
+                                   Margin="12,0,0,0" 
+                                   VerticalAlignment="Center"
+                                   Visibility="Collapsed"
+                                   IsHitTestVisible="False"
+                                   FontStyle="Italic"/>
+
+                                <ScrollViewer x:Name="PART_ContentHost" Focusable="false" 
+                                      HorizontalScrollBarVisibility="Hidden" 
+                                      VerticalScrollBarVisibility="Hidden"
+                                      VerticalAlignment="Center"
+                                      Margin="2,0,0,0"/>
+                            </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsFocused" Value="True">
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentOrange}"/>
                                 <Setter TargetName="border" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="WaterMark" Property="Visibility" Value="Visible"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -78,6 +104,7 @@
             </Setter>
         </Style>
     </Window.Resources>
+
     <Grid Margin="20">
         <Border Background="{StaticResource BeigeBackground}" CornerRadius="15">
             <Border.Effect>
@@ -93,25 +120,30 @@
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
                     <Path Data="M13,19V16H15V19H13M18,19V13H20V19H18M13,9H15V14H13V9M18,9H20V11H18V9M4,19V8H11V19H4M11,7V4H4V7H11Z" 
-                  Fill="{StaticResource AccentOrange}" Width="20" Height="20" Stretch="Uniform" Margin="0,0,10,0"/>
-                    <TextBlock x:Name="lblPrompt" Text="Nhập Yêu Cầu Của Khách Hàng" 
-                       FontWeight="SemiBold" FontSize="16" Foreground="{StaticResource TextDark}"/>
+                          Fill="{StaticResource AccentOrange}" Width="20" Height="20" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"/>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="lblPrompt" Text="Nhập Yêu Cầu Của Khách Hàng" 
+                                   FontWeight="SemiBold" FontSize="16" Foreground="{StaticResource TextDark}"/>
+                        <TextBlock Text="(để trống nếu không yêu cầu gì)" 
+                                   FontSize="12" Foreground="#8D6E63" Margin="0,2,0,0" FontStyle="Italic"/>
+                    </StackPanel>
                 </StackPanel>
 
                 <TextBox Grid.Row="1" x:Name="txtInput" 
-                 Style="{StaticResource CafeTextBoxStyle}"
-                 VerticalAlignment="Center"
-                 Tag="Nhập thông tin tại đây..."/>
+                         Style="{StaticResource CafeTextBoxStyle}"
+                         VerticalAlignment="Center"
+                         Tag="Nhập thông tin tại đây..."/>
 
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
                     <Button x:Name="btnCancel" Content="Bỏ qua" 
-                    Background="Transparent" Foreground="#8D6E63"
-                    Width="80" Height="35" Margin="0,0,10,0" 
-                    Style="{StaticResource CafeButtonStyle}" Click="BtnCancel_Click"/>
+                            Background="Transparent" Foreground="#8D6E63"
+                            Width="80" Height="35" Margin="0,0,10,0" 
+                            Style="{StaticResource CafeButtonStyle}" Click="BtnCancel_Click"/>
 
                     <Button x:Name="btnOk" Content="Xác nhận" 
-                    Style="{StaticResource CafeButtonStyle}"
-                    Width="100" Height="35" IsDefault="True" Click="BtnOk_Click"/>
+                            Style="{StaticResource CafeButtonStyle}"
+                            Width="100" Height="35" IsDefault="True" Click="BtnOk_Click"/>
                 </StackPanel>
             </Grid>
         </Border>

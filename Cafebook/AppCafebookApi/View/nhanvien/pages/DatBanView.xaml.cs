@@ -143,7 +143,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async Task LoadAllDataAsync()
         {
-            LoadingOverlay.Visibility = Visibility.Visible;
+           LoadingOverlay.Visibility = Visibility.Visible;
 
             // Đợi tất cả API tải xong hoàn toàn
             await Task.WhenAll(

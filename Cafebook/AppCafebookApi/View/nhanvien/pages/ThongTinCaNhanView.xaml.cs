@@ -270,29 +270,49 @@ namespace AppCafebookApi.View.nhanvien.pages
             { p3.Password = t3.Text; p3.Visibility = Visibility.Visible; t3.Visibility = Visibility.Collapsed; }
         }
 
-        private void TxtMatKhauCu_PasswordChanged(object sender, RoutedEventArgs e) 
-        { 
-            if (FindName("txtVisibleMatKhauCu") is TextBox t && FindName("txtMatKhauCu") is PasswordBox p) t.Text = p.Password; 
+        private void TxtMatKhauCu_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (FindName("txtVisibleMatKhauCu") is TextBox t && FindName("txtMatKhauCu") is PasswordBox p)
+            {
+                if (t.Text != p.Password) t.Text = p.Password;
+            }
         }
-        private void TxtVisibleMatKhauCu_TextChanged(object sender, TextChangedEventArgs e) 
-        { 
-            if (FindName("txtMatKhauCu") is PasswordBox p && FindName("txtVisibleMatKhauCu") is TextBox t) p.Password = t.Text; 
+        private void TxtVisibleMatKhauCu_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (FindName("txtMatKhauCu") is PasswordBox p && FindName("txtVisibleMatKhauCu") is TextBox t)
+            {
+                if (p.Password != t.Text) p.Password = t.Text;
+            }
         }
-        private void TxtMatKhauMoi_PasswordChanged(object sender, RoutedEventArgs e) 
-        { 
-            if (FindName("txtVisibleMatKhauMoi") is TextBox t && FindName("txtMatKhauMoi") is PasswordBox p) t.Text = p.Password; 
+
+        private void TxtMatKhauMoi_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (FindName("txtVisibleMatKhauMoi") is TextBox t && FindName("txtMatKhauMoi") is PasswordBox p)
+            {
+                if (t.Text != p.Password) t.Text = p.Password;
+            }
         }
-        private void TxtVisibleMatKhauMoi_TextChanged(object sender, TextChangedEventArgs e) 
-        { 
-            if (FindName("txtMatKhauMoi") is PasswordBox p && FindName("txtVisibleMatKhauMoi") is TextBox t) p.Password = t.Text; 
+        private void TxtVisibleMatKhauMoi_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (FindName("txtMatKhauMoi") is PasswordBox p && FindName("txtVisibleMatKhauMoi") is TextBox t)
+            {
+                if (p.Password != t.Text) p.Password = t.Text;
+            }
         }
-        private void TxtXacNhanMatKhau_PasswordChanged(object sender, RoutedEventArgs e) 
-        { 
-            if (FindName("txtVisibleXacNhanMatKhau") is TextBox t && FindName("txtXacNhanMatKhau") is PasswordBox p) t.Text = p.Password; 
+
+        private void TxtXacNhanMatKhau_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (FindName("txtVisibleXacNhanMatKhau") is TextBox t && FindName("txtXacNhanMatKhau") is PasswordBox p)
+            {
+                if (t.Text != p.Password) t.Text = p.Password;
+            }
         }
-        private void TxtVisibleXacNhanMatKhau_TextChanged(object sender, TextChangedEventArgs e) 
-        { 
-            if (FindName("txtXacNhanMatKhau") is PasswordBox p && FindName("txtVisibleXacNhanMatKhau") is TextBox t) p.Password = t.Text; 
+        private void TxtVisibleXacNhanMatKhau_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (FindName("txtXacNhanMatKhau") is PasswordBox p && FindName("txtVisibleXacNhanMatKhau") is TextBox t)
+            {
+                if (p.Password != t.Text) p.Password = t.Text;
+            }
         }
 
         private async void BtnXacNhanDoiMatKhau_Click(object sender, RoutedEventArgs e)
@@ -305,8 +325,26 @@ namespace AppCafebookApi.View.nhanvien.pages
             string newP = isShow ? ((TextBox)FindName("txtVisibleMatKhauMoi")).Text : ((PasswordBox)FindName("txtMatKhauMoi")).Password;
             string confP = isShow ? ((TextBox)FindName("txtVisibleXacNhanMatKhau")).Text : ((PasswordBox)FindName("txtXacNhanMatKhau")).Password;
 
-            if (string.IsNullOrWhiteSpace(oldP) || string.IsNullOrWhiteSpace(newP)) { MessageBox.Show("Vui lòng nhập đủ mật khẩu."); return; }
-            if (newP != confP) { MessageBox.Show("Mật khẩu xác nhận không khớp."); return; }
+            if (string.IsNullOrWhiteSpace(oldP) || string.IsNullOrWhiteSpace(newP))
+            {
+                MessageBox.Show("Vui lòng nhập đủ mật khẩu.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (newP.Length < 6)
+            {
+                MessageBox.Show("Mật khẩu mới phải có ít nhất 6 ký tự.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (oldP == newP)
+            {
+                MessageBox.Show("Mật khẩu mới không được trùng với mật khẩu cũ.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (newP != confP)
+            {
+                MessageBox.Show("Mật khẩu xác nhận không khớp.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             var req = new DoiMatKhauRequestDto { MatKhauCu = oldP, MatKhauMoi = newP };
 
@@ -315,7 +353,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 var res = await httpClient.PostAsJsonAsync($"api/app/nhanvien/thongtincanhan/change-password/{idNhanVien}", req);
                 if (res.IsSuccessStatusCode)
                 {
-                    MessageBox.Show("Đổi mật khẩu thành công!");
+                    MessageBox.Show("Đổi mật khẩu thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
                     if (FindName("txtMatKhauCu") is PasswordBox p1) p1.Password = "";
                     if (FindName("txtVisibleMatKhauCu") is TextBox t1) t1.Text = "";
                     if (FindName("txtMatKhauMoi") is PasswordBox p2) p2.Password = "";
@@ -323,7 +361,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                     if (FindName("txtXacNhanMatKhau") is PasswordBox p3) p3.Password = "";
                     if (FindName("txtVisibleXacNhanMatKhau") is TextBox t3) t3.Text = "";
                 }
-                else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
+                else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex) { MessageBox.Show($"Lỗi: {ex.Message}"); }
         }

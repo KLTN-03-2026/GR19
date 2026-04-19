@@ -76,6 +76,25 @@ namespace AppCafebookApi.View.nhanvien
             _notificationTimer.Start();
         }
 
+        // =================================================================================
+        // HÀM BỔ SUNG: CẬP NHẬT TRẠNG THÁI CHẤM CÔNG TỪ PAGE CON
+        // =================================================================================
+        public void UpdateSidebarStatus(string statusText)
+        {
+            if (FindName("lblSidebarStatus") is TextBlock lblStatus)
+            {
+                lblStatus.Text = statusText;
+
+                // Đổi màu tùy theo trạng thái
+                if (statusText.StartsWith("Đang làm"))
+                    lblStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#28a745"));
+                else if (statusText == "Lỗi đồng bộ" || statusText == "Chưa chấm công")
+                    lblStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#dc3545"));
+                else
+                    lblStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
+            }
+        }
+
         private void ApplyPermissions()
         {
             // Kiểm tra quyền quản trị hoặc toàn quyền nhân viên 
@@ -159,6 +178,7 @@ namespace AppCafebookApi.View.nhanvien
                 hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_PHIEU_LUONG");
                 pageToNavigate = new PhieuLuongView();
             }
+
             if (hasPermission && pageToNavigate != null)
             {
                 UpdateSelectedButton(clickedButton);

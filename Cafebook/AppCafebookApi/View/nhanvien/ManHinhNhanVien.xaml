@@ -132,7 +132,7 @@
                         </Viewbox>
                     </Border>
                     <TextBlock x:Name="txtUserName" Text="Tên Nhân Viên" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource WhiteTextBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
-                    <TextBlock x:Name="txtUserRole" Text="Nhân viên" FontSize="13" Foreground="{StaticResource SubtleWhiteTextBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="txtUserRole" Text="Vai trò" FontSize="13" Foreground="{StaticResource SubtleWhiteTextBrush}" HorizontalAlignment="Center"/>
                     <TextBlock x:Name="lblSidebarStatus" 
                                Text="(Đang tải...)" 
                                FontSize="12" 

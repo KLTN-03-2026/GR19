@@ -18,9 +18,10 @@ namespace CafebookModel.Model.ModelEntities
         [StringLength(100)]
         public string LoaiDeXuat { get; set; } = string.Empty;
 
-        [ForeignKey("IdSanPhamGoc")]
+        // XÓA [ForeignKey("IdSanPhamGoc")]
         public virtual SanPham SanPhamGoc { get; set; } = null!;
-        [ForeignKey("IdSanPhamDeXuat")]
+
+        // XÓA [ForeignKey("IdSanPhamDeXuat")]
         public virtual SanPham SanPhamDeXuat { get; set; } = null!;
     }
 }

@@ -205,6 +205,13 @@ namespace CafebookApi.Controllers.App.NhanVien
             if (string.IsNullOrEmpty(req.MatKhauCu) || string.IsNullOrEmpty(req.MatKhauMoi))
                 return BadRequest("Mật khẩu không được để trống.");
 
+            // Validation Backend
+            if (req.MatKhauMoi.Length < 6)
+                return BadRequest("Mật khẩu mới phải có ít nhất 6 ký tự.");
+
+            if (req.MatKhauCu == req.MatKhauMoi)
+                return BadRequest("Mật khẩu mới không được trùng với mật khẩu cũ.");
+
             var nhanVien = await _context.NhanViens.FindAsync(idNhanVien);
             if (nhanVien == null) return NotFound();
 

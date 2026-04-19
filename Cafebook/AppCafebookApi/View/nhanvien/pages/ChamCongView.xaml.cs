@@ -1,5 +1,4 @@
-﻿// Tệp: AppCafebookApi/View/nhanvien/pages/ChamCongView.xaml.cs
-using AppCafebookApi.Services;
+﻿using AppCafebookApi.Services;
 using CafebookModel.Model.ModelApp.NhanVien;
 using System;
 using System.Net.Http.Json;
@@ -8,8 +7,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using AppCafebookApi.View.common;
 using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace AppCafebookApi.View.nhanvien.pages
 {
@@ -17,296 +16,289 @@ namespace AppCafebookApi.View.nhanvien.pages
     {
         private DispatcherTimer _timerClock;
         private DispatcherTimer _timerWork;
-        private DateTime? _gioVaoCache;
 
-        private readonly Brush _mauXanh = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#28a745"));
-        private readonly Brush _mauDo = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#dc3545"));
-        private readonly Brush _mauXam = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#6c757d"));
-        private readonly Brush _mauCam = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#fd7e14"));
-        private readonly Brush _mauLam = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007bff"));
+        private DateTime? _gioVaoHienTai;
+        private decimal _tongGioDaLamCache = 0;
+
+        // Bảng màu cho Trạng thái chuẩn Material
+        private readonly Brush _colorSuccess = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2E7D32"));
+        private readonly Brush _colorSuccessBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E8F5E9"));
+
+        private readonly Brush _colorDanger = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#C62828"));
+        private readonly Brush _colorDangerBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFEBEE"));
+
+        private readonly Brush _colorWarning = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F57F17"));
+        private readonly Brush _colorWarningBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFDE7"));
+
+        private readonly Brush _colorInfo = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D27D2D"));
+        private readonly Brush _colorInfoBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF8E1"));
+
+        private readonly Brush _colorGray = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#757575"));
+        private readonly Brush _colorGrayBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F5F5F5"));
 
         public ChamCongView()
         {
             InitializeComponent();
 
             _timerClock = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-            _timerClock.Tick += TimerClock_Tick;
-            _timerClock.Start();
+            _timerClock.Tick += _timerClock_Tick;
 
             _timerWork = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-            _timerWork.Tick += TimerWork_Tick;
-        }
-
-        private void TimerClock_Tick(object? sender, EventArgs e)
-        {
-            lblThoiGianThucTe.Text = DateTime.Now.ToString("HH:mm:ss");
-        }
-
-        private void TimerWork_Tick(object? sender, EventArgs e)
-        {
-            if (_gioVaoCache.HasValue)
-            {
-                var duration = DateTime.Now - _gioVaoCache.Value;
-                lblTrangThaiChinh.Text = $"Đang làm: {duration:hh\\:mm\\:ss}";
-            }
+            _timerWork.Tick += _timerWork_Tick;
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(this))
-                return;
-
-            if (AuthService.CurrentUser == null)
+            // BẢO MẬT LỚP 2: KIỂM TRA QUYỀN
+            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG"))
             {
-                lblTrangThaiChinh.Text = "Vui lòng đăng nhập";
-                btnChamCong.Visibility = Visibility.Collapsed;
+                MessageBox.Show("Bạn không có quyền truy cập chức năng Chấm công.", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (this.NavigationService != null && this.NavigationService.CanGoBack) this.NavigationService.GoBack();
                 return;
             }
 
+            _timerClock.Start();
             await LoadStatusAsync();
 
-            dpChonThang.SelectedDate = DateTime.Now;
-            await LoadLichSuAsync(DateTime.Now.Month, DateTime.Now.Year);
+            if (FindName("dpChonThang") is DatePicker dp) dp.SelectedDate = DateTime.Now;
+        }
 
-            dpNgayBatDau.SelectedDate = DateTime.Today;
-            dpNgayKetThuc.SelectedDate = DateTime.Today;
-            cmbLoaiDon.SelectedIndex = 0;
+        private void Page_Unloaded(object sender, RoutedEventArgs e)
+        {
+            _timerClock.Stop();
+            _timerWork.Stop();
+        }
+
+        // ====================================================================
+        // ĐIỀU HƯỚNG ẨN HIỆN GIỮA "ĐIỂM DANH" VÀ "LỊCH SỬ"
+        // ====================================================================
+        private void BtnXemLichSu_Click(object sender, RoutedEventArgs e)
+        {
+            if (FindName("viewDiemDanh") is Grid vDiemDanh) vDiemDanh.Visibility = Visibility.Collapsed;
+            if (FindName("viewLichSu") is Grid vLichSu) vLichSu.Visibility = Visibility.Visible;
+            if (FindName("txtHeaderTitle") is TextBlock txtTitle) txtTitle.Text = "Lịch Sử Chấm Công";
+            if (FindName("txtHeaderIcon") is TextBlock txtIcon) txtIcon.Text = "📋";
+            if (FindName("btnXemLichSu") is Button btnLichSu) btnLichSu.Visibility = Visibility.Collapsed;
+
+            // Load lại lịch sử để đảm bảo data luôn mới
+            if (FindName("dpChonThang") is DatePicker dp && dp.SelectedDate.HasValue)
+            {
+                _ = LoadLichSuAsync(dp.SelectedDate.Value.Month, dp.SelectedDate.Value.Year);
+            }
+        }
+
+        private void BtnQuayLai_Click(object sender, RoutedEventArgs e)
+        {
+            // Nếu đang xem Lịch Sử -> Quay lại màn Điểm Danh
+            if (FindName("viewLichSu") is Grid vLichSu && vLichSu.Visibility == Visibility.Visible)
+            {
+                vLichSu.Visibility = Visibility.Collapsed;
+                if (FindName("viewDiemDanh") is Grid vDiemDanh) vDiemDanh.Visibility = Visibility.Visible;
+                if (FindName("txtHeaderTitle") is TextBlock txtTitle) txtTitle.Text = "Chấm Công Nhân Viên";
+                if (FindName("txtHeaderIcon") is TextBlock txtIcon) txtIcon.Text = "⏱️";
+                if (FindName("btnXemLichSu") is Button btnLichSu) btnLichSu.Visibility = Visibility.Visible;
+                return; // Kết thúc để không out khỏi page
+            }
+
+            // Nếu đang ở màn Điểm Danh -> Back thoát ra khỏi Menu
+            if (this.NavigationService != null && this.NavigationService.CanGoBack)
+            {
+                this.NavigationService.GoBack();
+            }
+        }
+        // ====================================================================
+
+        private void _timerClock_Tick(object? sender, EventArgs e)
+        {
+            if (FindName("txtClock") is TextBlock txtC) txtC.Text = DateTime.Now.ToString("HH:mm:ss");
+            if (FindName("txtDate") is TextBlock txtD) txtD.Text = DateTime.Now.ToString("dd/MM/yyyy");
+        }
+
+        private void _timerWork_Tick(object? sender, EventArgs e)
+        {
+            TimeSpan currentSession = TimeSpan.Zero;
+            if (_gioVaoHienTai.HasValue)
+            {
+                currentSession = DateTime.Now - _gioVaoHienTai.Value;
+            }
+
+            TimeSpan totalSpan = TimeSpan.FromHours((double)_tongGioDaLamCache) + currentSession;
+
+            if (FindName("txtThoiGianLam") is TextBlock txtT)
+                txtT.Text = $"{(int)totalSpan.TotalHours:D2}:{totalSpan.Minutes:D2}:{totalSpan.Seconds:D2}";
+
+            if (_gioVaoHienTai.HasValue)
+                UpdateSidebarStatus($"Đang làm ({(int)totalSpan.TotalHours:D2}:{totalSpan.Minutes:D2})");
+        }
+
+        private void UpdateSidebarStatus(string status)
+        {
+            if (Window.GetWindow(this) is ManHinhNhanVien mainWindow)
+            {
+                mainWindow.UpdateSidebarStatus(status);
+            }
         }
 
         private async Task LoadStatusAsync()
         {
+            if (AuthService.CurrentUser == null) return;
+            int idNhanVien = AuthService.CurrentUser.IdNhanVien;
+
+            if (FindName("brdLoadingBtn") is Border brdLoad) brdLoad.Visibility = Visibility.Visible;
+            if (FindName("btnVaoCa") is Button btnVao) btnVao.Visibility = Visibility.Collapsed;
+            if (FindName("btnRaCa") is Button btnRa) btnRa.Visibility = Visibility.Collapsed;
+
             try
             {
-                btnChamCong.IsEnabled = false;
+                var client = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-                var response = await ApiClient.Instance.GetAsync("api/app/chamcong/status");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var status = await response.Content.ReadFromJsonAsync<ChamCongDashboardDto>();
-                    if (status != null)
-                    {
-                        UpdateUI(status);
-                    }
-                }
-                else
-                {
-                    lblTrangThaiChinh.Text = "Lỗi tải trạng thái.";
-                }
+                var response = await client.GetFromJsonAsync<ChamCongDashboardDto>($"api/app/chamcong/status/{idNhanVien}");
+                if (response != null) UpdateUI(response);
             }
             catch (Exception ex)
             {
-                // Hiển thị lỗi chi tiết hơn (nếu có)
-                lblTrangThaiChinh.Text = $"Lỗi kết nối API: {ex.Message}";
+                Console.WriteLine($"[LoadStatusAsync Error]: {ex.Message}");
+                SetStatusBadge("Lỗi kết nối", _colorDanger, _colorDangerBg);
+                UpdateSidebarStatus("Lỗi đồng bộ");
+            }
+            finally
+            {
+                if (FindName("brdLoadingBtn") is Border brdLoadEnd) brdLoadEnd.Visibility = Visibility.Collapsed;
             }
         }
 
-        private void UpdateUI(ChamCongDashboardDto status)
+        private void SetStatusBadge(string text, Brush textBrush, Brush bgBrush)
         {
-            ManHinhNhanVien.CurrentTrangThai = status.TrangThai;
+            if (FindName("txtTrangThaiCa") is TextBlock txt)
+            {
+                txt.Text = text;
+                txt.Foreground = textBrush;
+            }
+            if (FindName("brdTrangThaiCa") is Border brd)
+            {
+                brd.Background = bgBrush;
+            }
+        }
 
-            btnChamCong.Visibility = Visibility.Visible;
-            btnChamCong.IsEnabled = true;
+        private void UpdateUI(ChamCongDashboardDto dto)
+        {
+            if (FindName("txtNhanVien") is TextBlock txtNv) txtNv.Text = $"Nhân viên: {dto.TenNhanVien}";
+
+            if (dto.TenCa != null)
+            {
+                if (FindName("txtTenCa") is TextBlock txtTc) txtTc.Text = $"Ca hiện tại: {dto.TenCa}";
+                if (FindName("txtThoiGianCa") is TextBlock txtTgc) txtTgc.Text = $"Quy định: {dto.GioBatDauCa:hh\\:mm} - {dto.GioKetThucCa:hh\\:mm}";
+            }
+            else
+            {
+                if (FindName("txtTenCa") is TextBlock txtTc) txtTc.Text = "Không có ca làm việc";
+                if (FindName("txtThoiGianCa") is TextBlock txtTgc) txtTgc.Text = "";
+            }
+
+            if (FindName("txtGioVao") is TextBlock txtGv) txtGv.Text = dto.LanVaoGanNhat?.ToString("HH:mm") ?? "--:--";
+            if (FindName("txtGioRa") is TextBlock txtGr) txtGr.Text = dto.LanRaGanNhat?.ToString("HH:mm") ?? "--:--";
+
+            _tongGioDaLamCache = dto.TongGioLamHienTai;
+
             _timerWork.Stop();
-            _gioVaoCache = null;
+            _gioVaoHienTai = null;
 
-            UpdateUI_Phu(status); // Gọi hàm đã sửa lỗi
-
-            switch (status.TrangThai)
+            if (dto.TrangThai == "KhongCoCa")
             {
-                case "NghiPhep":
-                    lblTrangThaiChinh.Text = status.TenCa; // "Nghỉ phép"
-                    btnChamCong.Content = "ĐANG NGHỈ PHÉP";
-                    btnChamCong.Background = _mauLam;
-                    btnChamCong.IsEnabled = false;
-                    btnChamCong.Tag = null;
-                    break;
-                case "KhongCoCa":
-                    lblTrangThaiChinh.Text = status.TenCa; // "Không có lịch làm"
-                    btnChamCong.Visibility = Visibility.Collapsed;
-                    break;
-                case "ChuaChamCong":
-                    lblTrangThaiChinh.Text = $"{status.TenCa} ({status.GioBatDauCa:hh\\:mm} - {status.GioKetThucCa:hh\\:mm})";
-                    btnChamCong.Content = "CHẤM CÔNG";
-                    btnChamCong.Background = _mauXanh;
-                    btnChamCong.Tag = "clock-in";
-                    break;
-                case "DaChamCong":
-                    _gioVaoCache = status.GioVao;
-                    _timerWork.Start();
-                    TimerWork_Tick(null, EventArgs.Empty);
-                    btnChamCong.Content = "TRẢ CA";
-                    btnChamCong.Background = _mauDo;
-                    btnChamCong.Tag = "clock-out";
-                    break;
-                case "DaTraCa":
-                    lblTrangThaiChinh.Text = $"Đã trả ca lúc {status.GioRa:HH:mm} (Làm: {status.SoGioLam:N2} giờ)";
-                    btnChamCong.Content = "ĐÃ TRẢ CA";
-                    btnChamCong.Background = _mauXam;
-                    btnChamCong.IsEnabled = false;
-                    btnChamCong.Tag = null;
-                    break;
+                SetStatusBadge("Ngoài ca làm việc", _colorGray, _colorGrayBg);
+                UpdateSidebarStatus("Không có ca");
             }
-        }
-
-        // *** HÀM ĐÃ SỬA LỖI ***
-        private void UpdateUI_Phu(ChamCongDashboardDto status)
-        {
-            if (!string.IsNullOrEmpty(status.TrangThaiDonNghi))
+            else if (dto.DangTrongCa)
             {
-                lblTrangThaiDonNghi.Text = status.TrangThaiDonNghi;
-                if (status.TrangThaiDonNghi == "Đã duyệt")
+                SetStatusBadge("Đang làm việc", _colorSuccess, _colorSuccessBg);
+                if (FindName("btnRaCa") is Button btnRa) btnRa.Visibility = Visibility.Visible;
+                if (FindName("txtGioRa") is TextBlock txtGr2) txtGr2.Text = "Đang chạy...";
+
+                _gioVaoHienTai = dto.LanVaoGanNhat;
+                _timerWork.Start();
+            }
+            else
+            {
+                if (dto.TongGioLamHienTai == 0)
                 {
-                    // SỬA: Tham chiếu trực tiếp đến borderDonNghi
-                    borderDonNghi.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E8F5E9"));
-                    lblTrangThaiDonNghi.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2E7D32"));
+                    SetStatusBadge("Chưa vào ca", _colorWarning, _colorWarningBg);
+                    UpdateSidebarStatus("Chưa chấm công");
                 }
                 else
                 {
-                    // SỬA: Tham chiếu trực tiếp đến borderDonNghi
-                    borderDonNghi.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF8E1"));
-                    lblTrangThaiDonNghi.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFA000"));
-                }
-                borderDonNghi.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                borderDonNghi.Visibility = Visibility.Collapsed;
-            }
+                    SetStatusBadge("Đã trả ca (Nghỉ giữa ca)", _colorInfo, _colorInfoBg);
+                    UpdateSidebarStatus("Đã trả ca");
 
-            if (status.SoLanDiTreThangNay > 0)
-            {
-                lblDiTre.Text = $"Trễ: {status.SoLanDiTreThangNay} lần";
-                borderDiTre.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                borderDiTre.Visibility = Visibility.Collapsed;
+                    TimeSpan total = TimeSpan.FromHours((double)_tongGioDaLamCache);
+                    if (FindName("txtThoiGianLam") is TextBlock txtTgl)
+                        txtTgl.Text = $"{(int)total.TotalHours:D2}:{total.Minutes:D2}:{total.Seconds:D2}";
+                }
+                if (FindName("btnVaoCa") is Button btnVao) btnVao.Visibility = Visibility.Visible;
             }
         }
-        // *** KẾT THÚC SỬA LỖI ***
 
-        private async void BtnChamCong_Click(object sender, RoutedEventArgs e)
+        private async void BtnVaoCa_Click(object sender, RoutedEventArgs e)
         {
-            string? action = btnChamCong.Tag as string;
-            if (string.IsNullOrEmpty(action)) return;
-
-            btnChamCong.IsEnabled = false;
-            string apiUrl = (action == "clock-in") ? "api/app/chamcong/clock-in" : "api/app/chamcong/clock-out";
+            if (AuthService.CurrentUser == null) return;
+            int idNhanVien = AuthService.CurrentUser.IdNhanVien;
 
             try
             {
-                var response = await ApiClient.Instance.PostAsync(apiUrl, null);
+                var client = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
+                var response = await client.PostAsync($"api/app/chamcong/clock-in/{idNhanVien}", null);
                 if (response.IsSuccessStatusCode)
                 {
-                    var newStatus = await response.Content.ReadFromJsonAsync<ChamCongDashboardDto>();
-                    if (newStatus != null)
-                    {
-                        UpdateUI(newStatus);
-                    }
+                    await LoadStatusAsync();
                 }
-                else
-                {
-                    string errorMessage = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show(errorMessage, "Lỗi Chấm Công", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    btnChamCong.IsEnabled = true;
-                }
+                else MessageBox.Show(await response.Content.ReadAsStringAsync(), "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi kết nối API: {ex.Message}", "Lỗi nghiêm trọng", MessageBoxButton.OK, MessageBoxImage.Error);
-                btnChamCong.IsEnabled = true;
-            }
+            catch (Exception ex) { MessageBox.Show($"Lỗi kết nối: {ex.Message}"); }
         }
 
-        private async Task LoadLichSuAsync(int thang, int nam)
+        private async void BtnRaCa_Click(object sender, RoutedEventArgs e)
         {
+            if (AuthService.CurrentUser == null) return;
+            int idNhanVien = AuthService.CurrentUser.IdNhanVien;
+
             try
             {
-                var response = await ApiClient.Instance.GetFromJsonAsync<LichSuChamCongPageDto>($"api/app/chamcong/lich-su?thang={thang}&nam={nam}");
+                var client = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
+                var response = await client.PostAsync($"api/app/chamcong/clock-out/{idNhanVien}", null);
+                if (response.IsSuccessStatusCode)
+                {
+                    await LoadStatusAsync();
+                }
+                else MessageBox.Show(await response.Content.ReadAsStringAsync(), "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            catch (Exception ex) { MessageBox.Show($"Lỗi kết nối: {ex.Message}"); }
+        }
+
+        private async void dpChonThang_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (FindName("dpChonThang") is DatePicker dp && dp.SelectedDate.HasValue)
+                await LoadLichSuAsync(dp.SelectedDate.Value.Month, dp.SelectedDate.Value.Year);
+        }
+
+        private async Task LoadLichSuAsync(int month, int year)
+        {
+            if (AuthService.CurrentUser == null) return;
+            int idNhanVien = AuthService.CurrentUser.IdNhanVien;
+
+            try
+            {
+                var client = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
+                var response = await client.GetFromJsonAsync<LichSuChamCongPageDto>($"api/app/chamcong/lich-su/{idNhanVien}?thang={month}&nam={year}");
+
                 if (response != null)
                 {
-                    dgLichSuChamCong.ItemsSource = response.LichSuChamCong;
-                    dgDonXinNghi.ItemsSource = response.DanhSachDonNghi;
-
-                    lblTongGioLam.Text = response.ThongKe.TongGioLam.ToString("N2");
-                    lblSoLanDiTre.Text = response.ThongKe.SoLanDiTre.ToString();
-                    lblSoNgayNghiPhep.Text = response.ThongKe.SoNgayNghiPhep.ToString();
+                    if (FindName("dgLichSu") is DataGrid dg) dg.ItemsSource = response.LichSuChamCong;
+                    if (FindName("txtTongGio") is TextBlock txtTg) txtTg.Text = $"{response.ThongKe.TongGioLam:N2} giờ";
+                    if (FindName("txtDiTre") is TextBlock txtDt) txtDt.Text = $"{response.ThongKe.SoLanDiTre} lần";
+                    if (FindName("txtVeSom") is TextBlock txtVs) txtVs.Text = $"{response.ThongKe.SoLanVeSom} lần";
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi tải lịch sử chấm công: {ex.Message}", "Lỗi API", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async void DpChonThang_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (dpChonThang.SelectedDate.HasValue && !IsLoaded)
-                return;
-
-            var date = dpChonThang.SelectedDate ?? DateTime.Now;
-            await LoadLichSuAsync(date.Month, date.Year);
-        }
-
-        private async void BtnGuiDon_Click(object sender, RoutedEventArgs e)
-        {
-            if (dpNgayBatDau.SelectedDate == null || dpNgayKetThuc.SelectedDate == null)
-            {
-                MessageBox.Show("Vui lòng chọn ngày bắt đầu và ngày kết thúc.", "Thiếu thông tin");
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(txtLyDo.Text))
-            {
-                MessageBox.Show("Vui lòng nhập lý do xin nghỉ.", "Thiếu thông tin");
-                return;
-            }
-            if (dpNgayKetThuc.SelectedDate < dpNgayBatDau.SelectedDate)
-            {
-                MessageBox.Show("Ngày kết thúc không thể trước ngày bắt đầu.", "Lỗi logic");
-                return;
-            }
-
-            var request = new DonXinNghiRequestDto
-            {
-                LoaiDon = (cmbLoaiDon.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Đơn xin nghỉ",
-                LyDo = txtLyDo.Text,
-                NgayBatDau = dpNgayBatDau.SelectedDate.Value,
-                NgayKetThuc = dpNgayKetThuc.SelectedDate.Value
-            };
-
-            btnGuiDon.IsEnabled = false;
-            try
-            {
-                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/chamcong/submit-leave", request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Gửi đơn xin nghỉ thành công!", "Thành công");
-                    BtnHuyGuiDon_Click(null, null); // Xóa form
-
-                    var date = dpChonThang.SelectedDate ?? DateTime.Now;
-                    await LoadLichSuAsync(date.Month, date.Year);
-                }
-                else
-                {
-                    string error = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Lỗi gửi đơn: {error}", "Lỗi API");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi kết nối: {ex.Message}", "Lỗi nghiêm trọng");
-            }
-            btnGuiDon.IsEnabled = true;
-        }
-
-        private void BtnHuyGuiDon_Click(object? sender, RoutedEventArgs? e)
-        {
-            txtLyDo.Text = "";
-            dpNgayBatDau.SelectedDate = DateTime.Today;
-            dpNgayKetThuc.SelectedDate = DateTime.Today;
-            cmbLoaiDon.SelectedIndex = 0;
+            catch { /* Im lặng nếu lỗi mạng */ }
         }
     }
 }

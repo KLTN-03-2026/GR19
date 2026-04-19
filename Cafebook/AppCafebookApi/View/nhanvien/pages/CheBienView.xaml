@@ -10,6 +10,21 @@
       Background="#FFF8E1"
       Loaded="Page_Loaded" Unloaded="Page_Unloaded">
 
+    <Page.Triggers>
+        <EventTrigger RoutedEvent="Page.Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.4"/>
+                    <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,20,0,0" To="0" Duration="0:0:0.5">
+                        <ThicknessAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </ThicknessAnimation.EasingFunction>
+                    </ThicknessAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Page.Triggers>
+    
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <SolidColorBrush x:Key="ActionGreenBrush" Color="#66BB6A"/>
@@ -96,7 +111,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="👨‍🍳 Màn Hình Chế Biến" FontSize="22" FontWeight="Bold" Foreground="{StaticResource CafeBrown}"/>
+                    <TextBlock Text="Màn Hình Chế Biến" FontSize="22" FontWeight="Bold" Foreground="{StaticResource CafeBrown}"/>
                     <TextBlock x:Name="lblLastUpdated" Text="(Đang tải...)" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="{StaticResource TextGray}" FontStyle="Italic"/>
                 </StackPanel>
 

@@ -15,7 +15,6 @@ namespace CafebookApi.Controllers.App.NhanVien
 {
     [Route("api/app/nhanvien/giaohang")]
     [ApiController]
-    [Authorize]
     public class GiaoHangController : ControllerBase
     {
         private readonly CafebookDbContext _context;

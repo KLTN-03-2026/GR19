@@ -8,6 +8,21 @@
       d:DesignHeight="700" d:DesignWidth="1100"
       Title="DatBanView" FontFamily="Segoe UI" Loaded="Page_Loaded">
 
+    <Page.Triggers>
+        <EventTrigger RoutedEvent="Page.Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.4"/>
+                    <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,20,0,0" To="0" Duration="0:0:0.5">
+                        <ThicknessAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </ThicknessAnimation.EasingFunction>
+                    </ThicknessAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Page.Triggers>
+    
     <Page.Resources>
         <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
         <SolidColorBrush x:Key="DarkBrownBrush" Color="#4E342E"/>
@@ -278,7 +293,6 @@
                 </StackPanel>
             </ScrollViewer>
         </Border>
-
         <Border x:Name="LoadingOverlay" Grid.ColumnSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
             <TextBlock Text="Đang tải..." HorizontalAlignment="Center" VerticalAlignment="Center" 
                        FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource DarkBrownBrush}"/>

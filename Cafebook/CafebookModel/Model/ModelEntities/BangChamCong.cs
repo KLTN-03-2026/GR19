@@ -20,11 +20,12 @@ namespace CafebookModel.Model.ModelEntities
         [Column("gioRa")]
         public DateTime? GioRa { get; set; }
 
+        // FIX LỖI: Gắn lại DatabaseGenerated để EF Core biết đây là cột tự động sinh từ SQL (Computed Column)
+        // và KHÔNG đẩy lệnh UPDATE vào cột này.
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-        [Column("soGioLam")]
-        public double? SoGioLam { get; set; }
+        [Column("soGioLam", TypeName = "decimal(18, 2)")]
+        public decimal? SoGioLam { get; set; }
 
-        // BỔ SUNG CỘT GHI CHÚ SỬA
         [Column("ghiChuSua")]
         [StringLength(500)]
         public string? GhiChuSua { get; set; }
