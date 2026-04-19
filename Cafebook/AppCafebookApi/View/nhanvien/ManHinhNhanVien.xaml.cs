@@ -172,41 +172,6 @@ namespace AppCafebookApi.View.nhanvien
             }
         }
 
-        /*
-        private void BtnSoDoBan_Click(object sender, RoutedEventArgs e) => NavigateToPage(btnSoDoBan, new SoDoBanView(), "NV_SO_DO_BAN");
-        private void BtnDatBan_Click(object sender, RoutedEventArgs e) => NavigateToPage(btnDatBan, new DatBanView(), "NV_DAT_BAN");
-        private void BtnCheBien_Click(object sender, RoutedEventArgs e) => NavigateToPage(btnCheBien, new CheBienView(), "NV_CHE_BIEN");
-        private void BtnThueSach_Click(object sender, RoutedEventArgs e) => NavigateToPage(btnThueSach, new ThueSachView(), "NV_THUE_SACH");
-        private void BtnGiaoHang_Click(object sender, RoutedEventArgs e) => NavigateToPage(btnGiaoHang, new GiaoHangView(), "NV_GIAO_HANG");
-
-        private void BtnThongTinCaNhan_Click(object sender, RoutedEventArgs e) => NavigateToPage(btnThongTinCaNhan, new ThongTinCaNhanView(), "NV_THONG_TIN");
-        private void BtnChamCong_Click(object sender, RoutedEventArgs e) => NavigateToPage(btnChamCong, new ChamCongView(), "NV_CHAM_CONG");
-        private void BtnLichLamViecCuaToi_Click(object sender, RoutedEventArgs e) => NavigateToPage(btnLichLamViecCuaToi, new LichLamViecView(), "NV_LICH_LAM_VIEC");
-        private void BtnPhieuLuongCuaToi_Click(object sender, RoutedEventArgs e) => NavigateToPage(btnPhieuLuongCuaToi, new PhieuLuongView(), "NV_PHIEU_LUONG");
-  
-        // Hàm Helper xử lý chung cho các nút
-        private void NavigateToPage(ToggleButton clickedBtn, Page targetPage, string requiredPermission)
-        {
-            if (clickedBtn == currentNavButton)
-            {
-                clickedBtn.IsChecked = true;
-                return;
-            }
-
-            // Kiểm tra quyền: Nếu có quyền FULL hoặc quyền cụ thể của trang
-            if (AuthService.CoQuyen("FULL_QL", "FULL_NV") || AuthService.CoQuyen(requiredPermission))
-            {
-                UpdateSelectedButton(clickedBtn);
-                MainFrame.Navigate(targetPage);
-            }
-            else
-            {
-                clickedBtn.IsChecked = false;
-                if (currentNavButton != null) currentNavButton.IsChecked = true;
-                MessageBox.Show("Bạn không có quyền truy cập chức năng này!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
-              */
         private void UpdateSelectedButton(ToggleButton newButton)
         {
             if (currentNavButton != null) currentNavButton.IsChecked = false;

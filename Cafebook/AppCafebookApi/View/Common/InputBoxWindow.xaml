@@ -10,27 +10,110 @@
         WindowStartupLocation="CenterScreen"
         Background="#F5F5F5"
         Loaded="Window_Loaded">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBrown" Color="#4E342E"/>
+        <SolidColorBrush x:Key="AccentOrange" Color="#D84315"/>
+        <SolidColorBrush x:Key="BeigeBackground" Color="#FFF8E1"/>
+        <SolidColorBrush x:Key="TextDark" Color="#3E2723"/>
+
+        <Style x:Key="CafeButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrown}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                            CornerRadius="8" SnapsToDevicePixels="true">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource AccentOrange}"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="border" 
+                                                         Storyboard.TargetProperty="Opacity" 
+                                                         To="0.9" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CafeTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#D7CCC8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="1" Background="{TemplateBinding Background}" 
+                            CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentOrange}"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        <Border Background="{StaticResource BeigeBackground}" CornerRadius="15">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" Color="#BCAAA4" ShadowDepth="2" Opacity="0.5"/>
+            </Border.Effect>
 
-        <TextBlock Grid.Row="0" x:Name="lblPrompt" Text="Vui lòng nhập:" TextWrapping="Wrap" FontSize="14" Margin="0,0,0,10"/>
+            <Grid Margin="25">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-        <TextBox Grid.Row="1" x:Name="txtInput" 
-                 TextWrapping="Wrap"
-                 AcceptsReturn="False"
-                 FontSize="14"
-                 Padding="5"
-                 VerticalAlignment="Top"
-                 BorderBrush="#BDBDBD"
-                 BorderThickness="1"/>
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
+                    <Path Data="M13,19V16H15V19H13M18,19V13H20V19H18M13,9H15V14H13V9M18,9H20V11H18V9M4,19V8H11V19H4M11,7V4H4V7H11Z" 
+                  Fill="{StaticResource AccentOrange}" Width="20" Height="20" Stretch="Uniform" Margin="0,0,10,0"/>
+                    <TextBlock x:Name="lblPrompt" Text="Nhập Yêu Cầu Của Khách Hàng" 
+                       FontWeight="SemiBold" FontSize="16" Foreground="{StaticResource TextDark}"/>
+                </StackPanel>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-            <Button x:Name="btnOk" Content="OK" Width="80" Height="30" Margin="0,0,10,0" IsDefault="True" Click="BtnOk_Click"/>
-            <Button x:Name="btnCancel" Content="Hủy" Width="80" Height="30" IsCancel="True" Click="BtnCancel_Click"/>
-        </StackPanel>
+                <TextBox Grid.Row="1" x:Name="txtInput" 
+                 Style="{StaticResource CafeTextBoxStyle}"
+                 VerticalAlignment="Center"
+                 Tag="Nhập thông tin tại đây..."/>
+
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                    <Button x:Name="btnCancel" Content="Bỏ qua" 
+                    Background="Transparent" Foreground="#8D6E63"
+                    Width="80" Height="35" Margin="0,0,10,0" 
+                    Style="{StaticResource CafeButtonStyle}" Click="BtnCancel_Click"/>
+
+                    <Button x:Name="btnOk" Content="Xác nhận" 
+                    Style="{StaticResource CafeButtonStyle}"
+                    Width="100" Height="35" IsDefault="True" Click="BtnOk_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
