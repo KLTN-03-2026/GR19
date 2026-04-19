@@ -31,20 +31,55 @@ namespace AppCafebookApi.View.common
             lblNgay.Text = $"Giờ vào: {_data.ThoiGianTao:dd/MM/yyyy HH:mm}";
             lblKhachHang.Text = $"Khách: {_data.TenKhachHang}";
 
-            // 3. Bind Danh sách
+            // 3. Bind Danh sách món ăn
             dgItems.ItemsSource = _data.Items;
-            icPhuThu.ItemsSource = _data.Surcharges;
 
-            // 4. Bind Tiền
+            // 4. Bind Tổng tiền
             lblTongTienGoc.Text = _data.TongTienGoc.ToString("N0");
-            lblGiamGiaKM.Text = $"- {_data.GiamGiaKM:N0}";
-            lblGiamGiaDiem.Text = $"- {_data.GiamGiaDiem:N0}";
-            lblTongPhuThu.Text = $"+ {_data.TongPhuThu:N0}";
             lblThanhTien.Text = _data.ThanhTien.ToString("N0") + " đ";
 
-            // Sửa 1: Ẩn/hiện panel tiền mặt
+            // --- ẨN/HIỆN KHUYẾN MÃI ---
+            if (_data.GiamGiaKM > 0)
+            {
+                gridGiamGiaKM.Visibility = Visibility.Visible;
+                lblGiamGiaKM.Text = $"- {_data.GiamGiaKM:N0}";
+            }
+            else
+            {
+                gridGiamGiaKM.Visibility = Visibility.Collapsed;
+            }
+
+            // --- ẨN/HIỆN GIẢM GIÁ BẰNG ĐIỂM ---
+            if (_data.GiamGiaDiem > 0)
+            {
+                gridGiamGiaDiem.Visibility = Visibility.Visible;
+                lblGiamGiaDiem.Text = $"- {_data.GiamGiaDiem:N0}";
+            }
+            else
+            {
+                gridGiamGiaDiem.Visibility = Visibility.Collapsed;
+            }
+
+            // --- ẨN/HIỆN PHỤ THU ---
+            if (_data.TongPhuThu > 0)
+            {
+                gridPhuThu.Visibility = Visibility.Visible;
+                icPhuThu.Visibility = Visibility.Visible; // Bảng chi tiết phụ thu
+
+                lblTongPhuThu.Text = $"+ {_data.TongPhuThu:N0}";
+                icPhuThu.ItemsSource = _data.Surcharges;
+            }
+            else
+            {
+                gridPhuThu.Visibility = Visibility.Collapsed;
+                icPhuThu.Visibility = Visibility.Collapsed;
+            }
+
+            // --- ẨN/HIỆN PANEL TIỀN MẶT ---
             if (_data.PhuongThucThanhToan == "Tiền mặt")
             {
+                gridTienMat.Visibility = Visibility.Visible;
+                gridTienThoi.Visibility = Visibility.Visible;
                 lblKhachDua.Text = _data.KhachDua.ToString("N0");
                 lblTienThoi.Text = _data.TienThoi.ToString("N0");
             }
@@ -52,6 +87,23 @@ namespace AppCafebookApi.View.common
             {
                 gridTienMat.Visibility = Visibility.Collapsed;
                 gridTienThoi.Visibility = Visibility.Collapsed;
+            }
+
+            // --- ẨN/HIỆN ĐIỂM CỘNG TÍCH LŨY ---
+            if (_data.DiemCong > 0)
+            {
+                sepDiem.Visibility = Visibility.Visible;
+                gridDiemCong.Visibility = Visibility.Visible;
+                gridTongDiem.Visibility = Visibility.Visible;
+
+                lblDiemCong.Text = $"+ {_data.DiemCong:N0}";
+                lblTongDiem.Text = _data.TongDiemTichLuy.ToString("N0");
+            }
+            else
+            {
+                sepDiem.Visibility = Visibility.Collapsed;
+                gridDiemCong.Visibility = Visibility.Collapsed;
+                gridTongDiem.Visibility = Visibility.Collapsed;
             }
         }
 

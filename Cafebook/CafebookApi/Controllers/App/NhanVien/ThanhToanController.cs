@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mail; // THÊM MỚI để kiểm tra email
+using System.Net.Mail; 
 using System.Threading.Tasks;
 
 namespace CafebookApi.Controllers.App.NhanVien
@@ -35,7 +35,10 @@ namespace CafebookApi.Controllers.App.NhanVien
                     c.TenCaiDat == "ThongTin_TenQuan" ||
                     c.TenCaiDat == "ThongTin_DiaChi" ||
                     c.TenCaiDat == "ThongTin_SoDienThoai" ||
-                    c.TenCaiDat == "Wifi_MatKhau")
+                    c.TenCaiDat == "Wifi_MatKhau" ||
+                    c.TenCaiDat == "NganHang_SoTaiKhoan" ||             // <-- THÊM
+                    c.TenCaiDat == "NganHang_ChuTaiKhoan" ||            // <-- THÊM
+                    c.TenCaiDat == "NganHang_MaDinhDanhNganHang")       // <-- THÊM
                 .AsNoTracking()
                 .ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
 
@@ -136,7 +139,12 @@ namespace CafebookApi.Controllers.App.NhanVien
                 TenQuan = _settings.GetValueOrDefault("ThongTin_TenQuan", "CafeBook"),
                 DiaChi = _settings.GetValueOrDefault("ThongTin_DiaChi", "N/A"),
                 SoDienThoai = _settings.GetValueOrDefault("ThongTin_SoDienThoai", "N/A"),
-                WifiMatKhau = _settings.GetValueOrDefault("Wifi_MatKhau", "N/A")
+                WifiMatKhau = _settings.GetValueOrDefault("Wifi_MatKhau", "N/A"),
+
+                // TRẢ VỀ DỮ LIỆU NGÂN HÀNG
+                NganHang_SoTaiKhoan = _settings.GetValueOrDefault("NganHang_SoTaiKhoan", ""),
+                NganHang_ChuTaiKhoan = _settings.GetValueOrDefault("NganHang_ChuTaiKhoan", ""),
+                NganHang_MaDinhDanhNganHang = _settings.GetValueOrDefault("NganHang_MaDinhDanhNganHang", "")
             });
         }
 
@@ -439,21 +447,37 @@ namespace CafebookApi.Controllers.App.NhanVien
             decimal giamGiaKM = 0;
             decimal giamGiaDiem = 0;
 
+            // ==========================================
+            // XỬ LÝ KHUYẾN MÃI TRONG THANH TOÁN
+            // ==========================================
             if (req.IdKhuyenMai.HasValue && req.IdKhuyenMai > 0)
             {
                 var km = await _context.KhuyenMais.FindAsync(req.IdKhuyenMai.Value);
                 if (km != null)
                 {
+                    // 1. KIỂM TRA NGHIÊM NGẶT NGAY LÚC THANH TOÁN
+                    if (km.SoLuongConLai.HasValue && km.SoLuongConLai <= 0)
+                    {
+                        return BadRequest($"Thanh toán thất bại: Khuyến mãi '{km.TenChuongTrinh}' đã hết lượt sử dụng trong hệ thống. Vui lòng gỡ khuyến mãi này ra khỏi hóa đơn!");
+                    }
+
+                    // 2. Tính toán tiền giảm
                     giamGiaKM = await CalculateDiscount(km, hoaDonThanhToan.TongTienGoc, chiTietTach);
 
                     var existingLink = await _context.HoaDonKhuyenMais
                         .AsNoTracking()
                         .FirstOrDefaultAsync(hkm => hkm.IdHoaDon == hoaDonThanhToan.IdHoaDon && hkm.IdKhuyenMai == km.IdKhuyenMai);
 
+                    // 3. Lưu liên kết nếu chưa có
                     if (existingLink == null)
                     {
                         _context.HoaDonKhuyenMais.Add(new HoaDon_KhuyenMai { IdHoaDon = hoaDonThanhToan.IdHoaDon, IdKhuyenMai = km.IdKhuyenMai });
-                        if (km.SoLuongConLai.HasValue && km.SoLuongConLai > 0) km.SoLuongConLai -= 1;
+                    }
+
+                    // 4. TRỪ SỐ LƯỢNG CHÍNH THỨC (Vì đã pass qua vòng kiểm tra <= 0 ở trên)
+                    if (km.SoLuongConLai.HasValue)
+                    {
+                        km.SoLuongConLai -= 1;
                     }
                 }
             }
@@ -512,6 +536,9 @@ namespace CafebookApi.Controllers.App.NhanVien
                 TrangThai = "Thành công"
             });
 
+            int diemCongMoi = 0;
+            int tongDiemSauThanhToan = 0;
+
             if (khachHang != null && _tiLeNhanDiem > 0)
             {
                 if (req.DiemSuDung == 0)
@@ -520,8 +547,10 @@ namespace CafebookApi.Controllers.App.NhanVien
                     if (diemMoi > 0)
                     {
                         khachHang.DiemTichLuy += diemMoi;
+                        diemCongMoi = diemMoi; // Lưu lại điểm vừa được cộng
                     }
                 }
+                tongDiemSauThanhToan = khachHang.DiemTichLuy; // Lấy tổng điểm hiện tại
             }
 
             bool hoaDonGocDaThanhToanHet = false;
@@ -543,8 +572,10 @@ namespace CafebookApi.Controllers.App.NhanVien
             return Ok(new
             {
                 message = "Thanh toán thành công!",
-                isFullPayment = hoaDonGocDaThanhToanHet, // Trả về cờ này
-                idHoaDonDaThanhToan = hoaDonThanhToan.IdHoaDon
+                isFullPayment = hoaDonGocDaThanhToanHet,
+                idHoaDonDaThanhToan = hoaDonThanhToan.IdHoaDon,
+                diemCong = diemCongMoi,
+                tongDiemTichLuy = tongDiemSauThanhToan
             });
         }
 

@@ -57,6 +57,10 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public string PhuongThucThanhToan { get; set; } = "Tiền mặt";
         public decimal KhachDua { get; set; }
         public decimal TienThoi { get; set; }
+
+        // ### THÊM MỚI (HIỂN THỊ ĐIỂM) ###
+        public int DiemCong { get; set; }
+        public int TongDiemTichLuy { get; set; }
     }
 
     /// <summary>
@@ -77,6 +81,11 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public string DiaChi { get; set; } = string.Empty;
         public string SoDienThoai { get; set; } = string.Empty;
         public string WifiMatKhau { get; set; } = string.Empty;
+
+        public string NganHang_SoTaiKhoan { get; set; } = string.Empty;
+        public string NganHang_ChuTaiKhoan { get; set; } = string.Empty;
+        public string NganHang_MaDinhDanhNganHang { get; set; } = string.Empty;
+
     }
 
     /// <summary>

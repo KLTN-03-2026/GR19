@@ -103,11 +103,9 @@
             <Border x:Name="printArea" Background="White" Margin="10" Padding="20" Width="380" HorizontalAlignment="Center">
                 <StackPanel>
                     <TextBlock x:Name="lblTenQuan" Text="CAFEBOOK" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock x:Name="lblDiaChi" Text="123 Đường ABC, Q.1, TP.HCM" HorizontalAlignment="Center" Margin="0,5,0,0"/>
-                    <TextBlock x:Name="lblSoDienThoai" Text="SĐT: 0909123456" HorizontalAlignment="Center"/>
-                    <TextBlock x:Name="lblWifi" 
- Text="Wifi: cafebook123" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-
+                    <TextBlock x:Name="lblDiaChi" Text="08 Ha Van Tinh" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                    <TextBlock x:Name="lblSoDienThoai" Text="SĐT: 0376512695" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="lblWifi" Text="Wifi: cafebook123" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                     <Separator Margin="0,5"/>
 
                     <TextBlock x:Name="lblTieuDe" Text="PHIẾU TẠM TÍNH" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10,0,0"/>
@@ -163,34 +161,28 @@
 
                     <Separator Margin="0,10"/>
 
-
                     <Grid Margin="0,5,0,5">
                         <TextBlock Text="Tổng tiền hàng (Tạm tính)" HorizontalAlignment="Left" FontSize="14"/>
                         <TextBlock x:Name="lblTongTienGoc" Text="0" HorizontalAlignment="Right" FontWeight="SemiBold" FontSize="14"/>
                     </Grid>
 
-
-                    <Grid Margin="0,0,0,5">
+                    <Grid Margin="0,0,0,5" x:Name="gridGiamGiaKM">
                         <TextBlock Text="Giảm giá (Khuyến mãi)" HorizontalAlignment="Left" FontSize="14"/>
                         <TextBlock x:Name="lblGiamGiaKM" Text="- 0" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="Green" FontSize="14"/>
                     </Grid>
-
 
                     <Grid Margin="0,0,0,5" x:Name="gridGiamGiaDiem">
                         <TextBlock Text="Giảm giá (Điểm)" HorizontalAlignment="Left" FontSize="14"/>
                         <TextBlock x:Name="lblGiamGiaDiem" Text="- 0" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="Green" FontSize="14"/>
                     </Grid>
 
-
-                    <Grid Margin="0,0,0,5">
+                    <Grid Margin="0,0,0,5" x:Name="gridPhuThu">
                         <TextBlock Text="Phụ thu" HorizontalAlignment="Left" FontSize="14"/>
                         <TextBlock x:Name="lblTongPhuThu" Text="+ 0" HorizontalAlignment="Right" FontWeight="SemiBold" FontSize="14"/>
                     </Grid>
 
-
-
                     <Separator Margin="0,10"/>
-
+                    
                     <Grid Margin="0,5,0,20">
                         <TextBlock Text="THÀNH TIỀN" FontSize="18" FontWeight="Bold" HorizontalAlignment="Left"/>
                         <TextBlock x:Name="lblThanhTien" Text="0" FontSize="20" FontWeight="Bold" HorizontalAlignment="Right"/>
@@ -205,8 +197,20 @@
                         <TextBlock Text="Tiền thối" HorizontalAlignment="Left" FontSize="14" Foreground="Gray"/>
                         <TextBlock x:Name="lblTienThoi" Text="0" HorizontalAlignment="Right" FontWeight="SemiBold" FontSize="14" Foreground="Gray"/>
                     </Grid>
-                    <TextBlock Text="Cảm ơn quý khách!"
- HorizontalAlignment="Center" FontStyle="Italic"/>
+
+                    <Separator x:Name="sepDiem" Margin="0,-10,0,10" Visibility="Collapsed"/>
+
+                    <Grid Margin="0,0,0,5" x:Name="gridDiemCong" Visibility="Collapsed">
+                        <TextBlock Text="Điểm cộng HĐ này" HorizontalAlignment="Left" FontSize="14" Foreground="#1565C0"/>
+                        <TextBlock x:Name="lblDiemCong" Text="+ 0" HorizontalAlignment="Right" FontWeight="Bold" FontSize="14" Foreground="#1565C0"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,20" x:Name="gridTongDiem" Visibility="Collapsed">
+                        <TextBlock Text="Tổng điểm tích lũy" HorizontalAlignment="Left" FontSize="14" Foreground="#1565C0"/>
+                        <TextBlock x:Name="lblTongDiem" Text="0" HorizontalAlignment="Right" FontWeight="Bold" FontSize="14" Foreground="#1565C0"/>
+                    </Grid>
+
+                    <TextBlock Text="Cảm ơn quý khách!" HorizontalAlignment="Center" FontStyle="Italic"/>
                 </StackPanel>
             </Border>
         </ScrollViewer>

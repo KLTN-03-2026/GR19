@@ -90,7 +90,6 @@ namespace AppCafebookApi.Controllers.app.NhanVien
         [HttpGet("khuvuc")]
         public async Task<ActionResult<IEnumerable<KhuVucDatBanDto>>> GetKhuVucList()
         {
-            // API nhẹ nhất có thể, chỉ quét đúng Id và Tên khu vực
             var list = await _context.KhuVucs
                 .AsNoTracking()
                 .Select(k => new KhuVucDatBanDto
@@ -105,10 +104,7 @@ namespace AppCafebookApi.Controllers.app.NhanVien
         [HttpGet("search-customer")]
         public async Task<ActionResult<IEnumerable<KhachHangLookupDto>>> SearchCustomer([FromQuery] string query)
         {
-            if (string.IsNullOrEmpty(query))
-            {
-                return Ok(new List<KhachHangLookupDto>());
-            }
+            if (string.IsNullOrEmpty(query)) return Ok(new List<KhachHangLookupDto>());
             var queryLower = query.ToLower();
             var results = await _context.KhachHangs
                 .AsNoTracking()
@@ -157,30 +153,15 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                 string? sdt = dto.SoDienThoai;
                 string? email = dto.Email;
 
-                if (!string.IsNullOrWhiteSpace(sdt))
-                {
-                    khachHang = await _context.KhachHangs.FirstOrDefaultAsync(k => k.SoDienThoai == sdt);
-                }
-                if (khachHang == null && !string.IsNullOrWhiteSpace(email))
-                {
-                    khachHang = await _context.KhachHangs.FirstOrDefaultAsync(k => k.Email == email);
-                }
+                if (!string.IsNullOrWhiteSpace(sdt)) { khachHang = await _context.KhachHangs.FirstOrDefaultAsync(k => k.SoDienThoai == sdt); }
+                if (khachHang == null && !string.IsNullOrWhiteSpace(email)) { khachHang = await _context.KhachHangs.FirstOrDefaultAsync(k => k.Email == email); }
 
                 if (khachHang == null)
                 {
-                    if (!string.IsNullOrWhiteSpace(sdt) && await _context.KhachHangs.AnyAsync(k => k.SoDienThoai == sdt))
-                    {
-                        return Conflict("Số điện thoại này đã tồn tại.");
-                    }
-                    if (!string.IsNullOrWhiteSpace(email) && await _context.KhachHangs.AnyAsync(k => k.Email == email))
-                    {
-                        return Conflict("Email này đã tồn tại.");
-                    }
+                    if (!string.IsNullOrWhiteSpace(sdt) && await _context.KhachHangs.AnyAsync(k => k.SoDienThoai == sdt)) return Conflict("Số điện thoại này đã tồn tại.");
+                    if (!string.IsNullOrWhiteSpace(email) && await _context.KhachHangs.AnyAsync(k => k.Email == email)) return Conflict("Email này đã tồn tại.");
 
-                    string tenDangNhap;
-                    if (!string.IsNullOrWhiteSpace(sdt)) { tenDangNhap = sdt; }
-                    else if (!string.IsNullOrWhiteSpace(email)) { tenDangNhap = email; }
-                    else { tenDangNhap = $"temp_{Guid.NewGuid().ToString("N")[..12]}"; }
+                    string tenDangNhap = !string.IsNullOrWhiteSpace(sdt) ? sdt : (!string.IsNullOrWhiteSpace(email) ? email : $"temp_{Guid.NewGuid().ToString("N")[..12]}");
 
                     var newKH = new KhachHang
                     {
@@ -222,8 +203,7 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                 DateTime newSlotEnd = dto.ThoiGianDat.AddHours(ReservationSlotHours);
 
                 var conflict = await _context.PhieuDatBans
-                    .Where(p => p.IdBan == dto.IdBan &&
-                                (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận"))
+                    .Where(p => p.IdBan == dto.IdBan && (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận"))
                     .ToListAsync();
 
                 foreach (var p in conflict)
@@ -256,15 +236,15 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                 var emailNguoiNhan = khachHang?.Email ?? dto.Email;
                 if (!string.IsNullOrEmpty(emailNguoiNhan))
                 {
-                    // LẤY CÀI ĐẶT SMTP TỪ DB TRƯỚC KHI VÀO TASK NỀN
                     var smtp = await GetSmtpSettingsAsync();
+                    var settingsDict = await GetGeneralSettingsAsync(); // Lấy settings cho UI Mail
                     if (!string.IsNullOrEmpty(smtp.username) && !string.IsNullOrEmpty(smtp.password))
                     {
                         var khachInfo = new KhachHang { HoTen = dto.TenKhachHang, Email = emailNguoiNhan };
                         var phieuMail = new PhieuDatBan { ThoiGianDat = phieu.ThoiGianDat, SoLuongKhach = phieu.SoLuongKhach, GhiChu = phieu.GhiChu, TrangThai = phieu.TrangThai };
                         string soBanMail = ban.SoBan;
 
-                        _ = Task.Run(() => SendConfirmationEmailAsync(phieuMail, khachInfo, soBanMail, smtp.host, smtp.port, smtp.username, smtp.password, smtp.fromName));
+                        _ = Task.Run(() => SendConfirmationEmailAsync(phieuMail, khachInfo, soBanMail, smtp.host, smtp.port, smtp.username, smtp.password, smtp.fromName, settingsDict));
                     }
                 }
                 return Ok(new { idPhieuDatBan = phieu.IdPhieuDatBan });
@@ -313,10 +293,7 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                     if (!string.IsNullOrWhiteSpace(sdt) && await _context.KhachHangs.AnyAsync(k => k.SoDienThoai == sdt)) { return Conflict("Số điện thoại này đã tồn tại."); }
                     if (!string.IsNullOrWhiteSpace(email) && await _context.KhachHangs.AnyAsync(k => k.Email == email)) { return Conflict("Email này đã tồn tại."); }
 
-                    string tenDangNhap;
-                    if (!string.IsNullOrWhiteSpace(sdt)) { tenDangNhap = sdt; }
-                    else if (!string.IsNullOrWhiteSpace(email)) { tenDangNhap = email; }
-                    else { tenDangNhap = $"temp_{Guid.NewGuid().ToString("N")[..12]}"; }
+                    string tenDangNhap = !string.IsNullOrWhiteSpace(sdt) ? sdt : (!string.IsNullOrWhiteSpace(email) ? email : $"temp_{Guid.NewGuid().ToString("N")[..12]}");
 
                     var newKH = new KhachHang
                     {
@@ -361,9 +338,7 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                 DateTime newSlotStart = dto.ThoiGianDat;
                 DateTime newSlotEnd = dto.ThoiGianDat.AddHours(ReservationSlotHours);
                 var conflict = await _context.PhieuDatBans
-                    .Where(p => p.IdBan == dto.IdBan &&
-                                p.IdPhieuDatBan != id &&
-                                (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận"))
+                    .Where(p => p.IdBan == dto.IdBan && p.IdPhieuDatBan != id && (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận"))
                     .ToListAsync();
 
                 foreach (var p in conflict)
@@ -390,13 +365,14 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                     if (!string.IsNullOrEmpty(emailNguoiNhan) && phieu.Ban != null)
                     {
                         var smtp = await GetSmtpSettingsAsync();
+                        var settingsDict = await GetGeneralSettingsAsync();
                         if (!string.IsNullOrEmpty(smtp.username) && !string.IsNullOrEmpty(smtp.password))
                         {
                             var khachInfo = new KhachHang { HoTen = dto.TenKhachHang, Email = emailNguoiNhan };
                             var phieuMail = new PhieuDatBan { ThoiGianDat = phieu.ThoiGianDat, SoLuongKhach = phieu.SoLuongKhach, GhiChu = phieu.GhiChu, TrangThai = phieu.TrangThai };
                             string soBanMail = phieu.Ban.SoBan;
 
-                            _ = Task.Run(() => SendConfirmationEmailAsync(phieuMail, khachInfo, soBanMail, smtp.host, smtp.port, smtp.username, smtp.password, smtp.fromName));
+                            _ = Task.Run(() => SendConfirmationEmailAsync(phieuMail, khachInfo, soBanMail, smtp.host, smtp.port, smtp.username, smtp.password, smtp.fromName, settingsDict));
                         }
                     }
                 }
@@ -461,126 +437,16 @@ namespace AppCafebookApi.Controllers.app.NhanVien
             await _context.SaveChangesAsync();
             return Ok();
         }
-        /*
-        [HttpPost("create-web")]
-        public async Task<IActionResult> CreateDatBanWeb(PhieuDatBanWebCreateDto dto)
-        {
-            KhachHang? khachHang = null;
-            try
-            {
-                khachHang = await FindOrCreateKhachHangWeb(dto.TenKhachHang, dto.SoDienThoai, dto.Email);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-
-            var ban = await _context.Bans.FindAsync(dto.IdBan);
-            if (ban == null) return BadRequest("Bàn không tồn tại.");
-            if (ban.TrangThai != "Trống") return BadRequest("Bàn đã có người đặt hoặc đang có khách.");
-
-            var openingHours = await GetAndParseOpeningHours();
-            if (!IsTimeValid(dto.ThoiGianDat, openingHours))
-            {
-                return BadRequest($"Giờ đặt ({dto.ThoiGianDat:HH:mm}) nằm ngoài giờ mở cửa ({openingHours.Open:hh\\:mm} - {openingHours.Close:hh\\:mm}).");
-            }
-            if (dto.SoLuongKhach > ban.SoGhe)
-            {
-                return BadRequest($"Số lượng khách ({dto.SoLuongKhach}) vượt quá số ghế của bàn ({ban.SoGhe}).");
-            }
-
-            DateTime newSlotStart = dto.ThoiGianDat;
-            DateTime newSlotEnd = dto.ThoiGianDat.AddHours(ReservationSlotHours);
-            var conflict = await _context.PhieuDatBans
-                .Where(p => p.IdBan == dto.IdBan &&
-                            (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận"))
-                .ToListAsync();
-            foreach (var p in conflict)
-            {
-                DateTime existingSlotStart = p.ThoiGianDat.AddMinutes(-ReservationBufferMinutes);
-                DateTime existingSlotEnd = p.ThoiGianDat.AddHours(ReservationSlotHours).AddMinutes(ReservationBufferMinutes);
-                if (newSlotStart < existingSlotEnd && existingSlotStart < newSlotEnd)
-                {
-                    return Conflict($"Xung đột! Bàn này đã có phiếu đặt lúc {p.ThoiGianDat:HH:mm} (có 5 phút đệm).");
-                }
-            }
-
-            var phieu = new PhieuDatBan
-            {
-                IdKhachHang = khachHang?.IdKhachHang,
-                IdBan = dto.IdBan,
-                HoTenKhach = dto.TenKhachHang,
-                SdtKhach = dto.SoDienThoai,
-                ThoiGianDat = dto.ThoiGianDat,
-                SoLuongKhach = dto.SoLuongKhach,
-                GhiChu = dto.GhiChu,
-                TrangThai = "Chờ xác nhận"
-            };
-            _context.PhieuDatBans.Add(phieu);
-
-            await _context.SaveChangesAsync();
-
-            var noiDungTB = $"Phiếu đặt bàn #{phieu.IdPhieuDatBan} ({khachHang?.HoTen ?? dto.TenKhachHang}) đang chờ xác nhận.";
-            var thongBao = new ThongBao
-            {
-                IdNhanVienTao = null,
-                NoiDung = noiDungTB,
-                LoaiThongBao = "DatBan",
-                IdLienQuan = phieu.IdPhieuDatBan,
-                DaXem = false,
-                ThoiGianTao = DateTime.Now
-            };
-            _context.ThongBaos.Add(thongBao);
-
-            await _context.SaveChangesAsync();
-            return Ok(new { idPhieuDatBan = phieu.IdPhieuDatBan });
-        }
-        */
         #endregion
 
         #region Helpers (Khách hàng, Email, Giờ)
-        /*
-        private async Task<KhachHang?> FindOrCreateKhachHangWeb(string ten, string sdt, string? email)
+
+        // HELPER: LẤY CÀI ĐẶT CHUNG (DICTIONARY)
+        private async Task<Dictionary<string, string>> GetGeneralSettingsAsync()
         {
-            if (string.IsNullOrWhiteSpace(sdt) || sdt == "N/A")
-            {
-                return null;
-            }
-
-            var khachHang = await _context.KhachHangs
-                .FirstOrDefaultAsync(k => k.SoDienThoai == sdt);
-
-            if (khachHang == null)
-            {
-                khachHang = new KhachHang
-                {
-                    HoTen = ten,
-                    SoDienThoai = sdt,
-                    Email = email,
-                    DiemTichLuy = 0,
-                    NgayTao = DateTime.Now,
-                    BiKhoa = false
-                };
-                _context.KhachHangs.Add(khachHang);
-                try
-                {
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2627 || sqlEx.Number == 2601))
-                {
-                    throw new Exception($"Lỗi CSDL: Không thể tạo khách hàng. SĐT hoặc Email có thể đã tồn tại. (Mã lỗi: {sqlEx.Number})");
-                }
-            }
-            else
-            {
-                khachHang.HoTen = ten;
-                khachHang.Email = string.IsNullOrEmpty(email) ? khachHang.Email : email;
-                await _context.SaveChangesAsync();
-            }
-            return khachHang;
+            return await _context.CaiDats.AsNoTracking().ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
         }
-        */
-        // HÀM HELPER LẤY CÀI ĐẶT SMTP ĐỂ GỌI NGOÀI LUỒNG
+
         private async Task<(string host, int port, string username, string password, string fromName)> GetSmtpSettingsAsync()
         {
             var smtpHost = await _context.CaiDats.AsNoTracking().FirstOrDefaultAsync(c => c.TenCaiDat == "Smtp_Host");
@@ -598,143 +464,61 @@ namespace AppCafebookApi.Controllers.app.NhanVien
             return (host, port, username, password, fromName);
         }
 
-        private async Task SendConfirmationEmailAsync(PhieuDatBan phieu, KhachHang khach, string soBan, string host, int port, string username, string password, string fromName)
+        // HÀM EMAIL 1: XÁC NHẬN ĐẶT BÀN
+        private async Task SendConfirmationEmailAsync(PhieuDatBan phieu, KhachHang khach, string soBan, string host, int port, string username, string password, string fromName, Dictionary<string, string> settings)
         {
             string toEmail = khach.Email ?? "";
             if (string.IsNullOrEmpty(toEmail)) return;
+
+            string tenQuan = settings.GetValueOrDefault("ThongTin_TenQuan", "Cafebook");
+            string diaChiQuan = settings.GetValueOrDefault("ThongTin_DiaChi", "Đang cập nhật");
+            string supportPhone = settings.GetValueOrDefault("ThongTin_SoDienThoai", "Đang cập nhật");
+            string supportEmail = settings.GetValueOrDefault("LienHe_Email", "cafebook.hotro@gmail.com");
 
             try
             {
                 var email = new MimeMessage();
                 email.From.Add(new MailboxAddress(fromName, username));
                 email.To.Add(new MailboxAddress(khach.HoTen, toEmail));
-                email.Subject = "[Cafebook] Xác nhận đặt bàn thành công";
+                email.Subject = $"[{tenQuan}] Xác nhận đặt bàn thành công";
 
-                // Thiết kế giao diện Material Design cho Cafebook
                 string body = $@"
                 <!DOCTYPE html>
                 <html lang=""vi"">
                 <head>
                     <meta charset=""UTF-8"">
-                    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
                     <style>
-                        body {{
-                            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-                            background-color: #F7F3E9; /* Màu Be/Kem */
-                            color: #4E342E; /* Màu Nâu đậm */
-                            margin: 0;
-                            padding: 20px;
-                        }}
-                        .container {{
-                            max-width: 600px;
-                            margin: 0 auto;
-                            background-color: #FFFFFF;
-                            border-radius: 16px;
-                            overflow: hidden;
-                            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                        }}
-                        .header {{
-                            background-color: #5D4037; /* Nâu cà phê */
-                            color: #FFF3E0;
-                            padding: 30px;
-                            text-align: center;
-                        }}
-                        .header h1 {{
-                            margin: 0;
-                            font-size: 26px;
-                            letter-spacing: 2px;
-                        }}
-                        .content {{
-                            padding: 30px;
-                            line-height: 1.6;
-                        }}
-                        .welcome-text {{
-                            font-size: 18px;
-                            font-weight: bold;
-                            margin-bottom: 20px;
-                        }}
-                        .info-card {{
-                            background-color: #FFFDE7; /* Kem sáng */
-                            border-left: 6px solid #D84315; /* Cam đất */
-                            border-radius: 8px;
-                            padding: 20px;
-                            margin: 25px 0;
-                        }}
-                        .info-item {{
-                            margin-bottom: 12px;
-                            display: flex;
-                            align-items: center;
-                            font-size: 15px;
-                        }}
-                        .info-item:last-child {{ margin-bottom: 0; }}
-                        .label {{
-                            color: #D84315;
-                            font-weight: 600;
-                            width: 120px;
-                            display: inline-block;
-                        }}
-                        .value {{
-                            color: #3E2723;
-                            font-weight: 700;
-                        }}
-                        .footer {{
-                            background-color: #EFEBE9;
-                            padding: 20px;
-                            text-align: center;
-                            font-size: 13px;
-                            color: #8D6E63;
-                            border-top: 1px solid #D7CCC8;
-                        }}
-                        .status-badge {{
-                            display: inline-block;
-                            padding: 4px 12px;
-                            background-color: #4CAF50;
-                            color: white;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            text-transform: uppercase;
-                        }}
+                        body {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #F7F3E9; color: #4E342E; margin: 0; padding: 20px; }}
+                        .container {{ max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+                        .header {{ background-color: #5D4037; color: #FFF3E0; padding: 30px; text-align: center; }}
+                        .header h1 {{ margin: 0; font-size: 26px; letter-spacing: 2px; text-transform: uppercase; }}
+                        .content {{ padding: 30px; line-height: 1.6; }}
+                        .info-card {{ background-color: #FFFDE7; border-left: 6px solid #D84315; border-radius: 8px; padding: 20px; margin: 25px 0; }}
+                        .footer {{ background-color: #EFEBE9; padding: 20px; text-align: center; font-size: 13px; color: #8D6E63; line-height: 1.6; border-top: 1px solid #D7CCC8; }}
                     </style>
                 </head>
                 <body>
                     <div class=""container"">
                         <div class=""header"">
-                            <h1>☕ CAFEBOOK</h1>
+                            <h1>☕ {tenQuan}</h1>
                         </div>
                         <div class=""content"">
-                            <div class=""welcome-text"">Xin chào {khach.HoTen},</div>
-                            <p>Cảm ơn bạn đã tin tưởng lựa chọn <strong>Cafebook</strong>. Yêu cầu đặt bàn của bạn đã được ghi nhận thành công với các thông tin chi tiết dưới đây:</p>
-                    
+                            <div style=""font-size: 18px; font-weight: bold; margin-bottom: 20px;"">Xin chào {khach.HoTen},</div>
+                            <p>Cảm ơn bạn đã tin tưởng lựa chọn <strong>{tenQuan}</strong>. Yêu cầu đặt bàn của bạn đã được ghi nhận thành công với các thông tin chi tiết dưới đây:</p>
+                            
                             <div class=""info-card"">
-                                <div class=""info-item"">
-                                    <span class=""label"">🪑 Bàn số:</span>
-                                    <span class=""value"">{soBan}</span>
-                                </div>
-                                <div class=""info-item"">
-                                    <span class=""label"">📅 Thời gian:</span>
-                                    <span class=""value"">{phieu.ThoiGianDat:HH:mm} ngày {phieu.ThoiGianDat:dd/MM/yyyy}</span>
-                                </div>
-                                <div class=""info-item"">
-                                    <span class=""label"">👥 Số khách:</span>
-                                    <span class=""value"">{phieu.SoLuongKhach} người</span>
-                                </div>
-                                <div class=""info-item"">
-                                    <span class=""label"">📝 Ghi chú:</span>
-                                    <span class=""value"">{phieu.GhiChu ?? "Không có"}</span>
-                                </div>
-                                <div class=""info-item"">
-                                    <span class=""label"">✅ Trạng thái:</span>
-                                    <span class=""status-badge"">{phieu.TrangThai}</span>
-                                </div>
+                                <div style=""margin-bottom: 12px;""><span style=""color: #D84315; font-weight: 600;"">🪑 Bàn số:</span> <strong>{soBan}</strong></div>
+                                <div style=""margin-bottom: 12px;""><span style=""color: #D84315; font-weight: 600;"">📅 Thời gian:</span> <strong>{phieu.ThoiGianDat:HH:mm} ngày {phieu.ThoiGianDat:dd/MM/yyyy}</strong></div>
+                                <div style=""margin-bottom: 12px;""><span style=""color: #D84315; font-weight: 600;"">👥 Số khách:</span> <strong>{phieu.SoLuongKhach} người</strong></div>
+                                <div><span style=""color: #D84315; font-weight: 600;"">📝 Ghi chú:</span> <strong>{phieu.GhiChu ?? "Không có"}</strong></div>
                             </div>
-
                             <p>Rất mong được đón tiếp bạn tại không gian ấm cúng của quán!</p>
                         </div>
                         <div class=""footer"">
-                            Trân trọng,<br>
-                            <strong>Đội ngũ Cafebook</strong><br>
-                            📞 Hotline: 0376512695 | ✉️ cafebook.hotro@gmail.com<br><br>
-                            © {DateTime.Now.Year} Cafebook. Mang đến trải nghiệm trọn vẹn nhất.
+                            <strong>Đội ngũ {tenQuan}</strong><br>
+                            📍 Địa chỉ: {diaChiQuan}<br>
+                            📞 Hotline: {supportPhone} | ✉️ {supportEmail}<br>
+                            © {DateTime.Now.Year} {tenQuan}. Mang đến trải nghiệm trọn vẹn nhất.
                         </div>
                     </div>
                 </body>
@@ -751,6 +535,79 @@ namespace AppCafebookApi.Controllers.app.NhanVien
             catch (Exception ex)
             {
                 Console.WriteLine($"Lỗi gửi email (chạy ngầm): {ex.Message}");
+            }
+        }
+
+        // HÀM EMAIL 2: HỦY ĐẶT BÀN DO TRỄ GIỜ
+        private async Task SendCancellationEmailAsync(PhieuDatBan phieu, KhachHang khach, string soBan, string host, int port, string username, string password, string fromName, Dictionary<string, string> settings)
+        {
+            string toEmail = khach.Email ?? "";
+            if (string.IsNullOrEmpty(toEmail)) return;
+
+            string tenQuan = settings.GetValueOrDefault("ThongTin_TenQuan", "Cafebook");
+            string diaChiQuan = settings.GetValueOrDefault("ThongTin_DiaChi", "Đang cập nhật");
+            string supportPhone = settings.GetValueOrDefault("ThongTin_SoDienThoai", "Đang cập nhật");
+            string supportEmail = settings.GetValueOrDefault("LienHe_Email", "cafebook.hotro@gmail.com");
+
+            try
+            {
+                var email = new MimeMessage();
+                email.From.Add(new MailboxAddress(fromName, username));
+                email.To.Add(new MailboxAddress(khach.HoTen, toEmail));
+                email.Subject = $"[{tenQuan}] Thông báo hủy đặt bàn tự động";
+
+                string body = $@"
+                <!DOCTYPE html>
+                <html lang=""vi"">
+                <head>
+                    <meta charset=""UTF-8"">
+                    <style>
+                        body {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #F7F3E9; color: #4E342E; margin: 0; padding: 20px; }}
+                        .container {{ max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+                        .header {{ background-color: #D32F2F; color: #FFFFFF; padding: 30px; text-align: center; }}
+                        .header h1 {{ margin: 0; font-size: 24px; letter-spacing: 1px; text-transform: uppercase; }}
+                        .content {{ padding: 30px; line-height: 1.6; }}
+                        .alert-card {{ background-color: #FFEBEE; border-left: 6px solid #D32F2F; border-radius: 8px; padding: 20px; margin: 25px 0; color: #C62828; }}
+                        .footer {{ background-color: #EFEBE9; padding: 20px; text-align: center; font-size: 13px; color: #8D6E63; line-height: 1.6; border-top: 1px solid #D7CCC8; }}
+                    </style>
+                </head>
+                <body>
+                    <div class=""container"">
+                        <div class=""header"">
+                            <h1>☕ {tenQuan}</h1>
+                        </div>
+                        <div class=""content"">
+                            <div style=""font-size: 18px; font-weight: bold; margin-bottom: 20px;"">Xin chào {khach.HoTen},</div>
+                            <p>Chúng tôi gửi email này để thông báo về tình trạng phiếu đặt bàn của bạn vào lúc <strong>{phieu.ThoiGianDat:HH:mm} ngày {phieu.ThoiGianDat:dd/MM/yyyy}</strong>.</p>
+                            
+                            <div class=""alert-card"">
+                                <strong>❌ Đã Hủy Tự Động</strong><br><br>
+                                Rất tiếc vì bạn đã không thể đến đúng giờ. Hệ thống của chúng tôi đã tự động hủy bàn (Bàn: <strong>{soBan}</strong>) do vượt quá thời gian chờ quy định (15 phút) nhằm giải phóng không gian phục vụ các thực khách khác.
+                            </div>
+                            
+                            <p>Chúng tôi rất hy vọng có cơ hội được phục vụ bạn vào một dịp khác gần nhất. Nếu bạn vẫn muốn ghé quán, vui lòng liên hệ lại Hotline hoặc đặt bàn mới nhé!</p>
+                        </div>
+                        <div class=""footer"">
+                            <strong>Đội ngũ {tenQuan}</strong><br>
+                            📍 Địa chỉ: {diaChiQuan}<br>
+                            📞 Hotline: {supportPhone} | ✉️ {supportEmail}<br>
+                            © {DateTime.Now.Year} {tenQuan}. Mang đến trải nghiệm trọn vẹn nhất.
+                        </div>
+                    </div>
+                </body>
+                </html>";
+
+                email.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = body };
+
+                using var smtp = new SmtpClient();
+                await smtp.ConnectAsync(host, port, SecureSocketOptions.StartTls);
+                await smtp.AuthenticateAsync(username, password);
+                await smtp.SendAsync(email);
+                await smtp.DisconnectAsync(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi gửi email hủy bàn (chạy ngầm): {ex.Message}");
             }
         }
 
@@ -789,6 +646,8 @@ namespace AppCafebookApi.Controllers.app.NhanVien
         }
         #endregion
 
+        // CẬP NHẬT: GỌI MAIL KHI TỰ ĐỘNG HỦY
+        // CẬP NHẬT: GỌI MAIL KHI TỰ ĐỘNG HỦY
         private async Task AutoCancelLateReservationsInternal()
         {
             try
@@ -798,12 +657,17 @@ namespace AppCafebookApi.Controllers.app.NhanVien
 
                 var lateReservations = await _context.PhieuDatBans
                     .Include(p => p.Ban)
+                    .Include(p => p.KhachHang) // Bổ sung Include KhachHang để lấy Email
                     .Where(p => (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận") &&
                                 p.ThoiGianDat < timeLimit)
                     .ToListAsync();
 
                 if (lateReservations.Any())
                 {
+                    // Lấy trước cấu hình để gửi Mail
+                    var smtp = await GetSmtpSettingsAsync();
+                    var settingsDict = await GetGeneralSettingsAsync();
+
                     foreach (var phieu in lateReservations)
                     {
                         phieu.TrangThai = "Đã hủy";
@@ -814,6 +678,22 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                         if (phieu.Ban != null && phieu.Ban.TrangThai != "Có khách")
                         {
                             phieu.Ban.TrangThai = "Trống";
+                        }
+
+                        // Trigger gửi mail báo hủy nếu có cấu hình Smtp và có Email khách
+                        var emailKhach = phieu.KhachHang?.Email;
+                        if (!string.IsNullOrEmpty(emailKhach) && !string.IsNullOrEmpty(smtp.username) && !string.IsNullOrEmpty(smtp.password))
+                        {
+                            // ĐÃ FIX LỖI CS8601 BẰNG TOÁN TỬ ?? ""
+                            var khachInfo = phieu.KhachHang ?? new KhachHang
+                            {
+                                HoTen = phieu.HoTenKhach ?? "Khách hàng",
+                                Email = emailKhach ?? ""
+                            };
+                            string soBanStr = phieu.Ban?.SoBan ?? "N/A";
+
+                            // Gửi mail trên tiến trình nền để không chặn tốc độ API
+                            _ = Task.Run(() => SendCancellationEmailAsync(phieu, khachInfo, soBanStr, smtp.host, smtp.port, smtp.username, smtp.password, smtp.fromName, settingsDict));
                         }
                     }
                     await _context.SaveChangesAsync();

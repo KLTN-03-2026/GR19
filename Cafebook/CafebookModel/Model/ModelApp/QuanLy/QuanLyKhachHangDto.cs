@@ -49,6 +49,19 @@ namespace CafebookModel.Model.ModelApp.QuanLy
         public string LyDo { get; set; } = string.Empty;
     }
 
-    public class KhachHangLichSuMuaDto { public int IdHoaDon { get; set; } public DateTime ThoiGian { get; set; } public decimal TongTien { get; set; } public string SanPhamMua { get; set; } = string.Empty; }
-    public class KhachHangLichSuThueDto { public int IdPhieuThue { get; set; } public string TieuDeSach { get; set; } = string.Empty; public DateTime NgayThue { get; set; } public string TrangThai { get; set; } = string.Empty; }
+    public class KhachHangLichSuMuaDto { 
+        public int IdHoaDon { get; set; } 
+        public DateTime ThoiGian { get; set; } 
+        public decimal TongTien { get; set; } 
+        public string SanPhamMua { get; set; } = string.Empty;
+        public string TrangThai { get; set; } = string.Empty;
+    }
+
+
+    public class KhachHangLichSuThueDto { 
+        public int IdPhieuThue { get; set; } 
+        public string TieuDeSach { get; set; } = string.Empty; 
+        public DateTime NgayThue { get; set; } 
+        public string TrangThai { get; set; } = string.Empty; 
+    }
 }

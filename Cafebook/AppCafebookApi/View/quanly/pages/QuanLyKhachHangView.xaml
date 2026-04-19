@@ -112,7 +112,7 @@
             </Border>
 
             <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer VerticalScrollBarVisibility="Hidden">
                     <StackPanel x:Name="formChiTiet" IsEnabled="False">
                         <TextBlock x:Name="lblFormTitle" Text="Thông tin Khách Hàng" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,15"/>
 
@@ -170,7 +170,39 @@
                             <Button x:Name="btnXoa" Content="🗑 Xóa Mềm" Style="{StaticResource DeleteBtn}" Click="BtnXoa_Click" Visibility="Collapsed"/>
                         </StackPanel>
 
-                        <StackPanel x:Name="panelLichSu" Visibility="Collapsed">
+                        <StackPanel x:Name="panelLichSu" Visibility="Collapsed" Margin="0,20,0,0">
+                            <TextBlock Text="Lịch sử Giao dịch" FontSize="20" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,15"/>
+
+                            <TextBlock Text="Đơn hàng đã mua:" FontSize="14" Margin="0,0,0,5"/>
+                            <DataGrid x:Name="dgLichSuMua" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="200" 
+                                      Background="White" BorderBrush="#BDBDBD" BorderThickness="1" 
+                                      GridLinesVisibility="All" HorizontalGridLinesBrush="#E0E0E0" VerticalGridLinesBrush="#E0E0E0"
+                                      Margin="0,0,0,15">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Mã HĐ" Binding="{Binding IdHoaDon}" Width="70"/>
+                                    <DataGridTextColumn Header="Ngày" Binding="{Binding ThoiGian, StringFormat=dd/MM/yy}" Width="80"/>
+                                    <DataGridTextColumn Header="Tổng tiền" Binding="{Binding TongTien, StringFormat=N0}" Width="*" ElementStyle="{StaticResource {x:Type TextBlock}}">
+                                        <DataGridTextColumn.CellStyle>
+                                            <Style TargetType="DataGridCell">
+                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                            </Style>
+                                        </DataGridTextColumn.CellStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="120"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <TextBlock Text="Sách đã thuê:" FontSize="14" Margin="0,0,0,5"/>
+                            <DataGrid x:Name="dgLichSuThue" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="200" 
+                                      Background="White" BorderBrush="#BDBDBD" BorderThickness="1"
+                                      GridLinesVisibility="All" HorizontalGridLinesBrush="#E0E0E0" VerticalGridLinesBrush="#E0E0E0">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Mã Phiếu" Binding="{Binding IdPhieuThue}" Width="80"/>
+                                    <DataGridTextColumn Header="Tên Sách" Binding="{Binding TieuDeSach}" Width="*"/>
+                                    <DataGridTextColumn Header="Ngày Thuê" Binding="{Binding NgayThue, StringFormat=dd/MM/yy}" Width="90"/>
+                                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="100"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

@@ -1,7 +1,8 @@
 ﻿using AppCafebookApi.Services;
 using AppCafebookApi.View.common;
-using CafebookModel.Model.ModelEntities;
+using AppCafebookApi.View.Common;
 using CafebookModel.Model.ModelApp.NhanVien;
+using CafebookModel.Model.ModelEntities;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -49,6 +50,10 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private string _tenQuan = "", _diaChi = "", _sdt = "", _wifi = "";
         private Brush _defaultBorderBrush;
+
+        private string _nganHangSoTaiKhoan = "";
+        private string _nganHangChuTaiKhoan = "";
+        private string _nganHangMaDinhDanh = "";
 
         // ======================================================
         // NÂNG CẤP 1: DYNAMIC URL (Tuyệt đối không hardcode)
@@ -162,6 +167,11 @@ namespace AppCafebookApi.View.nhanvien.pages
                 _diaChi = response.DiaChi;
                 _sdt = response.SoDienThoai;
                 _wifi = response.WifiMatKhau;
+
+                // Dưới đoạn _wifi = response.WifiMatKhau; thêm:
+                _nganHangSoTaiKhoan = response.NganHang_SoTaiKhoan;
+                _nganHangChuTaiKhoan = response.NganHang_ChuTaiKhoan;
+                _nganHangMaDinhDanh = response.NganHang_MaDinhDanhNganHang;
 
                 SetKhachHangUI(_currentKhachHang);
 
@@ -665,6 +675,35 @@ namespace AppCafebookApi.View.nhanvien.pages
                 }
             }
 
+            // Kích hoạt QR nếu chọn Chuyển khoản
+            if (_currentPhuongThuc == "Chuyển khoản")
+            {
+                if (string.IsNullOrEmpty(_nganHangSoTaiKhoan) || string.IsNullOrEmpty(_nganHangMaDinhDanh))
+                {
+                    MessageBox.Show("Chưa cấu hình tài khoản ngân hàng trong hệ thống (CaiDat).", "Lỗi cấu hình", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Ghi chú không dấu (VD: Thanh toan HD 12)
+                string noiDungCK = $"Thanh Toán Hóa đơn Cafebook{_idHoaDonGoc}";
+
+                var qrWindow = new VietQRWindow(
+                    _nganHangMaDinhDanh,
+                    _nganHangSoTaiKhoan,
+                    _nganHangChuTaiKhoan,
+                    _currentThanhTienTach,
+                    $"Thanh Toán Hóa đơn Cafebook {_idHoaDonGoc}"
+                );
+
+                // Mở popup, chờ nhân viên xác nhận
+                bool? isPaid = qrWindow.ShowDialog();
+                if (isPaid != true)
+                {
+                    // Nhân viên nhấn Hủy hoặc tắt cửa sổ -> Dừng quá trình thanh toán
+                    return;
+                }
+            }
+
             var request = new ThanhToanRequestDto
             {
                 IdHoaDonGoc = _idHoaDonGoc,
@@ -687,6 +726,12 @@ namespace AppCafebookApi.View.nhanvien.pages
                     bool isFullPaymentServer = jsonDoc.RootElement.GetProperty("isFullPayment").GetBoolean();
                     int idHoaDonDaThanhToan = jsonDoc.RootElement.GetProperty("idHoaDonDaThanhToan").GetInt32();
 
+                    // LẤY ĐIỂM TỪ API
+                    int diemCong = 0;
+                    int tongDiem = 0;
+                    if (jsonDoc.RootElement.TryGetProperty("diemCong", out var dProp)) diemCong = dProp.GetInt32();
+                    if (jsonDoc.RootElement.TryGetProperty("tongDiemTichLuy", out var tProp)) tongDiem = tProp.GetInt32();
+
                     var previewData = new HoaDonPreviewDto
                     {
                         IsProvisional = false,
@@ -708,7 +753,9 @@ namespace AppCafebookApi.View.nhanvien.pages
                         ThanhTien = _currentThanhTienTach,
                         PhuongThucThanhToan = _currentPhuongThuc,
                         KhachDua = decimal.TryParse(txtKhachDua.Text, out var kd) ? kd : 0,
-                        TienThoi = decimal.TryParse(lblTienThua.Text.Replace(" đ", "").Replace(",", ""), out var tt) ? tt : 0
+                        TienThoi = decimal.TryParse(lblTienThua.Text.Replace(" đ", "").Replace(",", ""), out var tt) ? tt : 0,
+                        DiemCong = diemCong,
+                        TongDiemTichLuy = tongDiem
                     };
 
                     var previewWindow = new HoaDonPreviewWindow(previewData);

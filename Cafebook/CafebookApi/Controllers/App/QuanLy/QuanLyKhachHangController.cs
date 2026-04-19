@@ -66,6 +66,35 @@ namespace CafebookApi.Controllers.App.QuanLy
             var kh = await _context.Set<KhachHang>().AsNoTracking().FirstOrDefaultAsync(k => k.IdKhachHang == id && !k.DaXoa);
             if (kh == null) return NotFound();
 
+            // 1. Lấy lịch sử mua hàng (Sử dụng ThoiGianTao và ThanhTien từ class HoaDon)
+            var lichSuMua = await _context.Set<HoaDon>()
+                .Where(h => h.IdKhachHang == id)
+                .OrderByDescending(h => h.ThoiGianTao)
+                .Select(h => new KhachHangLichSuMuaDto
+                {
+                    IdHoaDon = h.IdHoaDon,
+                    ThoiGian = h.ThoiGianTao,
+                    TongTien = h.ThanhTien,
+                    SanPhamMua = "Nhiều sản phẩm", // Gán tạm do HoaDon chứa nhiều ChiTietHoaDon
+                    TrangThai = h.TrangThai
+                })
+                .ToListAsync();
+
+            // 2. Lấy lịch sử thuê sách (Sử dụng Entity PhieuThueSach)
+            var lichSuThue = await _context.Set<PhieuThueSach>()
+                .Where(p => p.IdKhachHang == id)
+                .OrderByDescending(p => p.NgayThue)
+                .Select(p => new KhachHangLichSuThueDto
+                {
+                    IdPhieuThue = p.IdPhieuThueSach,
+
+                    TieuDeSach = p.ChiTietPhieuThues.Select(c => c.Sach.TenSach).FirstOrDefault() ?? "Không có thông tin",
+
+                    NgayThue = p.NgayThue,
+                    TrangThai = p.TrangThai
+                })
+                .ToListAsync();
+
             return Ok(new QuanLyKhachHangDetailDto
             {
                 IdKhachHang = kh.IdKhachHang,
@@ -80,7 +109,11 @@ namespace CafebookApi.Controllers.App.QuanLy
                 ThoiGianMoKhoa = kh.ThoiGianMoKhoa,
                 TaiKhoanTam = kh.TaiKhoanTam,
                 AnhDaiDien = kh.AnhDaiDien,
-                NgayTao = kh.NgayTao
+                NgayTao = kh.NgayTao,
+
+                // Gán 2 danh sách vừa query vào Dto trả về UI
+                LichSuMuaHang = lichSuMua,
+                LichSuThueSach = lichSuThue
             });
         }
 
@@ -123,123 +156,49 @@ namespace CafebookApi.Controllers.App.QuanLy
             {
                 string thoiGianStr = kh.ThoiGianMoKhoa.HasValue ? kh.ThoiGianMoKhoa.Value.ToString("dd/MM/yyyy HH:mm") : "Vĩnh viễn";
 
-                // Lấy thông tin liên hệ từ bảng CaiDat (có giá trị mặc định phòng trường hợp chưa có trong DB)
-                string supportEmail = settings.ContainsKey("LienHe_Email") ? settings["LienHe_Email"] : "cafebook.hotro@gmail.com";
-                string supportPhone = settings.ContainsKey("ThongTin_SoDienThoai") ? settings["ThongTin_SoDienThoai"] : "Đang cập nhật";
+                // Đồng bộ: Lấy toàn bộ thông tin từ bảng Cài Đặt (sử dụng TryGetValue để tránh lỗi Dictionary)
+                string tenQuan = settings.TryGetValue("ThongTin_TenQuan", out var tq) ? tq : "Cafebook";
+                string diaChiQuan = settings.TryGetValue("ThongTin_DiaChi", out var dc) ? dc : "Đang cập nhật";
+                string supportEmail = settings.TryGetValue("LienHe_Email", out var se) ? se : "cafebook.hotro@gmail.com";
+                string supportPhone = settings.TryGetValue("ThongTin_SoDienThoai", out var sp) ? sp : "Đang cập nhật";
 
-                // Giao diện email thiết kế lại với phong cách Material Design - Cafebook
-                // Giao diện email fix lỗi hiển thị text icon
+                // Đồng bộ Subject mail chứa Tên Quán
+                string subject = $"[{tenQuan}] Thông báo khóa tài khoản";
+
+                // Giao diện email đồng bộ Material Design
                 string body = $@"
                 <!DOCTYPE html>
                 <html lang=""vi"">
                 <head>
                     <meta charset=""UTF-8"">
                     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-                    <link href=""https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"" rel=""stylesheet"">
                     <style>
-                        body {{
-                            font-family: 'Roboto', Arial, sans-serif;
-                            background-color: #F7F3E9;
-                            color: #4E342E;
-                            margin: 0;
-                            padding: 40px 20px;
-                        }}
-                        .email-container {{
-                            max-width: 600px;
-                            margin: 0 auto;
-                            background-color: #FFFFFF;
-                            border-radius: 12px;
-                            overflow: hidden;
-                            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-                        }}
-                        .email-header {{
-                            background-color: #5D4037;
-                            color: #FFF3E0;
-                            padding: 30px 20px;
-                            text-align: center;
-                        }}
-                        .email-header h1 {{
-                            margin: 0;
-                            font-size: 24px;
-                            font-weight: 700;
-                            letter-spacing: 1px;
-                        }}
-                        .email-body {{
-                            padding: 30px;
-                            line-height: 1.6;
-                            font-size: 16px;
-                        }}
-                        .alert-card {{
-                            background-color: #FFF8E1;
-                            border-left: 5px solid #D84315;
-                            border-radius: 4px;
-                            padding: 20px;
-                            margin: 20px 0;
-                        }}
-                        .detail-row {{
-                            margin-bottom: 12px;
-                            display: flex;
-                            align-items: flex-start;
-                        }}
-                        .detail-row:last-child {{
-                            margin-bottom: 0;
-                        }}
-                        .icon-label {{
-                            color: #D84315;
-                            font-weight: 500;
-                            margin-right: 8px;
-                            display: inline-flex;
-                            align-items: center;
-                        }}
-                        .emoji-icon {{
-                            font-size: 18px;
-                            margin-right: 6px;
-                        }}
-                        .detail-value {{
-                            color: #3E2723;
-                            font-weight: 700;
-                        }}
-                        .contact-box {{
-                            background-color: #FAFAFA;
-                            border: 1px solid #E0E0E0;
-                            border-radius: 8px;
-                            padding: 15px;
-                            margin-top: 20px;
-                            text-align: center;
-                        }}
-                        .contact-box p {{
-                            margin: 5px 0;
-                            color: #5D4037;
-                        }}
-                        .email-footer {{
-                            background-color: #EFEBE9;
-                            padding: 20px;
-                            text-align: center;
-                            font-size: 13px;
-                            color: #8D6E63;
-                            border-top: 1px solid #D7CCC8;
-                        }}
-                        .btn-contact {{
-                            display: inline-block;
-                            margin-top: 15px;
-                            padding: 12px 24px;
-                            background-color: #D84315;
-                            color: #FFFFFF !important;
-                            text-decoration: none;
-                            border-radius: 6px;
-                            font-weight: 500;
-                        }}
+                        body {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #F7F3E9; color: #4E342E; margin: 0; padding: 20px; }}
+                        .container {{ max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+                        .header {{ background-color: #5D4037; color: #FFF3E0; padding: 30px; text-align: center; }}
+                        .header h1 {{ margin: 0; font-size: 26px; letter-spacing: 2px; text-transform: uppercase; }}
+                        .content {{ padding: 30px; line-height: 1.6; font-size: 16px; }}
+                        .alert-card {{ background-color: #FFF8E1; border-left: 6px solid #D84315; border-radius: 8px; padding: 20px; margin: 25px 0; }}
+                        .detail-row {{ margin-bottom: 12px; display: flex; align-items: flex-start; }}
+                        .detail-row:last-child {{ margin-bottom: 0; }}
+                        .icon-label {{ color: #D84315; font-weight: 600; margin-right: 8px; display: inline-flex; align-items: center; width: 160px; }}
+                        .emoji-icon {{ font-size: 18px; margin-right: 6px; }}
+                        .detail-value {{ color: #3E2723; font-weight: 700; flex: 1; }}
+                        .contact-box {{ background-color: #FAFAFA; border: 1px solid #E0E0E0; border-radius: 8px; padding: 15px; margin-top: 20px; text-align: center; }}
+                        .contact-box p {{ margin: 5px 0; color: #5D4037; }}
+                        .btn-contact {{ display: inline-block; margin-top: 15px; padding: 12px 24px; background-color: #D84315; color: #FFFFFF !important; text-decoration: none; border-radius: 6px; font-weight: 500; }}
+                        .footer {{ background-color: #EFEBE9; padding: 20px; text-align: center; font-size: 13px; color: #8D6E63; line-height: 1.6; border-top: 1px solid #D7CCC8; }}
                     </style>
                 </head>
                 <body>
-                    <div class=""email-container"">
-                        <div class=""email-header"">
-                            <h1>☕ CAFEBOOK</h1>
+                    <div class=""container"">
+                        <div class=""header"">
+                            <h1>☕ {tenQuan}</h1>
                         </div>
-                        <div class=""email-body"">
-                            <p>Xin chào bạn,</p>
-                            <p>Chúng tôi rất tiếc phải thông báo rằng tài khoản Cafebook của bạn hiện đang bị tạm khóa. Dưới đây là thông tin chi tiết:</p>
-            
+                        <div class=""content"">
+                            <div style=""font-size: 18px; font-weight: bold; margin-bottom: 20px;"">Xin chào bạn,</div>
+                            <p>Chúng tôi rất tiếc phải thông báo rằng tài khoản <strong>{tenQuan}</strong> của bạn hiện đang bị tạm khóa. Dưới đây là thông tin chi tiết:</p>
+                    
                             <div class=""alert-card"">
                                 <div class=""detail-row"">
                                     <span class=""icon-label"">
@@ -256,23 +215,24 @@ namespace CafebookApi.Controllers.App.QuanLy
                             </div>
 
                             <p>Nếu bạn cho rằng đây là một sự nhầm lẫn hoặc cần hỗ trợ thêm, vui lòng liên hệ với bộ phận CSKH của chúng tôi để được giải đáp qua các kênh dưới đây:</p>
-            
+                    
                             <div class=""contact-box"">
                                 <p>📞 <strong>Hotline:</strong> {supportPhone}</p>
                                 <p>✉️ <strong>Email:</strong> {supportEmail}</p>
                                 <a href=""mailto:{supportEmail}"" class=""btn-contact"">Gửi Email Hỗ Trợ</a>
                             </div>
                         </div>
-                        <div class=""email-footer"">
-                            Trân trọng,<br>
-                            <strong>Đội ngũ Cafebook</strong><br><br>
-                            © {DateTime.Now.Year} Cafebook. Mang đến trải nghiệm trọn vẹn nhất.
+                        <div class=""footer"">
+                            <strong>Đội ngũ {tenQuan}</strong><br>
+                            📍 Địa chỉ: {diaChiQuan}<br>
+                            📞 Hotline: {supportPhone} | ✉️ {supportEmail}<br>
+                            © {DateTime.Now.Year} {tenQuan}. Mang đến trải nghiệm trọn vẹn nhất.
                         </div>
                     </div>
                 </body>
                 </html>";
 
-                _ = Task.Run(() => SendEmailBackground(kh.Email, "Thông báo khóa tài khoản", body, settings));
+                _ = Task.Run(() => SendEmailBackground(kh.Email, subject, body, settings));
             }
             return Ok();
         }

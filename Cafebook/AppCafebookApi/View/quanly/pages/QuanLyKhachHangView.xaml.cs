@@ -171,6 +171,15 @@ namespace AppCafebookApi.View.quanly.pages
                             string fullUrl = string.IsNullOrEmpty(detail.AnhDaiDien) ? "" : $"{(AppConfigManager.GetApiServerUrl() ?? "http://localhost").TrimEnd('/')}/{detail.AnhDaiDien.TrimStart('/')}";
                             img.Source = HinhAnhHelper.LoadImage(fullUrl, HinhAnhPaths.DefaultAvatar);
                         }
+                        // HIỂN THỊ LỊCH SỬ GIAO DỊCH
+                        if (FindName("dgLichSuMua") is DataGrid dgMua)
+                            dgMua.ItemsSource = detail.LichSuMuaHang;
+
+                        if (FindName("dgLichSuThue") is DataGrid dgThue)
+                            dgThue.ItemsSource = detail.LichSuThueSach;
+
+                        if (FindName("panelLichSu") is StackPanel panelLS)
+                            panelLS.Visibility = Visibility.Visible;
                     }
                 }
                 finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
