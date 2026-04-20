@@ -200,41 +200,58 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (FindName("txtGioRa") is TextBlock txtGr) txtGr.Text = dto.LanRaGanNhat?.ToString("HH:mm") ?? "--:--";
 
             _tongGioDaLamCache = dto.TongGioLamHienTai;
-
             _timerWork.Stop();
             _gioVaoHienTai = null;
+
+            // Đặt lại mặc định cho Nút Vào Ca
+            if (FindName("btnVaoCa") is Button btnVaoDefault)
+            {
+                btnVaoDefault.IsEnabled = true;
+                btnVaoDefault.Content = "VÀO CA BẮT ĐẦU LÀM";
+            }
 
             if (dto.TrangThai == "KhongCoCa")
             {
                 SetStatusBadge("Ngoài ca làm việc", _colorGray, _colorGrayBg);
                 UpdateSidebarStatus("Không có ca");
             }
+            // [BỔ SUNG]: TRẠNG THÁI CHƯA ĐẾN GIỜ -> HIỆN NÚT NHƯNG BỊ MỜ KHÔNG CHO BẤM
+            else if (dto.TrangThai == "ChuaDenGio")
+            {
+                SetStatusBadge("CHƯA ĐẾN GIỜ VÀO CA", _colorGray, _colorGrayBg);
+                UpdateSidebarStatus("Sắp tới ca");
+
+                if (FindName("btnVaoCa") is Button btnVao)
+                {
+                    btnVao.Visibility = Visibility.Visible;
+                    btnVao.IsEnabled = false; // Khóa nút
+                    var gioMoMoChamCong = dto.GioBatDauCa?.Subtract(TimeSpan.FromMinutes(30));
+                    btnVao.Content = $"MỞ CHẤM CÔNG LÚC {gioMoMoChamCong:hh\\:mm}";
+                }
+                if (FindName("btnRaCa") is Button btnRa) btnRa.Visibility = Visibility.Collapsed;
+            }
+            else if (dto.TrangThai == "ChoVaoCa")
+            {
+                SetStatusBadge("ĐÃ MỞ CHẤM CÔNG", _colorWarning, _colorWarningBg);
+                UpdateSidebarStatus("Chưa chấm công");
+                if (FindName("btnVaoCa") is Button btnVao) btnVao.Visibility = Visibility.Visible;
+                if (FindName("btnRaCa") is Button btnRa) btnRa.Visibility = Visibility.Collapsed;
+            }
             else if (dto.DangTrongCa)
             {
                 SetStatusBadge("Đang làm việc", _colorSuccess, _colorSuccessBg);
+                if (FindName("btnVaoCa") is Button btnVao) btnVao.Visibility = Visibility.Collapsed;
                 if (FindName("btnRaCa") is Button btnRa) btnRa.Visibility = Visibility.Visible;
                 if (FindName("txtGioRa") is TextBlock txtGr2) txtGr2.Text = "Đang chạy...";
 
                 _gioVaoHienTai = dto.LanVaoGanNhat;
                 _timerWork.Start();
             }
-            else
+            else // DaHoanThanh
             {
-                if (dto.TongGioLamHienTai == 0)
-                {
-                    SetStatusBadge("Chưa vào ca", _colorWarning, _colorWarningBg);
-                    UpdateSidebarStatus("Chưa chấm công");
-                }
-                else
-                {
-                    SetStatusBadge("Đã trả ca (Nghỉ giữa ca)", _colorInfo, _colorInfoBg);
-                    UpdateSidebarStatus("Đã trả ca");
-
-                    TimeSpan total = TimeSpan.FromHours((double)_tongGioDaLamCache);
-                    if (FindName("txtThoiGianLam") is TextBlock txtTgl)
-                        txtTgl.Text = $"{(int)total.TotalHours:D2}:{total.Minutes:D2}:{total.Seconds:D2}";
-                }
-                if (FindName("btnVaoCa") is Button btnVao) btnVao.Visibility = Visibility.Visible;
+                SetStatusBadge("Hoàn thành mọi ca", _colorSuccess, _colorSuccessBg);
+                if (FindName("btnVaoCa") is Button btnVao) btnVao.Visibility = Visibility.Collapsed;
+                if (FindName("btnRaCa") is Button btnRa) btnRa.Visibility = Visibility.Collapsed;
             }
         }
 

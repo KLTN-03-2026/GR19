@@ -21,7 +21,7 @@ namespace CafebookModel.Model.ModelEntities
         public decimal GiaBan { get; set; }
         public string? MoTa { get; set; }
         public bool TrangThaiKinhDoanh { get; set; }
-        public string? HinhAnh { get; set; } // Base64
+        public string? HinhAnh { get; set; } 
         [StringLength(50)]
         public string? NhomIn { get; set; }
 

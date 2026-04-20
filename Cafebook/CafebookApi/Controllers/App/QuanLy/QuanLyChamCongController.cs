@@ -1,4 +1,5 @@
-﻿using CafebookApi.Data;
+﻿// File: CafebookApi/Controllers/App/QuanLy/QuanLyChamCongController.cs
+using CafebookApi.Data;
 using CafebookModel.Model.ModelEntities;
 using CafebookModel.Model.ModelApp.QuanLy;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-// --- FIX LỖI: Khai báo bí danh (Alias) chỉ định rõ ràng class Entity ---
+// Khai báo bí danh (Alias) chỉ định rõ ràng class Entity
 using NhanVienEntity = CafebookModel.Model.ModelEntities.NhanVien;
 
 namespace CafebookApi.Controllers.App.QuanLy
@@ -24,7 +25,6 @@ namespace CafebookApi.Controllers.App.QuanLy
         [HttpGet("nhanvien-lookup")]
         public async Task<IActionResult> GetNhanVienLookup()
         {
-            // SỬ DỤNG BÍ DANH TẠI ĐÂY
             var list = await _context.Set<NhanVienEntity>().AsNoTracking()
                 .OrderBy(nv => nv.HoTen)
                 .Select(nv => new ChamCongNhanVienLookupDto { IdNhanVien = nv.IdNhanVien, HoTen = nv.HoTen })
@@ -33,46 +33,69 @@ namespace CafebookApi.Controllers.App.QuanLy
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] DateTime? tuNgay, [FromQuery] DateTime? denNgay)
+        public async Task<IActionResult> Search([FromQuery] int? idNhanVien, [FromQuery] DateTime? tuNgay, [FromQuery] DateTime? denNgay)
         {
-            var query = from b in _context.Set<BangChamCong>()
-                        join l in _context.Set<LichLamViec>() on b.IdLichLamViec equals l.IdLichLamViec
-                        // SỬ DỤNG BÍ DANH TẠI ĐÂY ĐỂ FIX LỖI JOIN CS1941
-                        join nv in _context.Set<NhanVienEntity>() on l.IdNhanVien equals nv.IdNhanVien
-                        join c in _context.Set<CaLamViec>() on l.IdCa equals c.IdCa
-                        select new { b, l, nv, c };
+            // 1. LẤY CẤU HÌNH TỪ BẢNG CÀI ĐẶT
+            var settingTre = await _context.CaiDats.AsNoTracking().FirstOrDefaultAsync(c => c.TenCaiDat == "HR_PhatDiTre_Phut");
+            var settingSom = await _context.CaiDats.AsNoTracking().FirstOrDefaultAsync(c => c.TenCaiDat == "HR_PhatRaSom_Phut");
 
-            if (tuNgay.HasValue) query = query.Where(x => x.l.NgayLam >= tuNgay.Value.Date);
-            if (denNgay.HasValue) query = query.Where(x => x.l.NgayLam <= denNgay.Value.Date);
+            int phutTreChoPhep = (settingTre != null && int.TryParse(settingTre.GiaTri, out int t)) ? t : 10;
+            int phutSomChoPhep = (settingSom != null && int.TryParse(settingSom.GiaTri, out int s)) ? s : 10;
 
-            var rawData = await query.OrderByDescending(x => x.l.NgayLam).ThenByDescending(x => x.c.GioBatDau).ToListAsync();
+            var query = _context.Set<BangChamCong>()
+                .Include(b => b.LichLamViec).ThenInclude(l => l.CaLamViec)
+                .Include(b => b.LichLamViec).ThenInclude(l => l.NhanVien)
+                .AsNoTracking()
+                .Where(b => b.LichLamViec != null && b.LichLamViec.TrangThai == "Đã duyệt");
 
-            var data = rawData.Select(x => {
-                TimeSpan? gioVaoTime = x.b.GioVao?.TimeOfDay;
-                TimeSpan? gioRaTime = x.b.GioRa?.TimeOfDay;
+            if (idNhanVien.HasValue && idNhanVien.Value > 0)
+                query = query.Where(b => b.LichLamViec.IdNhanVien == idNhanVien.Value);
 
-                // TÍNH TOÁN TRẠNG THÁI ĐỘNG DỰA TRÊN CA LÀM VIỆC
-                string trangThai = "Chưa chấm công";
-                if (x.b.GioVao.HasValue && x.b.GioRa.HasValue)
+            if (tuNgay.HasValue)
+                query = query.Where(b => b.LichLamViec.NgayLam >= tuNgay.Value.Date);
+
+            if (denNgay.HasValue)
+                query = query.Where(b => b.LichLamViec.NgayLam <= denNgay.Value.Date);
+
+            var list = await query.Select(b => new { b, l = b.LichLamViec, nv = b.LichLamViec.NhanVien, ca = b.LichLamViec.CaLamViec }).ToListAsync();
+
+            var data = list.Select(x => {
+                string trangThai = "Vắng mặt";
+
+                // 2. ĐÁNH GIÁ TRẠNG THÁI DỰA TRÊN CẤU HÌNH ĐỘNG
+                if (x.b.GioVao.HasValue)
                 {
-                    List<string> statusList = new();
-                    if (gioVaoTime > x.c.GioBatDau) statusList.Add("Đi trễ");
-                    if (gioRaTime < x.c.GioKetThuc) statusList.Add("Về sớm");
-                    trangThai = statusList.Any() ? string.Join(", ", statusList) : "Hợp lệ";
+                    if (x.b.GioRa.HasValue)
+                    {
+                        // Số phút đi trễ = Giờ vào thực tế - Giờ bắt đầu ca
+                        bool diTre = (x.b.GioVao.Value.TimeOfDay - x.ca.GioBatDau).TotalMinutes > phutTreChoPhep;
+
+                        // Số phút về sớm = Giờ kết thúc ca - Giờ ra thực tế
+                        bool veSom = (x.ca.GioKetThuc - x.b.GioRa.Value.TimeOfDay).TotalMinutes > phutSomChoPhep;
+
+                        if (diTre && veSom) trangThai = "Đi trễ, Về sớm";
+                        else if (diTre) trangThai = "Đi trễ";
+                        else if (veSom) trangThai = "Về sớm";
+                        else trangThai = "Đúng giờ";
+                    }
+                    else
+                    {
+                        trangThai = "Đang làm";
+                    }
                 }
-                else if (x.b.GioVao.HasValue) trangThai = "Thiếu giờ ra";
-                else if (x.b.GioRa.HasValue) trangThai = "Thiếu giờ vào";
-                if (x.l.NgayLam.Date < DateTime.Today && !x.b.GioVao.HasValue && !x.b.GioRa.HasValue) trangThai = "Vắng mặt";
+
+                var gioVaoTime = x.b.GioVao?.TimeOfDay;
+                var gioRaTime = x.b.GioRa?.TimeOfDay;
 
                 return new QuanLyChamCongGridDto
                 {
                     IdChamCong = x.b.IdChamCong,
-                    IdNhanVien = x.l.IdNhanVien,
+                    IdNhanVien = x.nv.IdNhanVien,
                     TenNhanVien = x.nv.HoTen,
                     NgayLam = x.l.NgayLam,
-                    TenCa = x.c.TenCa,
-                    CaGioBatDau = x.c.GioBatDau,
-                    CaGioKetThuc = x.c.GioKetThuc,
+                    TenCa = x.ca.TenCa,
+                    CaGioBatDau = x.ca.GioBatDau,
+                    CaGioKetThuc = x.ca.GioKetThuc,
                     GioVao = gioVaoTime,
                     GioRa = gioRaTime,
                     TrangThai = trangThai,
@@ -98,7 +121,8 @@ namespace CafebookApi.Controllers.App.QuanLy
             DateTime? vao = !string.IsNullOrEmpty(dto.GioVao) && TimeSpan.TryParse(dto.GioVao, out var tsVao) ? ngayLam.Add(tsVao) : null;
             DateTime? ra = !string.IsNullOrEmpty(dto.GioRa) && TimeSpan.TryParse(dto.GioRa, out var tsRa) ? ngayLam.Add(tsRa) : null;
 
-            if (vao.HasValue && ra.HasValue && ra <= vao) ra = ra.Value.AddDays(1); // Ca qua đêm
+            if (vao.HasValue && ra.HasValue && ra.Value < vao.Value)
+                return BadRequest("Giờ ra không được nhỏ hơn giờ vào!");
 
             chamCong.GioVao = vao;
             chamCong.GioRa = ra;

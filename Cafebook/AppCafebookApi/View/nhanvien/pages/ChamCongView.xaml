@@ -151,7 +151,7 @@
                         <Border Background="{StaticResource LightCreamBrush}" CornerRadius="10" Padding="20" Margin="0,0,0,25" BorderBrush="{StaticResource AccentOrangeBrush}" BorderThickness="1,0,0,0">
                             <StackPanel>
                                 <TextBlock x:Name="txtNhanVien" Text="Nhân viên: ---" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextDarkBrush}" Margin="0,0,0,10"/>
-                                <TextBlock x:Name="txtTenCa" Text="Ca hiện tại: ---" FontSize="15" Foreground="{StaticResource TextDarkBrush}" Margin="0,0,0,5"/>
+                                <TextBlock x:Name="txtTenCa" Text="Ca hiện tại: ---" FontSize="15" Foreground="{StaticResource TextDarkBrush}" Margin="0,0,0,5" TextWrapping="Wrap"/>
                                 <TextBlock x:Name="txtThoiGianCa" Text="Quy định: ---" FontSize="14" Foreground="{StaticResource PrimaryBrownBrush}"/>
                             </StackPanel>
                         </Border>
