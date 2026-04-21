@@ -1,0 +1,82 @@
+﻿@page "/chinh-sach-dieu-khoan"
+@model WebCafebookApi.Pages.ChinhSachViewModel
+@{
+    ViewData["Title"] = Model.ChinhSach?.TenQuan ?? "Chính sách & Giới thiệu";
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/ChinhSachView.css" asp-append-version="true" />
+}
+
+<div class="container mt-5 mb-5 cb-policy-container">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            
+            <div class="cb-policy-header text-center">
+                <h1>Về @(Model.ChinhSach?.TenQuan ?? "Chúng Tôi") & Điều khoản</h1>
+                <p>Những giá trị cốt lõi và quy định chung tại không gian của chúng tôi.</p>
+            </div>
+
+            <h2 class="cb-policy-title">Về Chúng Tôi</h2>
+            <p class="cb-policy-text">
+                <strong>@(Model.ChinhSach?.TenQuan ?? "Cafebook")</strong> được sinh ra từ niềm đam mê bất tận với hai thứ: hương vị đậm đà của cà phê nguyên chất và giá trị vĩnh cửu của những trang sách.
+                @(Model.ChinhSach?.GioiThieu)
+            </p>
+
+            <div class="cb-info-box mb-4">
+                <h3 class="cb-policy-subtitle mt-0">Thông tin liên hệ & Hoạt động</h3>
+                <ul class="cb-policy-list list-unstyled mb-0">
+                    <li><i class="fas fa-map-marker-alt text-danger me-2"></i><strong>Địa chỉ:</strong> @(Model.ChinhSach?.DiaChi ?? "Đang cập nhật")</li>
+                    <li><i class="fas fa-phone-alt text-success me-2"></i><strong>Hotline:</strong> @(Model.ChinhSach?.SoDienThoai ?? "Đang cập nhật")</li>
+                    <li><i class="fas fa-envelope text-primary me-2"></i><strong>Email:</strong> @(Model.ChinhSach?.Email ?? "Đang cập nhật")</li>
+                    <li><i class="fas fa-clock text-warning me-2"></i><strong>Giờ mở cửa:</strong> @(Model.ChinhSach?.GioMoCua) - @(Model.ChinhSach?.GioDongCua) (Các ngày trong tuần: @(Model.ChinhSach?.ThuMoCua))</li>
+                </ul>
+            </div>
+
+            <h2 class="cb-policy-title">Điều Khoản Dịch Vụ</h2>
+            <p class="cb-policy-text">
+                Bằng việc sử dụng các dịch vụ của chúng tôi (bao gồm gọi món, đặt bàn, và thuê sách), bạn đồng ý tuân thủ các điều khoản và điều kiện dưới đây:
+            </p>
+
+            <h3 class="cb-policy-subtitle">1. Quy định chung tại cửa hàng</h3>
+            <ul class="cb-policy-list">
+                <li>Vui lòng giữ gìn không gian yên tĩnh, đặc biệt tại các khu vực làm việc và đọc sách.</li>
+                <li>Không mang đồ ăn, thức uống từ bên ngoài vào cửa hàng.</li>
+                <li>Chúng tôi không chịu trách nhiệm về tài sản cá nhân của quý khách.</li>
+            </ul>
+
+            <h3 class="cb-policy-subtitle">2. Dịch vụ Đặt bàn</h3>
+            <ul class="cb-policy-list">
+                <li>Việc đặt bàn trực tuyến qua website hoặc ứng dụng cần được thực hiện trước ít nhất 1 giờ.</li>
+                <li>Chúng tôi sẽ giữ bàn trong vòng 15 phút. Sau thời gian này, đặt hẹn có thể bị hủy để nhường chỗ cho khách hàng khác.</li>
+            </ul>
+
+            <h3 class="cb-policy-subtitle">3. Dịch vụ Thuê sách</h3>
+            <ul class="cb-policy-list">
+                <li>Phí dịch vụ thuê sách hiện tại là <strong>@(Model.ChinhSach?.PhiThue.ToString("N0") ?? "0")đ</strong> và mọi khoản phí phạt trễ hạn sẽ được khấu trừ vào tiền cọc khi bạn trả sách.</li>
+                <li>Thời gian thuê tiêu chuẩn là 7 ngày. Phí phạt trễ hạn là <strong>@(Model.ChinhSach?.PhiTraTreMoiNgay.ToString("N0") ?? "0")đ</strong> cho mỗi ngày quá hạn.</li>
+                <li>Trường hợp sách bị hư hỏng nặng, chúng tôi có thể giữ lại toàn bộ tiền cọc để bù đắp chi phí.</li>
+            </ul>
+
+            <h3 class="cb-policy-subtitle">4. Chính sách thành viên & Tích điểm</h3>
+            <ul class="cb-policy-list">
+                <li>
+                    Với mỗi <strong>@(Model.ChinhSach?.DiemNhanVND.ToString("N0") ?? "0")đ</strong> trong hóa đơn, bạn sẽ được tích <strong>1 điểm</strong>.
+                </li>
+                <li>
+                    Mỗi <strong>1 điểm</strong> tích lũy có giá trị quy đổi thành <strong>@(Model.ChinhSach?.DiemDoiVND.ToString("N0") ?? "0")đ</strong>, được trừ tối đa 50% trực tiếp vào hóa đơn lần sau.
+                </li>
+            </ul>
+
+            <h3 class="cb-policy-subtitle">5. Miễn trừ trách nhiệm</h3>
+            <p class="cb-policy-text">
+                @(Model.ChinhSach?.TenQuan ?? "Hệ thống") có quyền thay đổi, cập nhật hoặc ngưng các điều khoản này, cũng như các chương trình khuyến mãi, giá cả dịch vụ mà không cần báo trước. Các thay đổi sẽ được cập nhật công khai trên website này.
+            </p>
+        </div>
+    </div>
+</div>

@@ -73,7 +73,8 @@ namespace CafebookApi.Data
         public DbSet<NhuCauCaLam> NhuCauCaLams { get; set; }
         public DbSet<NguoiGiaoHang> NguoiGiaoHangs { get; set; }
         public virtual DbSet<NhanVien_Quyen> NhanVienQuyens { get; set; }
-        public DbSet<NhatKyHeThong> NhatKyHeThongs { get; set; } // Bảng mới thêm
+        public DbSet<NhatKyHeThong> NhatKyHeThongs { get; set; }
+        public DbSet<GopY> GopYs { get; set; }
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

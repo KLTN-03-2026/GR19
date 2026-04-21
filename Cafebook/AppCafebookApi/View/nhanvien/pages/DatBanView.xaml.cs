@@ -359,7 +359,13 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             if (!AvailableBans.Any(b => b.IdBan == _selectedPhieu.IdBan))
             {
-                AvailableBans.Add(new BanDatBanDto { IdBan = _selectedPhieu.IdBan, SoBan = _selectedPhieu.SoBan, TenKhuVuc = _selectedPhieu.TenKhuVuc, IdKhuVuc = 0, SoGhe = 0 });
+                AvailableBans.Add(new BanDatBanDto { 
+                    IdBan = _selectedPhieu.IdBan, 
+                    SoBan = _selectedPhieu.SoBan, 
+                    TenKhuVuc = _selectedPhieu.TenKhuVuc, 
+                    IdKhuVuc = 0, 
+                    SoGhe = _selectedPhieu.SoGhe 
+                });
             }
             cmbBan.SelectedValue = _selectedPhieu.IdBan;
 

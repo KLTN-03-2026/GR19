@@ -12,6 +12,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien.DatBan
         public string? Email { get; set; }
         public int IdBan { get; set; }
         public string? SoBan { get; set; }
+        public int SoGhe { get; set; } 
         public string? TenKhuVuc { get; set; }
         public DateTime ThoiGianDat { get; set; }
         public int SoLuongKhach { get; set; }

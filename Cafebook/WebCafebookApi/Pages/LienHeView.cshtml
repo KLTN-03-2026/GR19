@@ -1,0 +1,164 @@
+﻿@page "/lien-he"
+@model WebCafebookApi.Pages.LienHeViewModel
+@{
+    ViewData["Title"] = "Liên Hệ & Góp Ý";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/LienHeView.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <partial name="_ValidationScriptsPartial" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    
+    <script>
+        $(document).ready(function () {
+            $('form').on('submit', function (e) {
+                if ($(this).valid()) {
+                    var $btn = $('#btnSubmitGopY');
+                    $btn.prop('disabled', true);
+                    $btn.removeClass('btn-primary').addClass('btn-secondary');
+                    $('#btnSubmitText').text('Đang gửi, vui lòng chờ...');
+                }
+            });
+        });
+    </script>
+}
+
+<div class="container mt-4 mb-5">
+
+    <div class="contact-header-section shadow-sm mb-5">
+        <h1 class="fw-bold position-relative z-1" style="color: var(--cf-dark-brown);">@ViewData["Title"]</h1>
+        <p class="lead text-muted mb-0 position-relative z-1">@(Model.Info.TenQuan ?? "Cafebook") luôn sẵn sàng lắng nghe bạn. Đừng ngần ngại gửi phản hồi!</p>
+    </div>
+
+    <div class="row g-5">
+        <div class="col-lg-5">
+            <h3 class="fw-bold mb-4" style="color: var(--cf-dark-brown);">Thông Tin Chung</h3>
+            
+            <p class="text-muted" style="line-height: 1.8;">
+                @(Model.Info.GioiThieu ?? "⚙️ Thông tin giới thiệu đang được cập nhật...")
+            </p>
+
+            <ul class="list-unstyled mt-4">
+                <li class="d-flex align-items-center mb-4">
+                    <div class="contact-icon-wrapper shadow-sm"><span class="material-symbols-outlined fs-5">location_on</span></div>
+                    <span class="text-dark fw-semibold">@(Model.Info.DiaChi ?? "⚙️ Đang cập nhật...")</span>
+                </li>
+                <li class="d-flex align-items-center mb-4">
+                    <div class="contact-icon-wrapper shadow-sm"><span class="material-symbols-outlined fs-5">call</span></div>
+                    <span class="text-dark fw-semibold">@(Model.Info.SoDienThoai ?? "⚙️ Đang cập nhật...")</span>
+                </li>
+                <li class="d-flex align-items-center mb-4">
+                    <div class="contact-icon-wrapper shadow-sm"><span class="material-symbols-outlined fs-5">mail</span></div>
+                    <span class="text-dark fw-semibold">@(Model.Info.EmailLienHe ?? "⚙️ Đang cập nhật...")</span>
+                </li>
+                <li class="d-flex align-items-center mb-4">
+                    <div class="contact-icon-wrapper shadow-sm"><span class="material-symbols-outlined fs-5">schedule</span></div>
+                    <span class="text-dark fw-semibold">@(Model.Info.GioHoatDong ?? "⚙️ Đang cập nhật...")</span>
+                </li>
+            </ul>
+
+            <h5 class="fw-bold mt-5 mb-3" style="color: var(--cf-dark-brown);">Kết nối với chúng tôi</h5>
+            <div class="d-flex flex-wrap gap-3">
+                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkWebsite))
+                {
+                    <a href="@Model.Info.LinkWebsite" class="social-icon" target="_blank" rel="noopener noreferrer" title="Website"><i class="fa-solid fa-globe"></i></a>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkFacebook))
+                {
+                    <a href="@Model.Info.LinkFacebook" class="social-icon" target="_blank" rel="noopener noreferrer" title="Facebook"><i class="fab fa-facebook"></i></a>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkInstagram))
+                {
+                    <a href="@Model.Info.LinkInstagram" class="social-icon" target="_blank" rel="noopener noreferrer" title="Instagram"><i class="fab fa-instagram"></i></a>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkZalo))
+                {
+                    <a href="@Model.Info.LinkZalo" class="social-icon" target="_blank" rel="noopener noreferrer" title="Zalo">
+                        <i class="fa-solid fa-comment-dots"></i>
+                    </a>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkYoutube))
+                {
+                    <a href="@Model.Info.LinkYoutube" class="social-icon text-danger" target="_blank" rel="noopener noreferrer" title="Youtube"><i class="fab fa-youtube"></i></a>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkX))
+                {
+                    <a href="@Model.Info.LinkX" class="social-icon text-dark" target="_blank" rel="noopener noreferrer" title="X (Twitter)"><i class="fa-brands fa-x-twitter"></i></a>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <h3 class="fw-bold mb-4" style="color: var(--cf-dark-brown);">Tìm Chúng Tôi</h3>
+            <div class="card shadow-sm border-0 mb-5" style="border-radius: 16px; overflow: hidden;">
+                @if (string.IsNullOrWhiteSpace(Model.Info.LinkGoogleMapsEmbed))
+                {
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center text-muted" style="height: 350px; background-color: var(--cf-cream);">
+                        <span class="material-symbols-outlined fs-1 mb-2">map</span>
+                        ⚙️ Bản đồ đang được cập nhật...
+                    </div>
+                }
+                else
+                {
+                    <iframe src="@Model.Info.LinkGoogleMapsEmbed"
+                            height="350" style="border:0; width:100%;"
+                            allowfullscreen="" loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"></iframe>
+                }
+            </div>
+
+            <h3 class="fw-bold mb-4" style="color: var(--cf-dark-brown);">Gửi Góp Ý</h3>
+            
+            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+            {
+                <div class="alert alert-success d-flex align-items-center shadow-sm" style="border-radius: 12px;">
+                    <span class="material-symbols-outlined me-2">check_circle</span> @Model.SuccessMessage
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger d-flex align-items-center shadow-sm" style="border-radius: 12px;">
+                    <span class="material-symbols-outlined me-2">error</span> @Model.ErrorMessage
+                </div>
+            }
+
+            <div class="card shadow-sm border-0" style="background-color: var(--cf-white); border-radius: 16px;">
+                <div class="card-body p-4 p-md-5">
+                    <form method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label asp-for="PhanHoiInput.Ten" class="form-label fw-semibold text-muted">Tên của bạn <span class="text-danger">*</span></label>
+                                <input type="text" asp-for="PhanHoiInput.Ten" class="form-control form-control-lg" style="border-radius: 10px;" placeholder="Nguyễn Văn A" />
+                                <span asp-validation-for="PhanHoiInput.Ten" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="PhanHoiInput.Email" class="form-label fw-semibold text-muted">Email <span class="text-danger">*</span></label>
+                                <input type="email" asp-for="PhanHoiInput.Email" class="form-control form-control-lg" style="border-radius: 10px;" placeholder="email@example.com" />
+                                <span asp-validation-for="PhanHoiInput.Email" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="PhanHoiInput.NoiDung" class="form-label fw-semibold text-muted">Nội dung <span class="text-danger">*</span></label>
+                                <textarea asp-for="PhanHoiInput.NoiDung" class="form-control form-control-lg" rows="4" style="border-radius: 10px;" placeholder="Nhập lời nhắn của bạn..."></textarea>
+                                <span asp-validation-for="PhanHoiInput.NoiDung" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <button type="submit" id="btnSubmitGopY" class="btn btn-primary btn-lg mt-4 w-100 fw-bold shadow-sm" style="border-radius: 10px;">
+                            <span class="material-symbols-outlined align-middle me-2">send</span> <span id="btnSubmitText">Gửi Phản Hồi</span>
+                        </button>
+                        <p class="text-muted small text-center mt-3 mb-0">
+                            <span class="material-symbols-outlined align-middle fs-6 me-1">lock</span> Thông tin của bạn được bảo mật tuyệt đối.
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

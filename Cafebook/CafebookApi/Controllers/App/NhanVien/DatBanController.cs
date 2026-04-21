@@ -59,6 +59,7 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                     Email = p.KhachHang != null ? p.KhachHang.Email : null,
                     IdBan = p.IdBan,
                     SoBan = p.Ban.SoBan,
+                    SoGhe = p.Ban.SoGhe,
                     TenKhuVuc = p.Ban.KhuVuc != null ? p.Ban.KhuVuc.TenKhuVuc : "N/A",
                     ThoiGianDat = p.ThoiGianDat,
                     SoLuongKhach = p.SoLuongKhach,
