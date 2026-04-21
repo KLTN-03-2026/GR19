@@ -17,6 +17,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using AppCafebookApi.View.nhanvien.pages;
+using CafebookModel.Model.ModelApp.NhanVien;
 
 namespace AppCafebookApi.View.quanly
 {
@@ -29,7 +31,7 @@ namespace AppCafebookApi.View.quanly
 
         static ManHinhQuanly()
         {
-            string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
+            string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:";
             httpClient = new HttpClient
             {
                 BaseAddress = new Uri(apiUrl)
@@ -41,9 +43,13 @@ namespace AppCafebookApi.View.quanly
             InitializeComponent();
             _notificationTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(15)
+                Interval = TimeSpan.FromSeconds(5)
             };
-            _notificationTimer.Tick += async (s, e) => await CheckNotificationsAsync();
+            _notificationTimer.Tick += async (s, e) =>
+            {
+                await CheckNotificationsAsync();
+                await CheckChamCongStatusAsync(); 
+            };
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -81,6 +87,7 @@ namespace AppCafebookApi.View.quanly
             }
 
             await CheckNotificationsAsync();
+            await CheckChamCongStatusAsync(); 
             _notificationTimer.Start();
         }
 
@@ -98,6 +105,12 @@ namespace AppCafebookApi.View.quanly
                 btnNhanSu.Visibility = Visibility.Visible;
                 btnKhachHang.Visibility = Visibility.Visible;
 
+                // Thêm các nút này
+                btnThongTinCaNhan.Visibility = Visibility.Visible;
+                btnChamCong.Visibility = Visibility.Visible;
+                btnLichLamViecCuaToi.Visibility = Visibility.Visible;
+                btnPhieuLuongCuaToi.Visibility = Visibility.Visible;
+
                 // Hiển thị cả 2 nút thông báo
                 btnThongBao.Visibility = Visibility.Visible;
                 btnQuanLyThongBao.Visibility = Visibility.Visible;
@@ -114,7 +127,12 @@ namespace AppCafebookApi.View.quanly
             btnNhanSu.Visibility = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
             btnKhachHang.Visibility = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI") ? Visibility.Visible : Visibility.Collapsed;
 
-            // QUYỀN THÔNG BÁO MỚI
+            // Thêm phân quyền cho nhóm cá nhân (Dùng chung quyền cá nhân như bên nhân viên)
+            btnThongTinCaNhan.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THONG_TIN") ? Visibility.Visible : Visibility.Collapsed;
+            btnChamCong.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG") ? Visibility.Visible : Visibility.Collapsed;
+            btnLichLamViecCuaToi.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_LICH_LAM_VIEC") ? Visibility.Visible : Visibility.Collapsed;
+            btnPhieuLuongCuaToi.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_PHIEU_LUONG") ? Visibility.Visible : Visibility.Collapsed;
+
             // Nút cái chuông ngoài màn hình chính
             btnThongBao.Visibility = AuthService.CoQuyen("FULL_QL", "CM_THONG_BAO") ? Visibility.Visible : Visibility.Collapsed;
 
@@ -122,17 +140,70 @@ namespace AppCafebookApi.View.quanly
             btnQuanLyThongBao.Visibility = AuthService.CoQuyen("FULL_QL", "QL_THONG_BAO") ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        private async Task CheckChamCongStatusAsync()
+        {
+            if (AuthService.CurrentUser == null) return;
+
+            // Chỉ kiểm tra nếu user có quyền chấm công
+            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG", "QL_CHAM_CONG"))
+                return;
+
+            try
+            {
+                // Gọi API lấy trạng thái
+                string url = $"api/app/chamcong/status/{AuthService.CurrentUser.IdNhanVien}";
+                var response = await httpClient.GetFromJsonAsync<ChamCongDashboardDto>(url);
+
+                if (response != null)
+                {
+                    if (response.DangTrongCa)
+                    {
+                        if (response.LanVaoGanNhat.HasValue)
+                        {
+                            var totalSpan = TimeSpan.FromHours((double)response.TongGioLamHienTai) + (DateTime.Now - response.LanVaoGanNhat.Value);
+                            UpdateSidebarStatus($"Đang làm ({(int)totalSpan.TotalHours:D2}:{totalSpan.Minutes:D2})");
+                        }
+                        else UpdateSidebarStatus("Đang làm việc");
+                    }
+                    else if (response.TrangThai == "KhongCoCa") UpdateSidebarStatus("Không có ca");
+                    else if (response.TrangThai == "ChuaDenGio") UpdateSidebarStatus("Sắp tới ca");
+                    else if (response.TrangThai == "ChoVaoCa") UpdateSidebarStatus("Chưa chấm công");
+                    else if (response.TrangThai == "DaHoanThanh") UpdateSidebarStatus("Hoàn thành ca");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Lỗi load trạng thái chấm công: {ex.Message}");
+                UpdateSidebarStatus("Lỗi đồng bộ");
+            }
+        }
+
+        public void UpdateSidebarStatus(string statusText)
+        {
+            if (FindName("lblSidebarStatus") is TextBlock lblStatus)
+            {
+                lblStatus.Text = statusText;
+
+                if (statusText.StartsWith("Đang làm"))
+                    lblStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#28a745"));
+                else if (statusText == "Lỗi đồng bộ" || statusText == "Chưa chấm công")
+                    lblStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#dc3545"));
+                else
+                    lblStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
+            }
+        }
+
         private void NavButton_Click(object sender, RoutedEventArgs e)
         {
             var clickedButton = sender as ToggleButton;
             if (clickedButton == null) return;
-
+            /*
             if (clickedButton == currentNavButton)
             {
                 clickedButton.IsChecked = true;
                 return;
             }
-
+            */
             Page? pageToNavigate = null;
             bool hasPermission = false;
 
@@ -180,6 +251,26 @@ namespace AppCafebookApi.View.quanly
             {
                 hasPermission = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI");
                 pageToNavigate = new QuanLyKhachHangView();
+            }
+            else if (clickedButton == btnThongTinCaNhan)
+            {
+                hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THONG_TIN");
+                pageToNavigate = new ThongTinCaNhanView();
+            }
+            else if (clickedButton == btnChamCong)
+            {
+                hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG");
+                pageToNavigate = new ChamCongView();
+            }
+            else if (clickedButton == btnLichLamViecCuaToi)
+            {
+                hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_LICH_LAM_VIEC");
+                pageToNavigate = new LichLamViecView();
+            }
+            else if (clickedButton == btnPhieuLuongCuaToi)
+            {
+                hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_PHIEU_LUONG");
+                pageToNavigate = new PhieuLuongView();
             }
 
             if (hasPermission && pageToNavigate != null)

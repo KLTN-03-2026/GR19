@@ -1,0 +1,232 @@
+﻿@page "/chi-tiet-san-pham/{token?}"
+@model WebCafebookApi.Pages.ChiTietSanPhamViewModel
+@using CafebookModel.Utils
+@{
+    ViewData["Title"] = Model.SanPham?.TenSanPham ?? "Chi tiết sản phẩm";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/ChiTietSanPhamView.css" asp-append-version="true" />
+}
+
+@if (Model.SanPham != null)
+{
+    <div class="container py-5">
+        @if (TempData["CartMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                <span class="material-symbols-outlined align-middle me-2">check_circle</span>
+                @TempData["CartMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="product-detail-wrapper mb-5">
+            <div class="row g-5">
+                <div class="col-lg-5 text-center">
+                    <img src="@(string.IsNullOrEmpty(Model.SanPham.HinhAnhUrl) ? HinhAnhPaths.WebDefaultFoodIcon : Model.SanPham.HinhAnhUrl)"
+                         class="product-detail-img"
+                         onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultFoodIcon'" />
+                </div>
+
+                <div class="col-lg-7 d-flex flex-column">
+                    
+                    <nav aria-label="breadcrumb" class="mb-3">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a asp-page="/TrangChuView" class="text-decoration-none" style="color: var(--cf-brown);"><span class="material-symbols-outlined align-text-bottom fs-6">home</span></a></li>
+                            <li class="breadcrumb-item"><a asp-page="/ThucDonView" class="text-decoration-none" style="color: var(--cf-brown);">Thực Đơn</a></li>
+                            <li class="breadcrumb-item active text-truncate" style="max-width: 250px;">@Model.SanPham.TenSanPham</li>
+                        </ol>
+                    </nav>
+
+                    <h1 class="fw-bold" style="color: var(--cf-dark-brown); font-size: 2.5rem;">@Model.SanPham.TenSanPham</h1>
+
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="fs-4 fw-bold text-warning me-2">@Model.SaoTrungBinh.ToString("0.0")</span>
+                        <div class="text-warning me-3">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <span class="material-symbols-outlined @(i <= Model.SaoTrungBinh ? "fill" : "")" style="font-variation-settings: 'FILL' @(i <= Model.SaoTrungBinh ? "1" : "0");">star</span>
+                            }
+                        </div>
+                        <span class="text-muted">(@Model.TongSoDanhGia đánh giá)</span>
+                    </div>
+
+                    <h2 class="fw-bold mb-4" style="color: #D32F2F; font-size: 2.2rem;">@Model.SanPham.DonGia.ToString("N0") đ</h2>
+
+                    <p class="text-muted fs-5 mb-4 flex-grow-1">@(Model.SanPham.MoTa ?? "Chưa có mô tả cho sản phẩm này.")</p>
+
+                    <hr class="mb-4" />
+
+                    <form method="post" asp-page-handler="AddToCart">
+                        <input type="hidden" asp-for="EncryptedId" />
+                        
+                        <div class="d-flex align-items-center mb-4">
+                            <label class="fw-bold me-4 fs-5" style="color: var(--cf-dark-brown);">Số lượng:</label>
+                            <div class="qty-box">
+                                <button type="button" class="qty-btn btn-minus">-</button>
+                                <input asp-for="SoLuong" type="number" value="1" min="1" max="99" class="qty-input" readonly />
+                                <button type="button" class="qty-btn btn-plus">+</button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            @if (User.Identity?.IsAuthenticated == true && User.IsInRole("KhachHang"))
+                            {
+                                <button type="submit" class="btn btn-primary btn-lg d-flex align-items-center px-4 shadow-sm" style="border-radius: 12px;">
+                                    <span class="material-symbols-outlined me-2">add_shopping_cart</span> Thêm vào giỏ
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-primary btn-lg d-flex align-items-center px-4 shadow-sm" style="border-radius: 12px;" data-bs-toggle="modal" data-bs-target="#loginRequiredModal">
+                                    <span class="material-symbols-outlined me-2">add_shopping_cart</span> Thêm vào giỏ
+                                </button>
+                            }
+                        </div>
+                    </form>
+
+                    <div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-labelledby="loginRequiredModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content shadow-lg" style="border-radius: 16px; border: none;">
+                                <div class="modal-header border-0 pb-0">
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body text-center pb-4">
+                                    <div class="mb-3">
+                                        <span class="material-symbols-outlined text-warning" style="font-size: 5rem;">lock_person</span>
+                                    </div>
+                                    <h4 class="fw-bold mb-2" style="color: var(--cf-dark-brown);">Yêu cầu đăng nhập</h4>
+                                    <p class="text-muted fs-6 px-3">Bạn cần đăng nhập tài khoản Khách hàng để thêm sản phẩm vào giỏ và tiến hành đặt hàng.</p>
+                                </div>
+                                <div class="modal-footer border-0 d-flex justify-content-center pt-0 pb-4 gap-3">
+                                    <button type="button" class="btn btn-outline-secondary px-4 py-2 fw-bold" data-bs-dismiss="modal" style="border-radius: 10px;">Ở lại trang</button>
+                                    
+                                    <a asp-page="/Account/DangNhapView" asp-route-returnUrl="@Url.Page("/ChiTietSanPhamView", new { token = Model.EncryptedId })"
+                                           class="btn btn-primary px-4 py-2 fw-bold" style="border-radius: 10px; box-shadow: 0 4px 10px rgba(210, 125, 45, 0.3);">
+                                        Đăng nhập ngay
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs tabs-cafe mb-4">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#descTab">Mô tả chi tiết</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#reviewsTab">Đánh giá (@Model.TongSoDanhGia)</a>
+            </li>
+        </ul>
+
+        <div class="tab-content bg-white p-4 rounded-4 shadow-sm border mb-5">
+            <div class="tab-pane fade show active" id="descTab">
+                <h5 class="fw-bold mb-3" style="color: var(--cf-dark-brown);">Thuộc tính sản phẩm</h5>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex px-0">
+                        <span class="text-muted w-25">Danh mục:</span>
+                        <span class="fw-bold">@Model.SanPham.TenLoaiSP</span>
+                    </li>
+                </ul>
+                <p style="line-height: 1.8;">@Model.SanPham.MoTa</p>
+            </div>
+
+            <div class="tab-pane fade" id="reviewsTab">
+                @if (!Model.DanhSachDanhGia.Any())
+                {
+                    <div class="text-center py-4">
+                        <span class="material-symbols-outlined text-muted" style="font-size: 3rem;">rate_review</span>
+                        <p class="text-muted mt-2">Chưa có đánh giá nào. Hãy là người đầu tiên thưởng thức và để lại nhận xét nhé!</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var rv in Model.DanhSachDanhGia)
+                    {
+                        <div class="d-flex gap-3 border-bottom py-4">
+                            <img src="@(rv.AvatarKhachHang ?? HinhAnhPaths.WebDefaultAvatar)" class="rounded-circle shadow-sm" style="width: 50px; height: 50px; object-fit: cover;" />
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-1">@rv.TenKhachHang</h6>
+                                <div class="text-warning mb-2" style="font-size: 0.9rem;">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <span class="material-symbols-outlined @(i <= rv.SoSao ? "fill" : "")" style="font-size: 1.2rem; font-variation-settings: 'FILL' @(i <= rv.SoSao ? "1" : "0");">star</span>
+                                    }
+                                </div>
+                                <small class="text-muted d-block mb-2">@rv.NgayTao.ToString("dd/MM/yyyy HH:mm")</small>
+                                @if (!string.IsNullOrEmpty(rv.BinhLuan))
+                                {
+                                    <p>@rv.BinhLuan</p>
+                                }
+                                @if (rv.PhanHoi != null)
+                                {
+                                    <div class="review-reply">
+                                        <strong style="color: var(--cf-dark-brown);">Quản trị viên đã trả lời:</strong>
+                                        <p class="mb-0 mt-1">@rv.PhanHoi.NoiDung</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        @if (Model.SanPham.GoiY.Any())
+        {
+            <h3 class="fw-bold mb-4" style="color: var(--cf-dark-brown); border-bottom: 2px solid var(--cf-orange); display: inline-block; padding-bottom: 5px;">
+                Có thể bạn cũng thích
+            </h3>
+            <div class="row g-4">
+                @foreach (var item in Model.SanPham.GoiY)
+                {
+                    <div class="col-6 col-md-3">
+                        <div class="card h-100 shadow-sm border-0" style="border-radius: 12px; overflow: hidden; transition: transform 0.3s;">
+                            <a asp-page="/ChiTietSanPhamView" asp-route-token="@Model.EncryptId(item.IdSanPham)" class="text-decoration-none">
+                                <img src="@(string.IsNullOrEmpty(item.AnhSanPhamUrl) ? HinhAnhPaths.WebDefaultFoodIcon : item.AnhSanPhamUrl)" class="card-img-top" style="aspect-ratio: 1/1; object-fit: cover;" />
+                                <div class="card-body text-center">
+                                    <h6 class="text-dark fw-bold text-truncate">@item.TenSanPham</h6>
+                                    <span class="text-danger fw-bold">@item.DonGia.ToString("N0") đ</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="container py-5 text-center">
+        <div class="alert alert-danger shadow-sm p-5 rounded-4 d-inline-block">
+            <span class="material-symbols-outlined text-danger mb-3" style="font-size: 4rem;">gpp_bad</span>
+            <h4 class="fw-bold">@Model.ErrorMessage</h4>
+            <a asp-page="/ThucDonView" class="btn btn-outline-danger mt-3">Quay lại Thực đơn</a>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('.btn-plus').on("click", function (e) {
+                e.preventDefault(); e.stopPropagation();
+                let input = $(this).siblings('.qty-input');
+                let v = parseInt(input.val());
+                if (v < 99) input.val(v + 1);
+            });
+
+            $('.btn-minus').on("click", function (e) {
+                e.preventDefault(); e.stopPropagation();
+                let input = $(this).siblings('.qty-input');
+                let v = parseInt(input.val());
+                if (v > 1) input.val(v - 1);
+            });
+        });
+    </script>
+}

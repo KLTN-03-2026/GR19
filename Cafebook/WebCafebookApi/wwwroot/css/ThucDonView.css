@@ -1,0 +1,149 @@
+﻿/* Tập tin: WebCafebookApi/wwwroot/css/ThucDonView.css */
+
+/* --- 1. HEADER THỰC ĐƠN --- */
+.menu-header-section {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 3rem 1.5rem;
+    background: linear-gradient(135deg, var(--cf-cream) 0%, #F5E6D3 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(111, 78, 55, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+    .menu-header-section::before {
+        content: "coffee";
+        font-family: 'Material Symbols Outlined';
+        position: absolute;
+        font-size: 10rem;
+        color: rgba(111, 78, 55, 0.03);
+        top: -20px;
+        right: -20px;
+        transform: rotate(15deg);
+    }
+
+/* --- 2. BỘ LỌC (MATERIAL CARD) --- */
+.menu-filter-card {
+    background-color: var(--cf-white);
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 8px 24px rgba(78, 52, 46, 0.08);
+    top: 90px; /* Bù trừ cho Header Fixed */
+    overflow: hidden;
+}
+
+    .menu-filter-card .card-header {
+        background-color: var(--cf-dark-brown);
+        color: var(--cf-white);
+        border-bottom: none;
+        padding: 1.2rem 1.5rem;
+    }
+
+.menu-input-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+    .menu-input-group .material-symbols-outlined {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        left: 12px;
+        color: var(--cf-brown);
+        font-size: 1.2rem;
+        pointer-events: none;
+    }
+
+.menu-input, .menu-select {
+    width: 100%;
+    padding: 0.8rem 1rem 0.8rem 2.5rem; /* Cách lề cho icon */
+    border: 1.5px solid var(--cf-light-gray);
+    border-radius: 10px;
+    background-color: var(--cf-light-gray);
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    color: var(--cf-text);
+}
+
+    .menu-input:focus, .menu-select:focus {
+        outline: none;
+        background-color: var(--cf-white);
+        border-color: var(--cf-orange);
+        box-shadow: 0 0 0 4px rgba(210, 125, 45, 0.15);
+    }
+
+/* --- 3. THẺ SẢN PHẨM (MATERIAL PRODUCT CARD) --- */
+.menu-product-card {
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.03);
+    background: var(--cf-white);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+    .menu-product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(78, 52, 46, 0.12);
+        border-color: rgba(210, 125, 45, 0.3);
+    }
+
+.menu-product-img-wrap {
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    position: relative;
+    background-color: var(--cf-cream);
+}
+
+.menu-product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.menu-product-card:hover .menu-product-img {
+    transform: scale(1.1);
+}
+
+.menu-price-tag {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #D32F2F;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    backdrop-filter: blur(4px);
+}
+
+.menu-product-body {
+    padding: 1.25rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- 4. RESPONSIVE --- */
+@media (max-width: 991.98px) {
+    .menu-filter-card {
+        margin-bottom: 2rem;
+        position: static; /* Bỏ dính trên mobile/tablet */
+    }
+}
+
+@media (max-width: 575.98px) {
+    .menu-header-section {
+        padding: 2rem 1rem;
+    }
+
+        .menu-header-section h1 {
+            font-size: 2.2rem;
+        }
+}

@@ -23,6 +23,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                 .Select(t => new QuanLySuCoBanDto
                 {
                     IdThongBao = t.IdThongBao,
+                    IdBan = t.IdLienQuan,
                     NoiDung = t.NoiDung,
                     ThoiGianTao = t.ThoiGianTao,
                     DaXem = t.DaXem,
@@ -32,11 +33,22 @@ namespace CafebookApi.Controllers.App.QuanLy
         }
 
         [HttpPost("resolve/{id}")]
-        public async Task<IActionResult> Resolve(int id)
+        public async Task<IActionResult> Resolve(int id, [FromBody] QuanLySuCoBanResolveDto dto)
         {
             var tb = await _context.ThongBaos.FindAsync(id);
             if (tb == null) return NotFound();
-            tb.DaXem = true; await _context.SaveChangesAsync(); return Ok();
+            tb.DaXem = true;
+            if (dto.IdBan > 0)
+            {
+                var ban = await _context.Bans.FindAsync(dto.IdBan);
+                if (ban != null)
+                {
+                    ban.TrangThai = "Trống";
+                    ban.GhiChu = string.Empty;
+                }
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
         }
     }
 }

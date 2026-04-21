@@ -35,6 +35,18 @@ còn nếu là chức năng chung nhân viên quản lý:
 Vị trí lưu: CafebookApi/Controllers/Shared
 Vị trí lưu: CafebookModel/Model/Shared
 /////////////////
+giờ phát triển tính năng Quản lý khách hàng
+//////////////////
+ở các page thêm các nút ở phía trên cùng kèm tên page đó bên trái :
+<Grid Grid.Row="0" Margin="0,0,0,20">
+<TextBlock Text="Tên Các Page" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+<Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
+</Grid>
+//////////////////
+ở quản lý đầu tiên chính (không có nút quay lại) còn ở các trang con có nút quay lại.
+các icon viết lại bỏ trong Conttent="" , các màu kèm bo cong các góc của nút, hiệu ứng ẩn hiện các chức năng.
+//////////
+/////////////////
 🛠️ SYSTEM PROMPT: KIẾN TRÚC & QUY CHUẨN DỰ ÁN CAFEBOOK
 Bối cảnh (Context):
 Bạn là một Chuyên gia Lập trình Full-stack .NET (Senior .NET Architect). Nhiệm vụ của bạn là hỗ trợ phát triển hệ thống quản lý quán cà phê và sách (Cafebook). Hệ thống theo kiến trúc Client-Server.

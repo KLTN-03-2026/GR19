@@ -1,0 +1,208 @@
+﻿/* Tập tin: WebCafebookApi/wwwroot/css/layout.css */
+
+/* === ĐẨY NỘI DUNG XUỐNG ĐỂ KHÔNG BỊ HEADER CHE MẤT === */
+body {
+    padding-top: 76px;
+}
+
+/* === KHUNG BỐ CỤC CHÍNH === */
+html, body {
+    height: 100%;
+}
+
+.main-container {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex-grow: 1;
+}
+
+/* === HEADER & NAVBAR === */
+.cf-navbar {
+    background-color: var(--cf-white);
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    padding: 0.8rem 0;
+    transition: all 0.3s ease;
+}
+
+    /* Đảm bảo tên web luôn có màu Nâu đặc trưng */
+    .cf-navbar .navbar-brand {
+        font-weight: 800;
+        font-size: 1.6rem;
+        color: #4E342E !important; /* Mã màu var(--cf-dark-brown) */
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+    }
+
+        .cf-navbar .navbar-brand img {
+            height: 32px;
+            transition: transform 0.3s ease;
+        }
+
+        .cf-navbar .navbar-brand:hover img {
+            transform: rotate(-10deg) scale(1.1);
+        }
+
+/* Các link menu */
+.cf-nav-link {
+    color: var(--cf-text) !important;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem !important;
+    margin: 0 0.2rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+    .cf-nav-link:hover, .cf-nav-link:focus, .cf-nav-link.active {
+        color: var(--cf-orange) !important;
+        background-color: rgba(210, 125, 45, 0.1);
+    }
+
+/* Nút Giỏ Hàng */
+.cf-cart-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cf-dark-brown);
+    padding: 0.5rem;
+    margin-right: 15px;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+    .cf-cart-btn .material-symbols-outlined {
+        font-size: 1.8rem;
+    }
+
+    .cf-cart-btn .badge {
+        position: absolute;
+        top: 2px;
+        right: -4px;
+        font-size: 0.65rem;
+        padding: 4px 6px;
+        border-radius: 50px;
+        background-color: #D32F2F !important;
+        border: 2px solid var(--cf-white);
+        font-weight: bold;
+    }
+
+    .cf-cart-btn:hover {
+        color: var(--cf-orange);
+        transform: translateY(-2px);
+    }
+
+/* === MENU DROPDOWN NGƯỜI DÙNG === */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 15px var(--cf-shadow);
+    border-radius: 8px;
+    padding: 0.5rem 0;
+    margin-top: 10px;
+}
+
+.dropdown-item {
+    padding: 0.6rem 1.5rem;
+    font-weight: 500;
+    color: var(--cf-text);
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+    .dropdown-item:hover {
+        background-color: var(--cf-light-gray);
+        color: var(--cf-orange);
+    }
+
+    .dropdown-item .material-symbols-outlined {
+        font-size: 1.3rem;
+        margin-right: 10px;
+    }
+
+/* === FOOTER === */
+.cf-footer {
+    flex-shrink: 0;
+    background-color: var(--cf-dark-brown);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 2rem 0;
+    font-size: 0.95rem;
+}
+
+.cf-footer-link {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    font-weight: 500;
+}
+
+    .cf-footer-link:hover {
+        color: var(--cf-orange);
+    }
+
+.cf-footer .divider {
+    margin: 0 15px;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* === MOBILE RESPONSIVE CHO LAYOUT === */
+@media (max-width: 991.98px) {
+    .cf-navbar .navbar-collapse {
+        background-color: var(--cf-white);
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        margin-top: 10px;
+        border: 1px solid var(--cf-light-gray);
+    }
+
+    .cf-nav-link {
+        margin-bottom: 5px;
+        padding: 0.8rem 1rem !important;
+    }
+
+    .cf-cart-btn {
+        margin-top: 10px;
+        justify-content: flex-start;
+        padding-left: 1rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .cf-footer-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+}
+/* === NÚT THAO TÁC NHANH TRÊN MOBILE & TABLET === */
+.mobile-quick-actions .btn {
+    border-radius: 20px;
+    padding: 5px 10px;
+    border-width: 1.5px;
+}
+
+.mobile-quick-actions .cf-cart-btn {
+    margin-right: 0;
+    padding: 0.2rem;
+}
+
+    .mobile-quick-actions .cf-cart-btn .material-symbols-outlined {
+        font-size: 1.6rem;
+    }
+
+/* Đảm bảo nút hamburger không bị padding thừa ép các nút khác */
+.navbar-toggler {
+    padding: 2px !important;
+}
+/* Tối ưu các nút trên Mobile Bar */
+.mobile-quick-actions .btn-outline-primary {
+    border-radius: 4px;
+    font-weight: 700;
+    border-width: 1.5px;
+}

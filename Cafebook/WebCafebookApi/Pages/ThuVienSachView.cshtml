@@ -1,0 +1,162 @@
+﻿@page "/thu-vien-sach"
+@model WebCafebookApi.Pages.ThuVienSachViewModel
+@using CafebookModel.Utils
+@{
+    ViewData["Title"] = "Thư Viện Sách";
+    
+    var routeData = new Dictionary<string, string?>
+    {
+        { "TheLoai", Model.TheLoai?.ToString() },
+        { "Search", Model.Search },
+        { "SortBy", Model.SortBy },
+        { "TrangThai", Model.TrangThai }
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/ThuVienSachView.css" asp-append-version="true" />
+}
+
+<div class="container mt-4 mb-5">
+    <div class="library-header-section shadow-sm">
+        <h1 class="fw-bold" style="color: var(--cf-dark-brown);">@ViewData["Title"]</h1>
+        <p class="lead text-muted mb-0 position-relative z-1">Khám phá kho tàng tri thức trong khi thưởng thức ly cà phê của bạn.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger shadow-sm rounded-3 d-flex align-items-center">
+            <span class="material-symbols-outlined me-2">error</span>
+            @Model.ErrorMessage
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <form method="get" asp-page="/ThuVienSachView">
+                <div class="card sticky-top book-filter-card">
+                    <div class="card-header d-flex align-items-center">
+                        <span class="material-symbols-outlined me-2">tune</span>
+                        <h5 class="mb-0 fw-bold">Tìm & Lọc Sách</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        
+                        <label class="form-label fw-bold" style="color: var(--cf-dark-brown);">Tên sách / Tác giả</label>
+                        <div class="book-input-group">
+                            <span class="material-symbols-outlined">search</span>
+                            <input asp-for="Search" class="book-input" placeholder="Dế mèn phiêu lưu ký...">
+                        </div>
+
+                        <label class="form-label fw-bold" style="color: var(--cf-dark-brown);">Thể loại</label>
+                        <div class="book-input-group">
+                            <span class="material-symbols-outlined">auto_stories</span>
+                            <select asp-for="TheLoai" asp-items="@Model.TheLoaiList" class="book-select"></select>
+                        </div>
+
+                        <label class="form-label fw-bold" style="color: var(--cf-dark-brown);">Tình trạng</label>
+                        <div class="book-input-group">
+                            <span class="material-symbols-outlined">inventory_2</span>
+                            <select asp-for="TrangThai" asp-items="@Model.TrangThaiList" class="book-select"></select>
+                        </div>
+
+                        <label class="form-label fw-bold" style="color: var(--cf-dark-brown);">Sắp xếp</label>
+                        <div class="book-input-group">
+                            <span class="material-symbols-outlined">sort</span>
+                            <select asp-for="SortBy" asp-items="@Model.SortList" class="book-select"></select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mb-3 py-2 fw-bold" style="border-radius: 10px;">
+                            <span class="material-symbols-outlined align-middle me-1">check_circle</span> ÁP DỤNG
+                        </button>
+                        <a asp-page="/ThuVienSachView" class="btn btn-outline-secondary w-100 py-2" style="border-radius: 10px;">
+                            <span class="material-symbols-outlined align-middle me-1">refresh</span> Đặt lại
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-9">
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
+                @if (Model.SachResult?.Items != null && Model.SachResult.Items.Any())
+                {
+                    @foreach (var sach in Model.SachResult.Items)
+                    {
+                        <div class="col">
+                            <a asp-page="/ChiTietSachView" asp-route-token="@Model.EncryptId(sach.IdSach)" class="text-decoration-none">
+                                <div class="book-product-card shadow-sm">
+                                    <div class="book-product-img-wrap">
+                                        <img src="@(string.IsNullOrEmpty(sach.AnhBiaUrl) ? HinhAnhPaths.WebDefaultBookCover : sach.AnhBiaUrl)"
+                                             class="book-product-img" alt="@sach.TieuDe"
+                                             onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultBookCover'">
+                                    </div>
+                                    <div class="book-product-body">
+                                        <h6 class="card-title text-dark fw-bold mb-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4em; line-height: 1.2;">
+                                            @sach.TieuDe
+                                        </h6>
+                                        <p class="card-text text-muted small mb-2 text-truncate" title="@sach.TacGia">
+                                            <span class="material-symbols-outlined align-middle me-1" style="font-size: 1rem;">person</span>
+                                            @sach.TacGia
+                                        </p>
+                                        
+                                        <div class="mt-auto pt-2 border-top border-light d-flex flex-column gap-1">
+                                            <span class="text-danger fw-bold" style="font-size: 0.95rem;">@sach.GiaBia.ToString("N0") đ <small class="text-muted fw-normal">(Cọc)</small></span>
+                                            
+                                            <div>
+                                                @if (sach.SoLuongCoSan > 0)
+                                                {
+                                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1"><i class="fa-solid fa-check me-1"></i>Còn sách</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">Đã mượn hết</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12 text-center py-5">
+                        <div class="p-5 bg-white rounded-4 shadow-sm border">
+                            <span class="material-symbols-outlined text-muted mb-3" style="font-size: 5rem;">library_books</span>
+                            <h4 class="fw-bold" style="color: var(--cf-dark-brown);">Không tìm thấy cuốn sách nào</h4>
+                            <p class="text-muted fs-6">Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác nhé.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (Model.SachResult != null && Model.SachResult.TotalPages > 1)
+            {
+                <nav class="mt-5 d-flex justify-content-center">
+                    <ul class="pagination pagination-lg shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                        <li class="page-item @(Model.SachResult.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="@(Model.SachResult.CurrentPage - 1)">
+                                <span class="material-symbols-outlined align-middle">chevron_left</span>
+                            </a>
+                        </li>
+                        
+                        @for (int i = 1; i <= Model.SachResult.TotalPages; i++)
+                        {
+                            <li class="page-item @(Model.SachResult.CurrentPage == i ? "active" : "")">
+                                <a class="page-link @(Model.SachResult.CurrentPage == i ? "bg-primary border-primary text-white" : "text-dark")"
+                                   asp-all-route-data="routeData" asp-route-PageNum="@i">@i</a>
+                            </li>
+                        }
+
+                        <li class="page-item @(Model.SachResult.CurrentPage == Model.SachResult.TotalPages ? "disabled" : "")">
+                            <a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="@(Model.SachResult.CurrentPage + 1)">
+                                <span class="material-symbols-outlined align-middle">chevron_right</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>

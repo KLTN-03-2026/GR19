@@ -31,14 +31,12 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            // Kiểm tra quyền tổng quát để vào trang
             if (!AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT"))
             {
                 MessageBox.Show("Từ chối truy cập module Quản lý Lương!");
                 this.NavigationService?.GoBack(); return;
             }
 
-            // Xử lý ẩn/hiện nội dung chính của Quản lý Lương
             bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_LUONG");
             if (FindName("GridDuLieu") is Grid g) g.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;
@@ -51,17 +49,17 @@ namespace AppCafebookApi.View.quanly.pages
 
             if (hasQuyen)
             {
-                if (FindName("cmbNam") is ComboBox cNam && FindName("cmbTuan") is ComboBox cTuan)
+                // Thay đổi load data cho Combobox Tháng thay vì Tuần
+                if (FindName("cmbNam") is ComboBox cNam && FindName("cmbThang") is ComboBox cThang)
                 {
                     int currentYear = DateTime.Now.Year;
                     for (int i = currentYear - 2; i <= currentYear + 1; i++) cNam.Items.Add(i);
-                    for (int i = 1; i <= 52; i++) cTuan.Items.Add(i);
+                    for (int i = 1; i <= 12; i++) cThang.Items.Add(i);
 
                     cNam.SelectedItem = currentYear;
-                    cTuan.SelectedItem = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.Now, CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+                    cThang.SelectedItem = DateTime.Now.Month;
                 }
 
-                // Tải danh sách mẫu
                 await LoadThuongPhatMauAsync();
             }
         }
@@ -83,21 +81,17 @@ namespace AppCafebookApi.View.quanly.pages
         private void CmbThoiGian_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (FindName("cmbNam") is ComboBox cNam && cNam.SelectedItem != null &&
-                FindName("cmbTuan") is ComboBox cTuan && cTuan.SelectedItem != null)
+                FindName("cmbThang") is ComboBox cThang && cThang.SelectedItem != null)
             {
                 int year = (int)cNam.SelectedItem;
-                int week = (int)cTuan.SelectedItem;
+                int month = (int)cThang.SelectedItem;
 
-                DateTime jan1 = new DateTime(year, 1, 1);
-                int daysOffset = DayOfWeek.Monday - jan1.DayOfWeek;
-                DateTime firstMonday = jan1.AddDays(daysOffset);
-                if (firstMonday.Year < year) firstMonday = firstMonday.AddDays(7);
-
-                _tuNgay = firstMonday.AddDays((week - 1) * 7);
-                _denNgay = _tuNgay.AddDays(6);
+                // Tính từ ngày đầu tháng đến ngày cuối tháng
+                _tuNgay = new DateTime(year, month, 1);
+                _denNgay = _tuNgay.AddMonths(1).AddDays(-1);
 
                 if (FindName("txtKhoangThoiGian") is TextBlock txt)
-                    txt.Text = $"(Từ {_tuNgay:dd/MM/yy} đến {_denNgay:dd/MM/yy})";
+                    txt.Text = $"(Từ {_tuNgay:dd/MM/yyyy} đến {_denNgay:dd/MM/yyyy})";
             }
         }
 
@@ -127,7 +121,7 @@ namespace AppCafebookApi.View.quanly.pages
                         }
                     }
 
-                    if (!silent) MessageBox.Show("Hệ thống đã tự động bóc tách Giờ chuẩn, Tăng ca và Phạt trễ.\nBạn có thể thêm Thưởng/Phạt thủ công ở cột bên phải.", "Tạm tính hoàn tất");
+                    if (!silent) MessageBox.Show("Hệ thống đã tự động tính Chuyên cần, Tăng ca và Vi phạm.\nBạn có thể thêm Thưởng/Phạt thủ công ở cột bên phải.", "Tạm tính hoàn tất");
                 }
                 else
                 {
@@ -154,7 +148,6 @@ namespace AppCafebookApi.View.quanly.pages
             }
         }
 
-        // AUTO-FILL TỪ MẪU
         private void CmbThuongPhatMau_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (FindName("cmbThuongPhatMau") is ComboBox cmb && cmb.SelectedItem is ThuongPhatMauLookupDto mau)
@@ -185,7 +178,8 @@ namespace AppCafebookApi.View.quanly.pages
                 IdNhanVien = _selectedNhanVien.IdNhanVien,
                 Loai = (FindName("cmbLoaiThuongPhat") as ComboBox)?.Text ?? "Thưởng",
                 SoTien = soTien,
-                LyDo = lyDo
+                LyDo = lyDo,
+                IdNguoiTao = 1 // Ghi chú: Nếu hệ thống có UserID chuẩn, truyền AuthService.CurrentUserId vào đây
             };
 
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
@@ -196,9 +190,13 @@ namespace AppCafebookApi.View.quanly.pages
                 {
                     await ReloadPreviewAsync(true);
                     ResetFormThuongPhat();
-                    MessageBox.Show("Đã thêm khoản thủ công!");
+                    MessageBox.Show("Đã thêm khoản thủ công thành công!");
                 }
-                else MessageBox.Show("Lỗi máy chủ.");
+                else
+                {
+                    string errorMsg = await res.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Lỗi máy chủ: {errorMsg}");
+                }
             }
             finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
         }
@@ -252,20 +250,17 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void BtnNavChamCong_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG"))
-                this.NavigationService?.Navigate(new QuanLyChamCongView());
+            if (AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG")) this.NavigationService?.Navigate(new QuanLyChamCongView());
         }
 
         private void BtnNavPhatLuong_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_PHAT_LUONG"))
-                this.NavigationService?.Navigate(new QuanLyPhatLuongView());
+            if (AuthService.CoQuyen("FULL_QL", "QL_PHAT_LUONG")) this.NavigationService?.Navigate(new QuanLyPhatLuongView());
         }
 
         private void BtnNavThuongPhat_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_THUONG_PHAT"))
-                this.NavigationService?.Navigate(new QuanLyThuongPhatView());
+            if (AuthService.CoQuyen("FULL_QL", "QL_THUONG_PHAT")) this.NavigationService?.Navigate(new QuanLyThuongPhatView());
         }
     }
 }

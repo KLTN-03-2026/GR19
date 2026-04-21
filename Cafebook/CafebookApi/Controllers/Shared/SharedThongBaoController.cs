@@ -60,7 +60,10 @@ namespace CafebookApi.Controllers.Shared
             }
 
             var notifications = await query
-                .OrderByDescending(t => t.ThoiGianTao)
+                // Ghim các thông báo hệ thống lên đầu
+                .OrderByDescending(t => t.LoaiThongBao == "ThongBaoNhanVien" || t.LoaiThongBao == "ThongBaoToanNhanVien" || t.LoaiThongBao == "ThongBaoQuanLy")
+                // Sau đó mới sắp xếp theo thời gian mới nhất
+                .ThenByDescending(t => t.ThoiGianTao)
                 .Take(20)
                 .Select(t => new SharedThongBaoItemDto
                 {

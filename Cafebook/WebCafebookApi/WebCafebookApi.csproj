@@ -11,10 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\" />
     <Folder Include="Pages\Account\" />
     <Folder Include="Pages\employee\" />
-    <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,148 @@
+﻿@page "/"
+@model WebCafebookApi.Pages.TrangChuViewModel
+@{
+    ViewData["Title"] = "Trang Chủ";
+    var bannerStyle = string.IsNullOrEmpty(Model.Info?.BannerImageUrl)
+        ? "background-color: var(--cf-dark-brown); color: var(--cf-white);"
+        : $"background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('{Model.Info.BannerImageUrl}'); background-size: cover; background-position: center; color: white;";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/TrangChuView.css" asp-append-version="true" />
+}
+
+<div class="container-fluid px-0 mb-5">
+    <div class="text-center p-5" style="@bannerStyle min-height: 45vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        
+        <h1 class="display-3 fw-bold" style="color: #FFF8E1 !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+            @(Model.Info?.TenQuan ?? "Chào mừng đến Cafebook")
+        </h1>
+        
+        <p class="lead fs-5 col-md-8 mt-3" style="color: #FFF8E1 !important; opacity: 0.95;">
+            @(Model.Info?.GioiThieu ?? "Cafebook là không gian lý tưởng, kết hợp giữa niềm đam mê cà phê và tình yêu sách. Chúng tôi mang đến những hạt cà phê chất lượng cùng hàng ngàn đầu sách chọn lọc, tạo nên một ốc đảo bình yên cho tâm hồn bạn.")
+        </p>
+        
+        <div class="mt-4">
+            <a asp-page="/ThucDonView" class="btn btn-primary btn-lg me-3">Xem Thực Đơn</a>
+            <a asp-page="/ThuVienSachView" class="btn btn-outline-light btn-lg">Khám Phá Sách</a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    @if (Model.Promotions != null && Model.Promotions.Any())
+    {
+        <h2 class="text-center section-header-alt">
+            <span class="material-symbols-outlined">stars</span> Khuyến Mãi Đặc Biệt <span class="material-symbols-outlined">stars</span>
+        </h2>
+        <div class="promotion-container mt-4">
+            @foreach (var promo in Model.Promotions)
+            {
+                <div class="promotion-item">
+                    <h5 class="promo-title">@promo.TenKhuyenMai</h5>
+                    <p class="promo-description">@promo.MoTa</p>
+                    <p class="promo-condition">Áp dụng: @promo.DieuKienApDung</p>
+                </div>
+            }
+        </div>
+    }
+
+    <h2 class="home-section-header">
+        <span class="material-symbols-outlined">local_cafe</span> Món Nổi Bật
+    </h2>
+    <div class="row">
+        @if (Model.MonNoiBat != null && Model.MonNoiBat.Any())
+        {
+            @foreach (var item in Model.MonNoiBat)
+            {
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                    <a asp-page="/ChiTietSanPhamView" asp-route-token="@Model.EncryptSanPhamId(item.IdSanPham)" class="text-decoration-none">
+                        <div class="home-card card shadow-sm">
+                            <div class="home-card-img-wrapper">
+                                <img src="@(string.IsNullOrEmpty(item.AnhSanPhamUrl) ? "/images/default-food-icon.png" : item.AnhSanPhamUrl)"
+                                     class="home-card-img" alt="@item.TenSanPham">
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title text-dark">@item.TenSanPham</h6>
+                                <p class="card-text text-danger fw-bold mt-auto mb-0">@item.DonGia.ToString("N0") đ</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        }
+    </div>
+
+    <h2 class="home-section-header">
+        <span class="material-symbols-outlined">menu_book</span> Sách Hay Nên Đọc
+    </h2>
+    <div class="row">
+        @if (Model.SachNoiBat != null && Model.SachNoiBat.Any())
+        {
+            @foreach (var sach in Model.SachNoiBat)
+            {
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                    <div class="home-card card shadow-sm">
+                        <div class="home-card-img-wrapper" style="aspect-ratio: 2/3;">
+                            <img src="@(string.IsNullOrEmpty(sach.AnhBiaUrl) ? "/images/default-book-cover.png" : sach.AnhBiaUrl)"
+                                 class="home-card-img" alt="@sach.TieuDe">
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title text-dark">@sach.TieuDe</h6>
+                            <p class="card-text text-muted small mb-3">@sach.TacGia</p>
+                            <a asp-page="/ChiTietSachView" asp-route-token="@Model.EncryptSachId(sach.IdSach)" class="btn btn-outline-primary btn-sm w-100 mt-auto">
+                                Xem chi tiết
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="home-info-box mt-5 mb-5">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <h2 class="fw-bold">Tìm không gian cho riêng bạn?</h2>
+                <p class="lead text-muted">
+                    Hiện chúng tôi đang có <strong>@Model.Info?.SoBanTrong bàn trống</strong> sẵn sàng phục vụ.
+                    Và <strong>@Model.Info?.SoSachSanSang đầu sách</strong> đang sẵn sàng để bạn đọc và mượn.
+                </p>
+                <div class="d-grid d-md-block">
+                    <a asp-page="/DatBanView" class="btn btn-success btn-lg">
+                        <span class="material-symbols-outlined align-middle">book_online</span> Đặt Bàn Ngay
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-5 border-start-md contact-info ps-md-5">
+                <h5 class="fw-bold">Thông Tin Liên Hệ</h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><span class="material-symbols-outlined align-middle text-orange">call</span> <span class="ms-2">@(Model.Info?.SoDienThoai ?? "Đang Cập Nhật")</span></li>
+                    <li class="mb-2"><span class="material-symbols-outlined align-middle text-orange">mail</span> <span class="ms-2">@(Model.Info?.EmailLienHe ?? "Đang Cập Nhật")</span></li>
+                    <li class="mb-2">
+                        <span class="material-symbols-outlined align-middle text-orange">schedule</span>
+                        <span class="ms-2">
+                            @{
+                                string thuMoCuaStr = Model.Info?.ThuMoCua ?? "2,3,4,5,6,7,8";
+                                string formattedThu = thuMoCuaStr == "2,3,4,5,6,7,8" ? "2 - CN" : thuMoCuaStr.Replace("8", "CN");
+                            }
+                            Thứ @formattedThu: @(Model.Info?.GioMoCua ?? "07:00") - @(Model.Info?.GioDongCua ?? "22:00")
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-5">
+        <h2 class="text-center mb-4 pb-2 section-header-alt">
+            Khách Hàng Nói Gì Về Chúng Tôi
+        </h2>
+        <div class="col-12 text-center">
+            <p class="text-muted">
+                <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1.1rem;">spark</span>
+                Chức năng hiển thị đánh giá của khách hàng đang được phát triển.
+            </p>
+        </div>
+    </div>
+</div>

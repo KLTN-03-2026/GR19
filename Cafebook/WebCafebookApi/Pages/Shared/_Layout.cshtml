@@ -1,51 +1,122 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using System.Security.Claims
+@using WebCafebookApi.Services
+@using CafebookModel.Model.ModelWeb.KhachHang
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+@{
+    var cart = HttpContextAccessor.HttpContext?.Session.Get<List<CartItemDto>>(WebCafebookApi.Services.SessionExtensions.CartKey);
+    var cartCount = cart?.Count ?? 0;
+}
+<!DOCTYPE html>
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - WebCafebookApi</title>
+    <title>@ViewData["Title"] - Cafebook</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/WebCafebookApi.styles.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+    <link rel="stylesheet" href="~/css/core.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/components.css" asp-append-version="true" />
+    
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
+
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-lg cf-navbar fixed-top">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">WebCafebookApi</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+                <a class="navbar-brand" asp-page="/TrangChuView">
+                    <img src="/images/logo.png" alt="Cafebook Logo">
+                    <span class="d-none d-sm-inline">Cafebook</span>
+                </a>
+
+                <div class="d-flex align-items-center ms-auto d-lg-none gap-2 me-2 mobile-quick-actions">
+                    <a asp-page="/DatBanView" class="btn btn-outline-success d-flex align-items-center" title="Đặt Bàn">
+                        <span class="material-symbols-outlined fs-6">book_online</span>
+                        <span class="ms-1 d-none d-md-inline fw-bold">Đặt Bàn</span>
+                    </a>
+                    
+                    <a asp-page="/HoTroView" class="btn btn-outline-secondary d-flex align-items-center" title="Hỗ Trợ">
+                        <span class="material-symbols-outlined fs-6">support_agent</span>
+                    </a>
+
+                    <a asp-page="/GioHangView" class="cf-cart-btn text-decoration-none" title="Giỏ hàng của bạn">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        @if (cartCount > 0)
+                        {
+                            <span class="badge">@cartCount</span>
+                        }
+                    </a>
+                </div>
+
+                <button class="navbar-toggler border-0 shadow-none p-1" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="material-symbols-outlined" style="font-size: 2rem; color: var(--cf-dark-brown);">menu</span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
+
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link cf-nav-link" asp-page="/TrangChuView">Trang Chủ</a></li>
+                        <li class="nav-item"><a class="nav-link cf-nav-link" asp-page="/ThucDonView">Thực Đơn</a></li>
+                        <li class="nav-item"><a class="nav-link cf-nav-link" asp-page="/ThuVienSachView">Thư Viện Sách</a></li>
+                        
+                        <li class="nav-item d-none d-lg-block"><a class="nav-link cf-nav-link" asp-page="/DatBanView">Đặt Bàn</a></li>
+                        <li class="nav-item"><a class="nav-link cf-nav-link" asp-page="/LienHeView">Liên Hệ</a></li>
+                        <li class="nav-item d-none d-lg-block"><a class="nav-link cf-nav-link" asp-page="/HoTroView">Hỗ Trợ</a></li>
                     </ul>
+
+                    <div class="d-flex align-items-center flex-lg-row flex-column align-items-lg-center align-items-start">
+                        <a asp-page="/GioHangView" class="cf-cart-btn text-decoration-none d-none d-lg-flex" title="Giỏ hàng của bạn">
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                            @if (cartCount > 0)
+                            {
+                                <span class="badge">@cartCount</span>
+                            }
+                        </a>
+
+                        <div class="mt-3 mt-lg-0 w-100 w-lg-auto">
+                            <partial name="_LoginPartial" />
+                        </div>
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <div class="main-container">
+        <main role="main">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="cf-footer">
         <div class="container">
-            &copy; 2026 - WebCafebookApi - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            <div class="d-flex justify-content-between align-items-center cf-footer-content">
+                <div>
+                    <span>&copy; @DateTime.Now.Year - Cafebook</span>
+                    <span class="divider">|</span>
+                    <a class="cf-footer-link" asp-page="/LienHeView">Liên Hệ</a>
+                    <span class="divider">|</span>
+                    <a class="cf-footer-link" asp-page="/ChinhSachView">Chính sách</a>
+                </div>
+                
+                <div>
+                    <a class="cf-footer-link d-flex align-items-center" asp-page="/Employee/DangNhapEmployee">
+                        <span class="material-symbols-outlined fs-5 me-1">admin_panel_settings</span>
+                        Đăng nhập nhân viên
+                    </a>
+                </div>
+            </div>
         </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

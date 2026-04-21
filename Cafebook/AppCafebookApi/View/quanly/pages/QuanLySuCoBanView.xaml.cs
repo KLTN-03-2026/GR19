@@ -48,8 +48,21 @@ namespace AppCafebookApi.View.quanly.pages
             {
                 if (MessageBox.Show("Đánh dấu đã xử lý?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    await httpClient.PostAsync($"api/app/quanly-sucoban/resolve/{tb.IdThongBao}", null!);
-                    await LoadDataAsync();
+                    var payload = new QuanLySuCoBanResolveDto
+                    {
+                        IdBan = tb.IdBan ?? 0
+                    };
+
+                    var response = await httpClient.PostAsJsonAsync($"api/app/quanly-sucoban/resolve/{tb.IdThongBao}", payload);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        await LoadDataAsync();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Lỗi kết nối hoặc API trả về lỗi!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
             }
         }

@@ -89,8 +89,8 @@
                         <TextBlock Text="Năm:" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
                         <ComboBox x:Name="cmbNam" Width="80" SelectionChanged="CmbThoiGian_SelectionChanged"/>
 
-                        <TextBlock Text="Tuần:" VerticalAlignment="Center" Margin="15,0,5,0" FontWeight="SemiBold"/>
-                        <ComboBox x:Name="cmbTuan" Width="80" SelectionChanged="CmbThoiGian_SelectionChanged"/>
+                        <TextBlock Text="Tháng:" VerticalAlignment="Center" Margin="15,0,5,0" FontWeight="SemiBold"/>
+                        <ComboBox x:Name="cmbThang" Width="80" SelectionChanged="CmbThoiGian_SelectionChanged"/>
 
                         <TextBlock x:Name="txtKhoangThoiGian" Text="(...)" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="Gray" FontStyle="Italic"/>
 
@@ -102,6 +102,7 @@
                             <DataGridTextColumn Header="Nhân viên" Binding="{Binding TenNhanVien}" Width="*"/>
                             <DataGridTextColumn Header="Lương CB" Binding="{Binding LuongCoBan, StringFormat=N0}" Width="80"/>
                             <DataGridTextColumn Header="Giờ chuẩn" Binding="{Binding TongGioLamChuan, StringFormat='0.##'}" Width="80"/>
+
                             <DataGridTextColumn Header="Giờ OT" Binding="{Binding TongGioOT, StringFormat='0.##'}" Width="60">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
@@ -110,6 +111,23 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="Chuyên Cần" Binding="{Binding ThuongChuyenCan, StringFormat=N0}" Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#FF9800"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="Phạt Vi Phạm" Binding="{Binding TienPhatTreSom, StringFormat=N0}" Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#F44336"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
                             <DataGridTextColumn Header="THỰC LÃNH" Binding="{Binding ThucLanh, StringFormat=N0}" Width="100">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
@@ -122,7 +140,7 @@
                     </DataGrid>
 
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-                        <Button x:Name="btnChotLuong" Content="✅ CHỐT LƯƠNG TUẦN NÀY" Style="{StaticResource ActionBtn}" Background="#F44336" Padding="25,10" IsEnabled="False" Click="BtnChotLuong_Click"/>
+                        <Button x:Name="btnChotLuong" Content="✅ CHỐT LƯƠNG THÁNG NÀY" Style="{StaticResource ActionBtn}" Background="#F44336" Padding="25,10" IsEnabled="False" Click="BtnChotLuong_Click"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -132,7 +150,7 @@
                     <TextBlock Text="CHI TIẾT THƯỞNG/PHẠT" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,20"/>
                     <TextBlock x:Name="lblTenNhanVien" Text="Chọn nhân viên bên trái..." Foreground="#2196F3" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
 
-                    <DataGrid x:Name="dgChiTietThuongPhat" AutoGenerateColumns="False" IsReadOnly="True" Height="150" BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
+                    <DataGrid x:Name="dgChiTietThuongPhat" AutoGenerateColumns="False" IsReadOnly="True" Height="200" BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Loại" Binding="{Binding Loai}" Width="50"/>
                             <DataGridTextColumn Header="Nguồn" Binding="{Binding Nguon}" Width="70">
@@ -206,7 +224,7 @@
                 <TextBlock Text="Vui lòng sử dụng các nút chức năng phía trên thanh công cụ." FontSize="15" Foreground="Gray" FontStyle="Italic" HorizontalAlignment="Center" Margin="0,5,0,0"/>
             </StackPanel>
         </Border>
-        
+
         <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
             <TextBlock Text="Đang xử lý..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
         </Border>

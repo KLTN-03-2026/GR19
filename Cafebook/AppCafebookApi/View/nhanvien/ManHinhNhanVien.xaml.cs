@@ -15,6 +15,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using CafebookModel.Model.ModelApp.NhanVien;
 
 namespace AppCafebookApi.View.nhanvien
 {
@@ -31,13 +32,16 @@ namespace AppCafebookApi.View.nhanvien
             httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
         }
 
-        public ManHinhNhanVien()
+        public ManHinhNhanVien() 
         {
             InitializeComponent();
 
-            // Khởi tạo timer thông báo 15s/lần giống màn hình quản lý 
-            _notificationTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
-            _notificationTimer.Tick += async (s, e) => await CheckNotificationsAsync();
+            _notificationTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            _notificationTimer.Tick += async (s, e) =>
+            {
+                await CheckNotificationsAsync();
+                await CheckChamCongStatusAsync(); 
+            };
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -73,12 +77,51 @@ namespace AppCafebookApi.View.nhanvien
             }
 
             await CheckNotificationsAsync();
+            await CheckChamCongStatusAsync();
             _notificationTimer.Start();
         }
 
         // =================================================================================
         // HÀM BỔ SUNG: CẬP NHẬT TRẠNG THÁI CHẤM CÔNG TỪ PAGE CON
         // =================================================================================
+        private async Task CheckChamCongStatusAsync()
+        {
+            if (AuthService.CurrentUser == null) return;
+
+            // Chỉ kiểm tra nếu user có quyền chấm công
+            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG", "QL_CHAM_CONG"))
+                return;
+
+            try
+            {
+                // Gọi API lấy trạng thái
+                string url = $"api/app/chamcong/status/{AuthService.CurrentUser.IdNhanVien}";
+                var response = await httpClient.GetFromJsonAsync<ChamCongDashboardDto>(url);
+
+                if (response != null)
+                {
+                    if (response.DangTrongCa)
+                    {
+                        if (response.LanVaoGanNhat.HasValue)
+                        {
+                            var totalSpan = TimeSpan.FromHours((double)response.TongGioLamHienTai) + (DateTime.Now - response.LanVaoGanNhat.Value);
+                            UpdateSidebarStatus($"Đang làm ({(int)totalSpan.TotalHours:D2}:{totalSpan.Minutes:D2})");
+                        }
+                        else UpdateSidebarStatus("Đang làm việc");
+                    }
+                    else if (response.TrangThai == "KhongCoCa") UpdateSidebarStatus("Không có ca");
+                    else if (response.TrangThai == "ChuaDenGio") UpdateSidebarStatus("Sắp tới ca");
+                    else if (response.TrangThai == "ChoVaoCa") UpdateSidebarStatus("Chưa chấm công");
+                    else if (response.TrangThai == "DaHoanThanh") UpdateSidebarStatus("Hoàn thành ca");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Lỗi load trạng thái chấm công: {ex.Message}");
+                UpdateSidebarStatus("Lỗi đồng bộ");
+            }
+        }
+
         public void UpdateSidebarStatus(string statusText)
         {
             if (FindName("lblSidebarStatus") is TextBlock lblStatus)
@@ -123,13 +166,13 @@ namespace AppCafebookApi.View.nhanvien
         {
             var clickedButton = sender as ToggleButton;
             if (clickedButton == null) return;
-
+            /*
             if (clickedButton == currentNavButton)
             {
                 clickedButton.IsChecked = true;
                 return;
             }
-
+            */
             Page? pageToNavigate = null;
             bool hasPermission = false;
 

@@ -1,0 +1,89 @@
+﻿/* Tập tin: WebCafebookApi/wwwroot/css/core.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+:root {
+    --cf-brown: #6F4E37;
+    --cf-dark-brown: #4E342E;
+    --cf-orange: #D27D2D;
+    --cf-cream: #FFF8E1;
+    --cf-white: #FFFFFF;
+    --cf-text: #4E342E;
+    --cf-gray: #BDBDBD;
+    --cf-light-gray: #f8f9fa;
+    --cf-shadow: rgba(78, 52, 46, 0.15);
+    --bs-primary: var(--cf-brown);
+    --bs-secondary: var(--cf-gray);
+    --bs-body-bg: var(--cf-cream);
+    --bs-body-color: var(--cf-text);
+    --bs-link-color: var(--cf-orange);
+    --bs-link-hover-color: var(--cf-dark-brown);
+}
+
+html {
+    font-size: 16px;
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-brand, .fw-bold {
+    font-weight: 600;
+    color: var(--cf-dark-brown);
+}
+
+.main-content-card {
+    background-color: var(--cf-white);
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 12px var(--cf-shadow);
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    color: var(--cf-dark-brown);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--cf-orange);
+    padding-bottom: 10px;
+    display: inline-block;
+}
+
+.page-lead {
+    font-size: 1.1rem;
+    color: var(--cf-text);
+    opacity: 0.8;
+}
+
+.page-breadcrumb {
+    margin-bottom: 1.5rem;
+}
+
+    .page-breadcrumb .breadcrumb {
+        background-color: transparent;
+        padding: 0;
+    }
+
+    .page-breadcrumb .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--cf-orange);
+        display: inline-flex;
+        align-items: center;
+        font-weight: 500;
+    }
+
+        .page-breadcrumb .breadcrumb-item a:hover {
+            color: var(--cf-dark-brown);
+        }
+
+    .page-breadcrumb .breadcrumb-item .material-symbols-outlined {
+        font-size: 1.2rem;
+        margin-right: 4px;
+        font-variation-settings: 'FILL' 1;
+    }
