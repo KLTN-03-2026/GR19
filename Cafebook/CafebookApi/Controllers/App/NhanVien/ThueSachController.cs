@@ -27,7 +27,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         [HttpGet("settings")]
         public async Task<IActionResult> GetSettings()
         {
-            // TỐI ƯU: Thêm AsNoTracking cho truy vấn chỉ đọc
             var settings = await _context.CaiDats.AsNoTracking()
                 .Where(c => c.TenCaiDat.StartsWith("Sach_") || c.TenCaiDat.StartsWith("DiemTichLuy_") || c.TenCaiDat.StartsWith("NganHang_"))
                 .ToListAsync();
@@ -41,7 +40,8 @@ namespace CafebookApi.Controllers.App.NhanVien
                 PointToVND = decimal.Parse(settings.FirstOrDefault(c => c.TenCaiDat == "DiemTichLuy_DoiVND")?.GiaTri ?? "1000"),
                 BankId = settings.FirstOrDefault(c => c.TenCaiDat == "NganHang_MaDinhDanhNganHang")?.GiaTri ?? "",
                 BankAccount = settings.FirstOrDefault(c => c.TenCaiDat == "NganHang_SoTaiKhoan")?.GiaTri ?? "",
-                BankAccountName = settings.FirstOrDefault(c => c.TenCaiDat == "NganHang_ChuTaiKhoan")?.GiaTri ?? ""
+                BankAccountName = settings.FirstOrDefault(c => c.TenCaiDat == "NganHang_ChuTaiKhoan")?.GiaTri ?? "",
+                PhatGiamDoMoi1Percent = decimal.Parse(settings.FirstOrDefault(c => c.TenCaiDat == "Sach_PhatGiamDoMoi1Percent")?.GiaTri ?? "2000")
             };
             return Ok(dto);
         }
@@ -49,7 +49,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         [HttpGet("phieuthue")]
         public async Task<IActionResult> GetPhieuThue([FromQuery] string? search, [FromQuery] string status = "Đang Thuê")
         {
-            // TỐI ƯU: Thêm AsNoTracking()
             var query = _context.PhieuThueSachs.AsNoTracking().AsQueryable();
             if (status == "Đang Thuê" || status == "Đã Trả") { query = query.Where(p => p.TrangThai == status); }
 
@@ -80,7 +79,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         [HttpGet("chitiet/{idPhieu}")]
         public async Task<IActionResult> GetChiTietPhieu(int idPhieu)
         {
-            // TỐI ƯU: Thêm AsNoTracking()
             var phieu = await _context.PhieuThueSachs.AsNoTracking()
                 .Include(p => p.KhachHang)
                 .Include(p => p.ChiTietPhieuThues).ThenInclude(ct => ct.Sach)
@@ -118,7 +116,9 @@ namespace CafebookApi.Controllers.App.NhanVien
                         NgayHenTra = ct.NgayHenTra,
                         TienCoc = ct.TienCoc,
                         TienPhat = daysLate * settings.PhiTraTreMoiNgay,
-                        TinhTrang = ct.NgayTraThucTe != null ? "Đã Trả" : (treHan ? $"Trễ {daysLate} ngày" : "Đang Thuê")
+                        TinhTrang = ct.NgayTraThucTe != null ? "Đã Trả" : (treHan ? $"Trễ {daysLate} ngày" : "Đang Thuê"),
+                        DoMoiKhiThue = ct.DoMoiKhiThue ?? 100,
+                        GhiChuKhiThue = ct.GhiChuKhiThue
                     };
                 }).ToList()
             };
@@ -129,7 +129,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         public async Task<IActionResult> SearchKhachHang([FromQuery] string query)
         {
             var queryLower = query.ToLower();
-            // TỐI ƯU: Thêm AsNoTracking()
             var khachHangs = await _context.KhachHangs.AsNoTracking()
                 .Where(kh => kh.HoTen.ToLower().Contains(queryLower) || (kh.SoDienThoai != null && kh.SoDienThoai.Contains(query)))
                 .Take(10)
@@ -151,7 +150,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             var queryLower = query.ToLower();
             int.TryParse(query, out int sachId);
 
-            // TỐI ƯU: Thêm AsNoTracking()
             var sachs = await _context.Sachs.AsNoTracking()
                 .Where(s => s.SoLuongHienCo > 0 && (s.TenSach.ToLower().Contains(queryLower) || s.IdSach == sachId))
                 .Include(s => s.SachTacGias).ThenInclude(stg => stg.TacGia)
@@ -223,7 +221,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                 _context.PhieuThueSachs.Add(phieuThue);
                 await _context.SaveChangesAsync();
 
-                var danhSachTenSach = new List<string>();
+                var sachGuiMail = new List<ChiTietPrintDto>();
 
                 foreach (var sachThue in dto.SachCanThue)
                 {
@@ -234,7 +232,6 @@ namespace CafebookApi.Controllers.App.NhanVien
                         return Conflict($"Sách '{sach?.TenSach ?? "ID: " + sachThue.IdSach}' đã hết hàng.");
                     }
                     sach.SoLuongHienCo--;
-                    danhSachTenSach.Add(sach.TenSach);
 
                     var chiTiet = new ChiTietPhieuThue
                     {
@@ -242,10 +239,19 @@ namespace CafebookApi.Controllers.App.NhanVien
                         IdSach = sachThue.IdSach,
                         NgayHenTra = dto.NgayHenTra,
                         TienCoc = sachThue.TienCoc,
+                        DoMoiKhiThue = sachThue.DoMoiKhiThue > 0 ? sachThue.DoMoiKhiThue : 100,
+                        GhiChuKhiThue = string.IsNullOrWhiteSpace(sachThue.GhiChuKhiThue) ? "Bình thường" : sachThue.GhiChuKhiThue,
                         TienPhatTraTre = null,
                         NgayTraThucTe = null
                     };
                     _context.ChiTietPhieuThues.Add(chiTiet);
+
+                    sachGuiMail.Add(new ChiTietPrintDto
+                    {
+                        TenSach = sach.TenSach,
+                        DoMoi = chiTiet.DoMoiKhiThue.Value,
+                        GhiChu = chiTiet.GhiChuKhiThue
+                    });
                 }
 
                 await _context.SaveChangesAsync();
@@ -254,8 +260,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                 if (!string.IsNullOrWhiteSpace(dto.KhachHangInfo.Email))
                 {
                     var dictSettings = await GetGeneralSettingsAsync();
-                    // Đã truyền tham số tongCoc vào hàm Gửi Mail
-                    _ = SendConfirmationEmailAsync(dto.KhachHangInfo.Email, dto.KhachHangInfo.HoTen, danhSachTenSach, dto.NgayHenTra, phieuThue.IdPhieuThueSach, tongCoc, dictSettings);
+                    _ = SendConfirmationEmailAsync(dto.KhachHangInfo.Email, dto.KhachHangInfo.HoTen, sachGuiMail, dto.NgayHenTra, phieuThue.IdPhieuThueSach, tongCoc, dictSettings);
                 }
 
                 return Ok(new { IdPhieuThueSach = phieuThue.IdPhieuThueSach, TongTienCoc = tongCoc });
@@ -309,7 +314,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                         <div style=""padding: 30px;"">
                             <h3 style=""color: #2E7D32;"">✨ Gia hạn thành công!</h3>
                             <p>Xin chào <strong>{phieu.KhachHang.HoTen}</strong>,</p>
-                            <p>Phiếu thuê <strong>PT{phieu.IdPhieuThueSach:D6}</strong> đã được gia hạn thành công.</p>
+                            <p>Phiếu thuê <strong>#{phieu.IdPhieuThueSach}</strong> đã được gia hạn thành công.</p>
                             <div style=""background: #F1F8E9; border-left: 5px solid #4CAF50; padding: 15px; margin: 20px 0;"">
                                 📅 <strong>Hạn trả mới: {dto.NgayHenTraMoi:dd/MM/yyyy}</strong>
                             </div>
@@ -328,7 +333,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                 </body>
                 </html>";
 
-                _ = SendEmailHelper(phieu.KhachHang.Email, $"[{tenQuan}] Xác nhận gia hạn thành công PT{phieu.IdPhieuThueSach:D6}", body, settingsDict);
+                _ = SendEmailHelper(phieu.KhachHang.Email, $"[{tenQuan}] Xác nhận gia hạn thành công #{phieu.IdPhieuThueSach}", body, settingsDict);
             }
             return Ok(new { Message = "Gia hạn thành công." });
         }
@@ -348,6 +353,8 @@ namespace CafebookApi.Controllers.App.NhanVien
                 var khach = await _context.KhachHangs.FindAsync(phieu.IdKhachHang);
                 if (khach == null) return NotFound("Không tìm thấy khách hàng.");
 
+                decimal mucPhatPerPercent = decimal.Parse((await _context.CaiDats.FirstOrDefaultAsync(c => c.TenCaiDat == "Sach_PhatGiamDoMoi1Percent"))?.GiaTri ?? "2000");
+
                 decimal totalPhat = 0;
                 decimal totalCoc = 0;
                 decimal totalPhiThue = 0;
@@ -364,34 +371,59 @@ namespace CafebookApi.Controllers.App.NhanVien
 
                 var sachTraMailList = new List<string>();
 
-                foreach (int idSach in dto.IdSachs)
+                foreach (var item in dto.DanhSachTra)
                 {
-                    var ct = phieu.ChiTietPhieuThues.FirstOrDefault(c => c.IdSach == idSach && c.NgayTraThucTe == null);
+                    var ct = phieu.ChiTietPhieuThues.FirstOrDefault(c => c.IdSach == item.IdSach && c.NgayTraThucTe == null);
                     if (ct == null) continue;
 
-                    var sach = await _context.Sachs.FindAsync(idSach);
+                    var sach = await _context.Sachs.FindAsync(item.IdSach);
                     if (sach != null) sach.SoLuongHienCo++;
 
                     ct.NgayTraThucTe = now;
-                    decimal tienPhat = 0;
+
+                    // 1. Phạt Trễ
+                    decimal tienPhatTre = 0;
                     if (ct.NgayHenTra < now.Date)
                     {
                         int daysLate = (int)(now.Date - ct.NgayHenTra).TotalDays;
-                        tienPhat = daysLate * settings.PhiTraTreMoiNgay;
+                        tienPhatTre = daysLate * settings.PhiTraTreMoiNgay;
                     }
-                    ct.TienPhatTraTre = tienPhat;
+                    ct.TienPhatTraTre = tienPhatTre;
 
-                    totalPhat += tienPhat;
+                    // 2. Phạt Hư Hỏng (Khấu hao độ mới)
+                    decimal tienPhatHuHong = 0;
+                    int doMoiKhiThue = ct.DoMoiKhiThue ?? 100;
+                    if (item.DoMoiKhiTra < doMoiKhiThue)
+                    {
+                        int giamPercent = doMoiKhiThue - item.DoMoiKhiTra;
+                        tienPhatHuHong = giamPercent * mucPhatPerPercent;
+                    }
+
+                    // 3. Cộng dồn
+                    decimal tongPhatCuonNay = tienPhatTre + tienPhatHuHong;
+                    totalPhat += tongPhatCuonNay;
                     totalCoc += ct.TienCoc;
                     totalPhiThue += settings.PhiThue;
                     sachDaTra++;
 
-                    phieuTra.ChiTietPhieuTras.Add(new ChiTietPhieuTra { IdSach = idSach, TienPhat = tienPhat });
+                    // 4. Lưu
+                    phieuTra.ChiTietPhieuTras.Add(new ChiTietPhieuTra
+                    {
+                        IdSach = item.IdSach,
+                        TienPhat = tienPhatTre,
+                        TienPhatHuHong = tienPhatHuHong,
+                        DoMoiKhiTra = item.DoMoiKhiTra,
+                        GhiChuKhiTra = item.GhiChuKhiTra
+                    });
 
+                    // 5. Build HTML Email
                     if (sach != null)
                     {
-                        string phatText = tienPhat > 0 ? $"<small style='color: red;'>(Phạt trễ: {tienPhat:N0} đ)</small>" : "";
-                        sachTraMailList.Add($"<li style='padding: 5px 0; border-bottom: 1px solid #EEE;'>📖 {sach.TenSach} {phatText}</li>");
+                        string phatTreText = tienPhatTre > 0 ? $"<br><small style='color: red;'>- Phạt trễ: {tienPhatTre:N0} đ</small>" : "";
+                        string phatHuHongText = tienPhatHuHong > 0 ? $"<br><small style='color: red;'>- Khấu hao hư hỏng ({doMoiKhiThue}% -> {item.DoMoiKhiTra}%): {tienPhatHuHong:N0} đ</small>" : "";
+                        string ghiChuText = $"<br><small style='color: #555;'>- Độ mới lúc trả: {item.DoMoiKhiTra}% | Ghi chú: {(string.IsNullOrWhiteSpace(item.GhiChuKhiTra) ? "-" : item.GhiChuKhiTra)}</small>";
+
+                        sachTraMailList.Add($"<li style='padding: 10px 0; border-bottom: 1px solid #EEE;'><strong>📖 {sach.TenSach}</strong> {ghiChuText} {phatTreText} {phatHuHongText}</li>");
                     }
                 }
 
@@ -444,7 +476,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         [HttpGet("phieutra")]
         public async Task<IActionResult> GetPhieuTra([FromQuery] string? search)
         {
-            // TỐI ƯU: Thêm AsNoTracking()
             var query = _context.PhieuTraSachs.AsNoTracking().Include(pt => pt.NhanVien).AsQueryable();
             if (!string.IsNullOrEmpty(search))
             {
@@ -467,7 +498,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         [HttpPost("send-reminder/{idPhieu}")]
         public async Task<IActionResult> SendReminder(int idPhieu)
         {
-            // TỐI ƯU: Truy vấn email không cần tracking
             var phieu = await _context.Set<PhieuThueSach>().AsNoTracking()
                 .Include(p => p.KhachHang)
                 .Include(p => p.ChiTietPhieuThues).ThenInclude(ct => ct.Sach)
@@ -483,43 +513,9 @@ namespace CafebookApi.Controllers.App.NhanVien
             string body = BuildReminderTemplate(phieu.KhachHang.HoTen, sachChuaTra, settingsDict);
             string tenQuan = settingsDict.GetValueOrDefault("ThongTin_TenQuan", "Cafebook");
 
-            await SendEmailHelper(phieu.KhachHang.Email, $"[{tenQuan}] Nhắc hạn trả sách (PT{idPhieu:D6})", body, settingsDict);
+            await SendEmailHelper(phieu.KhachHang.Email, $"[{tenQuan}] Nhắc hạn trả sách (#{idPhieu})", body, settingsDict);
 
             return Ok(new { Message = "Đã gửi mail nhắc nhở." });
-        }
-
-        [HttpPost("send-all-reminders")]
-        public async Task<IActionResult> SendAllReminders()
-        {
-            var settingsDict = await GetGeneralSettingsAsync();
-            string tenQuan = settingsDict.GetValueOrDefault("ThongTin_TenQuan", "Cafebook");
-
-            var phieuSapTre = await _context.PhieuThueSachs.AsNoTracking()
-                .Include(p => p.KhachHang)
-                .Include(p => p.ChiTietPhieuThues).ThenInclude(ct => ct.Sach)
-                .Where(p => p.ChiTietPhieuThues.Any(ct => ct.NgayTraThucTe == null && ct.NgayHenTra.Date == DateTime.Today.AddDays(1)))
-                .ToListAsync();
-
-            int count = 0;
-            foreach (var phieu in phieuSapTre)
-            {
-                var khach = phieu.KhachHang;
-
-                if (khach == null || string.IsNullOrEmpty(khach.Email)) continue;
-
-                var sachList = phieu.ChiTietPhieuThues
-                    .Where(ct => ct.NgayTraThucTe == null && ct.NgayHenTra.Date == DateTime.Today.AddDays(1))
-                    .ToList();
-
-                if (!sachList.Any()) continue;
-
-                string body = BuildReminderTemplate(khach.HoTen, sachList, settingsDict);
-
-                await SendEmailHelper(khach.Email, $"[{tenQuan}] Nhắc hạn trả sách vào ngày mai", body, settingsDict);
-                count++;
-            }
-
-            return Ok(new { Message = $"Đã gửi {count} email." });
         }
 
         [HttpGet("print-data/{idPhieu}")]
@@ -535,7 +531,7 @@ namespace CafebookApi.Controllers.App.NhanVien
 
             var dto = new PhieuThuePrintDto
             {
-                IdPhieu = $"PT{phieu.IdPhieuThueSach:D6}",
+                IdPhieu = $"#{phieu.IdPhieuThueSach}",
                 TenQuan = settings.FirstOrDefault(c => c.TenCaiDat == "ThongTin_TenQuan")?.GiaTri ?? "Cafebook",
                 DiaChiQuan = settings.FirstOrDefault(c => c.TenCaiDat == "ThongTin_DiaChi")?.GiaTri ?? "N/A",
                 SdtQuan = settings.FirstOrDefault(c => c.TenCaiDat == "ThongTin_SoDienThoai")?.GiaTri ?? "N/A",
@@ -544,7 +540,15 @@ namespace CafebookApi.Controllers.App.NhanVien
                 TenKhachHang = phieu.KhachHang.HoTen,
                 SdtKhachHang = phieu.KhachHang.SoDienThoai ?? "N/A",
                 NgayHenTra = phieu.ChiTietPhieuThues.Min(ct => ct.NgayHenTra),
-                ChiTiet = phieu.ChiTietPhieuThues.Select(ct => new ChiTietPrintDto { TenSach = ct.Sach.TenSach, TienCoc = ct.TienCoc }).ToList(),
+
+                ChiTiet = phieu.ChiTietPhieuThues.Select(ct => new ChiTietPrintDto
+                {
+                    TenSach = ct.Sach.TenSach,
+                    DoMoi = ct.DoMoiKhiThue ?? 100,
+                    GhiChu = string.IsNullOrWhiteSpace(ct.GhiChuKhiThue) ? "-" : ct.GhiChuKhiThue,
+                    TienCoc = ct.TienCoc
+                }).ToList(),
+
                 TongTienCoc = phieu.TongTienCoc,
                 TongPhiThue = phieu.ChiTietPhieuThues.Count * settingsThue.PhiThue
             };
@@ -554,7 +558,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         [HttpGet("print-data/tra/{idPhieuTra}")]
         public async Task<IActionResult> GetPrintDataTra(int idPhieuTra)
         {
-            // TỐI ƯU: Thêm AsNoTracking()
             var phieuTra = await _context.PhieuTraSachs.AsNoTracking()
                 .Include(pt => pt.NhanVien).Include(pt => pt.PhieuThueSach.KhachHang).Include(pt => pt.PhieuThueSach.ChiTietPhieuThues)
                 .Include(pt => pt.ChiTietPhieuTras).ThenInclude(ct => ct.Sach)
@@ -567,8 +570,8 @@ namespace CafebookApi.Controllers.App.NhanVien
 
             var dto = new PhieuTraPrintDto
             {
-                IdPhieuTra = $"PTR{phieuTra.IdPhieuTra:D6}",
-                IdPhieuThue = $"PT{phieuTra.IdPhieuThueSach:D6}",
+                IdPhieuTra = $"#{phieuTra.IdPhieuTra}",
+                IdPhieuThue = $"#{phieuTra.IdPhieuThueSach}",
                 TenQuan = settings.FirstOrDefault(c => c.TenCaiDat == "ThongTin_TenQuan")?.GiaTri ?? "Cafebook",
                 DiaChiQuan = settings.FirstOrDefault(c => c.TenCaiDat == "ThongTin_DiaChi")?.GiaTri ?? "N/A",
                 SdtQuan = settings.FirstOrDefault(c => c.TenCaiDat == "ThongTin_SoDienThoai")?.GiaTri ?? "N/A",
@@ -577,12 +580,16 @@ namespace CafebookApi.Controllers.App.NhanVien
                 TenKhachHang = khach?.HoTen ?? "N/A",
                 SdtKhachHang = khach?.SoDienThoai ?? "N/A",
                 DiemTichLuy = phieuTra.DiemTichLuy,
+
                 ChiTiet = phieuTra.ChiTietPhieuTras.Select(ct => new ChiTietTraPrintDto
                 {
                     TenSach = ct.Sach.TenSach,
-                    TienPhat = ct.TienPhat,
+                    DoMoi = ct.DoMoiKhiTra ?? 100,
+                    GhiChu = string.IsNullOrWhiteSpace(ct.GhiChuKhiTra) ? "-" : ct.GhiChuKhiTra,
+                    TienPhat = ct.TienPhat + (ct.TienPhatHuHong ?? 0),
                     TienCoc = phieuTra.PhieuThueSach?.ChiTietPhieuThues.FirstOrDefault(cts => cts.IdSach == ct.IdSach)?.TienCoc ?? 0
                 }).ToList(),
+
                 TongTienCoc = phieuTra.TongTienCocHoan,
                 TongPhiThue = phieuTra.TongPhiThue,
                 TongTienPhat = phieuTra.TongTienPhat,
@@ -603,7 +610,8 @@ namespace CafebookApi.Controllers.App.NhanVien
                 PointToVND = decimal.Parse(settings.FirstOrDefault(c => c.TenCaiDat == "DiemTichLuy_DoiVND")?.GiaTri ?? "1000"),
                 BankId = settings.FirstOrDefault(c => c.TenCaiDat == "NganHang_MaDinhDanhNganHang")?.GiaTri ?? "",
                 BankAccount = settings.FirstOrDefault(c => c.TenCaiDat == "NganHang_SoTaiKhoan")?.GiaTri ?? "",
-                BankAccountName = settings.FirstOrDefault(c => c.TenCaiDat == "NganHang_ChuTaiKhoan")?.GiaTri ?? ""
+                BankAccountName = settings.FirstOrDefault(c => c.TenCaiDat == "NganHang_ChuTaiKhoan")?.GiaTri ?? "",
+                PhatGiamDoMoi1Percent = decimal.Parse(settings.FirstOrDefault(c => c.TenCaiDat == "Sach_PhatGiamDoMoi1Percent")?.GiaTri ?? "2000")
             };
         }
 
@@ -612,15 +620,13 @@ namespace CafebookApi.Controllers.App.NhanVien
             return await _context.CaiDats.AsNoTracking().ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
         }
 
-        // TÍNH NĂNG MỚI: BỔ SUNG GIAO DIỆN HÓA ĐƠN & ĐIỀU KHOẢN CHO MAIL XÁC NHẬN THUÊ SÁCH
-        private async Task SendConfirmationEmailAsync(string email, string hoTen, List<string> tenSachs, DateTime ngayHenTra, int idPhieu, decimal tongCoc, Dictionary<string, string> settings)
+        private async Task SendConfirmationEmailAsync(string email, string hoTen, List<ChiTietPrintDto> tenSachs, DateTime ngayHenTra, int idPhieu, decimal tongCoc, Dictionary<string, string> settings)
         {
             string tenQuan = settings.GetValueOrDefault("ThongTin_TenQuan", "Cafebook");
             string diaChiQuan = settings.GetValueOrDefault("ThongTin_DiaChi", "Đang cập nhật");
             string supportEmail = settings.GetValueOrDefault("LienHe_Email", "cafebook.hotro@gmail.com");
             string supportPhone = settings.GetValueOrDefault("ThongTin_SoDienThoai", "Đang cập nhật");
 
-            // Lấy thông số biểu phí từ setting
             decimal phiThue = decimal.Parse(settings.GetValueOrDefault("Sach_PhiThue", "5000"));
             decimal phiPhat = decimal.Parse(settings.GetValueOrDefault("Sach_PhiTraTreMoiNgay", "2000"));
             decimal tongPhiThue = phiThue * tenSachs.Count;
@@ -636,13 +642,17 @@ namespace CafebookApi.Controllers.App.NhanVien
                     <div style=""padding: 30px;"">
                         <p>Chào <strong>{hoTen}</strong>, cảm ơn bạn đã sử dụng dịch vụ tại {tenQuan}.</p>
                         <div style=""background: #FFFDE7; border-left: 5px solid #FBC02D; padding: 15px; margin: 20px 0;"">
-                            📝 Mã phiếu: <strong>PT{idPhieu:D6}</strong><br>
+                            📝 Mã phiếu: <strong>#{idPhieu}</strong><br>
                             📅 Hạn trả: <strong style=""color: #D84315;"">{ngayHenTra:dd/MM/yyyy}</strong>
                         </div>
                         
                         <h4 style=""color: #5D4037; border-bottom: 1px solid #eee; padding-bottom: 5px;"">📚 CHI TIẾT SÁCH MƯỢN</h4>
                         <div style=""background: #FAFAFA; padding: 15px; border-radius: 8px; border: 1px solid #E0E0E0; margin-bottom: 20px;"">
-                            {string.Join("", tenSachs.Select(s => $"<div style='margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px dashed #ccc;'>📖 {s}</div>"))}
+                            {string.Join("", tenSachs.Select(s => $@"
+                                <div style='margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px dashed #ccc;'>
+                                    <strong>📖 {s.TenSach}</strong><br>
+                                    <small style='color: #666;'>Độ mới: {s.DoMoi}% | Ghi chú: {(string.IsNullOrWhiteSpace(s.GhiChu) ? "-" : s.GhiChu)}</small>
+                                </div>"))}
                         </div>
 
                         <h4 style=""color: #5D4037; border-bottom: 1px solid #eee; padding-bottom: 5px;"">💰 THÔNG TIN THANH TOÁN</h4>
@@ -670,8 +680,8 @@ namespace CafebookApi.Controllers.App.NhanVien
                             - Phí thuê <b>{phiThue:N0} đ/cuốn</b> sẽ được trừ vào tiền cọc khi trả sách.<br>
                             - Vui lòng trả sách đúng hạn trước ngày <b>{ngayHenTra:dd/MM/yyyy}</b>.<br>
                             - Quá hạn sẽ tính phí phạt <b>{phiPhat:N0} đ/ngày/cuốn</b>.<br>
-                            - Số tiền cọc còn lại (sau khi trừ phí thuê và phí phạt) sẽ được hoàn trả đầy đủ cho quý khách.<br>
-                            - Vui lòng giữ gìn sách cẩn thận, không làm rách, bẩn hoặc viết vẽ lên sách.
+                            - Quán sẽ kiểm tra đánh giá độ mới của sách khi trả. Nếu bị giảm % so với lúc thuê, mức phạt khấu hao là <b>2.000 đ/1%</b> giảm.<br>
+                            - Số tiền cọc còn lại (sau khi trừ phí thuê và phí phạt) sẽ được hoàn trả đầy đủ cho quý khách.
                         </div>
                     </div>
                     <div style=""background: #EFEBE9; padding: 20px; text-align: center; font-size: 13px; color: #8D6E63; line-height: 1.6;"">
@@ -684,7 +694,7 @@ namespace CafebookApi.Controllers.App.NhanVien
             </body>
             </html>";
 
-            await SendEmailHelper(email, $"[{tenQuan}] Hóa đơn & Xác nhận thuê sách (PT{idPhieu:D6})", body, settings);
+            await SendEmailHelper(email, $"[{tenQuan}] Hóa đơn & Xác nhận thuê sách (#{idPhieu})", body, settings);
         }
 
         private async Task SendReturnEmailAsync(string email, string hoTen, int idPhieuTra, int idPhieuThue, decimal phiThue, decimal tienPhat, decimal hoanTra, int diemCung, List<string> dsSachTra, Dictionary<string, string> settings)
@@ -705,7 +715,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                         <h3 style=""color: #2E7D32;"">✅ Trả sách thành công!</h3>
                         <p>Chào <strong>{hoTen}</strong>, cảm ơn bạn đã trả sách tại {tenQuan}.</p>
                         <div style=""background: #E8F5E9; border-left: 5px solid #4CAF50; padding: 15px; margin: 20px 0;"">
-                            Mã phiếu trả: <strong>PTR{idPhieuTra:D6}</strong> (Thuộc phiếu: PT{idPhieuThue:D6})<br>
+                            Mã phiếu trả: <strong>#{idPhieuTra}</strong> (Thuộc phiếu: #{idPhieuThue})<br>
                             Thời gian trả: {DateTime.Now:dd/MM/yyyy HH:mm}
                         </div>
                         <p><strong>📚 Sách đã trả:</strong></p>
@@ -715,7 +725,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                         <div style=""background: #FAFAFA; padding: 15px; border-radius: 8px; border: 1px solid #E0E0E0; margin-top: 15px;"">
                             <strong>💰 Chi tiết thanh toán:</strong><br>
                             - Phí thuê: {phiThue:N0} đ<br>
-                            - Phạt trễ hạn: {tienPhat:N0} đ<br>
+                            - Tổng tiền phạt (Gồm Phạt trễ & Khấu hao): {tienPhat:N0} đ<br>
                             - <strong style=""color: #D84315;"">Tiền cọc hoàn trả: {hoanTra:N0} đ</strong><br>
                             - Điểm tích lũy cộng thêm: <strong style=""color: #4CAF50;"">+{diemCung} điểm</strong>
                         </div>
@@ -730,7 +740,7 @@ namespace CafebookApi.Controllers.App.NhanVien
             </body>
             </html>";
 
-            await SendEmailHelper(email, $"[{tenQuan}] Xác nhận trả sách thành công (PTR{idPhieuTra:D6})", body, settings);
+            await SendEmailHelper(email, $"[{tenQuan}] Xác nhận trả sách thành công (#{idPhieuTra})", body, settings);
         }
 
         private string BuildReminderTemplate(string hoTen, List<ChiTietPhieuThue> dsSach, Dictionary<string, string> settings)
@@ -752,6 +762,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                         {string.Join("", dsSach.Select(s => $@"
                             <div style='border-bottom: 1px solid #EEE; padding: 10px 0;'>
                                 <strong>📖 {s.Sach.TenSach}</strong><br>
+                                <small style='color: #666;'>Độ mới lúc thuê: {s.DoMoiKhiThue ?? 100}% | Ghi chú: {(string.IsNullOrWhiteSpace(s.GhiChuKhiThue) ? "-" : s.GhiChuKhiThue)}</small><br>
                                 <small style='color: #D84315;'>Hạn trả: {s.NgayHenTra:dd/MM/yyyy}</small>
                             </div>"))}
                     </div>

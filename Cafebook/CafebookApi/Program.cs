@@ -9,6 +9,7 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<CafebookApi.Services.AutoCancelReservationService>();
+builder.Services.AddHostedService<CafebookApi.Services.DailyReminderBackgroundService>();
 // ==========================================================
 // 1. KẾT NỐI DATABASE
 // ==========================================================

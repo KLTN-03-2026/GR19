@@ -18,13 +18,38 @@ using AppCafebookApi.View.Common;
 
 namespace AppCafebookApi.View.nhanvien.pages
 {
+    // --- CLASS HỖ TRỢ BINDING DỮ LIỆU LÚC TẠO PHIẾU ---
+    public class SachChonUI_Dto : INotifyPropertyChanged
+    {
+        public int IdSach { get; set; }
+        public string TenSach { get; set; } = string.Empty;
+        public decimal GiaBia { get; set; }
+
+        private int _doMoiKhiThue = 100;
+        public int DoMoiKhiThue
+        {
+            get => _doMoiKhiThue;
+            set { _doMoiKhiThue = value; OnPropertyChanged(nameof(DoMoiKhiThue)); }
+        }
+
+        private string? _ghiChuKhiThue;
+        public string? GhiChuKhiThue
+        {
+            get => _ghiChuKhiThue;
+            set { _ghiChuKhiThue = value; OnPropertyChanged(nameof(GhiChuKhiThue)); }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string prop) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+    }
+
     public partial class ThueSachView : Page
     {
         private static readonly HttpClient httpClient;
         private CaiDatThueSachDto _settings = new();
         private PhieuThueChiTietDto? _selectedPhieuChiTiet;
         private int? _idPhieuTraCanIn = null;
-        private int _idPhieuGiaHan = 0; // Lưu tạm ID khi mở modal gia hạn
+        private int _idPhieuGiaHan = 0;
 
         private List<ChiTietSachTraUI_Dto> _danhSachUI_Tra = new();
 
@@ -208,10 +233,16 @@ namespace AppCafebookApi.View.nhanvien.pages
             {
                 if (FindName("dgSachChon") is DataGrid dg)
                 {
-                    var currentList = (dg.ItemsSource as List<SachTimKiemDto>) ?? new List<SachTimKiemDto>();
+                    var currentList = (dg.ItemsSource as List<SachChonUI_Dto>) ?? new List<SachChonUI_Dto>();
                     if (!currentList.Any(s => s.IdSach == selectedSach.IdSach))
                     {
-                        currentList.Add(selectedSach);
+                        currentList.Add(new SachChonUI_Dto
+                        {
+                            IdSach = selectedSach.IdSach,
+                            TenSach = selectedSach.TenSach,
+                            GiaBia = selectedSach.GiaBia,
+                            DoMoiKhiThue = 100
+                        });
                         dg.ItemsSource = null;
                         dg.ItemsSource = currentList;
                         UpdateTongCoc();
@@ -224,7 +255,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private void BtnXoaSachChon_Click(object sender, RoutedEventArgs e)
         {
-            if (FindName("dgSachChon") is DataGrid dg && dg.SelectedItem is SachTimKiemDto selected && dg.ItemsSource is List<SachTimKiemDto> currentList)
+            if (FindName("dgSachChon") is DataGrid dg && dg.SelectedItem is SachChonUI_Dto selected && dg.ItemsSource is List<SachChonUI_Dto> currentList)
             {
                 currentList.Remove(selected);
                 dg.ItemsSource = null; dg.ItemsSource = currentList;
@@ -236,7 +267,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             if (FindName("dgSachChon") is DataGrid dg)
             {
-                var currentList = (dg.ItemsSource as List<SachTimKiemDto>) ?? new List<SachTimKiemDto>();
+                var currentList = (dg.ItemsSource as List<SachChonUI_Dto>) ?? new List<SachChonUI_Dto>();
                 decimal tongCoc = currentList.Sum(s => s.GiaBia);
                 decimal phiThue = currentList.Count * _settings.PhiThue;
 
@@ -247,10 +278,10 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async void BtnTaoPhieuThue_Click(object sender, RoutedEventArgs e)
         {
-            var confirm = MessageBox.Show("Xác nhận thuê sách này?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var confirm = MessageBox.Show("Xác nhận tạo phiếu thuê sách này?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (confirm == MessageBoxResult.No) return;
 
-            if (AuthService.CurrentUser == null) { MessageBox.Show("Lỗi phiên."); return; }
+            if (AuthService.CurrentUser == null) { MessageBox.Show("Lỗi phiên làm việc."); return; }
 
             string hoTen = "";
             if (FindName("txtHoTenKH") is TextBox txtTen) hoTen = txtTen.Text;
@@ -268,9 +299,16 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             if (FindName("dgSachChon") is DataGrid dg)
             {
-                var sachList = (dg.ItemsSource as List<SachTimKiemDto>);
-                if (sachList == null || !sachList.Any()) { MessageBox.Show("Chọn ít nhất 1 cuốn sách.", "Lỗi"); return; }
-                request.SachCanThue = sachList.Select(s => new SachThueRequestDto { IdSach = s.IdSach, TienCoc = s.GiaBia }).ToList();
+                var sachList = (dg.ItemsSource as List<SachChonUI_Dto>);
+                if (sachList == null || !sachList.Any()) { MessageBox.Show("Vui lòng chọn ít nhất 1 cuốn sách.", "Lỗi"); return; }
+
+                request.SachCanThue = sachList.Select(s => new SachThueRequestDto
+                {
+                    IdSach = s.IdSach,
+                    TienCoc = s.GiaBia,
+                    DoMoiKhiThue = s.DoMoiKhiThue,
+                    GhiChuKhiThue = s.GhiChuKhiThue
+                }).ToList();
             }
 
             if (FindName("dpNgayHenTra") is DatePicker dp)
@@ -285,7 +323,6 @@ namespace AppCafebookApi.View.nhanvien.pages
                     var jsonDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
                     int idPhieu = jsonDoc.RootElement.GetProperty("idPhieuThueSach").GetInt32();
 
-                    // Tắt loading TRƯỚC khi gọi Dialog QR
                     if (FindName("LoadingOverlay") is Border loadEnd) loadEnd.Visibility = Visibility.Collapsed;
 
                     decimal tongCoc = request.SachCanThue.Sum(s => s.TienCoc);
@@ -299,7 +336,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                         }
                         else
                         {
-                            MessageBox.Show("Hệ thống chưa thiết lập thông tin ngân hàng trong cài đặt. Vui lòng thu tiền cọc bằng tiền mặt.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBox.Show("Hệ thống chưa thiết lập thông tin ngân hàng. Vui lòng thu tiền mặt.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                     }
 
@@ -417,6 +454,9 @@ namespace AppCafebookApi.View.nhanvien.pages
                             TienCoc = s.TienCoc,
                             TienPhat = s.TienPhat,
                             TinhTrang = s.TinhTrang,
+                            DoMoiKhiThue = s.DoMoiKhiThue,
+                            GhiChuKhiThue = s.GhiChuKhiThue,
+                            DoMoiKhiTra = s.DoMoiKhiThue,
                             IsSelected = true
                         }).ToList();
 
@@ -449,35 +489,63 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private void ItemTra_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ChiTietSachTraUI_Dto.IsSelected)) UpdateTraSachSummary();
+            if (e.PropertyName == nameof(ChiTietSachTraUI_Dto.IsSelected) ||
+                e.PropertyName == nameof(ChiTietSachTraUI_Dto.DoMoiKhiTra))
+            {
+                if (sender is ChiTietSachTraUI_Dto item)
+                {
+                    if (item.DoMoiKhiTra > item.DoMoiKhiThue) item.DoMoiKhiTra = item.DoMoiKhiThue;
+                    if (item.DoMoiKhiTra < 0) item.DoMoiKhiTra = 0;
+
+                    int diff = item.DoMoiKhiThue - item.DoMoiKhiTra;
+                    if (diff > 0) item.TienPhatHuHong = diff * _settings.PhatGiamDoMoi1Percent;
+                    else item.TienPhatHuHong = 0;
+                }
+                UpdateTraSachSummary();
+            }
         }
 
         private void UpdateTraSachSummary()
         {
             var selectedSach = _danhSachUI_Tra.Where(s => s.IsSelected).ToList();
-            decimal tongPhat = selectedSach.Sum(s => s.TienPhat);
+
+            decimal tongPhatTre = selectedSach.Sum(s => s.TienPhat);
+            decimal tongPhatHuHong = selectedSach.Sum(s => s.TienPhatHuHong);
+            decimal tongTatCaPhat = tongPhatTre + tongPhatHuHong;
+
             decimal tongCoc = selectedSach.Sum(s => s.TienCoc);
             decimal tongPhi = selectedSach.Count * _settings.PhiThue;
 
-            if (FindName("lblTongPhat") is TextBlock l1) l1.Text = $"{tongPhat:N0} đ";
+            if (FindName("lblTongPhat") is TextBlock l1) l1.Text = $"{tongTatCaPhat:N0} đ";
             if (FindName("lblTongPhiThue_Tra") is TextBlock l2) l2.Text = $"{tongPhi:N0} đ";
-            if (FindName("lblTongCoc_Tra") is TextBlock l3) l3.Text = $"{tongCoc:N0} đ";
+
+            decimal tongCocHoan = tongCoc - tongPhi - tongTatCaPhat;
+            if (FindName("lblTongCoc_Tra") is TextBlock l3)
+            {
+                l3.Text = $"{tongCocHoan:N0} đ";
+                l3.Foreground = tongCocHoan < 0 ? (SolidColorBrush)FindResource("ErrorBrush") : (SolidColorBrush)FindResource("SuccessBrush");
+            }
         }
 
         private async void BtnXacNhanTra_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THUE_SACH")) { MessageBox.Show("Không có quyền."); return; }
-            if (MessageBox.Show("Xác nhận trả sách?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.No) return;
+            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THUE_SACH")) { MessageBox.Show("Không có quyền thao tác."); return; }
+            if (MessageBox.Show("Xác nhận trả các sách đã chọn?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.No) return;
 
             var selectedSach = _danhSachUI_Tra.Where(s => s.IsSelected).ToList();
-            if (selectedSach.Count == 0 || _selectedPhieuChiTiet == null) { MessageBox.Show("Chọn 1 cuốn sách."); return; }
-            if (AuthService.CurrentUser == null) { MessageBox.Show("Lỗi phiên."); return; }
+            if (selectedSach.Count == 0 || _selectedPhieuChiTiet == null) { MessageBox.Show("Vui lòng check chọn ít nhất 1 cuốn sách để trả."); return; }
+            if (AuthService.CurrentUser == null) { MessageBox.Show("Lỗi phiên làm việc."); return; }
 
             var request = new TraSachRequestDto
             {
                 IdPhieuThueSach = _selectedPhieuChiTiet.IdPhieuThueSach,
-                IdSachs = selectedSach.Select(s => s.IdSach).ToList(),
-                IdNhanVien = AuthService.CurrentUser.IdNhanVien
+                IdNhanVien = AuthService.CurrentUser.IdNhanVien,
+                DanhSachTra = selectedSach.Select(s => new TraSachItemRequestDto
+                {
+                    IdSach = s.IdSach,
+                    DoMoiKhiTra = s.DoMoiKhiTra,
+                    GhiChuKhiTra = s.GhiChuKhiTra
+                }).ToList()
             };
 
             if (FindName("LoadingOverlay") is Border load) load.Visibility = Visibility.Visible;
@@ -506,23 +574,6 @@ namespace AppCafebookApi.View.nhanvien.pages
                 if (item.TinhTrang == "Trễ Hạn") { e.Row.Background = new SolidColorBrush(Color.FromArgb(50, 239, 83, 80)); e.Row.ToolTip = "Trễ hạn trả sách."; }
                 else { e.Row.Background = Brushes.Transparent; e.Row.ToolTip = null; }
             }
-        }
-
-        private async void BtnGuiNhacHangLoat_Click(object sender, RoutedEventArgs e)
-        {
-            if (FindName("LoadingOverlay") is Border load) load.Visibility = Visibility.Visible;
-            try
-            {
-                var response = await httpClient.PostAsync("api/app/nhanvien/thuesach/send-all-reminders", null);
-                if (response.IsSuccessStatusCode)
-                {
-                    var jsonDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                    MessageBox.Show(jsonDoc.RootElement.GetProperty("message").GetString(), "Thành công");
-                }
-                else { MessageBox.Show($"Lỗi: {await response.Content.ReadAsStringAsync()}"); }
-            }
-            catch (Exception ex) { MessageBox.Show($"Lỗi: {ex.Message}"); }
-            finally { if (FindName("LoadingOverlay") is Border loadE) loadE.Visibility = Visibility.Collapsed; }
         }
 
         private async void BtnGuiNhacHen_Click(object sender, RoutedEventArgs e)
@@ -563,7 +614,6 @@ namespace AppCafebookApi.View.nhanvien.pages
             }
         }
 
-        // TÍNH NĂNG MỚI: MỞ MODAL GIA HẠN CÓ CHỌN NGÀY
         private void BtnGiaHan_Click(object sender, RoutedEventArgs e)
         {
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THUE_SACH"))
@@ -581,9 +631,9 @@ namespace AppCafebookApi.View.nhanvien.pages
 
                 if (FindName("dpGiaHan") is DatePicker dp)
                 {
-                    dp.DisplayDateStart = DateTime.Today.AddDays(1); // Ít nhất là mượn tới ngày mai
+                    dp.DisplayDateStart = DateTime.Today.AddDays(1);
                     dp.DisplayDateEnd = DateTime.Today.AddDays(_settings.SoNgayMuonToiDa);
-                    dp.SelectedDate = DateTime.Today.AddDays(_settings.SoNgayMuonToiDa); // Mặc định fill tối đa
+                    dp.SelectedDate = DateTime.Today.AddDays(_settings.SoNgayMuonToiDa);
                 }
 
                 if (FindName("GiaHanOverlay") is Border overlay) overlay.Visibility = Visibility.Visible;
@@ -622,10 +672,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                             await LoadChiTietPhieuCommon(_idPhieuGiaHan, false);
                         }
                     }
-                    else
-                    {
-                        MessageBox.Show($"Lỗi: {await response.Content.ReadAsStringAsync()}");
-                    }
+                    else { MessageBox.Show($"Lỗi: {await response.Content.ReadAsStringAsync()}"); }
                 }
                 catch (Exception ex) { MessageBox.Show($"Lỗi: {ex.Message}"); }
                 finally { if (FindName("LoadingOverlay") is Border loadE) loadE.Visibility = Visibility.Collapsed; }

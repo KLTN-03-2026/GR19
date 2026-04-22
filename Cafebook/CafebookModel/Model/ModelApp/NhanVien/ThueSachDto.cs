@@ -1,5 +1,4 @@
-﻿using CafebookModel.Model.ModelApp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -16,6 +15,8 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public string BankId { get; set; } = string.Empty;
         public string BankAccount { get; set; } = string.Empty;
         public string BankAccountName { get; set; } = string.Empty;
+
+        public decimal PhatGiamDoMoi1Percent { get; set; }
     }
 
     public class KhachHangSearchDto
@@ -56,6 +57,9 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public decimal TienCoc { get; set; }
         public string TinhTrang { get; set; } = string.Empty;
         public decimal TienPhat { get; set; }
+
+        public int DoMoiKhiThue { get; set; }
+        public string? GhiChuKhiThue { get; set; }
     }
 
     public class PhieuThueChiTietDto
@@ -92,16 +96,26 @@ namespace CafebookModel.Model.ModelApp.NhanVien
     {
         public int IdSach { get; set; }
         public decimal TienCoc { get; set; }
+
+        public int DoMoiKhiThue { get; set; } = 100;
+        public string? GhiChuKhiThue { get; set; }
+    }
+
+    public class TraSachItemRequestDto
+    {
+        public int IdSach { get; set; }
+        public int DoMoiKhiTra { get; set; } = 100;
+        public string? GhiChuKhiTra { get; set; }
     }
 
     public class TraSachRequestDto
     {
         public int IdPhieuThueSach { get; set; }
-        public List<int> IdSachs { get; set; } = new();
         public int IdNhanVien { get; set; }
+
+        public List<TraSachItemRequestDto> DanhSachTra { get; set; } = new();
     }
 
-    // --- THÊM DTO CHO TÍNH NĂNG GIA HẠN ---
     public class GiaHanRequestDto
     {
         public int IdPhieuThueSach { get; set; }
@@ -138,6 +152,8 @@ namespace CafebookModel.Model.ModelApp.NhanVien
     public class ChiTietPrintDto
     {
         public string TenSach { get; set; } = string.Empty;
+        public int DoMoi { get; set; }          
+        public string? GhiChu { get; set; }  
         public decimal TienCoc { get; set; }
     }
 
@@ -172,6 +188,8 @@ namespace CafebookModel.Model.ModelApp.NhanVien
     public class ChiTietTraPrintDto
     {
         public string TenSach { get; set; } = string.Empty;
+        public int DoMoi { get; set; }          
+        public string? GhiChu { get; set; }      
         public decimal TienCoc { get; set; }
         public decimal TienPhat { get; set; }
     }
@@ -185,6 +203,52 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public decimal TienCoc { get; set; }
         public decimal TienPhat { get; set; }
         public string TinhTrang { get; set; } = string.Empty;
+
+        public int DoMoiKhiThue { get; set; }
+        public string? GhiChuKhiThue { get; set; }
+
+        private int _doMoiKhiTra = 100;
+        public int DoMoiKhiTra
+        {
+            get => _doMoiKhiTra;
+            set
+            {
+                if (_doMoiKhiTra != value)
+                {
+                    _doMoiKhiTra = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string? _ghiChuKhiTra;
+        public string? GhiChuKhiTra
+        {
+            get => _ghiChuKhiTra;
+            set
+            {
+                if (_ghiChuKhiTra != value)
+                {
+                    _ghiChuKhiTra = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private decimal _tienPhatHuHong;
+        public decimal TienPhatHuHong
+        {
+            get => _tienPhatHuHong;
+            set
+            {
+                if (_tienPhatHuHong != value)
+                {
+                    _tienPhatHuHong = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public bool IsSelected
         {
             get => _isSelected;
@@ -197,6 +261,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien
                 }
             }
         }
+
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {

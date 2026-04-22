@@ -65,16 +65,9 @@ namespace WebCafebookApi.Pages.Account
                         Input.Email = profile.Email;
                         Input.DiaChi = profile.DiaChi;
                         Input.TenDangNhap = profile.TenDangNhap ?? "";
-
-                        // ==========================================
-                        // FIX LỖI CACHE ẢNH: Thêm đuôi thời gian (Ticks)
-                        // ==========================================
-                        string cleanUrl = profile.AnhDaiDienUrl.Split('?')[0]; // Xóa đuôi cũ (nếu có)
-                        AvatarHienTaiUrl = cleanUrl + "?v=" + DateTime.Now.Ticks; // Ép trình duyệt nhận diện đây là link mới
-
-                        // Cập nhật lại Session cho thanh Navbar (_LoginPartial)
+                        string cleanUrl = profile.AnhDaiDienUrl.Split('?')[0]; 
+                        AvatarHienTaiUrl = cleanUrl + "?v=" + DateTime.Now.Ticks;
                         HttpContext.Session.SetString("AvatarUrl", AvatarHienTaiUrl);
-                        // ==========================================
                     }
                     return Page();
                 }

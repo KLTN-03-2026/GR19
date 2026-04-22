@@ -1,0 +1,241 @@
+﻿@page "/tai-khoan/lich-su-thue-sach"
+@model WebCafebookApi.Pages.Account.LichSuThueSachViewModel
+@{
+    ViewData["Title"] = "Lịch sử thuê sách";
+    Layout = "_Layout_Account";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/LichSuThueSach.css" asp-append-version="true" />
+}
+
+<div class="lsts-container">
+    <h3 class="page-title-account">@ViewData["Title"]</h3>
+    <p class="page-lead-account">Theo dõi các phiếu thuê sách, phí dịch vụ và tiền phạt trễ hạn / khấu hao.</p>
+    <hr class="my-4" />
+
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-lg-5 col-md-12">
+                    <label class="form-label text-muted small fw-bold mb-1">Mã Phiếu</label>
+                    <input type="text" class="form-control form-control-sm" name="Search" value="@Model.Search" placeholder="Nhập mã phiếu (VD: 12)">
+                </div>
+                <div class="col-lg-4 col-md-8">
+                    <label class="form-label text-muted small fw-bold mb-1">Trạng thái</label>
+                    <select class="form-select form-select-sm" name="Status">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Đang thuê" selected="@(Model.Status?.ToLower() == "đang thuê")">Đang thuê</option>
+                        <option value="Đã trả" selected="@(Model.Status?.ToLower() == "đã trả")">Đã trả</option>
+                        <option value="Đã hủy" selected="@(Model.Status?.ToLower() == "đã hủy")">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-4 text-center mt-3 mt-lg-0">
+                    <button type="submit" class="btn btn-sm btn-primary w-100"><i class="fas fa-search me-1"></i> Tra cứu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger shadow-sm">@Model.ErrorMessage</div>
+    }
+
+    @if (Model.PagedData.Items == null || !Model.PagedData.Items.Any())
+    {
+        <div class="alert alert-info shadow-sm">Không tìm thấy lịch sử thuê sách nào.</div>
+    }
+    else
+    {
+        <div class="table-responsive lsts-table-wrapper mb-3">
+            <table class="table table-hover align-middle mb-0 bg-white">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Mã Phiếu</th>
+                        <th scope="col">Thời gian</th>
+                        <th scope="col">Trạng Thái</th>
+                        <th scope="col">SL</th>
+                        <th scope="col">Cọc</th>
+                        <th scope="col">Tổng Phạt</th>
+                        <th scope="col">Hoàn Trả</th>
+                        <th scope="col" class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.PagedData.Items)
+                    {
+                        <tr class="lsts-row">
+                            <td data-label="Mã Phiếu" class="fw-bold text-primary">#@item.IdPhieuThueSach</td>
+                            
+                            <td data-label="Thời gian" class="small">
+                                <div><span class="text-muted">Thuê:</span> @item.NgayThue.ToString("dd/MM/yyyy")</div>
+                                @if (item.NgayHenTra.HasValue)
+                                {
+                                    <div class="fw-bold @(DateTime.Now.Date > item.NgayHenTra.Value.Date && item.TrangThai.ToLower() == "đang thuê" ? "text-danger" : "text-dark")">
+                                        Hẹn trả: @item.NgayHenTra.Value.ToString("dd/MM/yyyy")
+                                    </div>
+                                }
+                                @if (item.NgayTra.HasValue)
+                                {
+                                    <div class="text-success"><i class="fas fa-check"></i> Đã trả: @item.NgayTra.Value.ToString("dd/MM/yyyy")</div>
+                                }
+                            </td>
+
+                            <td data-label="Trạng Thái">
+                                <span class="badge lsts-badge @GetBadgeClass(item.TrangThai)">@item.TrangThai</span>
+                                
+                                @if (item.LaSoTienTamTinh)
+                                {
+                                    <div class="text-muted" style="font-size:0.7rem; margin-top:4px;">(Tạm tính)</div>
+                                }
+
+                                @if (item.TrangThai.ToLower() == "đang thuê" && item.NgayHenTra.HasValue && DateTime.Now.Date > item.NgayHenTra.Value.Date)
+                                {
+                                    <div class="text-danger mt-2" style="font-size: 0.75rem; line-height: 1.4; max-width: 140px; border-top: 1px dashed #dc3545; padding-top: 4px;">
+                                        <strong><i class="fas fa-exclamation-triangle"></i> Quá hạn trả!</strong><br />
+                                        <span>Vui lòng trả sách để tránh phát sinh thêm phí phạt.</span>
+                                    </div>
+                                }
+                            </td>
+                            
+                            <td data-label="Số Lượng">@item.SoLuongSach</td>
+                            <td data-label="Tiền Cọc" class="fw-semibold text-secondary">@item.TongTienCoc.ToString("N0") đ</td>
+
+                            <td data-label="Tổng Phạt" class="@(item.TongTienPhat > 0 ? "text-danger fw-bold" : "text-dark") lsts-val-end">
+                                @(item.TongTienPhat?.ToString("N0") ?? "0") đ
+                            </td>
+                            
+                            <td data-label="Cọc Hoàn" class="@(item.TongTienCocHoan < 0 ? "text-danger" : "text-success") fw-bold lsts-val-end">
+                                @(item.TongTienCocHoan?.ToString("N0") ?? "0") đ
+                            </td>
+
+                            <td data-label="Thao tác" class="text-center lsts-action-cell">
+                                <button type="button" class="btn btn-sm btn-outline-primary fw-bold px-3 shadow-sm"
+                                        onclick="loadChiTietPhieu('@item.IdPhieuThueSach', 'dataChiTiet_@item.IdPhieuThueSach')">
+                                    <i class="fas fa-file-invoice"></i> Chi tiết
+                                </button>
+                                <script type="application/json" id="dataChiTiet_@item.IdPhieuThueSach">
+                                                            @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.ChiTietSachs))
+                                </script>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.PagedData.TotalPages > 1)
+        {
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-end">
+                    <li class="page-item @(Model.PagedData.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-route-PageIndex="@(Model.PagedData.CurrentPage - 1)" asp-route-Search="@Model.Search" asp-route-Status="@Model.Status">Trước</a>
+                    </li>
+                    @for (int i = 1; i <= Model.PagedData.TotalPages; i++)
+                    {
+                        <li class="page-item @(Model.PagedData.CurrentPage == i ? "active" : "")">
+                            <a class="page-link" asp-route-PageIndex="@i" asp-route-Search="@Model.Search" asp-route-Status="@Model.Status">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.PagedData.CurrentPage == Model.PagedData.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-route-PageIndex="@(Model.PagedData.CurrentPage + 1)" asp-route-Search="@Model.Search" asp-route-Status="@Model.Status">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+</div>
+
+<div class="modal fade" id="chiTietSachModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header text-white" style="background-color: #5D4037;">
+                <h5 class="modal-title fw-bold"><i class="fas fa-file-invoice me-2"></i>Biên bản đánh giá <span id="modalHeaderMaPhieu" class="text-warning"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3 p-md-4 bg-light">
+                <div class="mb-4 p-3 bg-white rounded border-start border-warning border-4 shadow-sm">
+                    <p class="mb-1 fw-semibold text-dark"><i class="fas fa-info-circle text-primary me-1"></i> Quy định của Cafebook:</p>
+                    <p class="text-muted small mb-0">Tiền cọc sẽ được hệ thống tự động khấu trừ nếu sách bị giảm sút độ mới do hư hỏng (Mức phạt: <b>2.000 đ / 1%</b> giảm).</p>
+                </div>
+
+                <div class="lsts-modal-table-wrapper bg-white shadow-sm">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 30%;">Tên Sách</th>
+                                <th style="width: 20%;">Lúc Thuê</th>
+                                <th style="width: 20%;">Lúc Trả</th>
+                                <th class="text-end" style="width: 15%;">Phạt Trễ</th>
+                                <th class="text-end" style="width: 15%;">Khấu Hao</th>
+                            </tr>
+                        </thead>
+                        <tbody id="chiTietTbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-white">
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function loadChiTietPhieu(maPhieu, dataId) {
+            document.getElementById('modalHeaderMaPhieu').innerText = "(Phiếu #" + maPhieu + ")";
+            var dataStr = document.getElementById(dataId).textContent;
+            var data = JSON.parse(dataStr);
+            
+            var tbody = document.getElementById('chiTietTbody');
+            tbody.innerHTML = '';
+            
+            data.forEach(function(item) {
+                var tenSach = item.TenSach || item.tenSach;
+                var doMoiThue = item.DoMoiKhiThue !== undefined ? item.DoMoiKhiThue : item.doMoiKhiThue;
+                var ghiChuThue = item.GhiChuKhiThue || item.ghiChuKhiThue || '-';
+                var doMoiTra = item.DoMoiKhiTra !== undefined ? item.DoMoiKhiTra : item.doMoiKhiTra;
+                var ghiChuTra = item.GhiChuKhiTra || item.ghiChuKhiTra || '-';
+                var pT = item.TienPhatTre || item.tienPhatTre || 0;
+                var pH = item.TienPhatHuHong || item.tienPhatHuHong || 0;
+
+                var thueStr = `<span class="badge bg-light text-dark border border-secondary shadow-sm"><i class="fas fa-star text-warning"></i> ${doMoiThue}%</span><div class="mt-1 small text-muted text-wrap">${ghiChuThue}</div>`;
+                
+                var traStr = (doMoiTra !== null && doMoiTra !== undefined)
+                    ? `<span class="badge ${doMoiTra < doMoiThue ? 'bg-danger' : 'bg-success'} shadow-sm">${doMoiTra}%</span><div class="mt-1 small text-muted text-wrap">${ghiChuTra}</div>`
+                    : `<span class="badge bg-secondary text-white shadow-sm">Đang mượn</span>`;
+
+                var tr = document.createElement('tr');
+                tr.className = 'lsts-row';
+                
+                tr.innerHTML = `
+                    <td data-label="Tên Sách" class="fw-bold text-dark" style="white-space: normal;">${tenSach}</td>
+                    <td data-label="Lúc Thuê">${thueStr}</td>
+                    <td data-label="Lúc Trả">${traStr}</td>
+                    <td data-label="Phạt Trễ" class="text-danger text-end lsts-val-end">${pT.toLocaleString('vi-VN')} đ</td>
+                    <td data-label="Khấu Hao" class="text-danger fw-bold text-end lsts-val-end">${pH.toLocaleString('vi-VN')} đ</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            var myModal = new bootstrap.Modal(document.getElementById('chiTietSachModal'));
+            myModal.show();
+        }
+    </script>
+}
+
+@functions {
+    private string GetBadgeClass(string trangThai)
+    {
+        return trangThai.Trim().ToLower() switch
+        {
+            "đang thuê" => "bg-primary",
+            "đã trả" => "bg-success",
+            "đã hủy" => "bg-danger",
+            _ => "bg-secondary",
+        };
+    }
+}

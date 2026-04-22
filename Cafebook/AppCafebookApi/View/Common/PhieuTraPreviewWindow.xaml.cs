@@ -49,12 +49,16 @@ namespace AppCafebookApi.View.common
                 lblTenQuan.Text = data.TenQuan;
                 lblDiaChiQuan.Text = data.DiaChiQuan;
                 lblSdtQuan.Text = $"SĐT: {data.SdtQuan}";
-                lblMaPhieu.Text = $"Mã: {data.IdPhieuTra}";
+
+                // NÂNG CẤP: Gán thẳng ID đã được format từ API (Ví dụ: #12)
+                lblMaPhieu.Text = $"Mã Phiếu: {data.IdPhieuTra}";
                 lblNgayTao.Text = $"Ngày: {data.NgayTra:dd/MM/yyyy HH:mm}";
 
                 lblTenKhach.Text = data.TenKhachHang;
                 lblSdtKhach.Text = $"SĐT: {data.SdtKhachHang}";
                 lblTenNhanVien.Text = data.TenNhanVien;
+
+                // Gán thẳng ID phiếu thuê gốc (Ví dụ: #10)
                 lblPhieuThueGoc.Text = data.IdPhieuThue;
 
                 dgChiTiet.ItemsSource = data.ChiTiet;
@@ -83,7 +87,7 @@ namespace AppCafebookApi.View.common
                     if (sender is Button btnPrint)
                         btnPrint.Visibility = Visibility.Collapsed;
 
-                    // 2. Tìm và ẩn nút Đóng (Tên chính xác trong XAML là "btnClose" với chữ b thường)
+                    // 2. Tìm và ẩn nút Đóng
                     if (FindName("btnClose") is Button btnClose)
                         btnClose.Visibility = Visibility.Collapsed;
 

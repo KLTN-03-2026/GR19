@@ -10,7 +10,7 @@ namespace AppCafebookApi.View.common
 {
     public partial class PhieuThuePreviewWindow : Window
     {
-        private static readonly HttpClient httpClient; 
+        private static readonly HttpClient httpClient;
         private readonly int _idPhieuThue;
 
         static PhieuThuePreviewWindow()
@@ -27,7 +27,7 @@ namespace AppCafebookApi.View.common
             }
         }
 
-        public PhieuThuePreviewWindow(int idPhieuThue) 
+        public PhieuThuePreviewWindow(int idPhieuThue)
         {
             InitializeComponent();
             _idPhieuThue = idPhieuThue;
@@ -42,14 +42,16 @@ namespace AppCafebookApi.View.common
                 {
                     MessageBox.Show("Không tìm thấy dữ liệu phiếu thuê.");
                     this.Close();
-                    return; 
+                    return;
                 }
 
                 // Đổ dữ liệu vào UI
                 lblTenQuan.Text = data.TenQuan;
                 lblDiaChiQuan.Text = data.DiaChiQuan;
                 lblSdtQuan.Text = $"SĐT: {data.SdtQuan}";
-                lblMaPhieu.Text = $"Mã: {data.IdPhieu}";
+
+                lblMaPhieu.Text = $"Mã Phiếu: {data.IdPhieu}";
+
                 lblNgayTao.Text = $"Ngày: {data.NgayTao:dd/MM/yyyy HH:mm}";
 
                 lblTenKhach.Text = data.TenKhachHang;
@@ -77,14 +79,22 @@ namespace AppCafebookApi.View.common
                 if (printDialog.ShowDialog() == true)
                 {
                     // Tạm ẩn 2 nút để khi in không bị thấy
-                    (sender as Button)!.Visibility = Visibility.Collapsed;
-                    (FindName("BtnClose") as Button)!.Visibility = Visibility.Collapsed;
+                    if (sender is Button btnPrint)
+                        btnPrint.Visibility = Visibility.Collapsed;
 
-                    printDialog.PrintVisual(printArea, "In Phiếu Thuê Sách");
+                    if (FindName("BtnClose") is Button btnClose)
+                        btnClose.Visibility = Visibility.Collapsed;
+
+                    // Thực hiện in vùng phiếu
+                    if (FindName("printArea") is UIElement area)
+                        printDialog.PrintVisual(area, "In Phiếu Thuê Sách");
 
                     // Hiện lại 2 nút
-                    (sender as Button)!.Visibility = Visibility.Visible;
-                    (FindName("BtnClose") as Button)!.Visibility = Visibility.Visible;
+                    if (sender is Button btnPrintRe)
+                        btnPrintRe.Visibility = Visibility.Visible;
+
+                    if (FindName("BtnClose") is Button btnCloseRe)
+                        btnCloseRe.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception ex)
@@ -95,7 +105,7 @@ namespace AppCafebookApi.View.common
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
-            this.Close(); 
+            this.Close();
         }
     }
 }

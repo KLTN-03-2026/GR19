@@ -1,0 +1,165 @@
+﻿/* =========================================================
+   GIAO DIỆN LỊCH SỬ THUÊ SÁCH (LSTS) - RESPONSIVE TỐI ĐA
+========================================================= */
+
+.lsts-container {
+    margin-top: 20px;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+/* Bảng chính */
+.lsts-table-wrapper {
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    overflow: hidden; /* Xóa scroll ngang thừa */
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Bảng trong Modal */
+.lsts-modal-table-wrapper {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+}
+
+    .lsts-table-wrapper th, .lsts-modal-table-wrapper th {
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #495057;
+        padding: 15px;
+        border-bottom: 2px solid #e9ecef;
+        background-color: #f8f9fa;
+    }
+
+    .lsts-table-wrapper td, .lsts-modal-table-wrapper td {
+        padding: 15px;
+        vertical-align: middle;
+    }
+
+    .lsts-table-wrapper tbody tr, .lsts-modal-table-wrapper tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+        .lsts-table-wrapper tbody tr:hover, .lsts-modal-table-wrapper tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+.lsts-badge {
+    font-size: 0.8rem;
+    padding: 0.55em 0.9em;
+    border-radius: 20px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
+   TABLET & MOBILE (DƯỚI 1000px) - CHUYỂN CẢ 2 BẢNG THÀNH CARD
+========================================================= */
+@media screen and (max-width: 1000px) {
+    .lsts-table-wrapper, .lsts-modal-table-wrapper {
+        overflow: visible;
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        padding: 0 !important;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+
+    /* Ép bảng thành các khối block */
+    .lsts-table-wrapper table, .lsts-table-wrapper thead,
+    .lsts-table-wrapper tbody, .lsts-table-wrapper th,
+    .lsts-table-wrapper td, .lsts-table-wrapper tr,
+    .lsts-modal-table-wrapper table, .lsts-modal-table-wrapper thead,
+    .lsts-modal-table-wrapper tbody, .lsts-modal-table-wrapper th,
+    .lsts-modal-table-wrapper td, .lsts-modal-table-wrapper tr {
+        display: block;
+        width: 100%;
+    }
+
+    /* Fix lỗi không nhấn được nút "Chi tiết" trên Mobile */
+    .lsts-action-cell button {
+        position: relative;
+        z-index: 10;
+        pointer-events: auto !important;
+    }
+
+    /* Giấu header table chuẩn đi (Vẫn giữ cho screen reader) */
+    .lsts-table-wrapper thead tr, .lsts-modal-table-wrapper thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    /* Style cho mỗi Dòng (Trở thành Card y hệt Đặt Bàn) */
+    .lsts-table-wrapper .lsts-row, .lsts-modal-table-wrapper .lsts-row {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        background: #fff;
+        padding: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    /* Style cho mỗi Ô dữ liệu trong Card */
+    .lsts-table-wrapper td, .lsts-modal-table-wrapper td {
+        border: none;
+        border-bottom: 1px dashed #f0f0f0;
+        position: relative;
+        padding: 12px 10px 12px 45%; /* Chừa đúng 45% bên trái cho Tiêu đề ảo */
+        text-align: right;
+        min-height: 45px;
+        /* Flexbox giúp text bám sát vào lề phải và canh giữa dọc, chống rớt dòng */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-end;
+    }
+
+        /* Bỏ gạch đứt ở dòng cuối cùng của Card */
+        .lsts-table-wrapper td:last-child, .lsts-modal-table-wrapper td:last-child {
+            border-bottom: 0;
+        }
+
+        /* Lấy data-label từ HTML làm Tiêu đề ảo bên trái (màu xám, in đậm) */
+        .lsts-table-wrapper td:before, .lsts-modal-table-wrapper td:before {
+            position: absolute;
+            top: 12px;
+            left: 10px;
+            width: 40%; /* Đồng bộ chiều rộng 40% với Đặt Bàn */
+            padding-right: 10px;
+            white-space: nowrap;
+            text-align: left;
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.9rem;
+            content: attr(data-label);
+        }
+
+    /* Căn lề số tiền và thao tác bên phải trên mobile */
+    .lsts-action-cell {
+        text-align: right !important;
+        align-items: flex-end !important;
+    }
+
+    .lsts-val-end {
+        text-align: right !important;
+    }
+}

@@ -22,7 +22,7 @@
             </BeginStoryboard>
         </EventTrigger>
     </Page.Triggers>
-    
+
     <Page.Resources>
         <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
         <SolidColorBrush x:Key="DarkBrownBrush" Color="#4E342E"/>
@@ -60,9 +60,9 @@
 
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="350"/>
-            <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="380"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="420"/>
         </Grid.ColumnDefinitions>
 
         <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="15" Margin="0,0,10,0">
@@ -73,10 +73,10 @@
                     <Label Content="Tên Khách Hàng (*)"/>
                     <TextBox x:Name="txtHoTenKH" Style="{StaticResource MaterialTextBox}" TextChanged="TxtKhachInfo_TextChanged"/>
 
-                    <Label Content="Số Điện Thoại (Nếu có)"/>
+                    <Label Content="Số Điện Thoại (*)"/>
                     <TextBox x:Name="txtSdtKH" Style="{StaticResource MaterialTextBox}" ToolTip="Nếu SĐT đã tồn tại, phiếu sẽ tự động gán cho khách cũ." TextChanged="TxtKhachInfo_TextChanged"/>
 
-                    <Label Content="Email (Nếu có)"/>
+                    <Label Content="Email (*)"/>
                     <TextBox x:Name="txtEmailKH" Style="{StaticResource MaterialTextBox}"/>
 
                     <ListBox x:Name="lbKhachHangResults" MaxHeight="100" SelectionChanged="LbKhachHangResults_SelectionChanged" Visibility="Collapsed" Margin="0,5,0,0">
@@ -106,10 +106,12 @@
                     </ListBox>
 
                     <Label Content="Sách chọn thuê"/>
-                    <DataGrid x:Name="dgSachChon" AutoGenerateColumns="False" MaxHeight="150" IsReadOnly="True" CanUserAddRows="False">
+                    <DataGrid x:Name="dgSachChon" AutoGenerateColumns="False" MaxHeight="150" IsReadOnly="False" CanUserAddRows="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Tên Sách" Binding="{Binding TenSach}" Width="*"/>
-                            <DataGridTextColumn Header="Tiền Cọc" Binding="{Binding GiaBia, StringFormat=N0}" Width="Auto"/>
+                            <DataGridTextColumn Header="Tên Sách" Binding="{Binding TenSach}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Cọc" Binding="{Binding GiaBia, StringFormat=N0}" Width="60" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Độ mới(%)" Binding="{Binding DoMoiKhiThue, UpdateSourceTrigger=PropertyChanged}" Width="75" IsReadOnly="False" Foreground="Blue" FontWeight="Bold"/>
+                            <DataGridTextColumn Header="Ghi chú" Binding="{Binding GhiChuKhiThue, UpdateSourceTrigger=PropertyChanged}" Width="100" IsReadOnly="False"/>
                         </DataGrid.Columns>
                     </DataGrid>
                     <Button Content="Xóa sách chọn" Style="{StaticResource DeleteButton}" Padding="8,4" FontSize="12" HorizontalAlignment="Right" Margin="0,5,0,0" Click="BtnXoaSachChon_Click"/>
@@ -135,7 +137,6 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
@@ -151,10 +152,7 @@
                     </ComboBox>
                 </StackPanel>
 
-                <Button x:Name="btnGuiNhacHangLoat" Grid.Row="1" Content="Gửi Email Nhắc Hẹn Hàng Loạt (Sắp trễ)" Style="{StaticResource ActionButton}" 
-                        Background="#FFB300" Foreground="{StaticResource DarkBrownBrush}" Padding="10,5" Margin="0,0,0,10" Click="BtnGuiNhacHangLoat_Click"/>
-
-                <TabControl Grid.Row="2" x:Name="TabPhieu">
+                <TabControl Grid.Row="1" x:Name="TabPhieu">
                     <TabItem Header="Phiếu Đang Thuê / Trễ Hạn">
                         <DataGrid x:Name="dgPhieuThue" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False"
                                   SelectionChanged="DgPhieuThue_SelectionChanged" LoadingRow="DgPhieuThue_LoadingRow">
@@ -212,10 +210,11 @@
                     <TextBlock x:Name="lblSdtKH_ChiTiet" Text="0909123456" Foreground="Gray"/>
 
                     <StackPanel x:Name="panelTraSach">
-                        <Label Content="Sách trong phiếu (Chọn để trả)"/>
-                        <DataGrid x:Name="dgSachTra" AutoGenerateColumns="False" MaxHeight="250" SelectionMode="Single" CanUserAddRows="False">
+                        <Label Content="Sách trong phiếu (Nhập đánh giá và chọn trả)"/>
+
+                        <DataGrid x:Name="dgSachTra" AutoGenerateColumns="False" MaxHeight="250" SelectionMode="Single" CanUserAddRows="False" IsReadOnly="False">
                             <DataGrid.Columns>
-                                <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="40">
+                                <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="40" IsReadOnly="False">
                                     <DataGridCheckBoxColumn.ElementStyle>
                                         <Style TargetType="CheckBox">
                                             <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -224,18 +223,31 @@
                                     </DataGridCheckBoxColumn.ElementStyle>
                                 </DataGridCheckBoxColumn>
                                 <DataGridTextColumn Header="Tên Sách" Binding="{Binding TenSach}" Width="*" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="Tiền Phạt" Binding="{Binding TienPhat, StringFormat=N0}" Width="Auto" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="Tình Trạng" Binding="{Binding TinhTrang}" Width="100" IsReadOnly="True"/>
+
+                                <DataGridTextColumn Header="% Thuê" Binding="{Binding DoMoiKhiThue, StringFormat={}{0}%}" Width="60" IsReadOnly="True" Foreground="Gray"/>
+
+                                <DataGridTextColumn Header="% Trả" Binding="{Binding DoMoiKhiTra, UpdateSourceTrigger=PropertyChanged}" Width="60" IsReadOnly="False" Foreground="Blue" FontWeight="Bold"/>
+
+                                <DataGridTextColumn Header="Ghi chú (Trả)" Binding="{Binding GhiChuKhiTra, UpdateSourceTrigger=PropertyChanged}" Width="90" IsReadOnly="False"/>
+                                <DataGridTextColumn Header="Phạt Trễ" Binding="{Binding TienPhat, StringFormat=N0}" Width="70" IsReadOnly="True" Foreground="{StaticResource ErrorBrush}"/>
                             </DataGrid.Columns>
                         </DataGrid>
 
+                        <Border Background="#E3F2FD" CornerRadius="5" Padding="10" Margin="0,10,0,0">
+                            <StackPanel>
+                                <TextBlock Text="💡 Bảng tính Phạt Khấu hao (Tự động)" FontWeight="Bold" Foreground="#0D47A1" Margin="0,0,0,5"/>
+                                <TextBlock Text="- Hệ thống sẽ tự trừ tiền nếu: % Trả &lt; % Thuê." FontSize="12" Foreground="#0D47A1" TextWrapping="Wrap"/>
+                                <TextBlock Text="- Mức phạt: 2.000 đ cho mỗi 1% giảm sút." FontSize="12" Foreground="#0D47A1" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
                         <Border Background="{StaticResource SubtleGrayBrush}" CornerRadius="5" Padding="10" Margin="0,15,0,0">
                             <StackPanel>
-                                <TextBlock Text="Tổng Tiền Phạt (sách đã chọn):" FontWeight="SemiBold"/>
+                                <TextBlock Text="Tổng Tiền Phạt Trễ (sách đã chọn):" FontWeight="SemiBold"/>
                                 <TextBlock x:Name="lblTongPhat" Text="0 đ" FontSize="16" FontWeight="Bold" Foreground="{StaticResource ErrorBrush}" Margin="0,5,0,0"/>
                                 <TextBlock Text="Tổng Phí Thuê (sách đã chọn):" FontWeight="SemiBold" Margin="0,5,0,0"/>
                                 <TextBlock x:Name="lblTongPhiThue_Tra" Text="0 đ" FontSize="16" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" Margin="0,5,0,0"/>
-                                <TextBlock Text="Tổng Cọc Hoàn Trả (sách đã chọn):" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                                <TextBlock Text="Tổng Cọc Hoàn Trả (tạm tính):" FontWeight="SemiBold" Margin="0,5,0,0"/>
                                 <TextBlock x:Name="lblTongCoc_Tra" Text="0 đ" FontSize="16" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" Margin="0,5,0,0"/>
                             </StackPanel>
                         </Border>

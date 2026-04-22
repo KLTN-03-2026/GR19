@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace WebCafebookApi.Pages.Account
 {
-    [Authorize(Roles = "KhachHang")] // [Quy tắc 3] Bảo mật lớp 1
+    [Authorize(Roles = "KhachHang")] 
     public class DoiMatKhauViewModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -44,7 +44,6 @@ namespace WebCafebookApi.Pages.Account
                 return Page();
             }
 
-            // [Quy tắc 2] Không hardcode localhost. Dùng cấu hình ApiClient
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
 
             try

@@ -1,0 +1,209 @@
+﻿@page "/tai-khoan/lich-su-dat-ban"
+@model WebCafebookApi.Pages.Account.LichSuDatBanViewModel
+@{
+    ViewData["Title"] = "Lịch sử đặt bàn";
+    Layout = "_Layout_Account";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/LichSuDatBan.css" asp-append-version="true" />
+}
+
+<div class="lsdb-container">
+    <h3 class="page-title-account">@ViewData["Title"]</h3>
+    <p class="page-lead-account">Theo dõi các phiếu đặt bàn sắp tới và đã hoàn thành của bạn.</p>
+    <hr class="my-4" />
+
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-lg-3 col-md-12">
+                    <label class="form-label text-muted small fw-bold mb-1">Tìm kiếm</label>
+                    <input type="text" class="form-control form-control-sm" name="Search" value="@Model.Search" placeholder="Số bàn, ghi chú...">
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label text-muted small fw-bold mb-1">Trạng thái</label>
+                    <select class="form-select form-select-sm" name="Status">
+                        <option value="">Tất cả</option>
+                        <option value="Chờ xác nhận" selected="@(Model.Status == "Chờ xác nhận")">Chờ xác nhận</option>
+                        <option value="Đã xác nhận" selected="@(Model.Status == "Đã xác nhận")">Đã xác nhận</option>
+                        <option value="Đã hoàn thành" selected="@(Model.Status == "Đã hoàn thành")">Đã hoàn thành</option>
+                        <option value="Đã hủy" selected="@(Model.Status == "Đã hủy")">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <label class="form-label text-muted small fw-bold mb-1">Từ ngày</label>
+                    <input type="date" class="form-control form-control-sm" name="FromDate" value="@Model.FromDate?.ToString("yyyy-MM-dd")">
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label text-muted small fw-bold mb-1">Đến ngày</label>
+                    <input type="date" class="form-control form-control-sm" name="ToDate" value="@Model.ToDate?.ToString("yyyy-MM-dd")">
+                </div>
+                <div class="col-lg-2 col-md-12 text-center mt-3 mt-lg-0">
+                    <button type="submit" class="btn btn-sm btn-primary w-100" title="Lọc">
+                        <i class="fas fa-filter me-1"></i> Lọc
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger shadow-sm alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i> @Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success shadow-sm alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model.PagedData.Items == null || !Model.PagedData.Items.Any())
+    {
+        <div class="alert alert-info shadow-sm">
+            <i class="fas fa-info-circle me-2"></i> Không tìm thấy phiếu đặt bàn nào phù hợp.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive lsdb-table-wrapper mb-3">
+            <table class="table table-hover align-middle mb-0 bg-white">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Số Bàn</th>
+                        <th scope="col">Thời gian</th>
+                        <th scope="col">Số khách</th>
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col">Ghi chú</th>
+                        <th scope="col" class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.PagedData.Items)
+                    {
+                        <tr class="lsdb-row">
+                            <td data-label="Số Bàn" class="fw-bold text-primary">@item.TenBan</td>
+                            <td data-label="Thời gian">
+                                <div>@(item.ThoiGianDat != default ? item.ThoiGianDat.ToString("HH:mm") : "N/A")</div>
+                                <div class="text-muted small">@(item.ThoiGianDat != default ? item.ThoiGianDat.ToString("dd/MM/yyyy") : "")</div>
+                            </td>
+                            <td data-label="Số khách">@item.SoLuongKhach</td>
+                            <td data-label="Trạng thái">
+                                <span class="badge lsdb-badge @GetBadgeClass(item.TrangThai)">@item.TrangThai</span>
+                            </td>
+                            <td data-label="Ghi chú" class="lsdb-note-text">
+                                @(string.IsNullOrWhiteSpace(item.GhiChu) ? "-" : item.GhiChu)
+                            </td>
+                            <td data-label="Thao tác" class="text-center lsdb-action-cell">
+                                @if (item.TrangThai == "Chờ xác nhận" || item.TrangThai == "Đã xác nhận")
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="openHuyModal('@item.IdPhieuDatBan', '@item.TenBan', '@item.ThoiGianDat.ToString("HH:mm, dd/MM")')">
+                                        <i class="fas fa-times"></i> Hủy
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.PagedData.TotalPages > 1)
+        {
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-end">
+                    <li class="page-item @(Model.PagedData.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-route-PageIndex="@(Model.PagedData.CurrentPage - 1)"
+                           asp-route-Search="@Model.Search" asp-route-Status="@Model.Status"
+                           asp-route-FromDate="@Model.FromDate?.ToString("yyyy-MM-dd")"
+                           asp-route-ToDate="@Model.ToDate?.ToString("yyyy-MM-dd")">Trước</a>
+                    </li>
+                    
+                    @for (int i = 1; i <= Model.PagedData.TotalPages; i++)
+                    {
+                        <li class="page-item @(Model.PagedData.CurrentPage == i ? "active" : "")">
+                            <a class="page-link" asp-route-PageIndex="@i"
+                               asp-route-Search="@Model.Search" asp-route-Status="@Model.Status"
+                               asp-route-FromDate="@Model.FromDate?.ToString("yyyy-MM-dd")"
+                               asp-route-ToDate="@Model.ToDate?.ToString("yyyy-MM-dd")">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.PagedData.CurrentPage == Model.PagedData.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-route-PageIndex="@(Model.PagedData.CurrentPage + 1)"
+                           asp-route-Search="@Model.Search" asp-route-Status="@Model.Status"
+                           asp-route-FromDate="@Model.FromDate?.ToString("yyyy-MM-dd")"
+                           asp-route-ToDate="@Model.ToDate?.ToString("yyyy-MM-dd")">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+</div>
+<div class="modal fade" id="huyBanModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Xác nhận hủy đặt bàn</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-page-handler="HuyBan">
+                <div class="modal-body">
+                    <input type="hidden" name="idPhieu" id="modalIdPhieu" />
+                    
+                    <div class="mb-3 p-3 bg-light rounded border-start border-danger border-4">
+                        <p class="mb-1 fw-semibold text-dark">Phiếu đặt bàn của bạn:</p>
+                        <strong id="modalInfo" class="text-danger fs-5"></strong>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">Lý do hủy (bắt buộc):</label>
+                        <textarea name="lyDoHuy" class="form-control" rows="3"
+                                  placeholder="Vui lòng cho quán biết lý do để chúng tôi cải thiện dịch vụ..." required></textarea>
+                    </div>
+                    
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-info-circle me-1"></i> <strong>Lưu ý:</strong> Hành động này không thể hoàn tác sau khi xác nhận.
+                    </p>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">Xác nhận hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Hàm này sẽ đổ dữ liệu vào Modal khi click nút Hủy
+        function openHuyModal(id, tenBan, thoiGian) {
+            document.getElementById('modalIdPhieu').value = id;
+            document.getElementById('modalInfo').innerText = tenBan + " - " + thoiGian;
+            
+            var myModal = new bootstrap.Modal(document.getElementById('huyBanModal'));
+            myModal.show();
+        }
+    </script>
+}
+
+@functions {
+    private string GetBadgeClass(string? trangThai)
+    {
+        return (trangThai ?? "").Trim() switch
+        {
+            "Đã xác nhận" => "bg-primary",
+            "Đã hủy" => "bg-danger",
+            "Khách đã đến" => "bg-success",
+            "Đã hoàn thành" => "bg-secondary",
+            _ => "bg-warning text-dark",
+        };
+    }
+}

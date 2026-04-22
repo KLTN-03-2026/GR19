@@ -149,8 +149,10 @@
                               BorderThickness="0" Background="White">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Tên Sách" Binding="{Binding TenSach}" Width="*"/>
-                            <DataGridTextColumn Header="Tiền Cọc" Binding="{Binding TienCoc, StringFormat=N0}" Width="Auto" ElementStyle="{StaticResource RightAligned}"/>
-                            <DataGridTextColumn Header="Tiền Phạt" Binding="{Binding TienPhat, StringFormat=N0}" Width="Auto" ElementStyle="{StaticResource RightAligned}"/>
+                            <DataGridTextColumn Header="Độ Mới" Binding="{Binding DoMoi, StringFormat={}{0}%}" Width="65" ElementStyle="{StaticResource RightAligned}"/>
+                            <DataGridTextColumn Header="Ghi Chú" Binding="{Binding GhiChu}" Width="120"/>
+                            <DataGridTextColumn Header="Tiền Cọc" Binding="{Binding TienCoc, StringFormat=N0}" Width="80" ElementStyle="{StaticResource RightAligned}"/>
+                            <DataGridTextColumn Header="Phạt" Binding="{Binding TienPhat, StringFormat=N0}" Width="70" ElementStyle="{StaticResource RightAligned}"/>
                         </DataGrid.Columns>
                     </DataGrid>
 

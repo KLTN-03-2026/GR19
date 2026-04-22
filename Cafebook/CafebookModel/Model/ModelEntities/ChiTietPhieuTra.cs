@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CafebookModel.Model.ModelEntities
 {
@@ -14,9 +9,14 @@ namespace CafebookModel.Model.ModelEntities
         public int IdSach { get; set; }
 
         [Column(TypeName = "decimal(18, 2)")]
-        public decimal TienPhat { get; set; }
+        public decimal TienPhat { get; set; } 
 
-        // Navigation properties
+        public int? DoMoiKhiTra { get; set; }
+        public string? GhiChuKhiTra { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? TienPhatHuHong { get; set; } 
+
         [ForeignKey("IdPhieuTra")]
         public virtual PhieuTraSach PhieuTraSach { get; set; } = null!;
 
