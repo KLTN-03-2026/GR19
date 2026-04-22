@@ -34,7 +34,7 @@
                     <li><i class="fas fa-map-marker-alt text-danger me-2"></i><strong>Địa chỉ:</strong> @(Model.ChinhSach?.DiaChi ?? "Đang cập nhật")</li>
                     <li><i class="fas fa-phone-alt text-success me-2"></i><strong>Hotline:</strong> @(Model.ChinhSach?.SoDienThoai ?? "Đang cập nhật")</li>
                     <li><i class="fas fa-envelope text-primary me-2"></i><strong>Email:</strong> @(Model.ChinhSach?.Email ?? "Đang cập nhật")</li>
-                    <li><i class="fas fa-clock text-warning me-2"></i><strong>Giờ mở cửa:</strong> @(Model.ChinhSach?.GioMoCua) - @(Model.ChinhSach?.GioDongCua) (Các ngày trong tuần: @(Model.ChinhSach?.ThuMoCua))</li>
+                    <li><i class="fas fa-clock text-warning me-2"></i><strong>Giờ mở cửa:</strong> @(Model.ChinhSach?.GioMoCua) - @(Model.ChinhSach?.GioDongCua) (Các thứ trong tuần: @(Model.ChinhSach?.ThuMoCua))</li>
                 </ul>
             </div>
 
@@ -59,7 +59,7 @@
             <h3 class="cb-policy-subtitle">3. Dịch vụ Thuê sách</h3>
             <ul class="cb-policy-list">
                 <li>Phí dịch vụ thuê sách hiện tại là <strong>@(Model.ChinhSach?.PhiThue.ToString("N0") ?? "0")đ</strong> và mọi khoản phí phạt trễ hạn sẽ được khấu trừ vào tiền cọc khi bạn trả sách.</li>
-                <li>Thời gian thuê tiêu chuẩn là 7 ngày. Phí phạt trễ hạn là <strong>@(Model.ChinhSach?.PhiTraTreMoiNgay.ToString("N0") ?? "0")đ</strong> cho mỗi ngày quá hạn.</li>
+                <li>Thời gian thuê tối đa là <strong>@(Model.ChinhSach?.SoNgayMuonToiDa ?? "0") ngày</strong> . Phí phạt trễ hạn là <strong>@(Model.ChinhSach?.PhiTraTreMoiNgay.ToString("N0") ?? "0")đ</strong> cho mỗi ngày quá hạn.</li>
                 <li>Trường hợp sách bị hư hỏng nặng, chúng tôi có thể giữ lại toàn bộ tiền cọc để bù đắp chi phí.</li>
             </ul>
 

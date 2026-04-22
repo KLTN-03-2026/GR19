@@ -1,0 +1,220 @@
+﻿/* =========================================================
+   [Quy tắc 4] Cách ly CSS - Module Đổi Mật Khẩu (Prefix: .dmk-)
+   Đã đồng bộ hiệu ứng Floating Label với DangNhapView
+   ========================================================= */
+
+.dmk-form-container {
+    background-color: #ffffff;
+    padding: 2.5rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    margin-top: 1rem;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.dmk-page-title {
+    color: var(--cf-dark-brown, #4E342E);
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.dmk-page-lead {
+    color: #757575;
+    font-size: 0.95rem;
+}
+
+/* ---------------- Input Style (Đồng bộ DangNhapView) ---------------- */
+.dmk-input-group {
+    position: relative;
+    margin-bottom: 2rem; /* Tạo khoảng trống cho Validation Span */
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.dmk-input-icon {
+    position: absolute;
+    left: 12px;
+    top: 25px; /* Căn giữa theo input có padding cao */
+    transform: translateY(-50%);
+    color: #9E9E9E;
+    font-size: 1.4rem;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Nút ẩn/hiện mật khẩu */
+.dmk-toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 25px;
+    transform: translateY(-50%);
+    color: #9E9E9E;
+    font-size: 1.4rem;
+    cursor: pointer;
+    z-index: 2;
+    transition: color 0.2s ease;
+}
+
+    .dmk-toggle-password:hover {
+        color: var(--cf-orange, #D27D2D);
+    }
+
+.dmk-input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #E0E0E0;
+    /* padding: top right bottom left */
+    padding: 1.5rem 2.8rem 0.5rem 2.8rem;
+    font-size: 1rem;
+    color: var(--cf-dark-brown, #4E342E);
+    background-color: transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    border-radius: 4px 4px 0 0;
+    outline: none;
+}
+
+.dmk-label {
+    position: absolute;
+    left: 2.8rem;
+    top: 25px;
+    transform: translateY(-50%);
+    color: #757575;
+    font-size: 1rem;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform-origin: left top;
+    margin: 0;
+}
+
+/* Hiệu ứng Floating */
+.dmk-input:focus ~ .dmk-label,
+.dmk-input:not(:placeholder-shown) ~ .dmk-label {
+    top: 10px;
+    transform: translateY(0) scale(0.8);
+    color: var(--cf-orange, #D27D2D);
+}
+
+.dmk-input:focus {
+    border-bottom: 2px solid var(--cf-brown, #6F4E37);
+    background-color: #F4F8FF; /* Xanh nhạt dịu mắt */
+}
+
+.dmk-input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #E8F0FE inset !important;
+}
+
+/* ---------------- Validation Text ---------------- */
+.dmk-validation-error {
+    position: absolute;
+    bottom: -22px;
+    left: 0;
+    font-size: 0.8rem;
+}
+
+/* ---------------- Button ---------------- */
+.dmk-btn-submit {
+    width: 100%; /* Choán hết bề ngang giống Đăng nhập */
+    background-color: var(--cf-brown, #6F4E37);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.9rem;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .dmk-btn-submit:hover:not(:disabled) {
+        background-color: var(--cf-dark-brown, #4E342E);
+        transform: translateY(-2px);
+    }
+
+    .dmk-btn-submit:disabled {
+        background-color: #d7ccc8;
+        cursor: not-allowed;
+    }
+
+/* =========================================================
+   [Nâng cấp] Responsive Design (PC, Tablet, Mobile)
+   ========================================================= */
+
+/* --- Tablet (Màn hình dưới 992px) --- */
+@media (max-width: 991.98px) {
+    .dmk-form-container {
+        padding: 2rem 1.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .dmk-page-title {
+        font-size: 1.5rem;
+    }
+
+    /* Thu gọn padding input một chút trên tablet */
+    .dmk-input {
+        padding: 1.5rem 2.5rem 0.5rem 2.5rem;
+    }
+
+    .dmk-label {
+        left: 2.5rem;
+    }
+}
+
+/* --- Mobile (Màn hình dưới 768px) --- */
+@media (max-width: 767.98px) {
+    .dmk-form-container {
+        padding: 1.5rem 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03); /* Giảm đổ bóng để phẳng hơn trên mobile */
+        border: 1px solid #F0F0F0;
+    }
+
+    .dmk-page-title {
+        font-size: 1.3rem;
+        text-align: center; /* Canh giữa tiêu đề trên điện thoại */
+    }
+
+    .dmk-page-lead {
+        font-size: 0.85rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .dmk-input-group {
+        margin-bottom: 1.8rem;
+    }
+
+    .dmk-input {
+        font-size: 0.95rem;
+        padding: 1.4rem 2.2rem 0.4rem 2.2rem; /* Giảm padding trái phải để tiết kiệm không gian */
+    }
+
+    .dmk-input-icon {
+        font-size: 1.2rem;
+        left: 10px;
+    }
+
+    .dmk-toggle-password {
+        font-size: 1.2rem;
+        right: 10px;
+    }
+
+    .dmk-label {
+        font-size: 0.95rem;
+        left: 2.2rem;
+    }
+
+    .dmk-btn-submit {
+        padding: 0.85rem;
+        font-size: 0.95rem;
+    }
+
+    .dmk-validation-error {
+        font-size: 0.75rem;
+        bottom: -20px;
+    }
+}

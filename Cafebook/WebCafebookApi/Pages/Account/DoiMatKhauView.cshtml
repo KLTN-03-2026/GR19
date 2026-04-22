@@ -1,0 +1,82 @@
+﻿@page "/tai-khoan/doi-mat-khau" 
+@model WebCafebookApi.Pages.Account.DoiMatKhauViewModel
+@{
+    ViewData["Title"] = "Đổi mật khẩu";
+    Layout = "_Layout_Account";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/DoiMatKhau.css" asp-append-version="true" />
+}
+
+<h3 class="dmk-page-title">@ViewData["Title"]</h3>
+<p class="dmk-page-lead">Để bảo mật, hãy chọn một mật khẩu mạnh và không sử dụng lại ở nơi khác.</p>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6 mx-auto">
+        <div class="dmk-form-container">
+            <form method="post" id="dmk-form">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+                <div class="dmk-input-group">
+                    <span class="material-symbols-outlined dmk-input-icon">lock</span>
+                    <input asp-for="Input.MatKhauCu" class="dmk-input" type="password" id="mkCu" placeholder=" " />
+                    <label asp-for="Input.MatKhauCu" class="dmk-label">Mật khẩu hiện tại</label>
+                    <span asp-validation-for="Input.MatKhauCu" class="text-danger dmk-validation-error"></span>
+                </div>
+
+                <div class="dmk-input-group">
+                    <span class="material-symbols-outlined dmk-input-icon">key</span>
+                    <input asp-for="Input.MatKhauMoi" class="dmk-input" type="password" id="mkMoi" placeholder=" " />
+                    <label asp-for="Input.MatKhauMoi" class="dmk-label">Mật khẩu mới</label>
+                    <span asp-validation-for="Input.MatKhauMoi" class="text-danger dmk-validation-error"></span>
+                </div>
+
+                <div class="dmk-input-group">
+                    <span class="material-symbols-outlined dmk-input-icon">enhanced_encryption</span>
+                    <input asp-for="Input.XacNhanMatKhauMoi" class="dmk-input" type="password" id="xacNhanMkMoi" placeholder=" " />
+                    <label asp-for="Input.XacNhanMatKhauMoi" class="dmk-label">Xác nhận mật khẩu mới</label>
+                    <span asp-validation-for="Input.XacNhanMatKhauMoi" class="text-danger dmk-validation-error"></span>
+                </div>
+
+                <button type="submit" class="dmk-btn-submit" id="dmk-submit-btn">
+                    <span class="material-symbols-outlined" style="margin-right: 8px;">lock_reset</span>
+                    <span>CẬP NHẬT MẬT KHẨU</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        // 1. Chỉ hiển thị SweetAlert nếu đó là thông báo LỖI
+        var message = '@Html.Raw(Model.SweetAlertMessage ?? "")';
+        var type = '@Html.Raw(Model.SweetAlertType ?? "")';
+
+        if (message && type === 'error') {
+        Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: message,
+        confirmButtonColor: '#6F4E37'
+        });
+        }
+
+        // 2. Chống Double-tap khi submit form
+        var form = document.getElementById('dmk-form');
+        var btn = document.getElementById('dmk-submit-btn');
+                
+        form.addEventListener('submit', function() {
+        if ($(form).valid()) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="margin-right: 8px;"></span><span>Đang xử lý...</span>';
+        }
+        });
+        });
+    </script>
+}

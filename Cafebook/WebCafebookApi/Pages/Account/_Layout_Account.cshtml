@@ -1,0 +1,72 @@
+﻿@{
+    Layout = "_Layout";
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/LayoutAccount.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+}
+
+<div class="container mt-5 mb-5 cb-account-container">
+    <div class="cb-account-card shadow-sm">
+        <div class="cb-account-layout">
+
+            <aside class="cb-account-sidebar">
+                <div class="cb-sidebar-header d-none d-md-block">
+                    <h5 class="cb-sidebar-title">Tài khoản của bạn</h5>
+                </div>
+                <nav class="nav flex-column nav-pills cb-account-nav">
+
+                    <a class="nav-link cb-nav-link @(currentPage == "/Account/TaiKhoanTongQuanView" ? "active" : "")"
+                           asp-page="/Account/TaiKhoanTongQuanView">
+                        <span class="material-symbols-outlined cb-nav-icon">person</span>
+                        Tài khoản của tôi
+                    </a>
+                    
+                    <a class="nav-link cb-nav-link @(currentPage == "/Account/ThongTinCaNhanView" ? "active" : "")"
+                           asp-page="/Account/ThongTinCaNhanView">
+                        <span class="material-symbols-outlined cb-nav-icon">badge</span>
+                        Hồ sơ cá nhân
+                    </a>
+                    
+                    <a class="nav-link cb-nav-link @(currentPage == "/Account/DoiMatKhauView" ? "active" : "")"
+                           asp-page="/Account/DoiMatKhauView">
+                        <span class="material-symbols-outlined cb-nav-icon">lock</span>
+                        Đổi mật khẩu
+                    </a>
+
+                    <hr class="cb-nav-divider" />
+
+                    <a class="nav-link cb-nav-link @(currentPage == "/Account/LichSuDatBanView" ? "active" : "")"
+                           asp-page="/Account/LichSuDatBanView">
+                        <span class="material-symbols-outlined cb-nav-icon">event_list</span>
+                        Lịch sử đặt bàn
+                    </a>
+                    
+                    <a class="nav-link cb-nav-link @(currentPage == "/Account/LichSuThueSachView" ? "active" : "")"
+                           asp-page="/Account/LichSuThueSachView">
+                        <span class="material-symbols-outlined cb-nav-icon">menu_book</span>
+                        Lịch sử thuê sách
+                    </a>
+
+                    <a class="nav-link cb-nav-link @(currentPage == "/Account/LichSuDonHangView" ? "active" : "")"
+                           asp-page="/Account/LichSuDonHangView">
+                        <span class="material-symbols-outlined cb-nav-icon">receipt_long</span>
+                        Lịch sử mua hàng
+                    </a>
+
+                </nav>
+            </aside>
+
+            <main class="cb-account-content">
+                @RenderBody()
+            </main>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}

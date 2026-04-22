@@ -180,54 +180,76 @@ namespace CafebookApi.Data
                 .HasForeignKey(n => n.IdNhanVienHuy)
                 .OnDelete(DeleteBehavior.NoAction);
         }
+
         // ====================================================================
         // HỆ THỐNG TỰ ĐỘNG GHI NHẬT KÝ (AUDIT LOG)
         // ====================================================================
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            // 1. Lấy ID người dùng từ Token thông qua HttpContext
-            int? currentUserId = null;
-            var userIdStr = _httpContextAccessor?.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(userIdStr, out int id)) currentUserId = id;
+            // 1. BÓC TÁCH DANH TÍNH NGƯỜI THAO TÁC TỪ HTTPCONTEXT (TOKEN)
+            bool isAuthenticated = _httpContextAccessor?.HttpContext?.User?.Identity?.IsAuthenticated == true;
+            string? userRole = isAuthenticated ? _httpContextAccessor!.HttpContext!.User.FindFirst(ClaimTypes.Role)?.Value : null;
+            string? userIdStr = isAuthenticated ? _httpContextAccessor!.HttpContext!.User.FindFirst(ClaimTypes.NameIdentifier)?.Value : null;
+            string? userName = isAuthenticated ? _httpContextAccessor!.HttpContext!.User.FindFirst(ClaimTypes.GivenName)?.Value
+                                                ?? _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Name)?.Value : null;
 
             string? ipAddress = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString();
 
-            // 2. Thu thập các thay đổi
+            // 2. NHẬN DIỆN CHÍNH XÁC ĐỐI TƯỢNG (KVL / KHÁCH HÀNG / NHÂN VIÊN)
+            int? currentStaffId = null;
+            string danhTinhPrefix = "[Khách vãng lai]"; // Mặc định nếu NULL (chưa đăng nhập)
+
+            if (isAuthenticated)
+            {
+                if (userRole == "NhanVien" || userRole == "QuanLy")
+                {
+                    if (int.TryParse(userIdStr, out int id)) currentStaffId = id;
+                    danhTinhPrefix = $"[Nhân viên: {userName} (ID: {currentStaffId})]";
+                }
+                else if (userRole == "KhachHang")
+                {
+                    danhTinhPrefix = $"[Khách hàng: {userName} (ID: {userIdStr})]";
+                }
+            }
+
+            // 3. THU THẬP CÁC THAY ĐỔI
             var entries = ChangeTracker.Entries()
-                .Where(e => e.Entity is not NhatKyHeThong &&
+                .Where(e => e.Entity is not CafebookModel.Model.ModelEntities.NhatKyHeThong &&
                            (e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted))
                 .ToList();
 
-            var auditEntries = new List<NhatKyHeThong>();
+            var auditEntries = new List<CafebookModel.Model.ModelEntities.NhatKyHeThong>();
 
             foreach (var entry in entries)
             {
-                var audit = new NhatKyHeThong
+                var audit = new CafebookModel.Model.ModelEntities.NhatKyHeThong
                 {
-                    IdNhanVien = currentUserId,
+                    // Chỉ gán ID nếu là Nhân viên. Nếu là Khách/KVL thì để NULL
+                    IdNhanVien = currentStaffId,
                     BangBiAnhHuong = entry.Entity.GetType().Name,
                     ThoiGian = DateTime.Now,
                     DiaChiIP = ipAddress
                 };
 
-                // Lấy khóa chính (ID) của dòng bị sửa
+                // Lấy khóa chính (ID) của dòng bị tác động
                 var key = entry.Properties.FirstOrDefault(p => p.Metadata.IsPrimaryKey());
                 audit.KhoaChinh = key?.CurrentValue?.ToString();
 
+                // Gắn danh tính vào Hành động để Quản lý dễ đọc
                 switch (entry.State)
                 {
                     case EntityState.Added:
-                        audit.HanhDong = "THÊM MỚI";
+                        audit.HanhDong = $"{danhTinhPrefix} THÊM MỚI";
                         audit.DuLieuMoi = JsonSerializer.Serialize(entry.CurrentValues.ToObject());
                         break;
 
                     case EntityState.Deleted:
-                        audit.HanhDong = "XÓA";
+                        audit.HanhDong = $"{danhTinhPrefix} XÓA";
                         audit.DuLieuCu = JsonSerializer.Serialize(entry.OriginalValues.ToObject());
                         break;
 
                     case EntityState.Modified:
-                        audit.HanhDong = "CẬP NHẬT";
+                        audit.HanhDong = $"{danhTinhPrefix} CẬP NHẬT";
                         var oldValues = new Dictionary<string, object?>();
                         var newValues = new Dictionary<string, object?>();
 
@@ -249,7 +271,7 @@ namespace CafebookApi.Data
                 auditEntries.Add(audit);
             }
 
-            // Lưu log vào context
+            // 4. LƯU LOG VÀO DATABASE
             if (auditEntries.Any())
             {
                 await this.NhatKyHeThongs.AddRangeAsync(auditEntries, cancellationToken);

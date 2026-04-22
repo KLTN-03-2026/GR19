@@ -12,41 +12,63 @@
 
         var avatarUrl = Context.Session.GetString("AvatarUrl");
         var avatarSrc = string.IsNullOrEmpty(avatarUrl)
-        ? "/images/default-avatar.png"
-        : avatarUrl;
+            ? "/images/default-avatar.png"
+            : avatarUrl;
 
         <li class="nav-item dropdown w-100 w-lg-auto text-center text-lg-start mt-2 mt-lg-0">
             <a class="nav-link dropdown-toggle d-inline-flex align-items-center justify-content-center px-3 py-2" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px; background-color: var(--cf-light-gray); transition: background-color 0.2s;">
                 <img src="@avatarSrc" alt="Avatar" class="rounded-circle shadow-sm" style="width: 32px; height: 32px; object-fit: cover; margin-right: 8px;" />
                 <span class="fw-bold" style="color: var(--cf-dark-brown);">Chào, @displayName</span>
             </a>
-            <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2" aria-labelledby="navbarDropdown" style="border-radius: 12px;">
+            <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2" aria-labelledby="navbarDropdown" style="border-radius: 12px; min-width: 240px;">
+                
                 <li>
-                    <a class="dropdown-item py-2" asp-page="/account/ThongTinCaNhanView">
-                        <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">account_circle</span>
-                        Thông tin cá nhân
+                    <a class="dropdown-item py-2" asp-page="/Account/TaiKhoanTongQuanView">
+                        <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">person</span>
+                        Tài khoản của tôi
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item py-2" asp-page="/account/LichSuDatBanView">
-                        <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">history</span>
+                    <a class="dropdown-item py-2" asp-page="/Account/ThongTinCaNhanView">
+                        <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">badge</span>
+                        Hồ sơ cá nhân
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2" asp-page="/Account/DoiMatKhauView">
+                        <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">lock</span>
+                        Đổi mật khẩu
+                    </a>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <a class="dropdown-item py-2" asp-page="/Account/LichSuDatBanView">
+                        <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">event_list</span>
                         Lịch sử đặt bàn
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item py-2" asp-page="/account/LichSuThueSachView">
-                        <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">book</span>
-                        Sách đang thuê
+                    <a class="dropdown-item py-2" asp-page="/Account/LichSuThueSachView">
+                        <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">menu_book</span>
+                        Lịch sử thuê sách
                     </a>
                 </li>
-                <li><hr class="dropdown-divider"></li>
                 <li>
-                    <form class="form-inline" asp-page="/Account/DangXuat" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })" method="post">
-                        <button type="submit" class="dropdown-item text-danger py-2 fw-bold">
-                            <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">logout</span>
-                            Đăng xuất
-                        </button>
-                    </form>
+                    <a class="dropdown-item py-2" asp-page="/Account/LichSuDonHangView">
+                        <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">receipt_long</span>
+                        Lịch sử mua hàng
+                    </a>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <button type="button" class="dropdown-item text-danger py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal">
+                        <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">logout</span>
+                        Đăng xuất
+                    </button>
                 </li>
             </ul>
         </li>
@@ -65,3 +87,47 @@
         </li>
     }
 </ul>
+
+@if (User.Identity?.IsAuthenticated == true && User.IsInRole("KhachHang"))
+{
+    <div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; background-color: #ffffff;">
+                <div class="modal-header border-0 pb-0 justify-content-end">
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body text-center px-4 pb-5 pt-0">
+                    <div class="mb-2">
+                        <span class="material-symbols-outlined" style="font-size: 5.5rem; color: #D32F2F;">logout</span>
+                    </div>
+                    <h3 class="fw-bold mb-3" style="color: var(--cf-dark-brown, #4E342E);">Xác nhận đăng xuất</h3>
+                    <p class="text-muted mb-4" style="font-size: 1.05rem; line-height: 1.6;">
+                        Bạn có chắc chắn muốn đăng xuất khỏi tài khoản của mình không?
+                    </p>
+                    
+                    <div class="d-flex justify-content-center gap-3 mt-2 flex-wrap flex-sm-nowrap">
+                        <button type="button" class="btn btn-outline-secondary fw-bold px-4 py-2 w-100 w-sm-auto" data-bs-dismiss="modal" style="border-radius: 8px; border-width: 2px;">
+                            HỦY BỎ
+                        </button>
+                        <form class="w-100 w-sm-auto" asp-page="/Account/DangXuat" asp-route-returnUrl="@Url.Page("/TrangChuView", new { area = "" })" method="post">
+                            <button type="submit" class="btn btn-danger fw-bold px-4 py-2 w-100" style="border-radius: 8px; letter-spacing: 0.5px;">
+                                ĐĂNG XUẤT
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var logoutModal = document.getElementById('logoutConfirmModal');
+            if (logoutModal) {
+                // Đẩy Modal ra thẳng ngoài Body để thoát khỏi sự trói buộc của Navbar
+                document.body.appendChild(logoutModal);
+            }
+        });
+    </script>
+}

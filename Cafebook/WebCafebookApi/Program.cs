@@ -65,7 +65,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.Cookie.Name = "AuthToken";
-        options.LoginPath = "/account/DangNhapView";
+        options.LoginPath = "/dang-nhap";
         options.AccessDeniedPath = "/AccessDenied";
         options.LogoutPath = "/Account/DangXuat";
     });
@@ -75,10 +75,12 @@ builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
+app.UseExceptionHandler("/loi-he-thong?code=500");
+app.UseStatusCodePagesWithReExecute("/loi-he-thong", "?code={0}");
+
 app.UseStaticFiles();
 app.UseRouting();
 
-// Đảm bảo thứ tự
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();

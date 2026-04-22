@@ -1,0 +1,202 @@
+﻿@page "/tai-khoan/thong-tin-ca-nhan"
+@model WebCafebookApi.Pages.Account.ThongTinCaNhanModel
+@{
+    ViewData["Title"] = "Hồ Sơ Cá Nhân";
+    Layout = "_Layout_Account";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" />
+    <link href="~/css/thongtincanhan.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<h3 class="ttcn-page-title">
+    <span class="material-symbols-outlined align-middle fs-3 me-2 text-warning">manage_accounts</span>
+    @ViewData["Title"]
+</h3>
+<p class="ttcn-page-lead">Quản lý và bảo mật thông tin tài khoản của bạn.</p>
+
+@if (Model.IsEditMode)
+{
+    <form method="post" enctype="multipart/form-data" id="formUpdateProfile">
+        <div class="row g-5">
+            <div class="col-12 col-md-4 ttcn-avatar-section">
+                <div class="ttcn-avatar-box">
+                    <img id="avatarPreview" src="@Model.AvatarHienTaiUrl" onerror="this.src='/anhmacdinh/avatars/default-avatar.png'" alt="Avatar" class="ttcn-avatar-img" />
+                    <label for="avatarUploadInput" class="ttcn-upload-overlay">
+                        <span class="ttcn-upload-text">
+                            <span class="material-symbols-outlined mb-1">photo_camera</span>
+                            Đổi ảnh
+                        </span>
+                    </label>
+                    <input type="file" asp-for="AvatarFile" id="avatarUploadInput" class="d-none" accept="image/png, image/jpeg" />
+                </div>
+            </div>
+
+            <div class="col-12 col-md-8">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="ttcn-input-group">
+                    <span class="material-symbols-outlined ttcn-input-icon">fingerprint</span>
+                    <input asp-for="Input.TenDangNhap" class="ttcn-input" placeholder=" " />
+                    <label class="ttcn-label">Tên đăng nhập</label>
+                    <span asp-validation-for="Input.TenDangNhap" class="text-danger small ms-2"></span>
+                </div>
+
+                <div class="ttcn-input-group">
+                    <span class="material-symbols-outlined ttcn-input-icon">person</span>
+                    <input asp-for="Input.HoTen" class="ttcn-input" placeholder=" " />
+                    <label class="ttcn-label">Họ và tên</label>
+                    <span asp-validation-for="Input.HoTen" class="text-danger small ms-2"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <div class="ttcn-input-group">
+                            <span class="material-symbols-outlined ttcn-input-icon">phone_iphone</span>
+                            <input asp-for="Input.SoDienThoai" class="ttcn-input" placeholder=" " />
+                            <label class="ttcn-label">Số điện thoại</label>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="ttcn-input-group">
+                            <span class="material-symbols-outlined ttcn-input-icon">alternate_email</span>
+                            <input asp-for="Input.Email" class="ttcn-input" placeholder=" " />
+                            <label class="ttcn-label">Email</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ttcn-input-group mb-4">
+                    <span class="material-symbols-outlined ttcn-input-icon">location_on</span>
+                    <input asp-for="Input.DiaChi" class="ttcn-input" placeholder=" " />
+                    <label class="ttcn-label">Địa chỉ giao hàng</label>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <button type="submit" class="ttcn-btn-submit" id="btnSubmit">
+                        <span class="material-symbols-outlined">save</span> Lưu Thay Đổi
+                    </button>
+                    <a href="/tai-khoan/thong-tin-ca-nhan" class="ttcn-btn-cancel">
+                        Hủy bỏ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+}
+else
+{
+    <div class="row g-4 align-items-start">
+        
+        <div class="col-12 col-lg-4 col-xl-4 ttcn-avatar-section mb-3 mb-lg-0">
+            <div class="ttcn-avatar-box border-0 mx-auto">
+                <img src="@Model.AvatarHienTaiUrl" onerror="this.src='/anhmacdinh/avatars/default-avatar.png'" alt="Avatar" class="ttcn-avatar-img" />
+            </div>
+            <div class="w-100 text-center mt-3">
+                <a asp-page-handler="Edit" class="ttcn-btn-submit w-100 justify-content-center" style="max-width: 250px;">
+                    <span class="material-symbols-outlined me-2">edit</span> Cập Nhật Hồ Sơ
+                </a>
+            </div>
+        </div>
+            
+        <div class="col-12 col-lg-8 col-xl-8">
+            <div class="row g-3">
+                <div class="col-12 col-sm-6">
+                    <div class="ttcn-info-card">
+                        <span class="material-symbols-outlined ttcn-info-icon">badge</span>
+                        <div class="ttcn-info-text">
+                            <label>Họ và tên</label>
+                            <p>@Model.Input.HoTen</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <div class="ttcn-info-card">
+                        <span class="material-symbols-outlined ttcn-info-icon">fingerprint</span>
+                        <div class="ttcn-info-text">
+                            <label>Tên đăng nhập</label>
+                            <p>@(string.IsNullOrWhiteSpace(Model.Input.TenDangNhap) ? "—" : Model.Input.TenDangNhap)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <div class="ttcn-info-card">
+                        <span class="material-symbols-outlined ttcn-info-icon">phone_in_talk</span>
+                        <div class="ttcn-info-text">
+                            <label>Số điện thoại</label>
+                            <p>@(string.IsNullOrWhiteSpace(Model.Input.SoDienThoai) ? "—" : Model.Input.SoDienThoai)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <div class="ttcn-info-card">
+                        <span class="material-symbols-outlined ttcn-info-icon">mark_email_read</span>
+                        <div class="ttcn-info-text">
+                            <label>Email liên hệ</label>
+                            <p>@(string.IsNullOrWhiteSpace(Model.Input.Email) ? "—" : Model.Input.Email)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="ttcn-info-card">
+                        <span class="material-symbols-outlined ttcn-info-icon">location_on</span>
+                        <div class="ttcn-info-text">
+                            <label>Địa chỉ giao hàng</label>
+                            <p>@(string.IsNullOrWhiteSpace(Model.Input.DiaChi) ? "—" : Model.Input.DiaChi)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <text>
+                Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: '@Html.Raw(TempData["SuccessMessage"])',
+                confirmButtonColor: '#6F4E37',
+                timer: 2000,
+                showConfirmButton: false
+                });
+            </text>
+        }
+        
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <text>
+                Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: '@Html.Raw(TempData["ErrorMessage"])',
+                confirmButtonColor: '#D27D2D'
+                });
+            </text>
+        }
+
+        document.getElementById('avatarUploadInput')?.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+        document.getElementById('avatarPreview').src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+        }
+        });
+
+        document.getElementById('formUpdateProfile')?.addEventListener('submit', function() {
+        const btn = document.getElementById('btnSubmit');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xử lý...';
+        btn.disabled = true;
+        });
+    </script>
+}

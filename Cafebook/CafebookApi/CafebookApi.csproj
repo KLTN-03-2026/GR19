@@ -23,7 +23,6 @@
   <ItemGroup>
     <Folder Include="Controllers\Web\NhanVien\" />
     <Folder Include="Hubs\" />
-    <Folder Include="Services\" />
     <Folder Include="wwwroot\images\anhdanhgia\monan\" />
     <Folder Include="wwwroot\images\anhdanhgia\sach\" />
     <Folder Include="wwwroot\images\avatars\avatarNV\" />

@@ -1,0 +1,85 @@
+﻿@page "/dang-nhap"
+@model WebCafebookApi.Pages.Account.DangNhapViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Cafebook</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/DangNhapView.css" asp-append-version="true" />
+</head>
+<body class="cb-login-body">
+
+    <div class="cb-login-wrapper">
+        <div class="cb-login-container">
+
+            <div class="cb-login-brand">
+                <img src="/images/logo.png" alt="Cafebook Logo" class="cb-login-logo" onerror="this.src='/images/default-avatar.png';">
+                <div class="cb-brand-text">
+                    <h1 class="cb-brand-title">Cafebook</h1>
+                    <p class="cb-brand-slogan">Awaken your senses</p>
+                </div>
+            </div>
+
+            <div class="cb-login-form-area">
+                <a asp-page="/TrangChuView" class="cb-back-link">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Về Trang Chủ
+                </a>
+
+                <h2 class="cb-login-title">@ViewData["Title"]</h2>
+                <p class="cb-login-subtitle">Chào mừng trở lại! Vui lòng nhập thông tin của bạn.</p>
+
+                @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                {
+                    <div class="alert alert-success p-2 small text-center fw-bold d-flex align-items-center justify-content-center gap-2" role="alert">
+                        <span class="material-symbols-outlined" style="font-size: 1.2rem;">check_circle</span>
+                        <span>@Model.SuccessMessage</span>
+                    </div>
+                }
+
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger p-2 small" role="alert"></div>
+
+                    <div class="cb-input-group">
+                        <span class="material-symbols-outlined cb-input-icon">person</span>
+                        <input asp-for="Input.LoginIdentifier" class="cb-input" placeholder=" " autocomplete="username" />
+                        <label asp-for="Input.LoginIdentifier" class="cb-label">Tên đăng nhập | Email | SĐT</label>
+                        <span asp-validation-for="Input.LoginIdentifier" class="text-danger small mt-1 d-block w-100"></span>
+                    </div>
+
+                    <div class="cb-input-group">
+                        <span class="material-symbols-outlined cb-input-icon">lock</span>
+                        <input asp-for="Input.Password" type="password" class="cb-input" placeholder=" " autocomplete="current-password" />
+                        <label asp-for="Input.Password" class="cb-label">Mật khẩu</label>
+                        <span asp-validation-for="Input.Password" class="text-danger small mt-1 d-block w-100"></span>
+                    </div>
+
+                    <div class="text-end mb-4">
+                        <a asp-page="/account/QuenMatKhauView" class="cb-forgot-link">Quên mật khẩu?</a>
+                    </div>
+
+                    <button type="submit" class="cb-btn-login">ĐĂNG NHẬP</button>
+
+                    <div class="cb-register-text">
+                        Chưa có tài khoản? <a asp-page="/account/DangKyView" asp-route-returnUrl="@Model.ReturnUrl" class="cb-register-link">Đăng ký ngay</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

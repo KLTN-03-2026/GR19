@@ -11,12 +11,18 @@ namespace WebCafebookApi.Pages
     public class ChiTietSachViewModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IDataProtector _protector;
+        private readonly IDataProtector _protectorSach;
+        private readonly IDataProtector _protectorTacGia;
+        private readonly IDataProtector _protectorTheLoai;
+        private readonly IDataProtector _protectorNXB;
 
         public ChiTietSachViewModel(IHttpClientFactory httpClientFactory, IDataProtectionProvider provider)
         {
             _httpClientFactory = httpClientFactory;
-            _protector = provider.CreateProtector("Cafebook.Sach.Id");
+            _protectorSach = provider.CreateProtector("Cafebook.Sach.Id");
+            _protectorTacGia = provider.CreateProtector("Cafebook.TacGia.Id");
+            _protectorTheLoai = provider.CreateProtector("Cafebook.TheLoai.Id");
+            _protectorNXB = provider.CreateProtector("Cafebook.NXB.Id");
         }
 
         [BindProperty(SupportsGet = true)]
@@ -36,7 +42,7 @@ namespace WebCafebookApi.Pages
             int bookId;
             try
             {
-                bookId = int.Parse(_protector.Unprotect(Token));
+                bookId = int.Parse(_protectorSach.Unprotect(Token));
             }
             catch
             {
@@ -61,9 +67,9 @@ namespace WebCafebookApi.Pages
             return Page();
         }
 
-        public string EncryptId(int id)
-        {
-            return _protector.Protect(id.ToString());
-        }
+        public string EncryptId(int id) => _protectorSach.Protect(id.ToString());
+        public string EncryptTacGia(int id) => _protectorTacGia.Protect(id.ToString());
+        public string EncryptTheLoai(int id) => _protectorTheLoai.Protect(id.ToString());
+        public string EncryptNXB(int id) => _protectorNXB.Protect(id.ToString());
     }
 }

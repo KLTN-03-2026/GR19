@@ -1,0 +1,83 @@
+﻿@page "dat-lai-mat-khau"
+@model WebCafebookApi.Pages.Account.DatLaiMatKhauViewModel
+@{
+    ViewData["Title"] = "Đặt Lại Mật Khẩu";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Cafebook</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="~/css/QuenMatKhau.css" asp-append-version="true" />
+</head>
+<body class="qmk-page-body">
+
+    <div class="qmk-wrapper">
+        <div class="qmk-container">
+            
+            <div class="qmk-brand d-none d-md-flex">
+                <img src="/images/logo.png" alt="Cafebook Logo" class="qmk-logo" onerror="this.onerror=null; this.src='/images/default-logo.png';">
+                <div class="qmk-brand-text">
+                    <h1 class="qmk-brand-title">Cafebook</h1>
+                    <p class="qmk-brand-slogan">Khôi phục tài khoản</p>
+                </div>
+            </div>
+
+            <div class="qmk-form-area">
+                <h2 class="qmk-title">@ViewData["Title"]</h2>
+                <p class="qmk-subtitle">Nhập mật khẩu mới an toàn cho tài khoản của bạn.</p>
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger p-2 mb-4 shadow-sm rounded" role="alert">
+                        <span class="material-symbols-outlined align-middle me-1 fs-5">error</span>
+                        @Model.ErrorMessage
+                    </div>
+                }
+
+                @if (string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 p-2 bg-danger bg-opacity-10 rounded" role="alert"></div>
+                        <input type="hidden" asp-for="Input.Email" />
+                        <input type="hidden" asp-for="Input.Token" />
+
+                        <div class="qmk-input-group">
+                            <span class="material-symbols-outlined qmk-input-icon">lock</span>
+                            <input asp-for="Input.NewPassword" type="password" class="qmk-input" autocomplete="new-password" aria-required="true" placeholder=" " />
+                            <label asp-for="Input.NewPassword" class="qmk-label">Mật khẩu mới</label>
+                            <span asp-validation-for="Input.NewPassword" class="text-danger small w-100 mt-1"></span>
+                        </div>
+
+                        <div class="qmk-input-group">
+                            <span class="material-symbols-outlined qmk-input-icon">lock_reset</span>
+                            <input asp-for="Input.ConfirmPassword" type="password" class="qmk-input" autocomplete="new-password" aria-required="true" placeholder=" " />
+                            <label asp-for="Input.ConfirmPassword" class="qmk-label">Xác nhận mật khẩu</label>
+                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger small w-100 mt-1"></span>
+                        </div>
+
+                        <button type="submit" class="qmk-btn-submit">
+                            LƯU MẬT KHẨU MỚI
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <a href="/Account/QuenMatKhauView" class="qmk-btn-submit text-center text-decoration-none d-block">
+                        YÊU CẦU MÃ MỚI
+                    </a>
+                }
+            </div>
+            
+        </div>
+    </div>
+
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

@@ -38,7 +38,7 @@
                     {
                         foreach (var tg in Model.Sach.TacGias)
                         {
-                            <a asp-page="/TimKiemSachView" asp-route-idTacGia="@tg.IdTacGia" class="text-dark fw-semibold text-decoration-none hover-orange">@tg.TenTacGia</a>
+                            <a asp-page="/TimKiemSachView" asp-route-tokenTacGia="@Model.EncryptTacGia(tg.IdTacGia)" class="text-dark fw-semibold text-decoration-none hover-orange">@tg.TenTacGia</a>
                             @(tg != Model.Sach.TacGias.Last() ? ", " : "")
                         }
                     }
@@ -98,7 +98,7 @@
                         {
                             foreach (var tl in Model.Sach.TheLoais)
                             {
-                                <a asp-page="/TimKiemSachView" asp-route-idTheLoai="@tl.IdTheLoai" class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none me-1 mb-1 px-3 py-2">@tl.TenTheLoai</a>
+                                <a asp-page="/TimKiemSachView" asp-route-tokenTheLoai="@Model.EncryptTheLoai(tl.IdTheLoai)" class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none me-1 mb-1 px-3 py-2">@tl.TenTheLoai</a>
                             }
                         }
                     </div>
@@ -108,7 +108,7 @@
                         {
                             foreach (var nxb in Model.Sach.NhaXuatBans)
                             {
-                                <a asp-page="/TimKiemSachView" asp-route-idNXB="@nxb.IdNhaXuatBan" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 text-decoration-none me-1 mb-1 px-3 py-2">@nxb.TenNhaXuatBan</a>
+                                <a asp-page="/TimKiemSachView" asp-route-tokenNXB="@Model.EncryptNXB(nxb.IdNhaXuatBan)" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 text-decoration-none me-1 mb-1 px-3 py-2">@nxb.TenNhaXuatBan</a>
                             }
                         }
                     </div>

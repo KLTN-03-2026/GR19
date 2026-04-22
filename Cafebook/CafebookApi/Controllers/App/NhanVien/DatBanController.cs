@@ -1,19 +1,12 @@
-﻿// [DatBanController.cs]
-using CafebookApi.Data;
+﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelApp.NhanVien.DatBan;
 using CafebookModel.Model.ModelEntities;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using MimeKit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace AppCafebookApi.Controllers.app.NhanVien
 {
@@ -44,7 +37,6 @@ namespace AppCafebookApi.Controllers.app.NhanVien
         [HttpGet("list")]
         public async Task<ActionResult<IEnumerable<PhieuDatBanDto>>> GetDatBanList()
         {
-            await AutoCancelLateReservationsInternal();
 
             var list = await _context.PhieuDatBans
                 .AsNoTracking()
@@ -234,11 +226,12 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                // Gửi Mail Xác Nhận (Chỉ giữ lại mail này)
                 var emailNguoiNhan = khachHang?.Email ?? dto.Email;
-                if (!string.IsNullOrEmpty(emailNguoiNhan))
+                if (!string.IsNullOrEmpty(emailNguoiNhan) && dto.TrangThai == "Đã xác nhận")
                 {
                     var smtp = await GetSmtpSettingsAsync();
-                    var settingsDict = await GetGeneralSettingsAsync(); // Lấy settings cho UI Mail
+                    var settingsDict = await GetGeneralSettingsAsync();
                     if (!string.IsNullOrEmpty(smtp.username) && !string.IsNullOrEmpty(smtp.password))
                     {
                         var khachInfo = new KhachHang { HoTen = dto.TenKhachHang, Email = emailNguoiNhan };
@@ -360,6 +353,7 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                // Gửi Mail khi được duyệt thành "Đã xác nhận"
                 if (oldTrangThai == "Chờ xác nhận" && dto.TrangThai == "Đã xác nhận")
                 {
                     var emailNguoiNhan = khachHang?.Email ?? dto.Email;
@@ -442,7 +436,6 @@ namespace AppCafebookApi.Controllers.app.NhanVien
 
         #region Helpers (Khách hàng, Email, Giờ)
 
-        // HELPER: LẤY CÀI ĐẶT CHUNG (DICTIONARY)
         private async Task<Dictionary<string, string>> GetGeneralSettingsAsync()
         {
             return await _context.CaiDats.AsNoTracking().ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
@@ -465,7 +458,7 @@ namespace AppCafebookApi.Controllers.app.NhanVien
             return (host, port, username, password, fromName);
         }
 
-        // HÀM EMAIL 1: XÁC NHẬN ĐẶT BÀN
+        // HÀM EMAIL: CHỈ GIỮ LẠI XÁC NHẬN ĐẶT BÀN
         private async Task SendConfirmationEmailAsync(PhieuDatBan phieu, KhachHang khach, string soBan, string host, int port, string username, string password, string fromName, Dictionary<string, string> settings)
         {
             string toEmail = khach.Email ?? "";
@@ -539,79 +532,6 @@ namespace AppCafebookApi.Controllers.app.NhanVien
             }
         }
 
-        // HÀM EMAIL 2: HỦY ĐẶT BÀN DO TRỄ GIỜ
-        private async Task SendCancellationEmailAsync(PhieuDatBan phieu, KhachHang khach, string soBan, string host, int port, string username, string password, string fromName, Dictionary<string, string> settings)
-        {
-            string toEmail = khach.Email ?? "";
-            if (string.IsNullOrEmpty(toEmail)) return;
-
-            string tenQuan = settings.GetValueOrDefault("ThongTin_TenQuan", "Cafebook");
-            string diaChiQuan = settings.GetValueOrDefault("ThongTin_DiaChi", "Đang cập nhật");
-            string supportPhone = settings.GetValueOrDefault("ThongTin_SoDienThoai", "Đang cập nhật");
-            string supportEmail = settings.GetValueOrDefault("LienHe_Email", "cafebook.hotro@gmail.com");
-
-            try
-            {
-                var email = new MimeMessage();
-                email.From.Add(new MailboxAddress(fromName, username));
-                email.To.Add(new MailboxAddress(khach.HoTen, toEmail));
-                email.Subject = $"[{tenQuan}] Thông báo hủy đặt bàn tự động";
-
-                string body = $@"
-                <!DOCTYPE html>
-                <html lang=""vi"">
-                <head>
-                    <meta charset=""UTF-8"">
-                    <style>
-                        body {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #F7F3E9; color: #4E342E; margin: 0; padding: 20px; }}
-                        .container {{ max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
-                        .header {{ background-color: #D32F2F; color: #FFFFFF; padding: 30px; text-align: center; }}
-                        .header h1 {{ margin: 0; font-size: 24px; letter-spacing: 1px; text-transform: uppercase; }}
-                        .content {{ padding: 30px; line-height: 1.6; }}
-                        .alert-card {{ background-color: #FFEBEE; border-left: 6px solid #D32F2F; border-radius: 8px; padding: 20px; margin: 25px 0; color: #C62828; }}
-                        .footer {{ background-color: #EFEBE9; padding: 20px; text-align: center; font-size: 13px; color: #8D6E63; line-height: 1.6; border-top: 1px solid #D7CCC8; }}
-                    </style>
-                </head>
-                <body>
-                    <div class=""container"">
-                        <div class=""header"">
-                            <h1>☕ {tenQuan}</h1>
-                        </div>
-                        <div class=""content"">
-                            <div style=""font-size: 18px; font-weight: bold; margin-bottom: 20px;"">Xin chào {khach.HoTen},</div>
-                            <p>Chúng tôi gửi email này để thông báo về tình trạng phiếu đặt bàn của bạn vào lúc <strong>{phieu.ThoiGianDat:HH:mm} ngày {phieu.ThoiGianDat:dd/MM/yyyy}</strong>.</p>
-                            
-                            <div class=""alert-card"">
-                                <strong>❌ Đã Hủy Tự Động</strong><br><br>
-                                Rất tiếc vì bạn đã không thể đến đúng giờ. Hệ thống của chúng tôi đã tự động hủy bàn (Bàn: <strong>{soBan}</strong>) do vượt quá thời gian chờ quy định (15 phút) nhằm giải phóng không gian phục vụ các thực khách khác.
-                            </div>
-                            
-                            <p>Chúng tôi rất hy vọng có cơ hội được phục vụ bạn vào một dịp khác gần nhất. Nếu bạn vẫn muốn ghé quán, vui lòng liên hệ lại Hotline hoặc đặt bàn mới nhé!</p>
-                        </div>
-                        <div class=""footer"">
-                            <strong>Đội ngũ {tenQuan}</strong><br>
-                            📍 Địa chỉ: {diaChiQuan}<br>
-                            📞 Hotline: {supportPhone} | ✉️ {supportEmail}<br>
-                            © {DateTime.Now.Year} {tenQuan}. Mang đến trải nghiệm trọn vẹn nhất.
-                        </div>
-                    </div>
-                </body>
-                </html>";
-
-                email.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = body };
-
-                using var smtp = new SmtpClient();
-                await smtp.ConnectAsync(host, port, SecureSocketOptions.StartTls);
-                await smtp.AuthenticateAsync(username, password);
-                await smtp.SendAsync(email);
-                await smtp.DisconnectAsync(true);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi gửi email hủy bàn (chạy ngầm): {ex.Message}");
-            }
-        }
-
         private async Task<OpeningHours> GetAndParseOpeningHours()
         {
             var openSetting = await _context.CaiDats.AsNoTracking().FirstOrDefaultAsync(cd => cd.TenCaiDat == "ThongTin_GioMoCua");
@@ -646,64 +566,5 @@ namespace AppCafebookApi.Controllers.app.NhanVien
             return timeOfDay >= hours.Open && timeOfDay <= hours.Close;
         }
         #endregion
-
-        // CẬP NHẬT: GỌI MAIL KHI TỰ ĐỘNG HỦY
-        // CẬP NHẬT: GỌI MAIL KHI TỰ ĐỘNG HỦY
-        private async Task AutoCancelLateReservationsInternal()
-        {
-            try
-            {
-                var now = DateTime.Now;
-                var timeLimit = now.AddMinutes(-15);
-
-                var lateReservations = await _context.PhieuDatBans
-                    .Include(p => p.Ban)
-                    .Include(p => p.KhachHang) // Bổ sung Include KhachHang để lấy Email
-                    .Where(p => (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận") &&
-                                p.ThoiGianDat < timeLimit)
-                    .ToListAsync();
-
-                if (lateReservations.Any())
-                {
-                    // Lấy trước cấu hình để gửi Mail
-                    var smtp = await GetSmtpSettingsAsync();
-                    var settingsDict = await GetGeneralSettingsAsync();
-
-                    foreach (var phieu in lateReservations)
-                    {
-                        phieu.TrangThai = "Đã hủy";
-                        phieu.GhiChu = string.IsNullOrEmpty(phieu.GhiChu)
-                            ? "Tự động hủy do khách trễ 15p"
-                            : phieu.GhiChu + " | Tự động hủy do trễ 15p";
-
-                        if (phieu.Ban != null && phieu.Ban.TrangThai != "Có khách")
-                        {
-                            phieu.Ban.TrangThai = "Trống";
-                        }
-
-                        // Trigger gửi mail báo hủy nếu có cấu hình Smtp và có Email khách
-                        var emailKhach = phieu.KhachHang?.Email;
-                        if (!string.IsNullOrEmpty(emailKhach) && !string.IsNullOrEmpty(smtp.username) && !string.IsNullOrEmpty(smtp.password))
-                        {
-                            // ĐÃ FIX LỖI CS8601 BẰNG TOÁN TỬ ?? ""
-                            var khachInfo = phieu.KhachHang ?? new KhachHang
-                            {
-                                HoTen = phieu.HoTenKhach ?? "Khách hàng",
-                                Email = emailKhach ?? ""
-                            };
-                            string soBanStr = phieu.Ban?.SoBan ?? "N/A";
-
-                            // Gửi mail trên tiến trình nền để không chặn tốc độ API
-                            _ = Task.Run(() => SendCancellationEmailAsync(phieu, khachInfo, soBanStr, smtp.host, smtp.port, smtp.username, smtp.password, smtp.fromName, settingsDict));
-                        }
-                    }
-                    await _context.SaveChangesAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi auto-cancel: {ex.Message}");
-            }
-        }
     }
 }

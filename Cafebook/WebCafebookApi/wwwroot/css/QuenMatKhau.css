@@ -1,0 +1,299 @@
+﻿/* ==========================================================
+   Tập tin: WebCafebookApi/wwwroot/css/QuenMatKhau.css
+   Mô tả: Đồng bộ UI/UX với trang Đăng Nhập, độc lập class
+========================================================== */
+
+.qmk-page-body {
+    background-color: var(--cf-cream, #FFF8E1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.qmk-wrapper {
+    width: 100%;
+    max-width: 900px;
+    padding: 20px;
+}
+
+.qmk-container {
+    display: flex;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(78, 52, 46, 0.1);
+    overflow: hidden;
+    min-height: 520px;
+}
+
+/* ---------------- Cột Trái (Branding) ---------------- */
+.qmk-brand {
+    background-color: var(--cf-brown, #6F4E37);
+    width: 42%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+}
+
+.qmk-logo {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    object-fit: cover;
+    background-color: #fff;
+}
+
+.qmk-brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.qmk-brand-title {
+    color: #fff;
+    font-weight: 800;
+    font-size: 2.2rem;
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.5px;
+}
+
+.qmk-brand-slogan {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.05rem;
+    margin: 0;
+}
+
+/* ---------------- Cột Phải (Form) ---------------- */
+.qmk-form-area {
+    width: 58%;
+    padding: 3.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.qmk-back-link {
+    color: #1976D2;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 2rem;
+    transition: color 0.2s ease;
+}
+
+    .qmk-back-link .material-symbols-outlined {
+        font-size: 1.2rem;
+        margin-right: 6px;
+    }
+
+    .qmk-back-link:hover {
+        color: #115293;
+    }
+
+.qmk-title {
+    color: var(--cf-dark-brown, #4E342E);
+    font-weight: 800;
+    font-size: 2rem; /* Chỉnh nhỏ hơn đăng nhập 1 chút cho cân chữ */
+    margin-bottom: 0.5rem;
+}
+
+.qmk-subtitle {
+    color: #757575;
+    font-size: 0.95rem;
+    margin-bottom: 2.5rem;
+}
+
+/* ---------------- Input Style (Floating Label Material) ---------------- */
+.qmk-input-group {
+    position: relative;
+    margin-bottom: 1.8rem;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.qmk-input-icon {
+    position: absolute;
+    left: 12px;
+    top: 22px;
+    transform: translateY(-50%);
+    color: #9E9E9E;
+    font-size: 1.3rem;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.qmk-input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #E0E0E0;
+    padding: 1.5rem 1rem 0.5rem 2.8rem;
+    font-size: 1rem;
+    color: var(--cf-text, #4E342E);
+    background-color: transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    border-radius: 4px 4px 0 0;
+    outline: none;
+}
+
+.qmk-label {
+    position: absolute;
+    left: 2.8rem;
+    top: 22px;
+    transform: translateY(-50%);
+    color: #757575;
+    font-size: 1rem;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform-origin: left top;
+    margin: 0;
+}
+
+.qmk-input:focus ~ .qmk-label,
+.qmk-input:not(:placeholder-shown) ~ .qmk-label {
+    top: 10px;
+    transform: translateY(0) scale(0.8);
+    color: var(--cf-orange, #D27D2D);
+}
+
+.qmk-input:focus {
+    border-bottom: 2px solid var(--cf-brown, #6F4E37);
+    background-color: #F4F8FF;
+}
+
+.qmk-input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #E8F0FE inset !important;
+}
+
+/* ---------------- Button ---------------- */
+.qmk-btn-submit {
+    width: 100%;
+    background-color: var(--cf-brown, #6F4E37);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0.9rem;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.5rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-transform: uppercase;
+}
+
+    .qmk-btn-submit:hover {
+        background-color: var(--cf-dark-brown, #4E342E);
+        transform: translateY(-2px);
+    }
+
+/* ==========================================================
+   RESPONSIVE: PC - TABLET - MOBILE
+========================================================== */
+
+/* MÀN HÌNH TABLET (< 992px) */
+@media (max-width: 991px) {
+    .qmk-wrapper {
+        max-width: 700px;
+        padding: 30px 15px;
+    }
+
+    .qmk-container {
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .qmk-brand {
+        width: 100%;
+        padding: 2rem;
+        flex-direction: row;
+        justify-content: center;
+        gap: 1.5rem;
+    }
+
+    .qmk-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 0;
+    }
+
+    .qmk-brand-text {
+        text-align: left;
+        justify-content: center;
+    }
+
+    .qmk-brand-title {
+        font-size: 2rem;
+        margin-bottom: 0;
+    }
+
+    .qmk-form-area {
+        width: 100%;
+        padding: 3rem 4rem;
+    }
+}
+
+/* MÀN HÌNH MOBILE (< 576px) */
+@media (max-width: 575px) {
+    .qmk-wrapper {
+        padding: 15px;
+    }
+
+    .qmk-brand {
+        flex-direction: column;
+        padding: 1.5rem 1rem;
+        gap: 0.5rem;
+    }
+
+    .qmk-logo {
+        width: 65px;
+        height: 65px;
+    }
+
+    .qmk-brand-text {
+        text-align: center;
+    }
+
+    .qmk-brand-title {
+        font-size: 1.6rem;
+    }
+
+    .qmk-brand-slogan {
+        font-size: 0.9rem;
+    }
+
+    .qmk-form-area {
+        padding: 2rem 1.5rem;
+    }
+
+    .qmk-title {
+        font-size: 1.8rem;
+    }
+
+    .qmk-subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+    }
+
+    .qmk-btn-submit {
+        padding: 0.8rem;
+        font-size: 0.95rem;
+    }
+
+    .qmk-back-link {
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* iPhone SE */
+@media (max-width: 375px) {
+    .qmk-form-area {
+        padding: 1.5rem 1rem;
+    }
+}

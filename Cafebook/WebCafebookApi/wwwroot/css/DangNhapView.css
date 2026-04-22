@@ -1,0 +1,350 @@
+﻿/* Tệp CSS tuân thủ Quy tắc 4: UI Isolation cho Đăng Nhập */
+
+.cb-login-body {
+    /* Sử dụng màu nền kem giống bản cũ, có fallback màu tĩnh */
+    background-color: var(--cf-cream, #FFF8E1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.cb-login-wrapper {
+    width: 100%;
+    max-width: 900px;
+    padding: 20px;
+}
+
+.cb-login-container {
+    display: flex;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(78, 52, 46, 0.1);
+    overflow: hidden;
+    min-height: 520px;
+}
+
+/* ---------------- Cột Trái (Branding) ---------------- */
+.cb-login-brand {
+    background-color: var(--cf-brown, #6F4E37);
+    width: 42%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+}
+
+.cb-login-logo {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    object-fit: cover;
+    background-color: #fff; /* Lót nền trắng cho logo trong suốt */
+}
+
+.cb-brand-title {
+    color: #fff;
+    font-weight: 800;
+    font-size: 2.2rem;
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.5px;
+}
+
+.cb-brand-slogan {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.05rem;
+    margin: 0;
+}
+
+/* ---------------- Cột Phải (Form) ---------------- */
+.cb-login-form-area {
+    width: 58%;
+    padding: 3.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Nút Về trang chủ (Màu xanh dương giống thiết kế) */
+.cb-back-link {
+    color: #1976D2;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 2rem;
+    transition: color 0.2s ease;
+}
+
+    .cb-back-link .material-symbols-outlined {
+        font-size: 1.2rem;
+        margin-right: 6px;
+    }
+
+    .cb-back-link:hover {
+        color: #115293;
+    }
+
+.cb-login-title {
+    color: var(--cf-dark-brown, #4E342E);
+    font-weight: 800;
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.cb-login-subtitle {
+    color: #757575;
+    font-size: 0.95rem;
+    margin-bottom: 2.5rem;
+}
+
+/* ---------------- Input Style (Floating Label Material) ---------------- */
+.cb-input-group {
+    position: relative;
+    margin-bottom: 1.8rem;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.cb-input-icon {
+    position: absolute;
+    left: 12px;
+    top: 22px; /* Căn giữa theo chiều dọc của input */
+    transform: translateY(-50%);
+    color: #9E9E9E;
+    font-size: 1.3rem;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Khối Input chính */
+.cb-input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #E0E0E0;
+    /* Khoảng trống bên trên cho Label thu nhỏ, bên trái cho Icon */
+    padding: 1.5rem 1rem 0.5rem 2.8rem;
+    font-size: 1rem;
+    color: var(--cf-text, #4E342E);
+    background-color: transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    border-radius: 4px 4px 0 0;
+    outline: none;
+}
+
+/* Thẻ Label nằm đè lên input ban đầu */
+.cb-label {
+    position: absolute;
+    left: 2.8rem; /* Căn ngang bằng chữ trong input */
+    top: 22px;
+    transform: translateY(-50%);
+    color: #757575;
+    font-size: 1rem;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform-origin: left top;
+    margin: 0;
+}
+
+/* Hiệu ứng ĐẨY CHỮ (Floating) khi được click (focus) hoặc đã có text (:not(:placeholder-shown)) */
+.cb-input:focus ~ .cb-label,
+.cb-input:not(:placeholder-shown) ~ .cb-label {
+    top: 10px; /* Đẩy lên trên */
+    transform: translateY(0) scale(0.8); /* Thu nhỏ chữ 80% */
+    color: var(--cf-orange, #D27D2D); /* Đổi màu cam nổi bật */
+}
+
+/* Hiệu ứng đổi viền và nền xanh nhạt (như bên phải hình) khi Focus */
+.cb-input:focus {
+    border-bottom: 2px solid var(--cf-brown, #6F4E37);
+    background-color: #F4F8FF; /* Nền xanh nhạt dịu mắt */
+}
+
+/* Giữ nền xanh nhạt nếu trình duyệt tự động điền (Autocomplete) */
+.cb-input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #E8F0FE inset !important;
+}
+/* ---------------- Links & Buttons ---------------- */
+.cb-forgot-link {
+    color: #1976D2;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+    .cb-forgot-link:hover {
+        text-decoration: underline;
+    }
+
+.cb-btn-login {
+    width: 100%;
+    background-color: var(--cf-brown, #6F4E37);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0.9rem;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.5rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+    .cb-btn-login:hover {
+        background-color: var(--cf-dark-brown, #4E342E);
+        transform: translateY(-2px);
+    }
+
+.cb-register-text {
+    text-align: center;
+    font-size: 0.95rem;
+    color: #757575;
+}
+
+.cb-register-link {
+    color: #1976D2;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+    .cb-register-link:hover {
+        text-decoration: underline;
+    }
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 768px) {
+    .cb-login-container {
+        flex-direction: column;
+    }
+
+    .cb-login-brand {
+        width: 100%;
+        padding: 2.5rem;
+    }
+
+    .cb-login-form-area {
+        width: 100%;
+        padding: 2.5rem 2rem;
+    }
+}
+/* ==========================================================
+   BỔ SUNG CSS RESPONSIVE: PC - TABLET - MOBILE
+========================================================== */
+
+/* 1. MẶC ĐỊNH (PC / DESKTOP / LAPTOP) */
+/* (Các class gốc của bạn đã thiết kế rất chuẩn cho PC rồi, 
+   chỉ cần thêm cấu hình cho thẻ bọc text mới tạo) */
+.cb-brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 2. MÀN HÌNH TABLET (Dưới 992px - iPad, Tablet ngang/dọc) */
+@media (max-width: 991px) {
+    .cb-login-wrapper {
+        max-width: 700px; /* Thu gọn form trên tablet */
+        padding: 30px 15px;
+    }
+
+    .cb-login-container {
+        flex-direction: column; /* Chuyển bố cục thành dọc (trên/dưới) */
+        min-height: auto;
+    }
+
+    /* Đổi cột trái thành Banner ngang phía trên */
+    .cb-login-brand {
+        width: 100%;
+        padding: 2rem;
+        flex-direction: row; /* Dàn logo và chữ thành hàng ngang */
+        justify-content: center;
+        gap: 1.5rem;
+    }
+
+    .cb-login-logo {
+        width: 80px; /* Thu nhỏ logo lại một chút */
+        height: 80px;
+        margin-bottom: 0; /* Xóa margin dưới để căn giữa với chữ */
+    }
+
+    .cb-brand-text {
+        text-align: left;
+        justify-content: center;
+    }
+
+    .cb-brand-title {
+        font-size: 2rem;
+        margin-bottom: 0;
+    }
+
+    .cb-login-form-area {
+        width: 100%;
+        padding: 3rem 4rem; /* Giữ padding tương đối rộng để nhập liệu thoải mái */
+    }
+}
+
+/* 3. MÀN HÌNH MOBILE (Dưới 576px - Điện thoại thông minh) */
+@media (max-width: 575px) {
+    .cb-login-wrapper {
+        padding: 15px;
+    }
+
+    .cb-login-brand {
+        flex-direction: column; /* Trả logo và chữ về dạng cột (trên/dưới) */
+        padding: 1.5rem 1rem;
+        gap: 0.5rem;
+    }
+
+    .cb-login-logo {
+        width: 65px;
+        height: 65px;
+    }
+
+    .cb-brand-text {
+        text-align: center; /* Căn giữa chữ trên điện thoại */
+    }
+
+    .cb-brand-title {
+        font-size: 1.6rem;
+    }
+
+    .cb-brand-slogan {
+        font-size: 0.9rem;
+    }
+
+    .cb-login-form-area {
+        padding: 2rem 1.5rem; /* Thu nhỏ padding để form tràn viền màn hình */
+    }
+
+    .cb-login-title {
+        font-size: 1.8rem;
+    }
+
+    .cb-login-subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Thu nhỏ nút và liên kết lại một chút trên mobile */
+    .cb-btn-login {
+        padding: 0.8rem;
+        font-size: 0.95rem;
+    }
+
+    .cb-back-link {
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Tối ưu chống co rúm màn hình với điện thoại quá nhỏ (như iPhone SE) */
+@media (max-width: 375px) {
+    .cb-login-form-area {
+        padding: 1.5rem 1rem;
+    }
+}

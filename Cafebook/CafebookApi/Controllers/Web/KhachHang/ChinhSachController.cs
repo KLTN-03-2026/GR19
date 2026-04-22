@@ -37,7 +37,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
         public async Task<IActionResult> GetChinhSachData()
         {
             var keysToFetch = new[] {
-                "Sach_PhiThue", "Sach_PhiTraTreMoiNgay", "DiemTichLuy_NhanVND", "DiemTichLuy_DoiVND",
+                "Sach_PhiThue", "Sach_PhiTraTreMoiNgay","Sach_SoNgayMuonToiDa", "DiemTichLuy_NhanVND", "DiemTichLuy_DoiVND",
                 "ThongTin_TenQuan", "ThongTin_GioiThieu", "ThongTin_DiaChi", "ThongTin_SoDienThoai",
                 "ThongTin_GioMoCua", "ThongTin_GioDongCua", "ThongTin_ThuMoCua", "LienHe_Email"
             };
@@ -50,6 +50,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
             {
                 PhiThue = GetSettingValue(settings, "Sach_PhiThue", 15000),
                 PhiTraTreMoiNgay = GetSettingValue(settings, "Sach_PhiTraTreMoiNgay", 5000),
+                SoNgayMuonToiDa = GetSettingString(settings, "Sach_SoNgayMuonToiDa", "7"),
                 DiemNhanVND = GetSettingValue(settings, "DiemTichLuy_NhanVND", 10000),
                 DiemDoiVND = GetSettingValue(settings, "DiemTichLuy_DoiVND", 1000),
 

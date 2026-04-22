@@ -8,6 +8,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMemoryCache();
+builder.Services.AddHostedService<CafebookApi.Services.AutoCancelReservationService>();
 // ==========================================================
 // 1. KẾT NỐI DATABASE
 // ==========================================================

@@ -1,0 +1,65 @@
+﻿@page "/quen-mat-khau"
+@model WebCafebookApi.Pages.Account.QuenMatKhauViewModel
+@{
+    ViewData["Title"] = "Quên Mật Khẩu";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Cafebook</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="~/css/QuenMatKhau.css" asp-append-version="true" />
+</head>
+<body class="qmk-page-body">
+
+    <div class="qmk-wrapper">
+        <div class="qmk-container">
+            
+            <div class="qmk-brand">
+                <img src="/images/logo.png" alt="Cafebook Logo" class="qmk-logo" onerror="this.onerror=null; this.src='/images/default-logo.png';">
+                <div class="qmk-brand-text">
+                    <h1 class="qmk-brand-title">Cafebook</h1>
+                    <p class="qmk-brand-slogan">Khôi phục tài khoản</p>
+                </div>
+            </div>
+
+            <div class="qmk-form-area">
+                <a asp-page="/Account/DangNhapView" class="qmk-back-link">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Về trang Đăng nhập
+                </a>
+
+                <h2 class="qmk-title">@ViewData["Title"]</h2>
+                <p class="qmk-subtitle">Nhập email của bạn để nhận mã xác nhận.</p>
+
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3 p-2 bg-danger bg-opacity-10 rounded" role="alert"></div>
+
+                    <div class="qmk-input-group">
+                        <span class="material-symbols-outlined qmk-input-icon">mail</span>
+                        
+                        <input asp-for="Input.Email" type="email" class="qmk-input" autocomplete="email" aria-required="true" placeholder=" " />
+                        
+                        <label asp-for="Input.Email" class="qmk-label">Địa chỉ Email</label>
+                        
+                        <span asp-validation-for="Input.Email" class="text-danger small w-100 mt-1"></span>
+                    </div>
+
+                    <button type="submit" class="qmk-btn-submit">
+                        Gửi Mã Xác Nhận
+                    </button>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

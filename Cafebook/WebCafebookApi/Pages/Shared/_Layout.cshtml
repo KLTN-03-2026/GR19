@@ -6,6 +6,8 @@
 @{
     var cart = HttpContextAccessor.HttpContext?.Session.Get<List<CartItemDto>>(WebCafebookApi.Services.SessionExtensions.CartKey);
     var cartCount = cart?.Count ?? 0;
+    
+    bool isKhachHang = User.Identity?.IsAuthenticated == true && User.IsInRole("KhachHang");
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -21,8 +23,8 @@
     <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/components.css" asp-append-version="true" />
     
-    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -45,13 +47,22 @@
                         <span class="material-symbols-outlined fs-6">support_agent</span>
                     </a>
 
-                    <a asp-page="/GioHangView" class="cf-cart-btn text-decoration-none" title="Giỏ hàng của bạn">
-                        <span class="material-symbols-outlined">shopping_cart</span>
-                        @if (cartCount > 0)
-                        {
-                            <span class="badge">@cartCount</span>
-                        }
-                    </a>
+                    @if (isKhachHang)
+                    {
+                        <a asp-page="/GioHangView" class="cf-cart-btn text-decoration-none" title="Giỏ hàng của bạn">
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                            @if (cartCount > 0)
+                            {
+                                <span class="badge">@cartCount</span>
+                            }
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="javascript:void(0)" class="cf-cart-btn text-decoration-none" title="Giỏ hàng của bạn" data-bs-toggle="modal" data-bs-target="#requireLoginModal">
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                        </a>
+                    }
                 </div>
 
                 <button class="navbar-toggler border-0 shadow-none p-1" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,13 +81,22 @@
                     </ul>
 
                     <div class="d-flex align-items-center flex-lg-row flex-column align-items-lg-center align-items-start">
-                        <a asp-page="/GioHangView" class="cf-cart-btn text-decoration-none d-none d-lg-flex" title="Giỏ hàng của bạn">
-                            <span class="material-symbols-outlined">shopping_cart</span>
-                            @if (cartCount > 0)
-                            {
-                                <span class="badge">@cartCount</span>
-                            }
-                        </a>
+                        @if (isKhachHang)
+                        {
+                            <a asp-page="/GioHangView" class="cf-cart-btn text-decoration-none d-none d-lg-flex" title="Giỏ hàng của bạn">
+                                <span class="material-symbols-outlined">shopping_cart</span>
+                                @if (cartCount > 0)
+                                {
+                                    <span class="badge">@cartCount</span>
+                                }
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="javascript:void(0)" class="cf-cart-btn text-decoration-none d-none d-lg-flex" title="Giỏ hàng của bạn" data-bs-toggle="modal" data-bs-target="#requireLoginModal">
+                                <span class="material-symbols-outlined">shopping_cart</span>
+                            </a>
+                        }
 
                         <div class="mt-3 mt-lg-0 w-100 w-lg-auto">
                             <partial name="_LoginPartial" />
@@ -113,6 +133,35 @@
             </div>
         </div>
     </footer>
+
+    <div class="modal fade" id="requireLoginModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-0 justify-content-end">
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body text-center px-4 pb-5 pt-0">
+                    <div class="mb-2">
+                        <span class="material-symbols-outlined" style="font-size: 5.5rem; color: #FFC107;">lock_person</span>
+                    </div>
+                    <h3 class="fw-bold mb-3" style="color: var(--cf-dark-brown, #4E342E);">Yêu cầu đăng nhập</h3>
+                    <p class="text-muted mb-4" style="font-size: 1.05rem; line-height: 1.6;">
+                        Bạn cần đăng nhập tài khoản Khách hàng để thêm sản phẩm vào giỏ và tiến hành đặt hàng.
+                    </p>
+                    
+                    <div class="d-flex justify-content-center gap-3 mt-2 flex-wrap flex-sm-nowrap">
+                        <button type="button" class="btn btn-outline-secondary fw-bold px-4 py-2 w-100 w-sm-auto" data-bs-dismiss="modal" style="border-radius: 8px; border-width: 2px;">
+                            Ở LẠI TRANG
+                        </button>
+                        <a asp-page="/Account/DangNhapView" class="btn fw-bold px-4 py-2 text-white w-100 w-sm-auto" style="background-color: var(--cf-brown, #6F4E37); border-radius: 8px; letter-spacing: 0.5px;">
+                            ĐĂNG NHẬP NGAY
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

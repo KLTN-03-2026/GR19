@@ -1,0 +1,73 @@
+﻿@page "/Account/VerifyCode"
+@model WebCafebookApi.Pages.Account.XacNhanMaViewModel
+@{
+    ViewData["Title"] = "Xác Nhận Mã";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Cafebook</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="~/css/QuenMatKhau.css" asp-append-version="true" />
+</head>
+<body class="qmk-page-body">
+
+    <div class="qmk-wrapper">
+        <div class="qmk-container">
+            
+            <div class="qmk-brand d-none d-md-flex">
+                <img src="/images/logo.png" alt="Cafebook Logo" class="qmk-logo" onerror="this.onerror=null; this.src='/images/default-logo.png';">
+                <div class="qmk-brand-text">
+                    <h1 class="qmk-brand-title">Cafebook</h1>
+                    <p class="qmk-brand-slogan">Khôi phục tài khoản</p>
+                </div>
+            </div>
+
+            <div class="qmk-form-area">
+                <a href="/Account/ForgotPassword" class="qmk-back-link">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Gửi lại mã?
+                </a>
+
+                <h2 class="qmk-title">@ViewData["Title"]</h2>
+                <p class="qmk-subtitle">Nhập mã 6 chữ số đã được gửi đến <strong>@Model.Input.Email</strong></p>
+
+                <form method="post">
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger p-2 mb-3 shadow-sm rounded" role="alert">
+                            <span class="material-symbols-outlined align-middle me-1 fs-5">error</span>
+                            @Model.ErrorMessage
+                        </div>
+                    }
+
+                    <input type="hidden" asp-for="Input.Email" />
+
+                    <div class="qmk-input-group">
+                        <span class="material-symbols-outlined qmk-input-icon">password</span>
+                        
+                        <input asp-for="Input.VerificationCode" class="qmk-input" autocomplete="one-time-code" aria-required="true" placeholder=" " />
+                        
+                        <label asp-for="Input.VerificationCode" class="qmk-label">Mã xác nhận (6 số)</label>
+                        
+                        <span asp-validation-for="Input.VerificationCode" class="text-danger small w-100 mt-1"></span>
+                    </div>
+
+                    <button type="submit" class="qmk-btn-submit">
+                        XÁC NHẬN MÃ
+                    </button>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

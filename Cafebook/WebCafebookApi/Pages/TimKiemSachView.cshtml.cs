@@ -1,10 +1,10 @@
 // Tập tin: WebCafebookApi/Pages/TimKiemSachView.cshtml.cs
+// Tập tin: WebCafebookApi/Pages/TimKiemSachView.cshtml.cs
 using CafebookModel.Model.ModelWeb.KhachHang;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,11 +14,15 @@ namespace WebCafebookApi.Pages
     public class TimKiemSachViewModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IDataProtector _protector;
 
-        [BindProperty(SupportsGet = true)] public int? IdTacGia { get; set; }
-        [BindProperty(SupportsGet = true)] public int? IdTheLoai { get; set; }
-        [BindProperty(SupportsGet = true)] public int? IdNXB { get; set; }
+        private readonly IDataProtector _protectorSach;
+        private readonly IDataProtector _protectorTacGia;
+        private readonly IDataProtector _protectorTheLoai;
+        private readonly IDataProtector _protectorNXB;
+
+        [BindProperty(SupportsGet = true)] public string? TokenTacGia { get; set; }
+        [BindProperty(SupportsGet = true)] public string? TokenTheLoai { get; set; }
+        [BindProperty(SupportsGet = true)] public string? TokenNXB { get; set; }
 
         public string PageTitle { get; set; } = "Thư Viện Sách";
         public string? PageDescription { get; set; }
@@ -29,18 +33,49 @@ namespace WebCafebookApi.Pages
         public TimKiemSachViewModel(IHttpClientFactory httpClientFactory, IDataProtectionProvider provider)
         {
             _httpClientFactory = httpClientFactory;
-            _protector = provider.CreateProtector("Cafebook.Sach.Id");
+
+            // Phải khớp tên Purpose với bên ChiTietSach
+            _protectorSach = provider.CreateProtector("Cafebook.Sach.Id");
+            _protectorTacGia = provider.CreateProtector("Cafebook.TacGia.Id");
+            _protectorTheLoai = provider.CreateProtector("Cafebook.TheLoai.Id");
+            _protectorNXB = provider.CreateProtector("Cafebook.NXB.Id");
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
             var sb = new StringBuilder("api/web/timkiemsach?");
+            bool hasValidParam = false;
 
-            if (IdTacGia.HasValue) sb.Append($"idTacGia={IdTacGia.Value}");
-            else if (IdTheLoai.HasValue) sb.Append($"idTheLoai={IdTheLoai.Value}");
-            else if (IdNXB.HasValue) sb.Append($"idNXB={IdNXB.Value}");
-            else
+            try
+            {
+                // Giải mã Token thành ID thật để gửi cho API
+                if (!string.IsNullOrEmpty(TokenTacGia))
+                {
+                    int idTacGia = int.Parse(_protectorTacGia.Unprotect(TokenTacGia));
+                    sb.Append($"idTacGia={idTacGia}");
+                    hasValidParam = true;
+                }
+                else if (!string.IsNullOrEmpty(TokenTheLoai))
+                {
+                    int idTheLoai = int.Parse(_protectorTheLoai.Unprotect(TokenTheLoai));
+                    sb.Append($"idTheLoai={idTheLoai}");
+                    hasValidParam = true;
+                }
+                else if (!string.IsNullOrEmpty(TokenNXB))
+                {
+                    int idNXB = int.Parse(_protectorNXB.Unprotect(TokenNXB));
+                    sb.Append($"idNXB={idNXB}");
+                    hasValidParam = true;
+                }
+            }
+            catch
+            {
+                ErrorMessage = "Đường dẫn không hợp lệ hoặc đã bị can thiệp.";
+                return Page();
+            }
+
+            if (!hasValidParam)
             {
                 return RedirectToPage("/ThuVienSachView");
             }
@@ -64,7 +99,8 @@ namespace WebCafebookApi.Pages
 
         public string EncryptId(int id)
         {
-            return _protector.Protect(id.ToString());
+            return _protectorSach.Protect(id.ToString());
         }
     }
 }
+

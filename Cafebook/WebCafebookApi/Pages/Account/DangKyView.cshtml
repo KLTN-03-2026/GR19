@@ -1,0 +1,78 @@
+﻿@page "/dang-ky"
+@model WebCafebookApi.Pages.Account.DangKyViewModel
+@{
+    ViewData["Title"] = "Đăng ký";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Cafebook</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/DangKyView.css" asp-append-version="true" />
+</head>
+<body class="cb-register-body">
+    <div class="cb-register-wrapper">
+        <div class="cb-register-container">
+
+            <div class="cb-register-brand">
+                <img src="/images/logo.png" alt="Cafebook Logo" class="cb-register-logo" onerror="this.src='/images/default-avatar.png';">
+                <div class="cb-brand-text">
+                    <h1 class="cb-brand-title">Cafebook</h1>
+                    <p class="cb-brand-slogan">Tham gia cộng đồng</p>
+                </div>
+            </div>
+
+            <div class="cb-register-form-area">
+                <h2 class="cb-register-title">@ViewData["Title"]</h2>
+                <p class="cb-register-subtitle">Tạo tài khoản mới để đặt bàn và thuê sách.</p>
+
+                <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger p-2 small"></div>
+
+                    <div class="cb-input-group">
+                        <span class="material-symbols-outlined cb-input-icon">phone</span>
+                        <input asp-for="Input.SoDienThoai" class="cb-input" placeholder=" " autocomplete="tel" />
+                        <label asp-for="Input.SoDienThoai" class="cb-label">Số điện thoại</label>
+                        <span asp-validation-for="Input.SoDienThoai" class="text-danger small mt-1 d-block w-100"></span>
+                    </div>
+
+                    <div class="cb-input-group">
+                        <span class="material-symbols-outlined cb-input-icon">mail</span>
+                        <input asp-for="Input.Email" class="cb-input" placeholder=" " autocomplete="email" />
+                        <label asp-for="Input.Email" class="cb-label">Email</label>
+                        <span asp-validation-for="Input.Email" class="text-danger small mt-1 d-block w-100"></span>
+                    </div>
+
+                    <div class="cb-input-group">
+                        <span class="material-symbols-outlined cb-input-icon">lock</span>
+                        <input asp-for="Input.Password" type="password" class="cb-input" placeholder=" " autocomplete="new-password" />
+                        <label asp-for="Input.Password" class="cb-label">Mật khẩu</label>
+                        <span asp-validation-for="Input.Password" class="text-danger small mt-1 d-block w-100"></span>
+                    </div>
+
+                    <div class="cb-input-group">
+                        <span class="material-symbols-outlined cb-input-icon">password</span>
+                        <input asp-for="Input.ConfirmPassword" type="password" class="cb-input" placeholder=" " autocomplete="new-password" />
+                        <label asp-for="Input.ConfirmPassword" class="cb-label">Xác nhận mật khẩu</label>
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger small mt-1 d-block w-100"></span>
+                    </div>
+
+                    <button type="submit" class="cb-btn-register mt-3">ĐĂNG KÝ</button>
+
+                    <div class="cb-login-text">
+                        Đã có tài khoản? <a asp-page="/account/DangNhapView" class="cb-login-link">Quay lại Đăng nhập</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

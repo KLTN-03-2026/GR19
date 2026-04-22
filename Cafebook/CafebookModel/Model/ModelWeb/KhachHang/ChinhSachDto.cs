@@ -17,6 +17,7 @@
         // Dịch vụ (Giá trị mặc định để phòng hờ)
         public decimal PhiThue { get; set; } = 15000;
         public decimal PhiTraTreMoiNgay { get; set; } = 5000;
+        public string SoNgayMuonToiDa { get; set; } = "7";
 
         // Tích điểm
         public decimal DiemNhanVND { get; set; } = 10000;

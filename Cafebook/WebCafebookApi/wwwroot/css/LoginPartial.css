@@ -1,0 +1,59 @@
+﻿/* Hình đại diện trên Navbar */
+.cb-login-avatar {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    margin-right: 8px;
+    border: 1px solid #E0D5C1; /* Bo viền nhẹ cho đẹp */
+}
+
+/* Tên người dùng */
+.cb-user-greeting {
+    font-weight: 500;
+    color: var(--cf-dark-brown, #4E342E);
+}
+
+/* Menu Dropdown */
+.cb-dropdown-menu {
+    border-radius: 12px;
+    border: 1px solid #F0EBE1;
+    padding: 0.5rem 0;
+    min-width: 240px;
+}
+
+/* Các item trong menu */
+.cb-dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1.5rem;
+    color: var(--cf-text, #4E342E);
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+    .cb-dropdown-item:hover {
+        background-color: #F9F6EE; /* Đổi màu nền nhẹ khi hover */
+        color: var(--cf-orange, #D27D2D);
+    }
+
+    /* Riêng nút Đăng xuất */
+    .cb-dropdown-item.text-danger:hover {
+        background-color: #FFF0F0 !important;
+        color: #DC3545 !important;
+    }
+
+/* Căn chỉnh Icon Material */
+.cb-dropdown-icon {
+    font-size: 1.3rem;
+    margin-right: 12px;
+}
+
+/* Nút Đăng nhập / Đăng ký */
+.cb-auth-link {
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+    .cb-auth-link:hover {
+        color: var(--cf-orange, #D27D2D) !important;
+    }

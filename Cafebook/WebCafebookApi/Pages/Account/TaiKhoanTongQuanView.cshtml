@@ -1,0 +1,70 @@
+﻿@page "/tai-khoan/tong-quan"
+@model WebCafebookApi.Pages.Account.TaiKhoanTongQuanViewModel
+@{
+    ViewData["Title"] = "Tổng Quan Tài Khoản";
+    Layout = "_Layout_Account";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/TaiKhoanTongQuan.css" asp-append-version="true" />
+}
+
+<h3 class="tktq-page-title">Chào mừng, @Model.HoTen!</h3>
+<p class="tktq-page-lead">Quản lý điểm tích lũy và theo dõi hoạt động mua sắm của bạn.</p>
+
+<hr class="my-4" style="opacity: 0.1;" />
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card tktq-card h-100 p-2">
+            <div class="card-body">
+                <div class="tktq-icon-wrapper gold">
+                    <span class="material-symbols-outlined fs-2">stars</span>
+                </div>
+                <h6 class="tktq-card-title">Điểm tích lũy hiện có</h6>
+                <h2 class="tktq-card-value">@Model.Overview.DiemTichLuy.ToString("N0") <span style="font-size: 1rem; color: #757575;">điểm</span></h2>
+                
+                <div class="tktq-card-subtext mt-3">
+                    <span class="material-symbols-outlined align-middle fs-6 me-1">redeem</span>
+                    Tương đương: @Model.Overview.GiaTriQuyDoiVND.ToString("N0") đ
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card tktq-card h-100 p-2">
+            <div class="card-body">
+                <div class="tktq-icon-wrapper orange">
+                    <span class="material-symbols-outlined fs-2">account_balance_wallet</span>
+                </div>
+                <h6 class="tktq-card-title">Tổng chi tiêu</h6>
+                <h2 class="tktq-card-value">@Model.Overview.TongChiTieu.ToString("N0") <span style="font-size: 1rem; color: #757575;">đ</span></h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card tktq-card h-100 p-2">
+            <div class="card-body">
+                <div class="tktq-icon-wrapper blue">
+                    <span class="material-symbols-outlined fs-2">receipt_long</span>
+                </div>
+                <h6 class="tktq-card-title">Hóa đơn hoàn thành</h6>
+                <h2 class="tktq-card-value">@Model.Overview.TongHoaDon.ToString("N0") <span style="font-size: 1rem; color: #757575;">đơn</span></h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card tktq-card h-100 p-2">
+            <div class="card-body">
+                <div class="tktq-icon-wrapper green">
+                    <span class="material-symbols-outlined fs-2">event_available</span>
+                </div>
+                <h6 class="tktq-card-title">Ngày tham gia hệ thống</h6>
+                <h2 class="tktq-card-value" style="font-size: 1.6rem; padding-top: 4px;">@Model.Overview.NgayTao.ToString("dd/MM/yyyy")</h2>
+            </div>
+        </div>
+    </div>
+</div>
