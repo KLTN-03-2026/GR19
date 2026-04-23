@@ -21,7 +21,7 @@ namespace AppCafebookApi.View.nhanvien.pages
     public partial class ThanhToanView : Page
     {
         private readonly int _idHoaDonGoc;
-        private static readonly HttpClient _httpClient;
+        //private static readonly HttpClient ApiClient.Instance;
         private bool _isDataLoading = true;
         private bool _isSettingCustomer = false;
 
@@ -57,17 +57,17 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         // ======================================================
         // NÂNG CẤP 1: DYNAMIC URL (Tuyệt đối không hardcode)
-        // ======================================================
+        /*======================================================
         static ThanhToanView()
         {
-            _httpClient = new HttpClient();
+            ApiClient.Instance = new HttpClient();
             string? apiUrl = AppConfigManager.GetApiServerUrl();
             if (!string.IsNullOrWhiteSpace(apiUrl))
             {
-                _httpClient.BaseAddress = new Uri(apiUrl);
+                ApiClient.Instance.BaseAddress = new Uri(apiUrl);
             }
         }
-
+        */
         public ThanhToanView(int idHoaDon)
         {
             InitializeComponent();
@@ -96,11 +96,11 @@ namespace AppCafebookApi.View.nhanvien.pages
             // Gắn Token
             if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
             // Chặn gọi API nếu chưa có URL (Chống crash)
-            if (_httpClient.BaseAddress == null)
+            if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Hệ thống chưa được cấu hình URL Server. Vui lòng kiểm tra file AppConfig.json!", "Thiếu cấu hình", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -137,7 +137,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             _isDataLoading = true;
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<ThanhToanViewDto>($"api/app/nhanvien/thanhtoan/load/{_idHoaDonGoc}");
+                var response = await ApiClient.Instance.GetFromJsonAsync<ThanhToanViewDto>($"api/app/nhanvien/thanhtoan/load/{_idHoaDonGoc}");
                 if (response == null)
                 {
                     MessageBox.Show("Không thể tải dữ liệu thanh toán.");
@@ -490,7 +490,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             btnXacNhanThanhToan.IsEnabled = false;
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/app/nhanvien/thanhtoan/find-or-create-customer", query);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/nhanvien/thanhtoan/find-or-create-customer", query);
                 if (response.IsSuccessStatusCode)
                 {
                     var resultDto = await response.Content.ReadFromJsonAsync<KhachHangTimKiemDto>();
@@ -584,7 +584,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (_availableKms.Any()) return;
             try
             {
-                var kms = await _httpClient.GetFromJsonAsync<List<KhuyenMaiHienThiThanhToanDto>>($"api/app/nhanvien/thanhtoan/khuyenmai-available/{_idHoaDonGoc}");
+                var kms = await ApiClient.Instance.GetFromJsonAsync<List<KhuyenMaiHienThiThanhToanDto>>($"api/app/nhanvien/thanhtoan/khuyenmai-available/{_idHoaDonGoc}");
 
                 _availableKms = kms ?? new List<KhuyenMaiHienThiThanhToanDto>();
             }
@@ -719,7 +719,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             btnXacNhanThanhToan.IsEnabled = false;
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/app/nhanvien/thanhtoan/pay", request);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/nhanvien/thanhtoan/pay", request);
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());

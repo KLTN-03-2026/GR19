@@ -15,22 +15,22 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDonXinNghiView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyDonXinNghiGridDto> _allDonNghiList = new List<QuanLyDonXinNghiGridDto>();
         private QuanLyDonXinNghiGridDto? _selectedDon = null;
-
+        /*
         static QuanLyDonXinNghiView()
         {
             string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
             httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
         }
-
+        */
         public QuanLyDonXinNghiView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_DON_XIN_NGHI"))
             {
@@ -47,7 +47,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
             try
             {
-                var response = await httpClient.GetFromJsonAsync<List<QuanLyDonXinNghiGridDto>>("api/app/quanly-donxinnghi/search");
+                var response = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDonXinNghiGridDto>>("api/app/quanly-donxinnghi/search");
                 if (response != null)
                 {
                     _allDonNghiList = response;
@@ -130,7 +130,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
             try
             {
-                var affectedShifts = await httpClient.GetFromJsonAsync<List<AffectedShiftDto>>($"api/app/quanly-donxinnghi/affected-shifts/{_selectedDon.IdDonXinNghi}");
+                var affectedShifts = await ApiClient.Instance.GetFromJsonAsync<List<AffectedShiftDto>>($"api/app/quanly-donxinnghi/affected-shifts/{_selectedDon.IdDonXinNghi}");
 
                 if (affectedShifts != null)
                 {
@@ -180,7 +180,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
             try
             {
-                var response = await httpClient.PutAsJsonAsync($"api/app/quanly-donxinnghi/{urlSegment}/{_selectedDon.IdDonXinNghi}", actionDto);
+                var response = await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-donxinnghi/{urlSegment}/{_selectedDon.IdDonXinNghi}", actionDto);
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show($"Đã {actionName} đơn thành công!", "Thông báo");

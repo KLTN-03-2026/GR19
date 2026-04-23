@@ -9,11 +9,13 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/datban")]
     [ApiController]
+    [AllowAnonymous]
     public class DatBanController : ControllerBase
     {
         private readonly CafebookDbContext _context;

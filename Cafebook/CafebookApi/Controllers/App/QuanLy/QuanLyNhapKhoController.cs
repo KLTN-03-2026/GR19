@@ -10,11 +10,13 @@ using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-nhapkho")]
     [ApiController]
+    [Authorize]
     public class QuanLyNhapKhoController : ControllerBase
     {
         private readonly CafebookDbContext _context;

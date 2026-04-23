@@ -11,11 +11,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-sach")]
     [ApiController]
+    [Authorize]
     public class QuanLySachController : ControllerBase
     {
         private readonly CafebookDbContext _context;

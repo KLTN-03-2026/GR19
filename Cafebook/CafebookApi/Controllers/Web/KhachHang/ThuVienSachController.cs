@@ -1,15 +1,17 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelWeb.KhachHang;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using System;
 
 namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/thuvien")]
     [ApiController]
+    [AllowAnonymous]
     public class ThuVienSachController : ControllerBase
     {
         private readonly CafebookDbContext _context;

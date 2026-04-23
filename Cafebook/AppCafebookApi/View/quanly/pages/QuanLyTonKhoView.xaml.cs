@@ -16,15 +16,15 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyTonKhoView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyTonKhoDto> _tonKhoList = new();
 
-        static QuanLyTonKhoView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyTonKhoView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
         public QuanLyTonKhoView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             // BẢO MẬT LỚP 1: Chìa khóa Cổng
             bool hasAnyPermission = AuthService.CoQuyen("FULL_QL", "QL_TON_KHO", "QL_NGUYEN_LIEU", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP", "QL_DON_VI_CHUYEN_DOI");
@@ -64,7 +64,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l1) l1.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyTonKhoDto>>("api/app/quanly-kho/tonkho");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyTonKhoDto>>("api/app/quanly-kho/tonkho");
                 if (res != null) { _tonKhoList = res; FilterData(); }
             }
             catch { MessageBox.Show("Lỗi kết nối API"); }

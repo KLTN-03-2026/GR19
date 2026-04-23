@@ -3,6 +3,7 @@ using CafebookModel.Model.ModelApp.NhanVien.DatBan;
 using CafebookModel.Model.ModelEntities;
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
@@ -12,6 +13,7 @@ namespace AppCafebookApi.Controllers.app.NhanVien
 {
     [Route("api/app/datban")]
     [ApiController]
+    [Authorize]
     public class DatBanController : ControllerBase
     {
         private readonly CafebookDbContext _context;

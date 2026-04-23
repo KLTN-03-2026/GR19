@@ -24,7 +24,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class DatBanView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
 
         private ObservableCollection<PhieuDatBanDto> PhieuDatBans { get; set; }
         private ObservableCollection<BanDatBanDto> AvailableBans { get; set; }
@@ -43,7 +43,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         private (TimeSpan Open, TimeSpan Close) _openingHours = (new TimeSpan(6, 0, 0), new TimeSpan(23, 0, 0));
         private List<string> _validHours = new List<string>();
         private List<string> _validMinutes = Enumerable.Range(0, 60).Select(m => m.ToString("00")).ToList();
-
+        /*
         static DatBanView()
         {
             httpClient = new HttpClient();
@@ -53,7 +53,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 httpClient.BaseAddress = new Uri(apiUrl);
             }
         }
-
+        */
         public DatBanView()
         {
             InitializeComponent();
@@ -88,10 +88,10 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
-            if (httpClient.BaseAddress == null)
+            if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Chưa cấu hình URL Server.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -143,7 +143,11 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async Task LoadAllDataAsync()
         {
-           LoadingOverlay.Visibility = Visibility.Visible;
+            if (AuthService.CurrentUser == null || string.IsNullOrEmpty(AuthService.AuthToken))
+            {
+                return;
+            }
+            LoadingOverlay.Visibility = Visibility.Visible;
 
             // Đợi tất cả API tải xong hoàn toàn
             await Task.WhenAll(
@@ -171,6 +175,11 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async Task SilentlyRefreshDataAsync()
         {
+            if (AuthService.CurrentUser == null || string.IsNullOrEmpty(AuthService.AuthToken))
+            {
+                _autoRefreshTimer?.Stop();
+                return;
+            }
             try
             {
                 await LoadPhieuDatBansAsync();
@@ -186,7 +195,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             try
             {
-                var data = await httpClient.GetFromJsonAsync<List<PhieuDatBanDto>>("api/app/datban/list", _jsonOptions);
+                var data = await ApiClient.Instance.GetFromJsonAsync<List<PhieuDatBanDto>>("api/app/datban/list", _jsonOptions);
                 _allPhieuDatBansCache.Clear();
                 if (data != null) _allPhieuDatBansCache = data;
             }
@@ -197,7 +206,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             try
             {
-                var data = await httpClient.GetFromJsonAsync<List<BanDatBanDto>>("api/app/datban/available-bans", _jsonOptions);
+                var data = await ApiClient.Instance.GetFromJsonAsync<List<BanDatBanDto>>("api/app/datban/available-bans", _jsonOptions);
                 _allBansCache.Clear();
                 if (data != null) _allBansCache = data;
             }
@@ -208,7 +217,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             try
             {
-                _allKhuVucCache = (await httpClient.GetFromJsonAsync<List<KhuVucDatBanDto>>("api/app/datban/khuvuc", _jsonOptions)) ?? new List<KhuVucDatBanDto>();
+                _allKhuVucCache = (await ApiClient.Instance.GetFromJsonAsync<List<KhuVucDatBanDto>>("api/app/datban/khuvuc", _jsonOptions)) ?? new List<KhuVucDatBanDto>();
 
                 var filterList = new List<KhuVucDatBanDto>(_allKhuVucCache);
                 filterList.Insert(0, new KhuVucDatBanDto { IdKhuVuc = 0, TenKhuVuc = "Tất cả Khu vực" });
@@ -224,7 +233,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             try
             {
-                string settingValue = await httpClient.GetStringAsync("api/app/datban/opening-hours");
+                string settingValue = await ApiClient.Instance.GetStringAsync("api/app/datban/opening-hours");
                 ParseOpeningHoursClient(settingValue);
             }
             catch
@@ -475,7 +484,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (!ValidateForm(out var dto)) return;
             try
             {
-                var response = await httpClient.PostAsJsonAsync("api/app/datban/create-staff", dto);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/datban/create-staff", dto);
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Thêm phiếu đặt bàn thành công.");
@@ -492,7 +501,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             dto.IdPhieuDatBan = _selectedPhieu.IdPhieuDatBan;
             try
             {
-                var response = await httpClient.PutAsJsonAsync($"api/app/datban/update/{dto.IdPhieuDatBan}", dto);
+                var response = await ApiClient.Instance.PutAsJsonAsync($"api/app/datban/update/{dto.IdPhieuDatBan}", dto);
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Cập nhật phiếu thành công.");
@@ -526,7 +535,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             var request = new XacNhanKhachDenRequestDto { IdPhieuDatBan = _selectedPhieu.IdPhieuDatBan, IdNhanVien = AuthService.CurrentUser.IdNhanVien };
             try
             {
-                var response = await httpClient.PostAsJsonAsync("api/app/datban/xacnhan-den", request);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/datban/xacnhan-den", request);
                 if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<XacNhanKhachDenResponseDto>(_jsonOptions);
@@ -553,7 +562,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             try
             {
-                var response = await httpClient.PostAsync($"api/app/datban/huy/{idPhieu}", null);
+                var response = await ApiClient.Instance.PostAsync($"api/app/datban/huy/{idPhieu}", null);
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show(isDelete ? "Xóa (hủy) phiếu thành công." : "Hủy phiếu thành công.");
@@ -650,7 +659,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             }
             try
             {
-                var results = await httpClient.GetFromJsonAsync<List<KhachHangLookupDto>>($"api/app/datban/search-customer?query={query}", _jsonOptions);
+                var results = await ApiClient.Instance.GetFromJsonAsync<List<KhachHangLookupDto>>($"api/app/datban/search-customer?query={query}", _jsonOptions);
                 if (results != null && results.Any())
                 {
                     lbKhachHangResults.ItemsSource = results;

@@ -8,11 +8,13 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.NhanVien
 {
     [Route("api/app/chamcong")]
     [ApiController]
+    [Authorize]
     public class ChamCongController : ControllerBase
     {
         private readonly CafebookDbContext _context;

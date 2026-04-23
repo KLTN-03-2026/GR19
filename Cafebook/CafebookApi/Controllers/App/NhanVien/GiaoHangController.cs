@@ -10,11 +10,13 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Net.Mail;
 using System.Net;
+using System.Security.Claims; // Cần thiết để lấy ClaimTypes
 
 namespace CafebookApi.Controllers.App.NhanVien
 {
     [Route("api/app/nhanvien/giaohang")]
     [ApiController]
+    [Authorize]
     public class GiaoHangController : ControllerBase
     {
         private readonly CafebookDbContext _context;
@@ -26,12 +28,12 @@ namespace CafebookApi.Controllers.App.NhanVien
 
         private int GetCurrentUserId()
         {
-            var idClaim = User.Claims.FirstOrDefault(c => c.Type == "IdNhanVien");
+            // ĐÃ SỬA: Hỗ trợ đọc cả Claim tiêu chuẩn NameIdentifier và IdNhanVien
+            var idClaim = User.Claims.FirstOrDefault(c => c.Type == "IdNhanVien" || c.Type == ClaimTypes.NameIdentifier);
             if (idClaim != null && int.TryParse(idClaim.Value, out int idNhanVien)) return idNhanVien;
             return 0;
         }
 
-        // TỐI ƯU: Đảm bảo Dictionary không chứa value Null bằng (c.GiaTri ?? "")
         private async Task<Dictionary<string, string>> GetGeneralSettingsAsync()
         {
             return await _context.CaiDats.AsNoTracking().ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri ?? "");
@@ -51,7 +53,7 @@ namespace CafebookApi.Controllers.App.NhanVien
 
                 if (!string.IsNullOrEmpty(status) && status != "Tất cả")
                 {
-                    if (status == "Đã Hủy") query = query.Where(h => h.TrangThai == "Đã hủy");
+                    if (status == "Đã hủy") query = query.Where(h => h.TrangThai == "Đã hủy");
                     else query = query.Where(h => h.TrangThaiGiaoHang == status);
                 }
 
@@ -112,13 +114,17 @@ namespace CafebookApi.Controllers.App.NhanVien
                 if (dto.IdNguoiGiaoHang.HasValue && string.IsNullOrEmpty(dto.TrangThaiGiaoHang))
                     hoaDon.TrangThaiGiaoHang = "Chờ lấy hàng";
 
-                if (dto.TrangThaiGiaoHang == "Hủy") hoaDon.TrangThai = "Đã hủy";
+                if (dto.TrangThaiGiaoHang == "Hủy" || dto.TrangThaiGiaoHang == "Đã hủy")
+                    hoaDon.TrangThai = "Đã hủy";
 
-                if (dto.TrangThaiGiaoHang == "Hoàn thành" && hoaDon.TrangThai != "Đã thanh toán")
+                if (dto.TrangThaiGiaoHang == "Trả hàng")
+                    hoaDon.TrangThai = "Đã hủy";
+
+                if (dto.TrangThaiGiaoHang == "Đã giao" && hoaDon.TrangThai != "Đã thanh toán")
                 {
                     hoaDon.TrangThai = "Đã thanh toán";
                     hoaDon.ThoiGianThanhToan = DateTime.Now;
-                    hoaDon.PhuongThucThanhToan = "COD";
+                    if (string.IsNullOrEmpty(hoaDon.PhuongThucThanhToan)) hoaDon.PhuongThucThanhToan = "COD";
                 }
 
                 var settingsDict = await GetGeneralSettingsAsync();
@@ -201,12 +207,12 @@ namespace CafebookApi.Controllers.App.NhanVien
 
             var dto = new PhieuGoiMonPrintDto
             {
-                IdPhieu = $"HD{hoaDon.IdHoaDon:D6}",
+                IdPhieu = hoaDon.IdHoaDon.ToString(),
                 TenQuan = settings.GetValueOrDefault("ThongTin_TenQuan", "Cafebook"),
                 DiaChiQuan = settings.GetValueOrDefault("ThongTin_DiaChi", "N/A"),
                 SdtQuan = settings.GetValueOrDefault("ThongTin_SoDienThoai", "N/A"),
                 NgayTao = hoaDon.ThoiGianTao,
-                TenNhanVien = hoaDon.NhanVienTao?.HoTen ?? "Web",
+                TenNhanVien = hoaDon.NhanVienTao?.HoTen ?? "Web Online",
                 SoBan = hoaDon.LoaiHoaDon,
                 GhiChu = $"KH: {hoaDon.KhachHang?.HoTen ?? "Khách vãng lai"}\nSĐT: {hoaDon.SoDienThoaiGiaoHang}\nĐịa chỉ: {hoaDon.DiaChiGiaoHang}\nGhi chú: {hoaDon.GhiChu}",
 
@@ -257,7 +263,8 @@ namespace CafebookApi.Controllers.App.NhanVien
             {
                 _context.ThongBaos.Add(new ThongBao
                 {
-                    IdNhanVienTao = idNhanVien,
+                    // ĐÃ SỬA: Nếu idNhanVien <= 0, ta truyền null để tránh lỗi Foreign Key
+                    IdNhanVienTao = idNhanVien > 0 ? idNhanVien : (int?)null,
                     NoiDung = $"Đơn Giao Hàng #{idHoaDon} cần chuẩn bị.",
                     ThoiGianTao = DateTime.Now,
                     LoaiThongBao = "PhieuGoiMon",
@@ -272,7 +279,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         {
             try
             {
-                // Lấy thông tin cấu hình từ DB
                 string tenQuan = settings.GetValueOrDefault("ThongTin_TenQuan", "Cafebook");
                 string diaChiQuan = settings.GetValueOrDefault("ThongTin_DiaChi", "Đang cập nhật");
                 string supportPhone = settings.GetValueOrDefault("ThongTin_SoDienThoai", "Đang cập nhật");
@@ -284,15 +290,14 @@ namespace CafebookApi.Controllers.App.NhanVien
                 if (status == "Đang chuẩn bị")
                 {
                     iconTrangThai = "🍳";
-                    noiDungChinh = $"Đơn hàng <strong>HD{idHoaDon:D6}</strong> của bạn đã được tiếp nhận và đang được bộ phận Bếp chuẩn bị. Chúng tôi sẽ giao hàng trong thời gian sớm nhất!";
+                    noiDungChinh = $"Đơn hàng <strong>#{idHoaDon}</strong> của bạn đã được tiếp nhận và đang được bộ phận Bếp chuẩn bị. Chúng tôi sẽ giao hàng trong thời gian sớm nhất!";
                 }
                 else
                 {
                     iconTrangThai = "🛵";
-                    noiDungChinh = $"Đơn hàng <strong>HD{idHoaDon:D6}</strong> của bạn đã được giao cho shipper <strong>{shipperName}</strong>. Vui lòng chú ý điện thoại để nhận hàng nhé!";
+                    noiDungChinh = $"Đơn hàng <strong>#{idHoaDon}</strong> của bạn đã được giao cho shipper <strong>{shipperName}</strong>. Vui lòng chú ý điện thoại để nhận hàng nhé!";
                 }
 
-                // Giao diện email đồng bộ Material Design - Cafebook
                 string body = $@"
                 <!DOCTYPE html>
                 <html lang=""vi"">
@@ -335,7 +340,6 @@ namespace CafebookApi.Controllers.App.NhanVien
                 </body>
                 </html>";
 
-                // Logic gửi mail giữ nguyên
                 string host = settings.GetValueOrDefault("Smtp_Host", "smtp.gmail.com");
                 string username = settings.GetValueOrDefault("Smtp_Username", "");
                 string password = settings.GetValueOrDefault("Smtp_Password", "");
@@ -345,7 +349,7 @@ namespace CafebookApi.Controllers.App.NhanVien
 
                 if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password)) return;
 
-                var mailMessage = new MailMessage { From = new MailAddress(username, fromName), Subject = $"[{tenQuan}] Cập nhật đơn hàng HD{idHoaDon:D6}", Body = body, IsBodyHtml = true };
+                var mailMessage = new MailMessage { From = new MailAddress(username, fromName), Subject = $"[{tenQuan}] Cập nhật đơn hàng #{idHoaDon}", Body = body, IsBodyHtml = true };
                 mailMessage.To.Add(new MailAddress(email));
 
                 using var smtpClient = new SmtpClient(host, port) { Credentials = new NetworkCredential(username, password), EnableSsl = enableSsl };

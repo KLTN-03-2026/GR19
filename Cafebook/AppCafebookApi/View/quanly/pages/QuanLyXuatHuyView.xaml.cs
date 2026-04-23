@@ -16,20 +16,20 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyXuatHuyView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyXuatHuyGridDto> _phieuHuyList = new();
         private List<LookupXuatHuyDto> _nlList = new();
         private ObservableCollection<QuanLyChiTietXuatHuyDto> _chiTietList = new();
 
         private bool _isViewing = false;
 
-        static QuanLyXuatHuyView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyXuatHuyView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyXuatHuyView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("QL_XUAT_HUY")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
 
@@ -51,7 +51,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var nl = await httpClient.GetFromJsonAsync<List<LookupXuatHuyDto>>("api/app/quanly-xuathuy/lookup-nl");
+                var nl = await ApiClient.Instance.GetFromJsonAsync<List<LookupXuatHuyDto>>("api/app/quanly-xuathuy/lookup-nl");
                 if (nl != null && FindName("cmbNguyenLieu") is ComboBox cb) { _nlList = nl; cb.ItemsSource = _nlList; }
 
                 await LoadPhieuHuyAsync();
@@ -64,7 +64,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyXuatHuyGridDto>>("api/app/quanly-xuathuy");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyXuatHuyGridDto>>("api/app/quanly-xuathuy");
                 if (res != null) { _phieuHuyList = res; FilterData(); }
             }
             catch { }
@@ -90,7 +90,7 @@ namespace AppCafebookApi.View.quanly.pages
 
                 try
                 {
-                    var detail = await httpClient.GetFromJsonAsync<QuanLyXuatHuyDetailDto>($"api/app/quanly-xuathuy/{item.IdPhieuXuatHuy}");
+                    var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLyXuatHuyDetailDto>($"api/app/quanly-xuathuy/{item.IdPhieuXuatHuy}");
                     if (detail != null)
                     {
                         if (FindName("txtLyDoChung") is TextBox t1) { t1.Text = detail.LyDoHuy; t1.IsReadOnly = true; }
@@ -164,7 +164,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.PostAsJsonAsync("api/app/quanly-xuathuy", dto);
+                var res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-xuathuy", dto);
                 if (res.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Tạo phiếu xuất hủy thành công. Đã trừ tồn kho!");

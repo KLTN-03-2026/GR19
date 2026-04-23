@@ -1,0 +1,98 @@
+﻿@page "dang-nhap-nhan-vien"
+@model WebCafebookApi.Pages.employee.DangNhapEmployeeModel
+@{
+    ViewData["Title"] = "Đăng nhập Hệ thống";
+    Layout = null; 
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Nhân viên Cafebook</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/DangNhapEmployee.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+</head>
+<body class="emplogin-body">
+
+    <div class="emplogin-wrapper">
+        <div class="emplogin-container">
+
+            <div class="emplogin-brand">
+                <img src="/images/logo.png" alt="Cafebook Staff" class="emplogin-logo" onerror="this.src='/images/default-avatar.png';">
+                <div class="emplogin-brand-text">
+                    <h1 class="emplogin-brand-title">Workspace</h1>
+                    <p class="emplogin-brand-slogan">Hệ thống Nhân viên Cafebook</p>
+                </div>
+            </div>
+
+            <div class="emplogin-form-area">
+                <a href="/" class="emplogin-back-link">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Về Trang Chủ
+                </a>
+
+                <h2 class="emplogin-title">@ViewData["Title"]</h2>
+                <p class="emplogin-subtitle">Dành riêng cho nhân viên và quản lý.</p>
+
+                <form method="post" id="employeeLoginForm">
+                    <div class="emplogin-input-group">
+                        <span class="material-symbols-outlined emplogin-input-icon">badge</span>
+                        <input asp-for="Input.TenDangNhap" class="emplogin-input" placeholder=" " autocomplete="username" />
+                        <label asp-for="Input.TenDangNhap" class="emplogin-label">Tài khoản | Email | SĐT</label>
+                        <span asp-validation-for="Input.TenDangNhap" class="text-danger small mt-1 d-block w-100"></span>
+                    </div>
+
+                    <div class="emplogin-input-group">
+                        <span class="material-symbols-outlined emplogin-input-icon">lock</span>
+                        <input asp-for="Input.MatKhau" type="password" class="emplogin-input" placeholder=" " autocomplete="current-password" />
+                        <label asp-for="Input.MatKhau" class="emplogin-label">Mật khẩu</label>
+                        <span asp-validation-for="Input.MatKhau" class="text-danger small mt-1 d-block w-100"></span>
+                    </div>
+
+                    <button type="submit" class="emplogin-btn-login" id="btnLogin">
+                        <span class="btn-text">ĐĂNG NHẬP VÀO HỆ THỐNG</span>
+                        <span class="spinner-border spinner-border-sm d-none ms-2" role="status" aria-hidden="true" id="loginSpinner"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function () {
+        // Quy tắc 7: Xử lý hiển thị SweetAlert2 thay cho Alert mặc định
+        var errorMsg = '@Html.Raw(Model.ErrorMessage?.Replace("'", "\\'"))';
+        if (errorMsg && errorMsg.trim() !== '') {
+        Swal.fire({
+        icon: 'error',
+        title: 'Đăng nhập thất bại',
+        text: errorMsg,
+        confirmButtonColor: '#D32F2F',
+        confirmButtonText: 'Thử lại'
+        });
+        }
+
+        // Chống Double-Tap / Spam Click
+        $('#employeeLoginForm').on('submit', function (e) {
+        if ($(this).valid()) {
+        var btn = $('#btnLogin');
+        btn.prop('disabled', true);
+        btn.find('.btn-text').text('ĐANG XỬ LÝ...');
+        $('#loginSpinner').removeClass('d-none');
+        }
+        });
+        });
+    </script>
+</body>
+</html>

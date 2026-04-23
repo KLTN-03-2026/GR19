@@ -17,7 +17,7 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyPhanQuyenView : Page
     {
-        private static readonly HttpClient httpClient;
+       //private static readonly HttpClient httpClient;
 
         // Class Wrapper dùng để Binding Checkbox lên giao diện (Thêm INotifyPropertyChanged)
         public class QuyenWrapper : INotifyPropertyChanged
@@ -69,12 +69,13 @@ namespace AppCafebookApi.View.quanly.pages
         private List<NhomQuyenWrapper> _danhSachNhomQuyen = new List<NhomQuyenWrapper>();
         private PhanQuyen_NhanVienDto? _selectedNhanVien = null;
         private string _currentRoleScope = string.Empty;
+        /*
         static QuanLyPhanQuyenView()
         {
             string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
             httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
         }
-
+        */
         public QuanLyPhanQuyenView()
         {
             InitializeComponent();
@@ -84,7 +85,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_PHAN_QUYEN"))
@@ -104,7 +105,7 @@ namespace AppCafebookApi.View.quanly.pages
 
             try
             {
-                var nhanViens = await httpClient.GetFromJsonAsync<List<PhanQuyen_NhanVienDto>>("api/app/quanly-phanquyen/nhanvien");
+                var nhanViens = await ApiClient.Instance.GetFromJsonAsync<List<PhanQuyen_NhanVienDto>>("api/app/quanly-phanquyen/nhanvien");
                 if (nhanViens != null)
                 {
                     _allNhanViens = nhanViens;
@@ -119,7 +120,7 @@ namespace AppCafebookApi.View.quanly.pages
                     }
                 }
 
-                var allQuyen = await httpClient.GetFromJsonAsync<List<PhanQuyen_QuyenDto>>("api/app/quanly-phanquyen/quyen");
+                var allQuyen = await ApiClient.Instance.GetFromJsonAsync<List<PhanQuyen_QuyenDto>>("api/app/quanly-phanquyen/quyen");
                 if (allQuyen != null)
                 {
                     _danhSachNhomQuyen = allQuyen
@@ -262,7 +263,7 @@ namespace AppCafebookApi.View.quanly.pages
                 if (loading != null) loading.Visibility = Visibility.Visible;
                 try
                 {
-                    var activeIds = await httpClient.GetFromJsonAsync<List<string>>($"api/app/quanly-phanquyen/nhanvien/{selected.IdNhanVien}/quyen");
+                    var activeIds = await ApiClient.Instance.GetFromJsonAsync<List<string>>($"api/app/quanly-phanquyen/nhanvien/{selected.IdNhanVien}/quyen");
                     foreach (var nhom in _danhSachNhomQuyen)
                         foreach (var q in nhom.Quyens)
                             q.IsSelected = activeIds?.Contains(q.IdQuyen) ?? false;
@@ -295,7 +296,7 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 var req = new PhanQuyen_SaveRequestDto { SelectedQuyenIds = selectedIds };
-                var response = await httpClient.PostAsJsonAsync($"api/app/quanly-phanquyen/nhanvien/{_selectedNhanVien.IdNhanVien}/quyen", req);
+                var response = await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-phanquyen/nhanvien/{_selectedNhanVien.IdNhanVien}/quyen", req);
 
                 if (response.IsSuccessStatusCode)
                 {

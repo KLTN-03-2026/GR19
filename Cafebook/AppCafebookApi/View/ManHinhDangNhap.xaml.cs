@@ -18,17 +18,14 @@ namespace AppCafebookApi.View
             InitializeComponent();
         }
 
-        // Thêm sự kiện Loaded để kiểm tra URL lúc mới mở form
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             txtUsername.Focus();
 
-            // Kiểm tra xem đã có cấu hình API chưa
             string? currentUrl = AppConfigManager.GetApiServerUrl();
 
             if (string.IsNullOrWhiteSpace(currentUrl))
             {
-                // 1. Chưa có cấu hình (Lần đầu chạy) -> Hiện nút và bắt buộc cài đặt
                 btnSettings.Visibility = Visibility.Visible;
 
                 MessageBox.Show("Đây là lần đầu chạy ứng dụng. Vui lòng thiết lập địa chỉ Server API để kết nối!", "Yêu cầu thiết lập", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -36,7 +33,6 @@ namespace AppCafebookApi.View
                 var settingWindow = new CaiDatServerWindow();
                 settingWindow.ShowDialog();
 
-                // 2. Kiểm tra lại ngay sau khi tắt form Cài đặt: Nếu người dùng đã nhập và lưu thành công thì ẩn nút đi
                 if (!string.IsNullOrWhiteSpace(AppConfigManager.GetApiServerUrl()))
                 {
                     btnSettings.Visibility = Visibility.Collapsed;
@@ -44,12 +40,10 @@ namespace AppCafebookApi.View
             }
             else
             {
-                // 3. Đã có cấu hình từ trước -> Ẩn nút Cài đặt đi cho gọn giao diện
                 btnSettings.Visibility = Visibility.Collapsed;
             }
         }
 
-        // Thêm hàm xử lý nút mở Cài đặt (nút này sẽ thêm ở XAML bước 2)
         private void BtnSettings_Click(object sender, RoutedEventArgs e)
         {
             var settingWindow = new CaiDatServerWindow();
@@ -70,7 +64,6 @@ namespace AppCafebookApi.View
                 return;
             }
 
-            // --- 1. KHÓA CÁC ĐIỀU KHIỂN ---
             btnLogin.IsEnabled = false;
             btnLogin.Content = "ĐANG ĐĂNG NHẬP...";
 
@@ -79,7 +72,7 @@ namespace AppCafebookApi.View
             txtVisiblePassword.IsEnabled = false;
             chkShowPassword.IsEnabled = false;
 
-            bool isRetrying = false; // Biến cờ để tránh mở khóa UI sớm khi đang tự động đăng nhập lại
+            bool isRetrying = false;
 
             try
             {
@@ -89,17 +82,13 @@ namespace AppCafebookApi.View
                 {
                     string targetWorkspace = "";
 
-                    // ĐIỀU KIỆN ĐẶC BIỆT: Vai trò là "Quản lý" VÀ có quyền "FULL_QL"
                     bool isSuperManager = loginResponse.TenVaiTro == "Quản lý" && AuthService.CoQuyen("FULL_QL");
 
                     if (isSuperManager)
                     {
                         var chonKhongGian = new ChonKhongGianWindow();
-
-                        // BỔ SUNG DÒNG NÀY: Đặt màn hình đăng nhập (this) làm chủ của popup
                         chonKhongGian.Owner = this;
 
-                        // Bật popup lên
                         bool? result = chonKhongGian.ShowDialog();
 
                         if (result == true)
@@ -113,11 +102,9 @@ namespace AppCafebookApi.View
                     }
                     else
                     {
-                        // CÁC TRƯỜNG HỢP CÒN LẠI: TỰ ĐỘNG ĐIỀU HƯỚNG
                         targetWorkspace = (loginResponse.TenVaiTro == "Quản lý") ? "QuanLy" : "NhanVien";
                     }
 
-                    // Chuyển sang màn hình Welcome
                     WelcomeWindow welcome = new WelcomeWindow(loginResponse, this, targetWorkspace);
                     welcome.Show();
 
@@ -143,11 +130,11 @@ namespace AppCafebookApi.View
 
                         if (isSaved == true)
                         {
-                            AuthService.ReloadHttpClient();
-                            _countConnectionError = 0;
+                            ApiClient.ResetInstance();
 
-                            isRetrying = true; // Đánh dấu đang retry để finally không mở khóa UI sớm
-                            BtnLogin_Click(sender, e); // Gọi lại lệnh đăng nhập
+                            _countConnectionError = 0;
+                            isRetrying = true;
+                            BtnLogin_Click(sender, e);
                         }
                     }
                 }
@@ -158,7 +145,6 @@ namespace AppCafebookApi.View
             }
             finally
             {
-                // --- 2. MỞ LẠI CÁC ĐIỀU KHIỂN (Chỉ mở khi KHÔNG PHẢI ĐANG TRONG QUÁ TRÌNH RETRY) ---
                 if (!isRetrying)
                 {
                     btnLogin.IsEnabled = true;
@@ -186,7 +172,6 @@ namespace AppCafebookApi.View
             }
         }
 
-        // --- Logic Hiển thị Mật khẩu ---
         private void ChkShowPassword_Checked(object sender, RoutedEventArgs e)
         {
             txtVisiblePassword.Text = txtPassword.Password;

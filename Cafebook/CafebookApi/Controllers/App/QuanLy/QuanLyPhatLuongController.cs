@@ -6,11 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/phatluong")]
     [ApiController]
+    [Authorize]
     public class PhatLuongController : ControllerBase
     {
         private readonly CafebookDbContext _context;

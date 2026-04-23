@@ -15,13 +15,13 @@ namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class PhieuLuongView : Page
     {
-        private static readonly HttpClient httpClient;
+        /*private static readonly HttpClient httpClient;
 
         static PhieuLuongView()
         {
             httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
         }
-
+        */
         public PhieuLuongView()
         {
             InitializeComponent();
@@ -36,7 +36,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             await LoadDanhSachPhieuLuongAsync();
         }
 
@@ -54,7 +54,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             try
             {
                 // SỬA URL: Gắn trực tiếp idNhanVien vào đường dẫn
-                var response = await httpClient.GetFromJsonAsync<PhieuLuongViewDto>($"api/app/nhanvien/phieuluong/list/{idNhanVien}");
+                var response = await ApiClient.Instance.GetFromJsonAsync<PhieuLuongViewDto>($"api/app/nhanvien/phieuluong/list/{idNhanVien}");
 
                 if (response != null && response.DanhSachPhieuLuong.Any())
                 {
@@ -90,7 +90,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             try
             {
                 // SỬA URL: Gắn trực tiếp idNhanVien vào đường dẫn
-                var data = await httpClient.GetFromJsonAsync<PhieuLuongChiTietDto>($"api/app/nhanvien/phieuluong/detail/{idNhanVien}/{idPhieuLuong}");
+                var data = await ApiClient.Instance.GetFromJsonAsync<PhieuLuongChiTietDto>($"api/app/nhanvien/phieuluong/detail/{idNhanVien}/{idPhieuLuong}");
                 if (data == null) return;
 
                 if (FindName("lblTieuDeChiTiet") is TextBlock t1) t1.Text = $"Chi tiết phiếu lương tháng {data.Thang}/{data.Nam}";

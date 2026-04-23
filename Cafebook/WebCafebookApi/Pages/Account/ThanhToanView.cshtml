@@ -1,0 +1,276 @@
+﻿@page "/thanh-toan"
+@model WebCafebookApi.Pages.Account.ThanhToanViewModel
+@{
+    ViewData["Title"] = "Thanh Toán";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/ThanhToan.css" asp-append-version="true" />
+}
+
+<div class="tt-wrapper container mt-5 pb-5">
+    <div class="mb-4">
+        <h2 class="fw-bold m-0 text-brown">HOÀN TẤT ĐẶT HÀNG</h2>
+        <p class="text-muted">Chỉ áp dụng giao hàng cho Thực đơn (Nước/Món ăn)</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger d-flex align-items-center shadow-sm rounded-3">
+            <span class="material-symbols-outlined me-2">error</span>
+            @Model.ErrorMessage
+        </div>
+    }
+
+    <form method="post" id="checkoutForm">
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="tt-card card border-0 shadow-sm p-4 mb-4">
+                    <h5 class="fw-bold mb-4 border-bottom pb-2"><span class="material-symbols-outlined align-middle me-2 text-primary">local_shipping</span>Thông tin nhận hàng</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="tt-input-group">
+                                <label class="form-label text-muted small fw-bold">Họ và tên</label>
+                                <input asp-for="Input.HoTen" class="form-control" />
+                                <span asp-validation-for="Input.HoTen" class="text-danger small fw-bold"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="tt-input-group">
+                                <label class="form-label text-muted small fw-bold">Số điện thoại</label>
+                                <input asp-for="Input.SoDienThoai" class="form-control" />
+                                <span asp-validation-for="Input.SoDienThoai" class="text-danger small fw-bold"></span>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="tt-input-group">
+                                <label class="form-label text-muted small fw-bold">Địa chỉ nhận hàng (*Bắt buộc)</label>
+                                <input asp-for="Input.DiaChiGiaoHang" class="form-control border-primary" placeholder="Ví dụ: 123 Đường ABC, Quận X..." />
+                                <span asp-validation-for="Input.DiaChiGiaoHang" class="text-danger small fw-bold"></span>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="tt-input-group">
+                                <label class="form-label text-muted small fw-bold">Ghi chú (Tùy chọn)</label>
+                                <textarea asp-for="Input.GhiChu" class="form-control" rows="2" placeholder="Yêu cầu thêm (ít đường, nhiều đá...)"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tt-card card border-0 shadow-sm p-4">
+                    <h5 class="fw-bold mb-4 border-bottom pb-2"><span class="material-symbols-outlined align-middle me-2 text-success">payments</span>Phương thức thanh toán</h5>
+                    
+                    <label class="tt-payment-option border rounded p-3 mb-3 d-flex align-items-center cursor-pointer">
+                        <input type="radio" asp-for="Input.PhuongThucThanhToan" value="COD" class="form-check-input mt-0 me-3" style="transform: scale(1.5);">
+                        <div class="flex-grow-1">
+                            <h6 class="fw-bold mb-0 text-dark">Thanh toán khi nhận hàng (COD)</h6>
+                            <small class="text-muted">Nhận hàng và thanh toán trực tiếp cho shipper.</small>
+                        </div>
+                        <span class="material-symbols-outlined text-muted fs-2">local_atm</span>
+                    </label>
+
+                    <label class="tt-payment-option border rounded p-3 d-flex align-items-center cursor-pointer">
+                        <input type="radio" asp-for="Input.PhuongThucThanhToan" value="VNPAY" class="form-check-input mt-0 me-3" style="transform: scale(1.5);">
+                        <div class="flex-grow-1">
+                            <h6 class="fw-bold mb-0 text-primary">Thanh toán qua VNPay</h6>
+                            <small class="text-muted">Quét mã QR, thẻ ATM, Visa/Mastercard.</small>
+                        </div>
+                        <img src="https://vnpay.vn/wp-content/uploads/2020/07/Logo-VNPAYQR-update.png" height="25" alt="VNPay" />
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="tt-summary card border-0 shadow-sm sticky-top" style="top: 100px;">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4 border-bottom pb-2">TÓM TẮT ĐƠN HÀNG</h5>
+                        
+                        <div class="mb-3" style="max-height: 300px; overflow-y: auto;">
+                            @foreach (var item in Model.PageData.CartSummary.Items)
+                            {
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div class="text-truncate pe-2">
+                                        <span class="fw-semibold">@item.SoLuong x</span> @item.TenSanPham
+                                    </div>
+                                    <span class="text-dark fw-bold">@item.ThanhTien.ToString("N0") đ</span>
+                                </div>
+                            }
+                        </div>
+                        <hr class="my-3" />
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Tiền hàng</span>
+                            <span class="fw-bold">@Model.PageData.CartSummary.TongTienHang.ToString("N0") đ</span>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.PageData.CartSummary.MaKhuyenMaiApDung))
+                        {
+                            <div class="alert alert-success d-flex justify-content-between align-items-center p-2 mb-3">
+                                <div>
+                                    <span class="material-symbols-outlined fs-6 align-middle me-1">local_offer</span>
+                                    <strong>@Model.PageData.CartSummary.MaKhuyenMaiApDung</strong>
+                                </div>
+                                <button type="submit" asp-page-handler="RemovePromo" formnovalidate class="btn-close" style="font-size: 0.6rem;"></button>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Giảm giá</span>
+                                <span class="fw-bold">-@Model.PageData.CartSummary.TienGiamGia.ToString("N0") đ</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-outline-primary w-100 mb-3 d-flex align-items-center justify-content-center border-dashed" data-bs-toggle="modal" data-bs-target="#promoModal">
+                                <span class="material-symbols-outlined me-2">confirmation_number</span>
+                                Chọn mã khuyến mãi
+                            </button>
+                        }
+
+                        <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
+                            <span class="text-muted">Phí giao hàng</span>
+                            <span class="fw-bold">@Model.PageData.CartSummary.PhiGiaoHang.ToString("N0") đ</span>
+                        </div>
+
+                        <div class="bg-light p-3 rounded mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong class="text-brown">Dùng điểm tích lũy</strong>
+                                <span class="badge bg-warning text-dark">Khả dụng: @Model.PageData.KhachHang.DiemTichLuy</span>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <input asp-for="Input.DiemSuDung" type="number" class="form-control fw-bold" id="Input_DiemSuDung" value="0" min="0" max="@Model.PageData.KhachHang.DiemTichLuy" />
+                                <span class="input-group-text bg-white">điểm</span>
+                            </div>
+                            <small class="text-danger d-block mt-1 fw-bold" id="diem-error"></small>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span class="text-muted small">Quy đổi: 1 điểm = @Model.PageData.TiLeDoiDiemVND đ</span>
+                                <strong class="text-success" id="diem-discount-text">- 0 đ</strong>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="fs-5 fw-bold text-dark">TỔNG THANH TOÁN</span>
+                            <span class="fs-4 fw-bold text-danger" id="final-total">@Model.PageData.CartSummary.TongTienThanhToan.ToString("N0") đ</span>
+                        </div>
+
+                        @if (!Model.PageData.IsStoreOpen)
+                        {
+                            <button type="button" class="btn btn-secondary w-100 py-3 rounded-pill fw-bold" disabled>QUÁN ĐANG ĐÓNG CỬA</button>
+                            <p class="text-danger small mt-2 text-center">@Model.PageData.StoreMessage</p>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-brown w-100 py-3 rounded-pill fw-bold fs-6 shadow-sm" id="btnSubmit">
+                                XÁC NHẬN ĐẶT HÀNG
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="modal fade" id="promoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title fw-bold text-dark">Ưu đãi của bạn</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="background-color: #f8f9fa;">
+                @if (Model.PageData.AvailablePromotions.Any())
+                {
+                    foreach (var km in Model.PageData.AvailablePromotions)
+                    {
+                        <div class="coupon-card @(km.IsEligible ? "eligible" : "ineligible") mb-3">
+                            <div class="coupon-left">
+                                <span class="material-symbols-outlined display-4">redeem</span>
+                            </div>
+                            <div class="coupon-right">
+                                <h6 class="fw-bold mb-1">@km.TenChuongTrinh</h6>
+                                <p class="small text-muted mb-2">@km.DieuKienApDung</p>
+                                
+                                @if (km.IsEligible)
+                                {
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span class="text-success fw-bold">-@km.CalculatedDiscount.ToString("N0") đ</span>
+                                        <form method="post" asp-page-handler="ApplyPromo" class="m-0">
+                                            <input type="hidden" name="maKhuyenMai" value="@km.MaKhuyenMai" />
+                                            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">Dùng ngay</button>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-danger p-2 m-0 mt-2 small" style="font-size: 0.75rem;">
+                                        <i class="fas fa-exclamation-circle"></i> @km.IneligibilityReason
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <span class="material-symbols-outlined fs-1 text-muted mb-2 opacity-50">sentiment_dissatisfied</span>
+                        <p class="text-muted m-0">Hiện chưa có chương trình khuyến mãi nào phù hợp.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            const originalTotal = parseFloat('@Model.PageData.CartSummary.TongTienThanhToan.ToString(System.Globalization.CultureInfo.InvariantCulture)');
+            const maxPoints = parseInt('@Model.PageData.KhachHang.DiemTichLuy.ToString(System.Globalization.CultureInfo.InvariantCulture)');
+            const rate = parseFloat('@Model.PageData.TiLeDoiDiemVND.ToString(System.Globalization.CultureInfo.InvariantCulture)');
+            
+            const tongTienHang = parseFloat('@Model.PageData.CartSummary.TongTienHang.ToString(System.Globalization.CultureInfo.InvariantCulture)');
+            const tienGiamGia = parseFloat('@Model.PageData.CartSummary.TienGiamGia.ToString(System.Globalization.CultureInfo.InvariantCulture)');
+            const maxDiscount = (tongTienHang - tienGiamGia) * 0.5;
+
+            $('#Input_DiemSuDung').on('input', function() {
+                let points = parseInt($(this).val()) || 0;
+                $('#diem-error').text('');
+
+                if (points < 0) { points = 0; $(this).val(0); }
+                if (points > maxPoints) { points = maxPoints; $(this).val(maxPoints); }
+
+                let discount = points * rate;
+                if (discount > maxDiscount) {
+                    discount = maxDiscount;
+                    let validPoints = Math.ceil(maxDiscount / rate);
+                    $(this).val(validPoints);
+                    $('#diem-error').text(`Chỉ được dùng tối đa ${validPoints} điểm (Giảm 50% đơn hàng).`);
+                }
+
+                let newTotal = originalTotal - discount;
+                if (newTotal < 0) newTotal = 0;
+
+                $('#diem-discount-text').text('- ' + discount.toLocaleString('vi-VN') + ' đ');
+                $('#final-total').text(newTotal.toLocaleString('vi-VN') + ' đ');
+            });
+
+            $('.tt-payment-option').on('click', function() {
+                $('.tt-payment-option').removeClass('border-primary bg-light');
+                $(this).addClass('border-primary bg-light');
+                $(this).find('input[type="radio"]').prop('checked', true);
+            });
+            $('input[name="Input.PhuongThucThanhToan"]:checked').closest('.tt-payment-option').addClass('border-primary bg-light');
+
+            $('#checkoutForm').on('submit', function (e) {
+                if (!$(this).valid()) {
+                    $('html, body').animate({
+                        scrollTop: $('.input-validation-error').first().offset().top - 150
+                    }, 300);
+                }
+            });
+        });
+    </script>
+}

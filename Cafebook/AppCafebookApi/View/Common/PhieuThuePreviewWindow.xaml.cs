@@ -10,9 +10,9 @@ namespace AppCafebookApi.View.common
 {
     public partial class PhieuThuePreviewWindow : Window
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private readonly int _idPhieuThue;
-
+        /*
         static PhieuThuePreviewWindow()
         {
             httpClient = new HttpClient();
@@ -26,7 +26,7 @@ namespace AppCafebookApi.View.common
                 httpClient.BaseAddress = new Uri("http://127.0.0.1:5166"); // Fallback an toàn
             }
         }
-
+        */
         public PhieuThuePreviewWindow(int idPhieuThue)
         {
             InitializeComponent();
@@ -37,7 +37,7 @@ namespace AppCafebookApi.View.common
         {
             try
             {
-                var data = await httpClient.GetFromJsonAsync<PhieuThuePrintDto>($"api/app/nhanvien/thuesach/print-data/{_idPhieuThue}");
+                var data = await ApiClient.Instance.GetFromJsonAsync<PhieuThuePrintDto>($"api/app/nhanvien/thuesach/print-data/{_idPhieuThue}");
                 if (data == null)
                 {
                     MessageBox.Show("Không tìm thấy dữ liệu phiếu thuê.");

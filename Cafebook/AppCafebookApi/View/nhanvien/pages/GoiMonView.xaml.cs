@@ -30,7 +30,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         }
 
         private readonly int _idHoaDon;
-        private static readonly HttpClient _httpClient;
+        //private static readonly HttpClient _httpClient;
 
         private List<SanPhamDto> _allSanPhams = new List<SanPhamDto>();
         private ObservableCollection<ChiTietDto> _chiTietItems = new ObservableCollection<ChiTietDto>();
@@ -43,6 +43,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         // ======================================================
         // NÂNG CẤP 1: DYNAMIC URL (Tuyệt đối không hardcode)
         // ======================================================
+        /*
         static GoiMonView()
         {
             _httpClient = new HttpClient();
@@ -52,7 +53,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 _httpClient.BaseAddress = new Uri(apiUrl);
             }
         }
-
+        */
         public GoiMonView(int idHoaDon)
         {
             InitializeComponent();
@@ -76,11 +77,11 @@ namespace AppCafebookApi.View.nhanvien.pages
             // Gắn Token
             if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
             // Chặn gọi API nếu chưa có URL (Chống crash)
-            if (_httpClient.BaseAddress == null)
+            if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Hệ thống chưa được cấu hình URL Server. Vui lòng kiểm tra file AppConfig.json!", "Thiếu cấu hình", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -115,7 +116,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             _isDataLoading = true;
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<GoiMonViewDto>($"api/app/nhanvien/goimon/load/{_idHoaDon}");
+                var response = await ApiClient.Instance.GetFromJsonAsync<GoiMonViewDto>($"api/app/nhanvien/goimon/load/{_idHoaDon}");
                 if (response == null) { MessageBox.Show("Không thể tải dữ liệu hóa đơn.", "Lỗi API"); return; }
 
                 _allSanPhams = response.SanPhams ?? new List<SanPhamDto>();
@@ -231,7 +232,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/app/nhanvien/goimon/add-item", request);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/nhanvien/goimon/add-item", request);
                 if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<AddItemResponseDto>();
@@ -282,7 +283,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             var request = new UpdateSoLuongRequest { IdChiTietHoaDon = item.IdChiTietHoaDon, SoLuongMoi = soLuongMoi };
             try
             {
-                var response = await _httpClient.PutAsJsonAsync("api/app/nhanvien/goimon/update-quantity", request);
+                var response = await ApiClient.Instance.PutAsJsonAsync("api/app/nhanvien/goimon/update-quantity", request);
                 if (response.IsSuccessStatusCode)
                 {
                     var hoaDonInfo = await response.Content.ReadFromJsonAsync<HoaDonInfoDto>();
@@ -323,7 +324,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             var request = new ApplyPromotionRequest { IdHoaDon = _idHoaDon, IdKhuyenMai = idKhuyenMai };
             try
             {
-                var response = await _httpClient.PutAsJsonAsync("api/app/nhanvien/goimon/apply-promotion", request);
+                var response = await ApiClient.Instance.PutAsJsonAsync("api/app/nhanvien/goimon/apply-promotion", request);
                 if (response.IsSuccessStatusCode)
                 {
                     var hoaDonInfo = await response.Content.ReadFromJsonAsync<HoaDonInfoDto>();
@@ -341,7 +342,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             var request = new ApplyPromotionRequest { IdHoaDon = _idHoaDon, IdKhuyenMai = _currentKhuyenMaiId };
             try
             {
-                var response = await _httpClient.PutAsJsonAsync("api/app/nhanvien/goimon/apply-promotion", request);
+                var response = await ApiClient.Instance.PutAsJsonAsync("api/app/nhanvien/goimon/apply-promotion", request);
                 if (!response.IsSuccessStatusCode)
                 {
                     MessageBox.Show(await response.Content.ReadAsStringAsync(), "Lỗi áp dụng KM");
@@ -360,7 +361,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (result != MessageBoxResult.Yes) return;
             try
             {
-                var response = await _httpClient.PutAsync($"api/app/nhanvien/goimon/cancel-order/{_idHoaDon}", null);
+                var response = await ApiClient.Instance.PutAsync($"api/app/nhanvien/goimon/cancel-order/{_idHoaDon}", null);
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Đã hủy hóa đơn thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -381,7 +382,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (AuthService.CurrentUser == null) return;
             try
             {
-                var response = await _httpClient.PostAsync($"api/app/nhanvien/goimon/send-to-kitchen/{_idHoaDon}", null);
+                var response = await ApiClient.Instance.PostAsync($"api/app/nhanvien/goimon/send-to-kitchen/{_idHoaDon}", null);
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Đã lưu và gửi các món mới đến bếp/pha chế.", "Đã lưu");
@@ -397,7 +398,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (AuthService.CurrentUser == null) return;
             try
             {
-                var response = await _httpClient.PostAsync($"api/app/nhanvien/goimon/print-and-notify-kitchen/{_idHoaDon}/{AuthService.CurrentUser.IdNhanVien}", null);
+                var response = await ApiClient.Instance.PostAsync($"api/app/nhanvien/goimon/print-and-notify-kitchen/{_idHoaDon}/{AuthService.CurrentUser.IdNhanVien}", null);
                 if (response.IsSuccessStatusCode)
                 {
                     await LoadDataAsync(); // Cập nhật để mở khóa Thanh Toán

@@ -21,18 +21,18 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyBaoCaoDoanhThuView : Page
     {
-        private static readonly HttpClient httpClient;
+       // private static readonly HttpClient httpClient;
         private QuanLyBaoCaoTongHopDto? currentReportData;
-
+        /*
         static QuanLyBaoCaoDoanhThuView()
         {
-            httpClient = new HttpClient
+            ApiClient.Instance = new ApiClient.Instance
             {
                 BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost"),
                 Timeout = TimeSpan.FromMinutes(5)
             };
         }
-
+        */
         public QuanLyBaoCaoDoanhThuView()
         {
             InitializeComponent();
@@ -41,7 +41,7 @@ namespace AppCafebookApi.View.quanly.pages
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_BAO_CAO_DOANH_THU"))
             {
@@ -92,7 +92,7 @@ namespace AppCafebookApi.View.quanly.pages
 
             try
             {
-                var response = await httpClient.PostAsJsonAsync("api/app/quanly/baocaodoanhthu/xem-bao-cao", request);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly/baocaodoanhthu/xem-bao-cao", request);
                 if (response.IsSuccessStatusCode)
                 {
                     currentReportData = await response.Content.ReadFromJsonAsync<QuanLyBaoCaoTongHopDto>();

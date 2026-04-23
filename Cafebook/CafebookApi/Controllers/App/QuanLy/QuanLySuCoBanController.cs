@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-sucoban")]
     [ApiController]
+    [Authorize]
     public class QuanLySuCoBanController : ControllerBase
     {
         private readonly CafebookDbContext _context;

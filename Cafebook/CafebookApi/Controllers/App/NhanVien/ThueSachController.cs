@@ -10,11 +10,13 @@ using System.Linq;
 using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.NhanVien
 {
     [Route("api/app/nhanvien/thuesach")]
     [ApiController]
+    [Authorize]
     public class ThueSachController : ControllerBase
     {
         private readonly CafebookDbContext _context;

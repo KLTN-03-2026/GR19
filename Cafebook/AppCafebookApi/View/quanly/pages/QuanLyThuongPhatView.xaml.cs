@@ -15,17 +15,17 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyThuongPhatView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyThuongPhatGridDto> _allDataList = new();
         private QuanLyThuongPhatGridDto? _selectedItem = null;
 
-        static QuanLyThuongPhatView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyThuongPhatView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyThuongPhatView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_LUONG")) // Dùng chung quyền Lương
             {
@@ -58,7 +58,7 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 // Tái sử dụng API lấy danh sách nhân viên từ module Chấm công
-                var nvs = await httpClient.GetFromJsonAsync<List<ChamCongNhanVienLookupDto>>("api/app/quanly-chamcong/nhanvien-lookup");
+                var nvs = await ApiClient.Instance.GetFromJsonAsync<List<ChamCongNhanVienLookupDto>>("api/app/quanly-chamcong/nhanvien-lookup");
                 if (nvs != null)
                 {
                     if (FindName("cmbNhanVien") is ComboBox cmbForm) cmbForm.ItemsSource = nvs;
@@ -86,7 +86,7 @@ namespace AppCafebookApi.View.quanly.pages
                 if (FindName("dpFilterDenNgay") is DatePicker den && den.SelectedDate.HasValue) queryParams.Add($"denNgay={den.SelectedDate.Value:yyyy-MM-dd}");
 
                 string url = "api/app/quanly-thuongphat/search" + (queryParams.Any() ? "?" + string.Join("&", queryParams) : "");
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyThuongPhatGridDto>>(url);
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyThuongPhatGridDto>>(url);
 
                 if (res != null && FindName("dgThuongPhat") is DataGrid dg)
                 {
@@ -171,8 +171,8 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 HttpResponseMessage res = _selectedItem == null
-                    ? await httpClient.PostAsJsonAsync("api/app/quanly-thuongphat", dto)
-                    : await httpClient.PutAsJsonAsync($"api/app/quanly-thuongphat/{_selectedItem.IdPhieuThuongPhat}", dto);
+                    ? await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-thuongphat", dto)
+                    : await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-thuongphat/{_selectedItem.IdPhieuThuongPhat}", dto);
 
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); await LoadDataAsync(); BtnLamMoiForm_Click(this, new RoutedEventArgs()); }
                 else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
@@ -188,7 +188,7 @@ namespace AppCafebookApi.View.quanly.pages
                 if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                 try
                 {
-                    var res = await httpClient.DeleteAsync($"api/app/quanly-thuongphat/{_selectedItem.IdPhieuThuongPhat}");
+                    var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-thuongphat/{_selectedItem.IdPhieuThuongPhat}");
                     if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa thành công!"); await LoadDataAsync(); BtnLamMoiForm_Click(this, new RoutedEventArgs()); }
                     else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
                 }

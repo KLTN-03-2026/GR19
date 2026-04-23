@@ -17,17 +17,17 @@ namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class ThongTinCaNhanView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private string? _newAvatarFilePath = null;
-
+        /*
         static ThongTinCaNhanView()
         {
-            httpClient = new HttpClient();
+            ApiClient.Instance = new ApiClient.Instance();
             string? apiUrl = AppConfigManager.GetApiServerUrl();
-            if (!string.IsNullOrWhiteSpace(apiUrl)) httpClient.BaseAddress = new Uri(apiUrl);
-            else httpClient.BaseAddress = new Uri("http://127.0.0.1:5166");
+            if (!string.IsNullOrWhiteSpace(apiUrl)) ApiClient.Instance.BaseAddress = new Uri(apiUrl);
+            else ApiClient.Instance.BaseAddress = new Uri("http://127.0.0.1:5166");
         }
-
+        */
         public ThongTinCaNhanView()
         {
             InitializeComponent();
@@ -42,7 +42,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (FindName("btnLichSu") is ToggleButton btnLichSu)
             {
@@ -82,7 +82,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             try
             {
-                var response = await httpClient.GetFromJsonAsync<ThongTinCaNhanViewDto>($"api/app/nhanvien/thongtincanhan/me/{idNhanVien}");
+                var response = await ApiClient.Instance.GetFromJsonAsync<ThongTinCaNhanViewDto>($"api/app/nhanvien/thongtincanhan/me/{idNhanVien}");
                 if (response == null) return;
 
                 if (FindName("lblHoTen") is TextBlock txtHoTen) txtHoTen.Text = response.NhanVien.HoTen;
@@ -134,7 +134,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             try
             {
-                var history = await httpClient.GetFromJsonAsync<DonXinNghiDto[]>($"api/app/nhanvien/thongtincanhan/leave-history/{idNhanVien}");
+                var history = await ApiClient.Instance.GetFromJsonAsync<DonXinNghiDto[]>($"api/app/nhanvien/thongtincanhan/leave-history/{idNhanVien}");
                 if (FindName("dgLichSuNghi") is DataGrid dg) dg.ItemsSource = history;
             }
             catch { }
@@ -175,7 +175,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                     streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
                     content.Add(streamContent, "avatarFile", Path.GetFileName(_newAvatarFilePath));
 
-                    var resAvt = await httpClient.PostAsync($"api/app/nhanvien/thongtincanhan/upload-avatar/{idNhanVien}", content);
+                    var resAvt = await ApiClient.Instance.PostAsync($"api/app/nhanvien/thongtincanhan/upload-avatar/{idNhanVien}", content);
                     if (!resAvt.IsSuccessStatusCode) MessageBox.Show("Lỗi khi tải ảnh lên.");
                 }
 
@@ -191,7 +191,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 }
 
                 var req = new CapNhatThongTinDto { HoTen = name, SoDienThoai = sdt, Email = email, DiaChi = diaChi };
-                var res = await httpClient.PutAsJsonAsync($"api/app/nhanvien/thongtincanhan/update-info/{idNhanVien}", req);
+                var res = await ApiClient.Instance.PutAsJsonAsync($"api/app/nhanvien/thongtincanhan/update-info/{idNhanVien}", req);
 
                 if (res.IsSuccessStatusCode) MessageBox.Show("Lưu thông tin thành công!");
                 else MessageBox.Show("Lưu thông tin thất bại.");
@@ -228,7 +228,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (FindName("btnGuiDon") is Button btnGuiStart) btnGuiStart.IsEnabled = false;
             try
             {
-                var res = await httpClient.PostAsJsonAsync($"api/app/nhanvien/thongtincanhan/submit-leave/{idNhanVien}", req);
+                var res = await ApiClient.Instance.PostAsJsonAsync($"api/app/nhanvien/thongtincanhan/submit-leave/{idNhanVien}", req);
 
                 if (res.IsSuccessStatusCode)
                 {
@@ -350,7 +350,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             try
             {
-                var res = await httpClient.PostAsJsonAsync($"api/app/nhanvien/thongtincanhan/change-password/{idNhanVien}", req);
+                var res = await ApiClient.Instance.PostAsJsonAsync($"api/app/nhanvien/thongtincanhan/change-password/{idNhanVien}", req);
                 if (res.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Đổi mật khẩu thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);

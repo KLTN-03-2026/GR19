@@ -9,6 +9,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 using NhanVienEntity = CafebookModel.Model.ModelEntities.NhanVien;
 
@@ -16,6 +17,7 @@ namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-nhanvien")]
     [ApiController]
+    [Authorize]
     public class QuanLyNhanVienController : ControllerBase
     {
         private readonly CafebookDbContext _context;

@@ -15,17 +15,17 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyKhuVucView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyKhuVucDto> _dataList = new();
         private QuanLyKhuVucDto? _selectedItem;
         private bool _isAdding = false;
 
-        static QuanLyKhuVucView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyKhuVucView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
         public QuanLyKhuVucView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             if (!AuthService.CoQuyen("QL_KHU_VUC")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
             ApplyPermissions(); await LoadDataAsync();
         }
@@ -44,7 +44,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (overlay != null) overlay.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyKhuVucDto>>("api/app/quanly-khuvuc");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhuVucDto>>("api/app/quanly-khuvuc");
                 if (res != null) { _dataList = res; FilterData(); }
             }
             catch { }
@@ -93,7 +93,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (overlay != null) overlay.Visibility = Visibility.Visible;
             try
             {
-                HttpResponseMessage res = _isAdding ? await httpClient.PostAsJsonAsync("api/app/quanly-khuvuc", dto) : await httpClient.PutAsJsonAsync($"api/app/quanly-khuvuc/{_selectedItem.IdKhuVuc}", dto);
+                HttpResponseMessage res = _isAdding ? await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-khuvuc", dto) : await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-khuvuc/{_selectedItem.IdKhuVuc}", dto);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }
@@ -108,7 +108,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (overlay != null) overlay.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.DeleteAsync($"api/app/quanly-khuvuc/{_selectedItem.IdKhuVuc}");
+                var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-khuvuc/{_selectedItem.IdKhuVuc}");
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }

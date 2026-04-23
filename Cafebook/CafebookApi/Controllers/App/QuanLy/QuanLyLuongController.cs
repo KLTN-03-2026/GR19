@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 using NhanVienEntity = CafebookModel.Model.ModelEntities.NhanVien;
 
@@ -14,6 +15,7 @@ namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-luong")]
     [ApiController]
+    [Authorize]
     public class QuanLyLuongController : ControllerBase
     {
         private readonly CafebookDbContext _context;

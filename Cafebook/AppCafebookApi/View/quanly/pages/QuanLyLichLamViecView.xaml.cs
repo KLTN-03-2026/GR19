@@ -28,7 +28,7 @@ namespace AppCafebookApi.View.quanly.pages
 
     public partial class QuanLyLichLamViecView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private const double PIXELS_PER_HOUR = 60.0;
 
         private QuanLyLichLamViec_CaiDatDto? _caiDat;
@@ -42,13 +42,13 @@ namespace AppCafebookApi.View.quanly.pages
         private DateTime? _clickedDate = null;
         private int _editNhuCauId = 0;
         private QuanLyNhanVienLookupDto? _pendingAssignNhanVien = null;
-
+        /*
         static QuanLyLichLamViecView()
         {
             string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
             httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
         }
-
+        */
         public QuanLyLichLamViecView()
         {
             InitializeComponent();
@@ -57,7 +57,7 @@ namespace AppCafebookApi.View.quanly.pages
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             dpTuNgay.SelectedDate = LayNgayDauTuan(DateTime.Now);
             await LoadMasterData();
@@ -74,15 +74,15 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                _caList = await httpClient.GetFromJsonAsync<List<QuanLyLichLamViec_CaDto>>("api/app/quanly-lichlamviec/ca-lam-viec") ?? new();
+                _caList = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyLichLamViec_CaDto>>("api/app/quanly-lichlamviec/ca-lam-viec") ?? new();
                 cmbPopupCaNhuCau.ItemsSource = _caList;
                 cmbPopupCaGiao.ItemsSource = _caList;
                 dgCaLamViec.ItemsSource = _caList;
 
-                _vaiTroList = await httpClient.GetFromJsonAsync<List<QuanLyVaiTroLookupDto>>("api/app/quanly-lichlamviec/vaitro") ?? new();
+                _vaiTroList = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyVaiTroLookupDto>>("api/app/quanly-lichlamviec/vaitro") ?? new();
                 cmbPopupVaiTro.ItemsSource = _vaiTroList;
 
-                _allNhanVienList = await httpClient.GetFromJsonAsync<List<QuanLyNhanVienLookupDto>>("api/app/quanly-lichlamviec/nhanvien") ?? new();
+                _allNhanVienList = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyNhanVienLookupDto>>("api/app/quanly-lichlamviec/nhanvien") ?? new();
                 lbNhanVien.ItemsSource = _allNhanVienList;
 
                 // --- BẮT ĐẦU: Nạp dữ liệu cho ComboBox Lọc Nhân viên (Cột bên trái) ---
@@ -102,13 +102,13 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 if (_caiDat == null)
-                    _caiDat = await httpClient.GetFromJsonAsync<QuanLyLichLamViec_CaiDatDto>("api/app/quanly-lichlamviec/cai-dat");
+                    _caiDat = await ApiClient.Instance.GetFromJsonAsync<QuanLyLichLamViec_CaiDatDto>("api/app/quanly-lichlamviec/cai-dat");
 
                 _currentStartDate = dpTuNgay.SelectedDate ?? DateTime.Today;
                 DateTime endDate = _currentStartDate.AddDays(_soNgayHienThi - 1);
 
                 string url = $"api/app/quanly-lichlamviec/data?fromDate={_currentStartDate:yyyy-MM-dd}&toDate={endDate:yyyy-MM-dd}";
-                _lichData = await httpClient.GetFromJsonAsync<List<QuanLyLichLamViec_ItemDto>>(url) ?? new();
+                _lichData = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyLichLamViec_ItemDto>>(url) ?? new();
 
                 DrawGridAndSchedules();
             }
@@ -175,7 +175,7 @@ namespace AppCafebookApi.View.quanly.pages
                     if (MessageBox.Show(msg, "Xác nhận chép lịch", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                     {
                         LoadingOverlay.Visibility = Visibility.Visible;
-                        var res = await httpClient.PostAsJsonAsync("api/app/quanly-lichlamviec/copy-tuan", new { SourceDate = currentDate });
+                        var res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-lichlamviec/copy-tuan", new { SourceDate = currentDate });
                         if (res.IsSuccessStatusCode) await RefreshDataAndDraw();
                         else MessageBox.Show("Lỗi: " + await res.Content.ReadAsStringAsync());
                         LoadingOverlay.Visibility = Visibility.Collapsed;
@@ -277,7 +277,7 @@ namespace AppCafebookApi.View.quanly.pages
                                 {
                                     if (nv.TrangThai == "Chờ duyệt" && MessageBox.Show($"Duyệt cho {nv.TenNhanVien} làm ca này?", "Duyệt nhanh", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                                     {
-                                        await httpClient.PutAsync($"api/app/quanly-lichlamviec/duyet-ca/{nv.IdLichLamViec}", null);
+                                        await ApiClient.Instance.PutAsync($"api/app/quanly-lichlamviec/duyet-ca/{nv.IdLichLamViec}", null);
                                         await RefreshDataAndDraw();
                                     }
                                 }
@@ -329,7 +329,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (sender is Button btn && btn.Tag is int idLich)
             {
-                await httpClient.PutAsync($"api/app/quanly-lichlamviec/duyet-ca/{idLich}", null);
+                await ApiClient.Instance.PutAsync($"api/app/quanly-lichlamviec/duyet-ca/{idLich}", null);
                 await RefreshDataAndDraw();
 
                 // SỬA Ở ĐÂY: Truyền lại sender và e thay vì (null, null)
@@ -447,8 +447,8 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 HttpResponseMessage response;
-                if (_editNhuCauId == 0) response = await httpClient.PostAsJsonAsync("api/app/quanly-lichlamviec/nhucau", dto);
-                else response = await httpClient.PutAsJsonAsync($"api/app/quanly-lichlamviec/nhucau/{_editNhuCauId}", dto);
+                if (_editNhuCauId == 0) response = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-lichlamviec/nhucau", dto);
+                else response = await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-lichlamviec/nhucau/{_editNhuCauId}", dto);
 
                 if (response.IsSuccessStatusCode) await RefreshDataAndDraw();
                 else MessageBox.Show($"Lỗi: {await response.Content.ReadAsStringAsync()}");
@@ -464,7 +464,7 @@ namespace AppCafebookApi.View.quanly.pages
                 LoadingOverlay.Visibility = Visibility.Visible;
                 try
                 {
-                    var res = await httpClient.DeleteAsync($"api/app/quanly-lichlamviec/nhucau/{_editNhuCauId}");
+                    var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-lichlamviec/nhucau/{_editNhuCauId}");
                     if (res.IsSuccessStatusCode) await RefreshDataAndDraw();
                     else MessageBox.Show(await res.Content.ReadAsStringAsync());
                 }
@@ -491,7 +491,7 @@ namespace AppCafebookApi.View.quanly.pages
             LoadingOverlay.Visibility = Visibility.Visible;
             try
             {
-                var response = await httpClient.PostAsJsonAsync("api/app/quanly-lichlamviec/assign", dto);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-lichlamviec/assign", dto);
                 if (response.IsSuccessStatusCode)
                 {
                     await RefreshDataAndDraw();
@@ -519,7 +519,7 @@ namespace AppCafebookApi.View.quanly.pages
                     LoadingOverlay.Visibility = Visibility.Visible;
                     try
                     {
-                        var res = await httpClient.DeleteAsync($"api/app/quanly-lichlamviec/xoa-ca/{idLich}");
+                        var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-lichlamviec/xoa-ca/{idLich}");
                         if (res.IsSuccessStatusCode)
                         {
                             await RefreshDataAndDraw();
@@ -589,7 +589,7 @@ namespace AppCafebookApi.View.quanly.pages
             LoadingOverlay.Visibility = Visibility.Visible;
             try
             {
-                var response = await httpClient.PostAsJsonAsync("api/app/quanly-lichlamviec/assign", dto);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-lichlamviec/assign", dto);
                 if (response.IsSuccessStatusCode) await RefreshDataAndDraw();
                 else MessageBox.Show($"Lỗi: {await response.Content.ReadAsStringAsync()}", "Bị Từ Chối");
             }
@@ -623,7 +623,7 @@ namespace AppCafebookApi.View.quanly.pages
             }
 
             var dto = new QuanLyLichLamViec_CaDto { TenCa = txtAddTenCa.Text, GioBatDau = bd, GioKetThuc = kt };
-            var response = await httpClient.PostAsJsonAsync("api/app/quanly-lichlamviec/ca-lam-viec", dto);
+            var response = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-lichlamviec/ca-lam-viec", dto);
 
             if (response.IsSuccessStatusCode)
             {
@@ -639,7 +639,7 @@ namespace AppCafebookApi.View.quanly.pages
             {
                 if (MessageBox.Show("Xóa ca làm này?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    var response = await httpClient.DeleteAsync($"api/app/quanly-lichlamviec/ca-lam-viec/{idCa}");
+                    var response = await ApiClient.Instance.DeleteAsync($"api/app/quanly-lichlamviec/ca-lam-viec/{idCa}");
                     if (response.IsSuccessStatusCode) await LoadMasterData();
                     else MessageBox.Show($"Lỗi: {await response.Content.ReadAsStringAsync()}");
                 }

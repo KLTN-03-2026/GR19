@@ -15,18 +15,18 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDonViChuyenDoiView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyDonViChuyenDoiGridDto> _dataList = new();
         private List<LookupNguyenLieuDvtDto> _nlList = new();
         private QuanLyDonViChuyenDoiGridDto? _selectedItem;
         private bool _isAdding = false;
 
-        static QuanLyDonViChuyenDoiView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+       // static QuanLyDonViChuyenDoiView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
         public QuanLyDonViChuyenDoiView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             // LỚP 2 BẢO MẬT
             if (!AuthService.CoQuyen("QL_DON_VI_CHUYEN_DOI")) { MessageBox.Show("Từ chối!"); this.NavigationService?.GoBack(); return; }
@@ -48,14 +48,14 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l1) l1.Visibility = Visibility.Visible;
             try
             {
-                var nls = await httpClient.GetFromJsonAsync<List<LookupNguyenLieuDvtDto>>("api/app/quanly-donvichuyendoi/lookup-nguyenlieu");
+                var nls = await ApiClient.Instance.GetFromJsonAsync<List<LookupNguyenLieuDvtDto>>("api/app/quanly-donvichuyendoi/lookup-nguyenlieu");
                 if (nls != null)
                 {
                     _nlList = nls;
                     if (FindName("cmbNguyenLieu") is ComboBox cb1) cb1.ItemsSource = _nlList;
                     if (FindName("cmbFilterNL") is ComboBox cb2) { var flt = new List<LookupNguyenLieuDvtDto> { new LookupNguyenLieuDvtDto { Id = 0, Ten = "Tất cả" } }; flt.AddRange(nls); cb2.ItemsSource = flt; cb2.SelectedIndex = 0; }
                 }
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyDonViChuyenDoiGridDto>>("api/app/quanly-donvichuyendoi");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDonViChuyenDoiGridDto>>("api/app/quanly-donvichuyendoi");
                 if (res != null) { _dataList = res; FilterData(); }
             }
             catch { }
@@ -113,7 +113,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l1) l1.Visibility = Visibility.Visible;
             try
             {
-                var res = _isAdding ? await httpClient.PostAsJsonAsync("api/app/quanly-donvichuyendoi", dto) : await httpClient.PutAsJsonAsync($"api/app/quanly-donvichuyendoi/{_selectedItem.IdChuyenDoi}", dto);
+                var res = _isAdding ? await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-donvichuyendoi", dto) : await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-donvichuyendoi/{_selectedItem.IdChuyenDoi}", dto);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Đã lưu!"); await LoadDataAsync(); } else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }
             finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
@@ -124,7 +124,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!AuthService.CoQuyen("QL_DON_VI_CHUYEN_DOI") || _selectedItem == null || _isAdding) return;
             if (MessageBox.Show("Xóa Đơn vị này?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
-                var res = await httpClient.DeleteAsync($"api/app/quanly-donvichuyendoi/{_selectedItem.IdChuyenDoi}");
+                var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-donvichuyendoi/{_selectedItem.IdChuyenDoi}");
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa thành công"); BtnLamMoiForm_Click(this, new RoutedEventArgs()); await LoadDataAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }

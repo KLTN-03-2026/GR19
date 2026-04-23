@@ -21,17 +21,17 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyKhachHangView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyKhachHangGridDto> _allKhachHangList = new();
         private QuanLyKhachHangDetailDto? _selectedKhachHang = null;
 
-        static QuanLyKhachHangView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyKhachHangView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyKhachHangView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG"))
             {
@@ -63,7 +63,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyKhachHangGridDto>>("api/app/quanly-khachhang");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhachHangGridDto>>("api/app/quanly-khachhang");
                 if (res != null) { _allKhachHangList = res; FilterData(); }
             }
             finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
@@ -138,7 +138,7 @@ namespace AppCafebookApi.View.quanly.pages
                 if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                 try
                 {
-                    var detail = await httpClient.GetFromJsonAsync<QuanLyKhachHangDetailDto>($"api/app/quanly-khachhang/{item.IdKhachHang}");
+                    var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLyKhachHangDetailDto>($"api/app/quanly-khachhang/{item.IdKhachHang}");
                     if (detail != null)
                     {
                         _selectedKhachHang = detail;
@@ -222,7 +222,7 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 var req = new KhoaKhachHangRequestDto { LyDoKhoa = lyDo, SoNgayKhoa = soNgay };
-                await httpClient.PostAsJsonAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}/khoa", req);
+                await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}/khoa", req);
                 MessageBox.Show("Khóa thành công. Hệ thống đang gửi Email.");
 
                 // GIỮ LẠI ID ĐỂ TỰ ĐỘNG CHỌN LẠI SAU KHI LOAD
@@ -249,7 +249,7 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 var req = new CapNhatDiemKhachHangDto { DiemThayDoi = diemThayDoi, LyDo = "Cập nhật thủ công" };
-                await httpClient.PostAsJsonAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}/diem", req);
+                await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}/diem", req);
                 MessageBox.Show("Cập nhật điểm thành công!");
 
                 // GIỮ LẠI ID ĐỂ TỰ ĐỘNG CHỌN LẠI SAU KHI LOAD
@@ -276,7 +276,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                await httpClient.PostAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}/mokhoa", null);
+                await ApiClient.Instance.PostAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}/mokhoa", null);
                 MessageBox.Show("Đã mở khóa tài khoản thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 // GIỮ LẠI ID ĐỂ TỰ ĐỘNG CHỌN LẠI SAU KHI LOAD
@@ -307,7 +307,7 @@ namespace AppCafebookApi.View.quanly.pages
                 if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                 try
                 {
-                    var response = await httpClient.DeleteAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}");
+                    var response = await ApiClient.Instance.DeleteAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}");
                     if (response.IsSuccessStatusCode)
                     {
                         MessageBox.Show("Đã xóa khách hàng thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);

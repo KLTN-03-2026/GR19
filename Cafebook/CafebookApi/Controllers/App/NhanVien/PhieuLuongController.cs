@@ -5,11 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.NhanVien
 {
     [Route("api/app/nhanvien/phieuluong")]
     [ApiController]
+    [Authorize]
     public class PhieuLuongController : ControllerBase
     {
         private readonly CafebookDbContext _context;

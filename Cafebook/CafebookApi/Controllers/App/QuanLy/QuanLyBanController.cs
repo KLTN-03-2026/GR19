@@ -1,6 +1,7 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelApp.QuanLy;
 using CafebookModel.Model.ModelEntities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -11,6 +12,7 @@ namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-ban")]
     [ApiController]
+    [Authorize]
     public class QuanLyBanController : ControllerBase
     {
         private readonly CafebookDbContext _context;

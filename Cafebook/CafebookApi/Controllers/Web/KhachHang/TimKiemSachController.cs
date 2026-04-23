@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/timkiemsach")]
     [ApiController]
+    [AllowAnonymous]
     public class TimKiemSachController : ControllerBase
     {
         private readonly CafebookDbContext _context;

@@ -1,0 +1,144 @@
+﻿@page "/ket-qua-thanh-toan/{code}"
+@model WebCafebookApi.Pages.Account.ThanhToanThanhCongViewModel
+@{
+    ViewData["Title"] = "Đặt hàng thành công";
+    Layout = "_Layout"; 
+}
+
+<div class="container mt-5 pb-5">
+    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden; animation: fadeIn 0.5s ease-in-out;">
+        <div class="text-center" style="padding: 50px 20px;">
+
+            @if (Model.ErrorMessage != null)
+            {
+                <span class="material-symbols-outlined text-danger" style="font-size: 80px;">error</span>
+                <h2 class="fw-bold mt-3 text-dark">Đã có lỗi xảy ra</h2>
+                <p class="lead text-muted">@Model.ErrorMessage</p>
+                <a asp-page="/GioHangView" class="btn btn-outline-primary mt-4 px-4 py-2 rounded-pill fw-bold">Quay lại giỏ hàng</a>
+            }
+            else if (Model.HoaDon != null)
+            {
+                <span class="material-symbols-outlined text-success mb-2" style="font-size: 80px;">check_circle</span>
+                <h2 class="fw-bold mt-2" style="color: var(--cf-brown, #6F4E37);">ĐẶT HÀNG THÀNH CÔNG!</h2>
+                <p class="lead text-muted mt-3">
+                    Cảm ơn bạn đã tin tưởng và đặt hàng tại Cafebook.<br />
+                    Mã đơn hàng của bạn là <strong class="text-dark fs-5">#@Model.HoaDon.IdHoaDonMoi</strong>.
+                </p>
+                
+                <div class="alert bg-light border-0 d-inline-block text-start text-muted mb-4 px-4 py-3" style="border-radius: 12px;">
+                    <i class="material-symbols-outlined align-middle text-primary me-1">call</i> 
+                    Nhân viên sẽ gọi xác nhận qua SĐT <strong class="text-dark">@Model.HoaDon.SoDienThoai</strong> trong chốc lát.
+                </div>
+
+                <hr class="my-4 mx-auto" style="max-width: 600px; border-color: #eee;" />
+
+                <div class="row justify-content-center">
+                    <div class="col-lg-6 col-md-8 text-start">
+                        <h5 class="fw-bold mb-3 text-center text-dark">TÓM TẮT ĐƠN HÀNG</h5>
+                        
+                        <div class="card border-0 bg-light p-3 p-md-4 mb-4" style="border-radius: 16px;">
+                            <ul class="list-group list-group-flush bg-transparent">
+                                @foreach (var item in Model.HoaDon.Items)
+                                {
+                                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-light px-0 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3 shadow-sm" style="width: 50px; height: 50px; border-radius: 8px; overflow: hidden; background: #fff;">
+                                                <img src="@item.HinhAnhUrl" alt="@item.TenSanPham" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/anhmacdinh/foods/default-food-icon.png'" />
+                                            </div>
+                                            <div>
+                                                <h6 class="my-0 fw-bold text-dark">@item.TenSanPham</h6>
+                                                <small class="text-muted">Số lượng: @item.SoLuong</small>
+                                            </div>
+                                        </div>
+                                        <span class="fw-semibold text-dark">@item.ThanhTien.ToString("N0") đ</span>
+                                    </li>
+                                }
+                            </ul>
+                            
+                            <div class="mt-3 pt-3 border-top border-light">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Tiền hàng</span>
+                                    <span class="fw-semibold text-dark">@Model.HoaDon.TongTienHang.ToString("N0") đ</span>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Phí giao hàng</span>
+                                    @if (Model.HoaDon.PhiGiaoHang > 0)
+                                    {
+                                        <span class="fw-semibold text-dark">@Model.HoaDon.PhiGiaoHang.ToString("N0") đ</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="fw-semibold text-success">Miễn phí</span>
+                                    }
+                                </div>
+
+                                @if (Model.HoaDon.GiamGia > 0)
+                                {
+                                    <div class="d-flex justify-content-between mb-2 text-success">
+                                        <span>Giảm giá (KM + Điểm)</span>
+                                        <span class="fw-bold">-@Model.HoaDon.GiamGia.ToString("N0") đ</span>
+                                    </div>
+                                }
+                                
+                                <div class="d-flex justify-content-between mt-3 pt-3 border-top border-light">
+                                    <strong class="fs-5 text-dark">Tổng thanh toán</strong>
+                                    <strong class="fs-4 text-danger">@Model.HoaDon.ThanhTien.ToString("N0") đ</strong>
+                                </div>
+                                <div class="text-end mt-1">
+                                    <small class="text-muted">Thanh toán qua: <strong class="text-primary">@Model.HoaDon.PhuongThucThanhToan</strong></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-center gap-3 mt-2 flex-wrap">
+                    <a asp-page="/ThucDonView" class="btn btn-light border px-4 py-3 rounded-pill fw-bold text-muted transition-300 hover-shadow">
+                        <i class="fas fa-arrow-left me-2"></i>Tiếp tục mua sắm
+                    </a>
+                    <a asp-page="/Account/LichSuDonHangDetailView" asp-route-id="@Model.HoaDon.IdHoaDonMoi" class="btn text-white px-5 py-3 rounded-pill fw-bold shadow-sm transition-300" style="background-color: var(--cf-brown, #6F4E37);">
+                        Theo dõi đơn hàng
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        :root {
+            --cf-brown: #6F4E37;
+        }
+        
+        /* SỬA LỖI CS0103: Dùng @@keyframes để Razor bỏ qua không biên dịch C# */
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .transition-300 {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-shadow:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .btn-light:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .btn[style*="background-color: var(--cf-brown)"]:hover {
+            background-color: #4E342E !important; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(111, 78, 55, 0.3) !important;
+        }
+        
+        .border-light {
+            border-color: #e9ecef !important;
+        }
+    </style>
+}

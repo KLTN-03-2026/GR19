@@ -19,7 +19,6 @@ namespace CafebookModel.Model.ModelEntities
 
         public virtual ICollection<NhanVien> NhanViens { get; set; } = new List<NhanVien>();
 
-        // BỔ SUNG LIÊN KẾT ĐẾN BẢNG NHU CẦU
         public virtual ICollection<NhuCauCaLam> NhuCauCaLams { get; set; } = new List<NhuCauCaLam>();
     }
 }

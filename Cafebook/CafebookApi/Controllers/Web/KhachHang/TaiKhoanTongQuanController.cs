@@ -11,6 +11,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/taikhoantongquan")]
     [ApiController]
+    [Authorize]
     [Authorize(Roles = "KhachHang")]
     public class TaikhoanTongquanController : ControllerBase
     {

@@ -1,7 +1,7 @@
-﻿// Vị trí lưu: WebCafebookApi/Pages/TrangChuView.cshtml.cs
-using CafebookModel.Model.ModelWeb.KhachHang;
+﻿using CafebookModel.Model.ModelWeb.KhachHang;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.DataProtection;
+using System.Net.Http; // Đảm bảo có thư viện này để bắt lỗi HttpRequestException
 
 namespace WebCafebookApi.Pages
 {
@@ -26,20 +26,43 @@ namespace WebCafebookApi.Pages
         public async Task OnGetAsync()
         {
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
-            try
+
+            await Task.Delay(1500);
+
+            int maxRetries = 3;
+            int delayMs = 2000;
+
+            for (int i = 0; i < maxRetries; i++)
             {
-                var response = await httpClient.GetFromJsonAsync<TrangChuDto>("api/web/trangchu/data");
-                if (response != null)
+                try
                 {
-                    Info = response.Info;
-                    Promotions = response.Promotions;
-                    MonNoiBat = response.MonNoiBat;
-                    SachNoiBat = response.SachNoiBat;
+                    var response = await httpClient.GetFromJsonAsync<TrangChuDto>("api/web/trangchu/data");
+                    if (response != null)
+                    {
+                        Info = response.Info;
+                        Promotions = response.Promotions;
+                        MonNoiBat = response.MonNoiBat;
+                        SachNoiBat = response.SachNoiBat;
+
+                        break; 
+                    }
                 }
-            }
-            catch (Exception)
-            {
-                Info = new ThongTinChungDto();
+                catch (HttpRequestException)
+                {
+                    if (i == maxRetries - 1)
+                    {
+                        Info = new ThongTinChungDto();
+                    }
+                    else
+                    {
+                        await Task.Delay(delayMs);
+                    }
+                }
+                catch (Exception)
+                {
+                    Info = new ThongTinChungDto();
+                    break;
+                }
             }
         }
 

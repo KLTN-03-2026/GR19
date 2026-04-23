@@ -5,12 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.NhanVien
 {
     [Route("api/app/nhanvien/lichlamviec")]
     [ApiController]
-    // Đã gỡ bỏ [Authorize] để không bị lỗi 401
+    [Authorize]
     public class LichLamViecController : ControllerBase
     {
         private readonly CafebookDbContext _context;

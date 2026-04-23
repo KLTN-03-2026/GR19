@@ -7,11 +7,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Net;
 using System.Net.Mail;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/khachhang/dangky")]
     [ApiController]
+    [AllowAnonymous]
     public class DangKyController : ControllerBase
     {
         private readonly CafebookDbContext _context;

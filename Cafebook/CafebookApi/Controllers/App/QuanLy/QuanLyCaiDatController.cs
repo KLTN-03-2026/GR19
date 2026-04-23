@@ -7,11 +7,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-caidat")]
     [ApiController]
+    [Authorize]
     public class QuanLyCaiDatController : ControllerBase
     {
         private readonly CafebookDbContext _context;

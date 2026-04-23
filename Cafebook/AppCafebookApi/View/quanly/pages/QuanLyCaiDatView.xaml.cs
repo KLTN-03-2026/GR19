@@ -19,16 +19,16 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyCaiDatView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyCaiDatDto> _allSettings = new();
         private ObservableCollection<QuanLyCaiDatDto> _viewSettings = new();
         private DispatcherTimer _notificationTimer;
-
+        /*
         static QuanLyCaiDatView()
         {
             httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
         }
-
+        */
         public QuanLyCaiDatView()
         {
             InitializeComponent();
@@ -39,7 +39,7 @@ namespace AppCafebookApi.View.quanly.pages
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             await LoadDataAsync();
         }
@@ -49,7 +49,7 @@ namespace AppCafebookApi.View.quanly.pages
             LoadingOverlay.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyCaiDatDto>>("api/app/quanly-caidat/all");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyCaiDatDto>>("api/app/quanly-caidat/all");
                 if (res != null)
                 {
                     _allSettings = res;
@@ -87,7 +87,7 @@ namespace AppCafebookApi.View.quanly.pages
                 LoadingOverlay.Visibility = Visibility.Visible;
                 try
                 {
-                    var response = await httpClient.PutAsJsonAsync("api/app/quanly-caidat/update-single", item);
+                    var response = await ApiClient.Instance.PutAsJsonAsync("api/app/quanly-caidat/update-single", item);
                     if (response.IsSuccessStatusCode) ShowNotification($"Đã lưu: {item.TenCaiDat}");
                     else ShowNotification("Lỗi khi lưu: " + await response.Content.ReadAsStringAsync(), true);
                 }

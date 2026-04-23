@@ -15,17 +15,17 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDinhLuongView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyDinhLuongSPDto> _spList = new();
         private QuanLyDinhLuongSPDto? _selectedSP;
         private QuanLyDinhLuongNLDto? _selectedNL;
 
-        static QuanLyDinhLuongView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyDinhLuongView() { ApiClient.Instance = new ApiClient.Instance { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
         public QuanLyDinhLuongView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             if (!AuthService.CoQuyen("QL_DINH_LUONG")) { MessageBox.Show("Từ chối!"); this.NavigationService?.GoBack(); return; }
             ApplyPermissions(); await LoadMasterDataAsync();
         }
@@ -42,9 +42,9 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l1) l1.Visibility = Visibility.Visible;
             try
             {
-                var sp = await httpClient.GetFromJsonAsync<List<QuanLyDinhLuongSPDto>>("api/app/quanly-dinhluong/lookup-sp"); if (sp != null) { _spList = sp; FilterSP(); }
-                var nl = await httpClient.GetFromJsonAsync<List<LookupDinhLuongDto>>("api/app/quanly-dinhluong/lookup-nl"); if (FindName("cmbNguyenLieu") is ComboBox cbNL) cbNL.ItemsSource = nl;
-                var dv = await httpClient.GetFromJsonAsync<List<LookupDinhLuongDto>>("api/app/quanly-dinhluong/lookup-dv"); if (FindName("cmbDonVi") is ComboBox cbDV) cbDV.ItemsSource = dv;
+                var sp = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDinhLuongSPDto>>("api/app/quanly-dinhluong/lookup-sp"); if (sp != null) { _spList = sp; FilterSP(); }
+                var nl = await ApiClient.Instance.GetFromJsonAsync<List<LookupDinhLuongDto>>("api/app/quanly-dinhluong/lookup-nl"); if (FindName("cmbNguyenLieu") is ComboBox cbNL) cbNL.ItemsSource = nl;
+                var dv = await ApiClient.Instance.GetFromJsonAsync<List<LookupDinhLuongDto>>("api/app/quanly-dinhluong/lookup-dv"); if (FindName("cmbDonVi") is ComboBox cbDV) cbDV.ItemsSource = dv;
             }
             catch { }
             finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
@@ -65,7 +65,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async Task LoadDinhLuongAsync(int idSp)
         {
-            try { var res = await httpClient.GetFromJsonAsync<List<QuanLyDinhLuongNLDto>>($"api/app/quanly-dinhluong/{idSp}"); if (FindName("dgDinhLuong") is DataGrid dg) dg.ItemsSource = res; ResetNLForm(); } catch { }
+            try { var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDinhLuongNLDto>>($"api/app/quanly-dinhluong/{idSp}"); if (FindName("dgDinhLuong") is DataGrid dg) dg.ItemsSource = res; ResetNLForm(); } catch { }
         }
 
         private void DgDinhLuong_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -85,10 +85,10 @@ namespace AppCafebookApi.View.quanly.pages
             if (idNl == 0 || idDv == 0 || sl <= 0) { MessageBox.Show("Nhập đủ thông tin hợp lệ!"); return; }
             var dto = new QuanLyDinhLuongSaveDto { IdNguyenLieu = idNl, SoLuongSuDung = sl, IdDonViSuDung = idDv };
             if (FindName("LoadingOverlay") is Border l1) l1.Visibility = Visibility.Visible;
-            try { var res = await httpClient.PostAsJsonAsync($"api/app/quanly-dinhluong/{_selectedSP.IdSanPham}", dto); if (res.IsSuccessStatusCode) await LoadDinhLuongAsync(_selectedSP.IdSanPham); else MessageBox.Show(await res.Content.ReadAsStringAsync()); } finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+            try { var res = await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-dinhluong/{_selectedSP.IdSanPham}", dto); if (res.IsSuccessStatusCode) await LoadDinhLuongAsync(_selectedSP.IdSanPham); else MessageBox.Show(await res.Content.ReadAsStringAsync()); } finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
         }
 
-        private async void BtnXoa_Click(object sender, RoutedEventArgs e) { if (!AuthService.CoQuyen("QL_DINH_LUONG") || _selectedSP == null || _selectedNL == null) return; if (MessageBox.Show("Xóa?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { var res = await httpClient.DeleteAsync($"api/app/quanly-dinhluong/{_selectedSP.IdSanPham}/{_selectedNL.IdNguyenLieu}"); if (res.IsSuccessStatusCode) await LoadDinhLuongAsync(_selectedSP.IdSanPham); } }
+        private async void BtnXoa_Click(object sender, RoutedEventArgs e) { if (!AuthService.CoQuyen("QL_DINH_LUONG") || _selectedSP == null || _selectedNL == null) return; if (MessageBox.Show("Xóa?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-dinhluong/{_selectedSP.IdSanPham}/{_selectedNL.IdNguyenLieu}"); if (res.IsSuccessStatusCode) await LoadDinhLuongAsync(_selectedSP.IdSanPham); } }
         private void BtnQuayLai_Click(object sender, RoutedEventArgs e) => this.NavigationService?.GoBack();
     }
 }

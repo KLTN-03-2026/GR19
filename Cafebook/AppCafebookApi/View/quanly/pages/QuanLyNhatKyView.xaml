@@ -112,7 +112,11 @@
                     <DataGrid x:Name="dgNhatKy" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="1" BorderBrush="#EEEEEE" Background="Transparent" SelectionChanged="DgNhatKy_SelectionChanged">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Thời gian" Binding="{Binding ThoiGian, StringFormat='dd/MM/yyyy HH:mm:ss'}" Width="130"/>
-                            <DataGridTextColumn Header="Hành động" Binding="{Binding HanhDong}" Width="90">
+
+                            <DataGridTextColumn Header="Vai trò" Binding="{Binding VaiTro}" Width="100"/>
+                            <DataGridTextColumn Header="Người thao tác" Binding="{Binding NguoiThaoTac}" Width="*"/>
+
+                            <DataGridTextColumn Header="Hành động" Binding="{Binding HanhDong}" Width="100">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="FontWeight" Value="Bold"/>
@@ -133,7 +137,7 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Người thao tác" Binding="{Binding TenNhanVien}" Width="*"/>
+
                             <DataGridTextColumn Header="Bảng" Binding="{Binding BangBiAnhHuong}" Width="120"/>
                             <DataGridTextColumn Header="IP" Binding="{Binding DiaChiIP}" Width="90"/>
                         </DataGrid.Columns>

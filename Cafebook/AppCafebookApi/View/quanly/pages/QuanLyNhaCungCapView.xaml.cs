@@ -21,18 +21,18 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyNhaCungCapView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyNhaCungCapGridDto> _dataList = new();
         private QuanLyNhaCungCapGridDto? _selectedItem;
         private bool _isAdding = false;
 
-        static QuanLyNhaCungCapView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyNhaCungCapView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyNhaCungCapView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("QL_NHA_CUNG_CAP")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
 
@@ -53,7 +53,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is System.Windows.Controls.Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyNhaCungCapGridDto>>("api/app/quanly-nhacungcap");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyNhaCungCapGridDto>>("api/app/quanly-nhacungcap");
                 if (res != null) { _dataList = res; FilterData(); }
             }
             catch { }
@@ -116,7 +116,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is System.Windows.Controls.Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = _isAdding ? await httpClient.PostAsJsonAsync("api/app/quanly-nhacungcap", dto) : await httpClient.PutAsJsonAsync($"api/app/quanly-nhacungcap/{_selectedItem.IdNhaCungCap}", dto);
+                var res = _isAdding ? await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-nhacungcap", dto) : await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-nhacungcap/{_selectedItem.IdNhaCungCap}", dto);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }
@@ -128,7 +128,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!AuthService.CoQuyen("QL_NHA_CUNG_CAP") || _selectedItem == null || _isAdding) return;
             if (MessageBox.Show("Xóa Nhà cung cấp này?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
-                var res = await httpClient.DeleteAsync($"api/app/quanly-nhacungcap/{_selectedItem.IdNhaCungCap}");
+                var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-nhacungcap/{_selectedItem.IdNhaCungCap}");
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa thành công!"); BtnLamMoiForm_Click(this, new RoutedEventArgs()); await LoadDataAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }

@@ -150,10 +150,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             try
             {
-                var client = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-
-                var response = await client.GetFromJsonAsync<ChamCongDashboardDto>($"api/app/chamcong/status/{idNhanVien}");
+                var response = await ApiClient.Instance.GetFromJsonAsync<ChamCongDashboardDto>($"api/app/chamcong/status/{idNhanVien}");
                 if (response != null) UpdateUI(response);
             }
             catch (Exception ex)
@@ -247,7 +244,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 _gioVaoHienTai = dto.LanVaoGanNhat;
                 _timerWork.Start();
             }
-            else // DaHoanThanh
+            else 
             {
                 SetStatusBadge("Hoàn thành mọi ca", _colorSuccess, _colorSuccessBg);
                 if (FindName("btnVaoCa") is Button btnVao) btnVao.Visibility = Visibility.Collapsed;
@@ -262,8 +259,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             try
             {
-                var client = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
-                var response = await client.PostAsync($"api/app/chamcong/clock-in/{idNhanVien}", null);
+                var response = await ApiClient.Instance.PostAsync($"api/app/chamcong/clock-in/{idNhanVien}", null);
                 if (response.IsSuccessStatusCode)
                 {
                     await LoadStatusAsync();
@@ -280,8 +276,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             try
             {
-                var client = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
-                var response = await client.PostAsync($"api/app/chamcong/clock-out/{idNhanVien}", null);
+                var response = await ApiClient.Instance.PostAsync($"api/app/chamcong/clock-out/{idNhanVien}", null);
                 if (response.IsSuccessStatusCode)
                 {
                     await LoadStatusAsync();
@@ -304,8 +299,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             try
             {
-                var client = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
-                var response = await client.GetFromJsonAsync<LichSuChamCongPageDto>($"api/app/chamcong/lich-su/{idNhanVien}?thang={month}&nam={year}");
+                var response = await ApiClient.Instance.GetFromJsonAsync<LichSuChamCongPageDto>($"api/app/chamcong/lich-su/{idNhanVien}?thang={month}&nam={year}");
 
                 if (response != null)
                 {

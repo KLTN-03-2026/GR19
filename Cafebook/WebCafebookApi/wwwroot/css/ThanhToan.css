@@ -1,0 +1,72 @@
+﻿:root {
+    --cf-brown: #6F4E37;
+    --cf-dark-brown: #4E342E;
+    --cf-light-cream: #FFF8E1;
+}
+
+.text-brown {
+    color: var(--cf-brown);
+}
+
+.btn-brown {
+    background-color: var(--cf-brown);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+    .btn-brown:hover {
+        background-color: var(--cf-dark-brown);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(78, 52, 46, 0.2);
+    }
+
+.tt-wrapper {
+    animation: fadeIn 0.4s ease;
+}
+
+.tt-card, .tt-summary {
+    border-radius: 16px !important;
+}
+
+.tt-input-group label {
+    margin-bottom: 0.5rem;
+}
+
+.tt-input-group .form-control {
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+    background-color: #fcfcfc;
+    transition: all 0.2s;
+}
+
+    .tt-input-group .form-control:focus {
+        box-shadow: 0 0 0 4px rgba(111, 78, 55, 0.1);
+        border-color: var(--cf-brown);
+        background-color: #fff;
+    }
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.tt-payment-option {
+    transition: all 0.2s;
+}
+
+    .tt-payment-option:hover {
+        border-color: #adb5bd !important;
+    }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

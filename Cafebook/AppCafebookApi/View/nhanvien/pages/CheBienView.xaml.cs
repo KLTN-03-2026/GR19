@@ -16,9 +16,9 @@ namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class CheBienView : Page
     {
-        private static readonly HttpClient _httpClient;
+        //private static readonly HttpClient _httpClient;
         private DispatcherTimer _refreshTimer;
-
+        /*
         static CheBienView()
         {
             _httpClient = new HttpClient();
@@ -28,7 +28,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 _httpClient.BaseAddress = new Uri(apiUrl);
             }
         }
-
+        */
         public CheBienView()
         {
             InitializeComponent();
@@ -50,9 +50,9 @@ namespace AppCafebookApi.View.nhanvien.pages
             }
 
             if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (_httpClient.BaseAddress == null)
+            if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Hệ thống chưa được cấu hình URL Server.", "Thiếu cấu hình", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -80,7 +80,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             ShowLoading(true);
             try
             {
-                var items = await _httpClient.GetFromJsonAsync<List<CheBienItemDto>>("api/app/nhanvien/chebien/load");
+                var items = await ApiClient.Instance.GetFromJsonAsync<List<CheBienItemDto>>("api/app/nhanvien/chebien/load");
                 if (items != null)
                 {
                     if (FindName("lblLastUpdated") is TextBlock lblUpdate)
@@ -117,7 +117,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             try
             {
                 // SỬA LỖI: Dùng PutAsJsonAsync gửi {} thay vì PutAsync gửi null để tránh lỗi 415
-                var response = await _httpClient.PutAsJsonAsync($"api/app/nhanvien/chebien/start/{item.IdTrangThaiCheBien}", new { });
+                var response = await ApiClient.Instance.PutAsJsonAsync($"api/app/nhanvien/chebien/start/{item.IdTrangThaiCheBien}", new { });
                 if (response.IsSuccessStatusCode)
                 {
                     await LoadDataAsync();
@@ -137,7 +137,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             try
             {
                 // SỬA LỖI: Dùng PutAsJsonAsync gửi {} thay vì PutAsync gửi null để tránh lỗi 415
-                var response = await _httpClient.PutAsJsonAsync($"api/app/nhanvien/chebien/complete/{item.IdTrangThaiCheBien}", new { });
+                var response = await ApiClient.Instance.PutAsJsonAsync($"api/app/nhanvien/chebien/complete/{item.IdTrangThaiCheBien}", new { });
                 if (response.IsSuccessStatusCode)
                 {
                     await LoadDataAsync();
@@ -158,7 +158,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             try
             {
-                var congThucItems = await _httpClient.GetFromJsonAsync<List<CongThucItemDto>>($"api/app/nhanvien/chebien/congthuc/{item.IdSanPham}");
+                var congThucItems = await ApiClient.Instance.GetFromJsonAsync<List<CongThucItemDto>>($"api/app/nhanvien/chebien/congthuc/{item.IdSanPham}");
 
                 if (FindName("lblCongThucTenMon") is TextBlock lbl) lbl.Text = $"Công thức: {item.TenMon}";
                 if (FindName("lvCongThuc") is ListView lv) lv.ItemsSource = congThucItems;
@@ -195,7 +195,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             ShowLoading(true);
             try
             {
-                var items = await _httpClient.GetFromJsonAsync<List<CheBienItemDto>>("api/app/nhanvien/chebien/history");
+                var items = await ApiClient.Instance.GetFromJsonAsync<List<CheBienItemDto>>("api/app/nhanvien/chebien/history");
                 if (items != null)
                 {
                     _allLichSuItems = items;

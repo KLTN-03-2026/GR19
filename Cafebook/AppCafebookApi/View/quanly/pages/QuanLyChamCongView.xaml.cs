@@ -15,18 +15,18 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyChamCongView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyChamCongGridDto> _allDataList = new();
         private List<ChamCongNhanVienLookupDto> _lookupNhanVien = new();
         private QuanLyChamCongGridDto? _selectedItem = null;
 
-        static QuanLyChamCongView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+     //   static QuanLyChamCongView() { ApiClient.Instance = new ApiClient.Instance { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyChamCongView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG"))
             {
@@ -61,7 +61,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var nvs = await httpClient.GetFromJsonAsync<List<ChamCongNhanVienLookupDto>>("api/app/quanly-chamcong/nhanvien-lookup");
+                var nvs = await ApiClient.Instance.GetFromJsonAsync<List<ChamCongNhanVienLookupDto>>("api/app/quanly-chamcong/nhanvien-lookup");
                 if (nvs != null) _lookupNhanVien = nvs;
             }
             catch { }
@@ -77,7 +77,7 @@ namespace AppCafebookApi.View.quanly.pages
                 if (FindName("dpFilterDenNgay") is DatePicker den && den.SelectedDate.HasValue) queryParams.Add($"denNgay={den.SelectedDate.Value:yyyy-MM-dd}");
 
                 string url = "api/app/quanly-chamcong/search" + (queryParams.Any() ? "?" + string.Join("&", queryParams) : "");
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyChamCongGridDto>>(url);
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyChamCongGridDto>>(url);
 
                 if (res != null) { _allDataList = res; FilterData(); }
             }
@@ -173,7 +173,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                HttpResponseMessage res = await httpClient.PutAsJsonAsync($"api/app/quanly-chamcong/{_selectedItem.IdChamCong}", dto);
+                HttpResponseMessage res = await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-chamcong/{_selectedItem.IdChamCong}", dto);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Cập nhật thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
             }

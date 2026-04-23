@@ -18,7 +18,7 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyTongQuanView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
 
         public SeriesCollection LineSeriesCollection { get; set; }
         public SeriesCollection BarSeriesCollection { get; set; }
@@ -29,13 +29,13 @@ namespace AppCafebookApi.View.quanly.pages
 
         public Func<double, string> CurrencyFormatter { get; set; }
         public Func<double, string> NumberFormatter { get; set; }
-
+        /*
         static QuanLyTongQuanView()
         {
             string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:";
             httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
         }
-
+        */
         public QuanLyTongQuanView()
         {
             InitializeComponent();
@@ -56,7 +56,7 @@ namespace AppCafebookApi.View.quanly.pages
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             bool hasAnyPermission = AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN", "QL_BAO_CAO_TON_KHO_SACH", "QL_BAO_CAO_TON_KHO_NL", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_BAO_CAO_DOANH_THU", "CM_CAI_DAT", "CM_NHAT_KY_HE_THONG");
 
@@ -96,7 +96,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var summary = await httpClient.GetFromJsonAsync<QuanLyTongQuanDto>("api/app/quanly-tongquan/summary");
+                var summary = await ApiClient.Instance.GetFromJsonAsync<QuanLyTongQuanDto>("api/app/quanly-tongquan/summary");
                 if (summary != null)
                 {
                     if (FindName("txtDoanhThu") is TextBlock t1) t1.Text = summary.TongDoanhThuHomNay.ToString("N0") + " đ";

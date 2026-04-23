@@ -15,19 +15,19 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyNguyenLieuView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyNguyenLieuGridDto> _dataList = new();
         private QuanLyNguyenLieuGridDto? _selectedItem;
         private bool _isAdding = false;
 
-        static QuanLyNguyenLieuView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyNguyenLieuView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyNguyenLieuView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             // 1. KIỂM TRA CHÌA KHÓA CỔNG (Cho phép vào nếu có 1 trong các quyền liên quan)
             bool hasAccess = AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU", "QL_DON_VI_CHUYEN_DOI");
@@ -74,7 +74,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyNguyenLieuGridDto>>("api/app/quanly-nguyenlieu");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyNguyenLieuGridDto>>("api/app/quanly-nguyenlieu");
                 if (res != null) { _dataList = res; FilterData(); }
             }
             catch { }
@@ -129,7 +129,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = _isAdding ? await httpClient.PostAsJsonAsync("api/app/quanly-nguyenlieu", dto) : await httpClient.PutAsJsonAsync($"api/app/quanly-nguyenlieu/{_selectedItem.IdNguyenLieu}", dto);
+                var res = _isAdding ? await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-nguyenlieu", dto) : await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-nguyenlieu/{_selectedItem.IdNguyenLieu}", dto);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }
@@ -141,7 +141,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!AuthService.CoQuyen("QL_NGUYEN_LIEU") || _selectedItem == null || _isAdding) return;
             if (MessageBox.Show("Xóa nguyên liệu này?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
-                var res = await httpClient.DeleteAsync($"api/app/quanly-nguyenlieu/{_selectedItem.IdNguyenLieu}");
+                var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-nguyenlieu/{_selectedItem.IdNguyenLieu}");
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }

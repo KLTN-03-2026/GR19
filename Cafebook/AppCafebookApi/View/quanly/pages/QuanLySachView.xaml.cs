@@ -19,7 +19,7 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLySachView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLySachGridDto> _allSachList = new();
         private QuanLySachDetailDto? _selectedSach = null;
         private string? _currentAnhBiaFilePath = null;
@@ -30,13 +30,13 @@ namespace AppCafebookApi.View.quanly.pages
         private List<QuanLySachFilterLookupDto> _lookupTheLoai = new();
         private List<QuanLySachFilterLookupDto> _lookupNXB = new();
 
-        static QuanLySachView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLySachView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLySachView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             bool hasAnyQuyen = AuthService.CoQuyen("FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH");
             if (!hasAnyQuyen)
@@ -73,9 +73,9 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var tl = await httpClient.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/theloai");
-                var tg = await httpClient.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/tacgia");
-                var nxb = await httpClient.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/nxb");
+                var tl = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/theloai");
+                var tg = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/tacgia");
+                var nxb = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/nxb");
 
                 if (tl != null)
                 {
@@ -97,7 +97,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLySachGridDto>>("api/app/quanly-sach");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySachGridDto>>("api/app/quanly-sach");
                 if (res != null) { _allSachList = res; FilterData(); }
             }
             finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
@@ -134,7 +134,7 @@ namespace AppCafebookApi.View.quanly.pages
                 if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                 try
                 {
-                    var detail = await httpClient.GetFromJsonAsync<QuanLySachDetailDto>($"api/app/quanly-sach/{item.IdSach}");
+                    var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLySachDetailDto>($"api/app/quanly-sach/{item.IdSach}");
                     if (detail != null)
                     {
                         _selectedSach = detail;
@@ -208,8 +208,8 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 HttpResponseMessage res = _selectedSach == null
-                    ? await httpClient.PostAsync("api/app/quanly-sach", formData)
-                    : await httpClient.PutAsync($"api/app/quanly-sach/{_selectedSach.IdSach}", formData);
+                    ? await ApiClient.Instance.PostAsync("api/app/quanly-sach", formData)
+                    : await ApiClient.Instance.PutAsync($"api/app/quanly-sach/{_selectedSach.IdSach}", formData);
 
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu sách thành công!"); await LoadLookupsAsync(); await LoadSachAsync(); }
                 else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
@@ -225,7 +225,7 @@ namespace AppCafebookApi.View.quanly.pages
                 if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                 try
                 {
-                    var res = await httpClient.DeleteAsync($"api/app/quanly-sach/{_selectedSach.IdSach}");
+                    var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-sach/{_selectedSach.IdSach}");
                     if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa sách thành công!"); BtnLamMoiForm_Click(this, new RoutedEventArgs()); await LoadSachAsync(); }
                     else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
                 }

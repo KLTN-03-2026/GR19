@@ -15,18 +15,18 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDanhMucSachView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyDanhMucSachItemDto> _currentDataList = new();
         private QuanLyDanhMucSachItemDto? _selectedItem = null;
         private string _currentEndpoint = "tacgia"; // Mặc định là Tác giả
 
-        static QuanLyDanhMucSachView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+//        static QuanLyDanhMucSachView() { ApiClient.Instance = new ApiClient.Instance { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyDanhMucSachView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             // BẢO MẬT LỚP 2
             if (!AuthService.CoQuyen("FULL_QL", "QL_DANH_MUC_SACH"))
@@ -53,7 +53,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyDanhMucSachItemDto>>($"api/app/quanly-danhmucsach/{_currentEndpoint}");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDanhMucSachItemDto>>($"api/app/quanly-danhmucsach/{_currentEndpoint}");
                 if (res != null)
                 {
                     _currentDataList = res;
@@ -127,8 +127,8 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 HttpResponseMessage res = _selectedItem == null
-                    ? await httpClient.PostAsJsonAsync($"api/app/quanly-danhmucsach/{_currentEndpoint}", dto)
-                    : await httpClient.PutAsJsonAsync($"api/app/quanly-danhmucsach/{_currentEndpoint}/{_selectedItem.Id}", dto);
+                    ? await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-danhmucsach/{_currentEndpoint}", dto)
+                    : await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-danhmucsach/{_currentEndpoint}/{_selectedItem.Id}", dto);
 
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); await LoadDataAsync(); BtnLamMoiForm_Click(this, new RoutedEventArgs()); }
                 else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
@@ -144,7 +144,7 @@ namespace AppCafebookApi.View.quanly.pages
                 if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                 try
                 {
-                    var res = await httpClient.DeleteAsync($"api/app/quanly-danhmucsach/{_currentEndpoint}/{_selectedItem.Id}");
+                    var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-danhmucsach/{_currentEndpoint}/{_selectedItem.Id}");
                     if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa thành công!"); await LoadDataAsync(); BtnLamMoiForm_Click(this, new RoutedEventArgs()); }
                     else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
                 }

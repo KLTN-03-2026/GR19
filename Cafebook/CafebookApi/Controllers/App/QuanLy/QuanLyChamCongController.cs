@@ -8,14 +8,14 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-
-// Khai báo bí danh (Alias) chỉ định rõ ràng class Entity
+using Microsoft.AspNetCore.Authorization;
 using NhanVienEntity = CafebookModel.Model.ModelEntities.NhanVien;
 
 namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-chamcong")]
     [ApiController]
+    [Authorize]
     public class QuanLyChamCongController : ControllerBase
     {
         private readonly CafebookDbContext _context;

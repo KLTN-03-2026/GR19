@@ -16,15 +16,15 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyPhatLuongView : Page
     {
-        private static readonly HttpClient httpClient;
+        /*private static readonly HttpClient httpClient;
 
         static QuanLyPhatLuongView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
-
+        */
         public QuanLyPhatLuongView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_LUONG"))
             {
@@ -59,7 +59,7 @@ namespace AppCafebookApi.View.quanly.pages
                 int nam = (FindName("cmbNam") as ComboBox)?.SelectedItem as int? ?? DateTime.Now.Year;
                 int thang = (FindName("cmbThang") as ComboBox)?.SelectedItem as int? ?? DateTime.Now.Month;
 
-                var res = await httpClient.GetFromJsonAsync<List<PhatLuongGridDto>>($"api/app/phatluong/danhsach?nam={nam}&thang={thang}");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<PhatLuongGridDto>>($"api/app/phatluong/danhsach?nam={nam}&thang={thang}");
                 if (res != null && FindName("dgPhieuLuong") is DataGrid dg) dg.ItemsSource = res;
             }
             catch { }

@@ -10,9 +10,9 @@ namespace AppCafebookApi.View.common
 {
     public partial class PhieuTraPreviewWindow : Window
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private readonly int _idPhieuTra;
-
+        /*
         static PhieuTraPreviewWindow()
         {
             httpClient = new HttpClient();
@@ -26,7 +26,7 @@ namespace AppCafebookApi.View.common
                 httpClient.BaseAddress = new Uri("http://127.0.0.1:5166"); // Fallback an toàn
             }
         }
-
+        */
         public PhieuTraPreviewWindow(int idPhieuTra)
         {
             InitializeComponent();
@@ -37,7 +37,7 @@ namespace AppCafebookApi.View.common
         {
             try
             {
-                var data = await httpClient.GetFromJsonAsync<PhieuTraPrintDto>($"api/app/nhanvien/thuesach/print-data/tra/{_idPhieuTra}");
+                var data = await ApiClient.Instance.GetFromJsonAsync<PhieuTraPrintDto>($"api/app/nhanvien/thuesach/print-data/tra/{_idPhieuTra}");
                 if (data == null)
                 {
                     MessageBox.Show("Không tìm thấy dữ liệu phiếu trả.");

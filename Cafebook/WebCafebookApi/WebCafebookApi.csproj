@@ -10,8 +10,4 @@
     <ProjectReference Include="..\CafebookModel\CafebookModel.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Pages\employee\" />
-  </ItemGroup>
-
 </Project>

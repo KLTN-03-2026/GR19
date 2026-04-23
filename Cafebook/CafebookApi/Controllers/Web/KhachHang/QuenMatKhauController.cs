@@ -2,6 +2,7 @@
 using CafebookModel.Model.ModelWeb.KhachHang;
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory; // THÊM THƯ VIỆN NÀY
@@ -14,6 +15,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/quenmatkhau")]
     [ApiController]
+    [AllowAnonymous]
     public class QuenMatKhauController : ControllerBase
     {
         private readonly CafebookDbContext _context;

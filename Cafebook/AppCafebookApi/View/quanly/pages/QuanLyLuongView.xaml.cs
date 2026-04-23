@@ -16,20 +16,20 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyLuongView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyLuongBangKeDto> _previewList = new();
         private List<ThuongPhatMauLookupDto> _thuongPhatMauList = new();
         private QuanLyLuongBangKeDto? _selectedNhanVien = null;
         private DateTime _tuNgay;
         private DateTime _denNgay;
 
-        static QuanLyLuongView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyLuongView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyLuongView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT"))
             {
@@ -68,7 +68,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<ThuongPhatMauLookupDto>>("api/app/quanly-luong/thuong-phat-mau");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<ThuongPhatMauLookupDto>>("api/app/quanly-luong/thuong-phat-mau");
                 if (res != null && FindName("cmbThuongPhatMau") is ComboBox cmb)
                 {
                     _thuongPhatMauList = res;
@@ -103,7 +103,7 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 string url = $"api/app/quanly-luong/preview?tuNgay={_tuNgay:yyyy-MM-dd}&denNgay={_denNgay:yyyy-MM-dd}";
-                var response = await httpClient.GetAsync(url);
+                var response = await ApiClient.Instance.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -185,7 +185,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.PostAsJsonAsync("api/app/quanly-luong/thuong-phat", dto);
+                var res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-luong/thuong-phat", dto);
                 if (res.IsSuccessStatusCode)
                 {
                     await ReloadPreviewAsync(true);
@@ -211,7 +211,7 @@ namespace AppCafebookApi.View.quanly.pages
                     if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                     try
                     {
-                        var res = await httpClient.DeleteAsync($"api/app/quanly-luong/thuong-phat/{item.Id}");
+                        var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-luong/thuong-phat/{item.Id}");
                         if (res.IsSuccessStatusCode) { await ReloadPreviewAsync(true); }
                     }
                     finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
@@ -233,7 +233,7 @@ namespace AppCafebookApi.View.quanly.pages
                         DanhSachChot = _previewList
                     };
 
-                    HttpResponseMessage res = await httpClient.PostAsJsonAsync("api/app/quanly-luong/chot-luong", dto);
+                    HttpResponseMessage res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-luong/chot-luong", dto);
                     if (res.IsSuccessStatusCode)
                     {
                         MessageBox.Show("Chốt lương thành công!");

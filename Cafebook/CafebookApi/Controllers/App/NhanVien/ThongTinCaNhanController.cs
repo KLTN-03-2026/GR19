@@ -9,11 +9,13 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.NhanVien
 {
     [Route("api/app/nhanvien/thongtincanhan")]
     [ApiController]
+    [Authorize]
     public class ThongTinCaNhanController : ControllerBase
     {
         private readonly CafebookDbContext _context;

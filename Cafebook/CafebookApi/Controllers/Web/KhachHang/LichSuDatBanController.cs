@@ -13,6 +13,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/khach-hang/lich-su-dat-ban")]
     [ApiController]
+    [Authorize]
     [Authorize(Roles = "KhachHang")] // Lớp bảo mật 2: Bắt buộc có quyền Khách hàng
     public class LichSuDatBanController : ControllerBase
     {

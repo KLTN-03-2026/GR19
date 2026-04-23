@@ -15,17 +15,17 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDanhMucView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyDanhMucGridDto> _dataList = new();
         private QuanLyDanhMucGridDto? _selectedItem;
         private bool _isAdding = false;
 
-        static QuanLyDanhMucView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+       // static QuanLyDanhMucView() { ApiClient.Instance = new ApiClient.Instance { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
         public QuanLyDanhMucView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             if (!AuthService.CoQuyen("QL_DANH_MUC")) { MessageBox.Show("Từ chối!"); this.NavigationService?.GoBack(); return; }
             ApplyPermissions(); await LoadDataAsync();
         }
@@ -41,7 +41,7 @@ namespace AppCafebookApi.View.quanly.pages
         private async Task LoadDataAsync()
         {
             if (FindName("LoadingOverlay") is Border l1) l1.Visibility = Visibility.Visible;
-            try { var res = await httpClient.GetFromJsonAsync<List<QuanLyDanhMucGridDto>>("api/app/quanly-danhmuc"); if (res != null) { _dataList = res; FilterData(); } }
+            try { var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDanhMucGridDto>>("api/app/quanly-danhmuc"); if (res != null) { _dataList = res; FilterData(); } }
             catch { }
             finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
         }
@@ -63,11 +63,11 @@ namespace AppCafebookApi.View.quanly.pages
             if (string.IsNullOrEmpty(ten)) { MessageBox.Show("Nhập tên danh mục!"); return; }
             var dto = new QuanLyDanhMucSaveDto { TenDanhMuc = ten };
             if (FindName("LoadingOverlay") is Border l1) l1.Visibility = Visibility.Visible;
-            try { var res = _isAdding ? await httpClient.PostAsJsonAsync("api/app/quanly-danhmuc", dto) : await httpClient.PutAsJsonAsync($"api/app/quanly-danhmuc/{_selectedItem.IdDanhMuc}", dto); if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); await LoadDataAsync(); } }
+            try { var res = _isAdding ? await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-danhmuc", dto) : await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-danhmuc/{_selectedItem.IdDanhMuc}", dto); if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); await LoadDataAsync(); } }
             finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
         }
 
-        private async void BtnXoa_Click(object sender, RoutedEventArgs e) { if (!AuthService.CoQuyen("QL_DANH_MUC") || _selectedItem == null || _isAdding) return; if (MessageBox.Show("Xóa?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { var res = await httpClient.DeleteAsync($"api/app/quanly-danhmuc/{_selectedItem.IdDanhMuc}"); if (res.IsSuccessStatusCode) await LoadDataAsync(); } }
+        private async void BtnXoa_Click(object sender, RoutedEventArgs e) { if (!AuthService.CoQuyen("QL_DANH_MUC") || _selectedItem == null || _isAdding) return; if (MessageBox.Show("Xóa?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-danhmuc/{_selectedItem.IdDanhMuc}"); if (res.IsSuccessStatusCode) await LoadDataAsync(); } }
         private void BtnQuayLai_Click(object sender, RoutedEventArgs e) => this.NavigationService?.GoBack();
     }
 }

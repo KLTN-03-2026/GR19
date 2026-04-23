@@ -14,13 +14,13 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyLichSuThueSachView : Page
     {
-        private static readonly HttpClient httpClient;
+        /*private static readonly HttpClient httpClient;
 
         static QuanLyLichSuThueSachView()
         {
             httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
         }
-
+        */
         public QuanLyLichSuThueSachView()
         {
             InitializeComponent();
@@ -29,7 +29,7 @@ namespace AppCafebookApi.View.quanly.pages
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             // BẢO MẬT LỚP 2: Chặn truy cập Page
             if (!AuthService.CoQuyen("FULL_QL", "QL_LICH_SU_THUE_SACH"))
@@ -71,7 +71,7 @@ namespace AppCafebookApi.View.quanly.pages
 
                 if (queryParams.Count > 0) url += "?" + string.Join("&", queryParams);
 
-                var res = await httpClient.GetFromJsonAsync<BaoCaoLichSuThueDto>(url);
+                var res = await ApiClient.Instance.GetFromJsonAsync<BaoCaoLichSuThueDto>(url);
                 if (res != null)
                 {
                     if (FindName("dgSachQuaHan") is DataGrid dg1) dg1.ItemsSource = res.SachQuaHan;

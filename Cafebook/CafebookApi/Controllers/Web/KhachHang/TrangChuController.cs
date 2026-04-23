@@ -1,6 +1,7 @@
 ﻿// Vị trí lưu: CafebookApi/Controllers/Web/KhachHang/TrangChuController.cs
 using CafebookApi.Data;
 using CafebookModel.Model.ModelWeb.KhachHang;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/trangchu")]
     [ApiController]
+    [AllowAnonymous]
     public class TrangChuController : ControllerBase
     {
         private readonly CafebookDbContext _context;

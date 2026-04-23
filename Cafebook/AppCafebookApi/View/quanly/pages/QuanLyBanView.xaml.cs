@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Json;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,20 +13,17 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyBanView : Page
     {
-        private static readonly HttpClient httpClient;
+
         private List<QuanLyBanGridDto> _dataList = new();
         private List<LookupKhuVucDto> _lookupKv = new();
         private QuanLyBanGridDto? _selectedItem;
         private bool _isAdding = false;
 
-        static QuanLyBanView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+
         public QuanLyBanView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-
-            // 1. CHÌA KHÓA CỔNG
             bool hasAnyPermission = AuthService.CoQuyen("FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC");
             if (!hasAnyPermission)
             {
@@ -39,7 +34,6 @@ namespace AppCafebookApi.View.quanly.pages
 
             ApplyPermissions();
 
-            // 2. CHÌA KHÓA PHÒNG
             if (AuthService.CoQuyen("FULL_QL", "QL_BAN"))
             {
                 await LoadDataAsync();
@@ -68,7 +62,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (overlay != null) overlay.Visibility = Visibility.Visible;
             try
             {
-                var kvs = await httpClient.GetFromJsonAsync<List<LookupKhuVucDto>>("api/app/quanly-ban/lookup-khuvuc");
+                var kvs = await ApiClient.Instance.GetFromJsonAsync<List<LookupKhuVucDto>>("api/app/quanly-ban/lookup-khuvuc");
                 if (kvs != null)
                 {
                     _lookupKv = kvs;
@@ -81,7 +75,7 @@ namespace AppCafebookApi.View.quanly.pages
                     }
                 }
 
-                var bans = await httpClient.GetFromJsonAsync<List<QuanLyBanGridDto>>("api/app/quanly-ban");
+                var bans = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyBanGridDto>>("api/app/quanly-ban");
                 if (bans != null) { _dataList = bans; FilterData(); }
             }
             catch { }
@@ -152,7 +146,9 @@ namespace AppCafebookApi.View.quanly.pages
             if (overlay != null) overlay.Visibility = Visibility.Visible;
             try
             {
-                var res = _isAdding ? await httpClient.PostAsJsonAsync("api/app/quanly-ban", dto) : await httpClient.PutAsJsonAsync($"api/app/quanly-ban/{_selectedItem!.IdBan}", dto);
+                var res = _isAdding ? await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-ban", dto)
+                                    : await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-ban/{_selectedItem!.IdBan}", dto);
+
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }
@@ -168,7 +164,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (overlay != null) overlay.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.DeleteAsync($"api/app/quanly-ban/{_selectedItem.IdBan}");
+                var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-ban/{_selectedItem.IdBan}");
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }
@@ -180,13 +176,12 @@ namespace AppCafebookApi.View.quanly.pages
             if (!AuthService.CoQuyen("FULL_QL", "QL_BAN") || _selectedItem == null || _isAdding) return;
             try
             {
-                var his = await httpClient.GetFromJsonAsync<QuanLyBanHistoryDto>($"api/app/quanly-ban/{_selectedItem.IdBan}/history");
+                var his = await ApiClient.Instance.GetFromJsonAsync<QuanLyBanHistoryDto>($"api/app/quanly-ban/{_selectedItem.IdBan}/history");
                 if (his != null) MessageBox.Show($"Phục vụ: {his.SoLuotPhucVu}\nDoanh thu: {his.TongDoanhThu:N0}\nĐặt trước: {his.SoLuotDatTruoc}", "Lịch sử Bàn");
             }
             catch { }
         }
 
-        // ĐIỀU HƯỚNG (BẢO MẬT LỚP 2)
         private void BtnNavKhuVuc_Click(object sender, RoutedEventArgs e)
         {
             if (AuthService.CoQuyen("FULL_QL", "QL_KHU_VUC")) this.NavigationService?.Navigate(new QuanLyKhuVucView());

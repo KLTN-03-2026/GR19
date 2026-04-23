@@ -17,18 +17,18 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyKiemKhoView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyKiemKhoGridDto> _phieuKiemList = new();
         private ObservableCollection<QuanLyKiemKhoNguyenLieuDto> _nlKiemKhoList = new();
         private bool _isViewing = true;
 
-        static QuanLyKiemKhoView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyKiemKhoView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyKiemKhoView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             // BẢO MẬT LỚP 2
             if (!AuthService.CoQuyen("QL_KIEM_KHO")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
@@ -51,7 +51,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyKiemKhoGridDto>>("api/app/quanly-kiemkho");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyKiemKhoGridDto>>("api/app/quanly-kiemkho");
                 if (res != null && FindName("dgPhieuKiem") is DataGrid dg) dg.ItemsSource = res;
             }
             catch { }
@@ -69,7 +69,7 @@ namespace AppCafebookApi.View.quanly.pages
 
                 try
                 {
-                    var detail = await httpClient.GetFromJsonAsync<QuanLyKiemKhoDetailDto>($"api/app/quanly-kiemkho/{item.IdPhieuKiemKho}");
+                    var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLyKiemKhoDetailDto>($"api/app/quanly-kiemkho/{item.IdPhieuKiemKho}");
                     if (detail != null && FindName("dgChiTiet") is DataGrid dgc) dgc.ItemsSource = detail.ChiTiet;
                 }
                 catch { }
@@ -87,7 +87,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var data = await httpClient.GetFromJsonAsync<List<QuanLyKiemKhoNguyenLieuDto>>("api/app/quanly-kiemkho/lookup-nl");
+                var data = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyKiemKhoNguyenLieuDto>>("api/app/quanly-kiemkho/lookup-nl");
                 if (data != null)
                 {
                     _nlKiemKhoList.Clear();
@@ -119,7 +119,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.PostAsJsonAsync("api/app/quanly-kiemkho", dto);
+                var res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-kiemkho", dto);
                 if (res.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Kiểm kho và Cân bằng kho thành công!");

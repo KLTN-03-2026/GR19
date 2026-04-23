@@ -9,11 +9,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Net.Mail;
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-khachhang")]
     [ApiController]
+    [Authorize]
     public class QuanLyKhachHangController : ControllerBase
     {
         private readonly CafebookDbContext _context;

@@ -23,18 +23,18 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyBaoCaoHieuSuatView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private QuanLyBaoCaoHieuSuatTongHopDto? currentReportData;
-
+        /*
         static QuanLyBaoCaoHieuSuatView()
         {
-            httpClient = new HttpClient
+            ApiClient.Instance = new ApiClient.Instance
             {
                 BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost"),
                 Timeout = TimeSpan.FromMinutes(5)
             };
         }
-
+        */
         public QuanLyBaoCaoHieuSuatView()
         {
             InitializeComponent();
@@ -44,7 +44,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             // Bảo mật Lớp 2
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_BAO_CAO_HIEU_SUAT_NHAN_SU"))
             {
@@ -73,7 +73,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var response = await httpClient.GetFromJsonAsync<JsonElement>("api/app/quanly/baocaohieusuat/filters");
+                var response = await ApiClient.Instance.GetFromJsonAsync<JsonElement>("api/app/quanly/baocaohieusuat/filters");
                 if (response.TryGetProperty("vaiTros", out JsonElement vtElement))
                 {
                     var vaiTros = vtElement.Deserialize<List<QuanLyFilterLookupDto>>();
@@ -111,7 +111,7 @@ namespace AppCafebookApi.View.quanly.pages
 
             try
             {
-                var response = await httpClient.PostAsJsonAsync("api/app/quanly/baocaohieusuat/report", request);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly/baocaohieusuat/report", request);
                 if (response.IsSuccessStatusCode)
                 {
                     currentReportData = await response.Content.ReadFromJsonAsync<QuanLyBaoCaoHieuSuatTongHopDto>();

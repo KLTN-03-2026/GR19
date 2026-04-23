@@ -24,7 +24,7 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyBaoCaoNhanSuView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
 
         // [FIX LỖI]: Thêm biến lưu trữ dữ liệu hiện tại để xuất Excel
         private QuanLyBaoCaoNhanSuTongHopDto? currentReportData;
@@ -32,7 +32,7 @@ namespace AppCafebookApi.View.quanly.pages
         public SeriesCollection LuongChartSeries { get; set; }
         public string[] ChartLabels { get; set; }
         public Func<double, string> YFormatter { get; set; }
-
+        /*
         static QuanLyBaoCaoNhanSuView()
         {
             httpClient = new HttpClient
@@ -41,7 +41,7 @@ namespace AppCafebookApi.View.quanly.pages
                 Timeout = TimeSpan.FromMinutes(5)
             };
         }
-
+        */
         public QuanLyBaoCaoNhanSuView()
         {
             InitializeComponent();
@@ -65,7 +65,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             // Bảo mật Lớp 2
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_BAO_CAO_NHAN_SU"))
             {
@@ -94,7 +94,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var response = await httpClient.GetFromJsonAsync<QuanLyBaoCaoNhanSu_FiltersDto>("api/app/quanly/baocaonhansu/filters");
+                var response = await ApiClient.Instance.GetFromJsonAsync<QuanLyBaoCaoNhanSu_FiltersDto>("api/app/quanly/baocaonhansu/filters");
                 if (response != null)
                 {
                     if (FindName("cmbVaiTro") is ComboBox cmbVT)
@@ -143,7 +143,7 @@ namespace AppCafebookApi.View.quanly.pages
 
             try
             {
-                var response = await httpClient.PostAsJsonAsync("api/app/quanly/baocaonhansu/report", request);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly/baocaonhansu/report", request);
                 if (response.IsSuccessStatusCode)
                 {
                     // [FIX LỖI]: Gán dữ liệu vào biến currentReportData

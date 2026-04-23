@@ -24,22 +24,22 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyKhuyenMaiView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyKhuyenMaiGridDto> _allKhuyenMaiList = new();
         private QuanLyKhuyenMaiSaveDto? _selectedKhuyenMai = null;
         private List<QuanLyKhuyenMaiLookupDto> _sanPhamList = new();
-
+        /*
         static QuanLyKhuyenMaiView()
         {
             httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
         }
-
+        */
         public QuanLyKhuyenMaiView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI"))
             {
@@ -71,7 +71,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var sp = await httpClient.GetFromJsonAsync<List<QuanLyKhuyenMaiLookupDto>>("api/app/quanly-khuyenmai/filters");
+                var sp = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhuyenMaiLookupDto>>("api/app/quanly-khuyenmai/filters");
                 if (sp != null && FindName("cmbSanPhamApDung") is ComboBox cmb)
                 {
                     var viewList = new List<QuanLyKhuyenMaiLookupDto> { new QuanLyKhuyenMaiLookupDto { Id = 0, Ten = "Không áp dụng (cho toàn hóa đơn)" } };
@@ -90,7 +90,7 @@ namespace AppCafebookApi.View.quanly.pages
                 string maKM = (FindName("txtTimKiem") as TextBox)?.Text ?? "";
                 string trangThai = (FindName("cmbFilterTrangThai") as ComboBox)?.Text ?? "Tất cả";
 
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyKhuyenMaiGridDto>>($"api/app/quanly-khuyenmai/search?maKhuyenMai={maKM}&trangThai={trangThai}");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhuyenMaiGridDto>>($"api/app/quanly-khuyenmai/search?maKhuyenMai={maKM}&trangThai={trangThai}");
                 if (res != null && FindName("dgKhuyenMai") is DataGrid dg)
                 {
                     _allKhuyenMaiList = res;
@@ -113,7 +113,7 @@ namespace AppCafebookApi.View.quanly.pages
                 SetLoading(true);
                 try
                 {
-                    var detail = await httpClient.GetFromJsonAsync<QuanLyKhuyenMaiSaveDto>($"api/app/quanly-khuyenmai/{item.IdKhuyenMai}");
+                    var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLyKhuyenMaiSaveDto>($"api/app/quanly-khuyenmai/{item.IdKhuyenMai}");
                     if (detail != null)
                     {
                         _selectedKhuyenMai = detail;
@@ -234,7 +234,7 @@ namespace AppCafebookApi.View.quanly.pages
             {
                 var dto = MapDtoFromUi();
                 dto.TrangThai = "Hoạt động";
-                var res = await httpClient.PostAsJsonAsync("api/app/quanly-khuyenmai", dto);
+                var res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-khuyenmai", dto);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Thêm mới thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
             }
@@ -253,7 +253,7 @@ namespace AppCafebookApi.View.quanly.pages
                 dto.IdKhuyenMai = _selectedKhuyenMai.IdKhuyenMai;
                 dto.TrangThai = (FindName("cmbTrangThai") as ComboBox)?.Text ?? "Hoạt động";
 
-                var res = await httpClient.PutAsJsonAsync($"api/app/quanly-khuyenmai/{dto.IdKhuyenMai}", dto);
+                var res = await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-khuyenmai/{dto.IdKhuyenMai}", dto);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Cập nhật thành công!"); await LoadDataAsync(); }
                 else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
             }
@@ -270,7 +270,7 @@ namespace AppCafebookApi.View.quanly.pages
                 SetLoading(true);
                 try
                 {
-                    var res = await httpClient.DeleteAsync($"api/app/quanly-khuyenmai/{_selectedKhuyenMai.IdKhuyenMai}");
+                    var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-khuyenmai/{_selectedKhuyenMai.IdKhuyenMai}");
                     if (res.IsSuccessStatusCode) { MessageBox.Show("Đã xóa!"); LamMoiUI(); await LoadDataAsync(); }
                     else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
                 }
@@ -284,7 +284,7 @@ namespace AppCafebookApi.View.quanly.pages
             SetLoading(true);
             try
             {
-                var res = await httpClient.PatchAsync($"api/app/quanly-khuyenmai/togglestatus/{_selectedKhuyenMai.IdKhuyenMai}", null);
+                var res = await ApiClient.Instance.PatchAsync($"api/app/quanly-khuyenmai/togglestatus/{_selectedKhuyenMai.IdKhuyenMai}", null);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Đã thay đổi trạng thái!"); await LoadDataAsync(); }
                 else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
             }

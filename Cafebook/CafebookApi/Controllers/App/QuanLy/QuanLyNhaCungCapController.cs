@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.QuanLy
 {
     [Route("api/app/quanly-nhacungcap")]
     [ApiController]
+    [Authorize]
     public class QuanLyNhaCungCapController : ControllerBase
     {
         private readonly CafebookDbContext _context;

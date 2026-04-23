@@ -1,6 +1,7 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelWeb.KhachHang;
 using CafebookModel.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -14,6 +15,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/khachhang/dangnhap")]
     [ApiController]
+    [AllowAnonymous]
     public class DangNhapController : ControllerBase
     {
         private readonly CafebookDbContext _context;
@@ -163,6 +165,21 @@ namespace CafebookApi.Controllers.Web.KhachHang
             };
 
             string token = GenerateJwtToken(khachHang);
+
+            // THÊM ĐOẠN CODE LƯU LOG VÀO ĐÂY =========================
+            var log = new CafebookModel.Model.ModelEntities.NhatKyHeThong
+            {
+                IdKhachHang = khachHang.IdKhachHang,
+                VaiTro = "Khách hàng",
+                HanhDong = "ĐĂNG NHẬP",
+                BangBiAnhHuong = "Auth",
+                ThoiGian = DateTime.Now,
+                DiaChiIP = ipAddress
+            };
+            _context.NhatKyHeThongs.Add(log);
+            await _context.SaveChangesAsync();
+            // ========================================================
+
             return Ok(new DangNhapResponseDto { Success = true, KhachHangData = dto, Token = token });
         }
 

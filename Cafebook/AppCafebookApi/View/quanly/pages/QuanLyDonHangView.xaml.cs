@@ -20,18 +20,18 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDonHangView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyDonHangGridDto> _orderList = new();
         private QuanLyDonHangGridDto? _selectedOrder;
 
-        static QuanLyDonHangView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyDonHangView() { ApiClient.Instance = new ApiClient.Instance { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyDonHangView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             // 1. CHÌA KHÓA CỔNG (Cho phép vào nếu có ít nhất 1 quyền trong nhóm Đơn hàng)
             bool hasAccess = AuthService.CoQuyen("FULL_QL", "QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG");
@@ -91,7 +91,7 @@ namespace AppCafebookApi.View.quanly.pages
                 var search = (FindName("txtSearch") as TextBox)?.Text.Trim();
 
                 string url = $"api/app/quanly-donhang?tuNgay={tuNgay}&denNgay={denNgay}&trangThai={status}&search={search}";
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyDonHangGridDto>>(url);
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDonHangGridDto>>(url);
 
                 if (res != null)
                 {
@@ -125,7 +125,7 @@ namespace AppCafebookApi.View.quanly.pages
 
                 try
                 {
-                    var detail = await httpClient.GetFromJsonAsync<QuanLyDonHangDetailDto>($"api/app/quanly-donhang/{item.IdHoaDon}");
+                    var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLyDonHangDetailDto>($"api/app/quanly-donhang/{item.IdHoaDon}");
                     if (detail != null)
                     {
                         if (FindName("txtMaHD") is TextBlock t1) t1.Text = $"Mã HĐ: {detail.IdHoaDon}";
@@ -159,7 +159,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is System.Windows.Controls.Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.PutAsJsonAsync($"api/app/quanly-donhang/{_selectedOrder.IdHoaDon}/status", dto);
+                var res = await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-donhang/{_selectedOrder.IdHoaDon}/status", dto);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Cập nhật thành công!"); await LoadOrdersAsync(); }
                 else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }

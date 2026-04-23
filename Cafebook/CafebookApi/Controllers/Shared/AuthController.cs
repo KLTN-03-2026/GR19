@@ -1,6 +1,7 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelEntities;
 using CafebookModel.Model.Shared;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +13,7 @@ namespace CafebookApi.Controllers.Shared
 {
     [Route("api/shared/[controller]")]
     [ApiController]
+    [AllowAnonymous]
     public class AuthController : ControllerBase
     {
         private readonly CafebookDbContext _context;
@@ -75,12 +77,20 @@ namespace CafebookApi.Controllers.Shared
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            string roleCode = "NhanVien"; 
+            if (nv.VaiTro.TenVaiTro.ToLower().Contains("quản lý") || nv.VaiTro.TenVaiTro.ToLower().Contains("quản trị"))
+            {
+                roleCode = "QuanLy";
+            }
 
             var claims = new List<Claim>
             {
+                new Claim("IdNhanVien", nv.IdNhanVien.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, nv.IdNhanVien.ToString()),
                 new Claim(ClaimTypes.Name, nv.HoTen),
-                new Claim(ClaimTypes.Role, nv.VaiTro.TenVaiTro),
+                
+                new Claim(ClaimTypes.Role, roleCode),
+
                 new Claim("Username", nv.TenDangNhap)
             };
 

@@ -22,7 +22,7 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyNhapKhoView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLyNhapKhoGridDto> _phieuNhapList = new();
         private List<LookupNhapKhoDto> _nccList = new();
         private List<LookupNhapKhoDto> _nlList = new();
@@ -34,13 +34,13 @@ namespace AppCafebookApi.View.quanly.pages
 
         private bool _isViewing = false;
 
-        static QuanLyNhapKhoView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLyNhapKhoView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public QuanLyNhapKhoView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("QL_NHAP_KHO")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
 
@@ -62,7 +62,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var ncc = await httpClient.GetFromJsonAsync<List<LookupNhapKhoDto>>("api/app/quanly-nhapkho/lookup-ncc");
+                var ncc = await ApiClient.Instance.GetFromJsonAsync<List<LookupNhapKhoDto>>("api/app/quanly-nhapkho/lookup-ncc");
                 if (ncc != null && FindName("cmbNhaCungCap") is ComboBox cb1)
                 {
                     _nccList = ncc; cb1.ItemsSource = _nccList;
@@ -71,7 +71,7 @@ namespace AppCafebookApi.View.quanly.pages
                     view1.Filter = item => string.IsNullOrEmpty(cb1.Text) || ((LookupNhapKhoDto)item).Ten.IndexOf(cb1.Text, StringComparison.OrdinalIgnoreCase) >= 0;
                 }
 
-                var nl = await httpClient.GetFromJsonAsync<List<LookupNhapKhoDto>>("api/app/quanly-nhapkho/lookup-nl");
+                var nl = await ApiClient.Instance.GetFromJsonAsync<List<LookupNhapKhoDto>>("api/app/quanly-nhapkho/lookup-nl");
                 if (nl != null && FindName("cmbNguyenLieu") is ComboBox cb2)
                 {
                     _nlList = nl; cb2.ItemsSource = _nlList;
@@ -111,7 +111,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyNhapKhoGridDto>>("api/app/quanly-nhapkho");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyNhapKhoGridDto>>("api/app/quanly-nhapkho");
                 if (res != null) { _phieuNhapList = res; FilterData(); }
             }
             catch { }
@@ -142,7 +142,7 @@ namespace AppCafebookApi.View.quanly.pages
 
                 try
                 {
-                    var detail = await httpClient.GetFromJsonAsync<QuanLyNhapKhoDetailDto>($"api/app/quanly-nhapkho/{item.IdPhieuNhap}");
+                    var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLyNhapKhoDetailDto>($"api/app/quanly-nhapkho/{item.IdPhieuNhap}");
                     if (detail != null)
                     {
                         if (FindName("cmbNhaCungCap") is ComboBox c1) c1.SelectedValue = detail.IdNhaCungCap;
@@ -268,7 +268,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await httpClient.PostAsJsonAsync("api/app/quanly-nhapkho", dto);
+                var res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-nhapkho", dto);
                 if (res.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Tạo phiếu nhập thành công và đã cập nhật tồn kho!");

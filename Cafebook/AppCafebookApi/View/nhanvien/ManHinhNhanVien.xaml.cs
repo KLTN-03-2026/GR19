@@ -22,16 +22,16 @@ namespace AppCafebookApi.View.nhanvien
     public partial class ManHinhNhanVien : Window
     {
         private ToggleButton? currentNavButton;
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private DispatcherTimer _notificationTimer;
         private Page? _targetPageForNotification = null;
-
+        /*
         static ManHinhNhanVien()
         {
             string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
             httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
         }
-
+        */
         public ManHinhNhanVien() 
         {
             InitializeComponent();
@@ -96,7 +96,7 @@ namespace AppCafebookApi.View.nhanvien
             {
                 // Gọi API lấy trạng thái
                 string url = $"api/app/chamcong/status/{AuthService.CurrentUser.IdNhanVien}";
-                var response = await httpClient.GetFromJsonAsync<ChamCongDashboardDto>(url);
+                var response = await ApiClient.Instance.GetFromJsonAsync<ChamCongDashboardDto>(url);
 
                 if (response != null)
                 {
@@ -268,7 +268,7 @@ namespace AppCafebookApi.View.nhanvien
                 // 2. PHẢI CÓ THAM SỐ roleName
                 string url = $"api/shared/thongbao/my-notifications?userId={AuthService.CurrentUser.IdNhanVien}&userRoles={roles}&roleName={rName}";
 
-                var response = await httpClient.GetFromJsonAsync<SharedThongBaoResponseDto>(url);
+                var response = await ApiClient.Instance.GetFromJsonAsync<SharedThongBaoResponseDto>(url);
 
                 if (response != null)
                 {
@@ -294,7 +294,7 @@ namespace AppCafebookApi.View.nhanvien
                 {
                     try
                     {
-                        await httpClient.PostAsync($"api/shared/thongbao/mark-as-read/{tb.IdThongBao}", null);
+                        await ApiClient.Instance.PostAsync($"api/shared/thongbao/mark-as-read/{tb.IdThongBao}", null);
                         await CheckNotificationsAsync();
                     }
                     catch { }
@@ -340,8 +340,19 @@ namespace AppCafebookApi.View.nhanvien
         {
             if (MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
-                _notificationTimer.Stop();
+                _notificationTimer?.Stop();
+                if (MainFrame != null)
+                {
+                    MainFrame.Content = null;
+
+                    while (MainFrame.NavigationService.CanGoBack)
+                    {
+                        MainFrame.NavigationService.RemoveBackEntry();
+                    }
+                }
+
                 AuthService.Logout();
+
                 new ManHinhDangNhap().Show();
                 this.Close();
             }

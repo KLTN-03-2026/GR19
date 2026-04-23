@@ -22,20 +22,20 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLySanPhamView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private List<QuanLySanPhamGridDto> _dataList = new();
         private List<LookupDanhMucDto> _danhMucList = new();
         private QuanLySanPhamDetailDto? _selectedItem;
         private string? _currentImgPath = null;
         private bool _deleteImgRequest = false;
 
-        static QuanLySanPhamView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static QuanLySanPhamView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
         public QuanLySanPhamView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             // 1. CHÌA KHÓA CỔNG
             bool hasAccess = AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM", "QL_DANH_MUC", "QL_DINH_LUONG");
@@ -81,7 +81,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is System.Windows.Controls.Border l1) l1.Visibility = Visibility.Visible;
             try
             {
-                var dms = await httpClient.GetFromJsonAsync<List<LookupDanhMucDto>>("api/app/quanly-sanpham/lookup-danhmuc");
+                var dms = await ApiClient.Instance.GetFromJsonAsync<List<LookupDanhMucDto>>("api/app/quanly-sanpham/lookup-danhmuc");
                 if (dms != null)
                 {
                     _danhMucList = dms;
@@ -104,7 +104,7 @@ namespace AppCafebookApi.View.quanly.pages
                         view2.Filter = item => string.IsNullOrEmpty(cb2.Text) || ((LookupDanhMucDto)item).Ten.IndexOf(cb2.Text, StringComparison.OrdinalIgnoreCase) >= 0;
                     }
                 }
-                var sps = await httpClient.GetFromJsonAsync<List<QuanLySanPhamGridDto>>("api/app/quanly-sanpham");
+                var sps = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySanPhamGridDto>>("api/app/quanly-sanpham");
                 if (sps != null) { _dataList = sps; FilterData(); }
             }
             catch { }
@@ -154,7 +154,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("dgSanPham") is DataGrid dg && dg.SelectedItem is QuanLySanPhamGridDto item)
             {
                 if (FindName("formChiTiet") is StackPanel form) form.IsEnabled = true;
-                _selectedItem = await httpClient.GetFromJsonAsync<QuanLySanPhamDetailDto>($"api/app/quanly-sanpham/{item.IdSanPham}");
+                _selectedItem = await ApiClient.Instance.GetFromJsonAsync<QuanLySanPhamDetailDto>($"api/app/quanly-sanpham/{item.IdSanPham}");
                 if (_selectedItem != null)
                 {
                     if (FindName("txtTenSanPham") is TextBox t1) t1.Text = _selectedItem.TenSanPham;
@@ -208,7 +208,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("LoadingOverlay") is System.Windows.Controls.Border l1) l1.Visibility = Visibility.Visible;
             try
             {
-                var res = _selectedItem.IdSanPham == 0 ? await httpClient.PostAsync("api/app/quanly-sanpham", content) : await httpClient.PutAsync($"api/app/quanly-sanpham/{_selectedItem.IdSanPham}", content);
+                var res = _selectedItem.IdSanPham == 0 ? await ApiClient.Instance.PostAsync("api/app/quanly-sanpham", content) : await ApiClient.Instance.PutAsync($"api/app/quanly-sanpham/{_selectedItem.IdSanPham}", content);
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Đã lưu!"); await LoadDataAsync(); } else MessageBox.Show(await res.Content.ReadAsStringAsync());
             }
             finally { if (FindName("LoadingOverlay") is System.Windows.Controls.Border l2) l2.Visibility = Visibility.Collapsed; }
@@ -219,7 +219,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!AuthService.CoQuyen("QL_SAN_PHAM") || _selectedItem == null || _selectedItem.IdSanPham == 0) return;
             if (MessageBox.Show("Xóa SP này?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
-                var res = await httpClient.DeleteAsync($"api/app/quanly-sanpham/{_selectedItem.IdSanPham}");
+                var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-sanpham/{_selectedItem.IdSanPham}");
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Đã xóa"); BtnLamMoiForm_Click(this, new RoutedEventArgs()); await LoadDataAsync(); }
             }
         }

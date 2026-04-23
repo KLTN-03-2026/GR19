@@ -15,7 +15,7 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyThongBaoView : Page
     {
-        private static readonly HttpClient httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
+        //private static readonly HttpClient httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
         private List<QuanLyThongBaoGridDto> _allData = new();
         private QuanLyThongBaoGridDto? _selectedItem = null;
 
@@ -29,7 +29,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             // Cho phép Admin (FULL_QL) hoặc Quyền quản lý thông báo được xem
             bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_THONG_BAO") || AuthService.CoQuyen("FULL_QL", "FULL_QL");
@@ -74,7 +74,7 @@ namespace AppCafebookApi.View.quanly.pages
                     queryParams.Add($"keyword={txtKeyword.Text.Trim()}");
 
                 string url = "api/app/quanly-thongbao/search" + (queryParams.Any() ? "?" + string.Join("&", queryParams) : "");
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyThongBaoGridDto>>(url);
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyThongBaoGridDto>>(url);
 
                 if (res != null)
                 {
@@ -144,8 +144,8 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 HttpResponseMessage res = _selectedItem == null
-                    ? await httpClient.PostAsJsonAsync("api/app/quanly-thongbao", dto)
-                    : await httpClient.PutAsJsonAsync($"api/app/quanly-thongbao/{_selectedItem.IdThongBao}", dto);
+                    ? await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-thongbao", dto)
+                    : await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-thongbao/{_selectedItem.IdThongBao}", dto);
 
                 if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); BtnLamMoiForm_Click(this, new RoutedEventArgs()); await LoadDataAsync(); }
                 else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
@@ -162,7 +162,7 @@ namespace AppCafebookApi.View.quanly.pages
                 LoadingOverlay.Visibility = Visibility.Visible;
                 try
                 {
-                    var res = await httpClient.DeleteAsync($"api/app/quanly-thongbao/{_selectedItem.IdThongBao}");
+                    var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-thongbao/{_selectedItem.IdThongBao}");
                     if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa thành công!"); BtnLamMoiForm_Click(this, new RoutedEventArgs()); await LoadDataAsync(); }
                     else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
                 }

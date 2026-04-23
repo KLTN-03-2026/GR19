@@ -7,11 +7,13 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.Shared
 {
     [Route("api/shared/thongbao")]
     [ApiController]
+    [Authorize]
     public class SharedThongBaoController : ControllerBase
     {
         private readonly CafebookDbContext _context;

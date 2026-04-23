@@ -1,5 +1,6 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelWeb.KhachHang;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -9,6 +10,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/chitietsach")]
     [ApiController]
+    [AllowAnonymous]
     public class ChiTietSachController : ControllerBase
     {
         private readonly CafebookDbContext _context;

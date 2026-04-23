@@ -22,9 +22,9 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyBaoCaoTonKhoSachView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private QuanLyBaoCaoSachTongHopDto? currentReportData;
-
+        /*
         static QuanLyBaoCaoTonKhoSachView()
         {
             httpClient = new HttpClient
@@ -33,7 +33,7 @@ namespace AppCafebookApi.View.quanly.pages
                 Timeout = TimeSpan.FromMinutes(5)
             };
         }
-
+        */
         public QuanLyBaoCaoTonKhoSachView()
         {
             InitializeComponent();
@@ -43,7 +43,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             // Bảo mật Lớp 2
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_BAO_CAO_TON_KHO_SACH"))
             {
@@ -66,7 +66,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var response = await httpClient.GetFromJsonAsync<QuanLyBaoCaoTonKhoSach_FiltersDto>("api/app/quanly/baocaotonkhosach/filters");
+                var response = await ApiClient.Instance.GetFromJsonAsync<QuanLyBaoCaoTonKhoSach_FiltersDto>("api/app/quanly/baocaotonkhosach/filters");
                 if (response != null)
                 {
                     if (FindName("cmbTheLoai") is ComboBox cmbTL)
@@ -109,7 +109,7 @@ namespace AppCafebookApi.View.quanly.pages
 
             try
             {
-                var response = await httpClient.PostAsJsonAsync("api/app/quanly/baocaotonkhosach/report", request);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly/baocaotonkhosach/report", request);
                 if (response.IsSuccessStatusCode)
                 {
                     currentReportData = await response.Content.ReadFromJsonAsync<QuanLyBaoCaoSachTongHopDto>();

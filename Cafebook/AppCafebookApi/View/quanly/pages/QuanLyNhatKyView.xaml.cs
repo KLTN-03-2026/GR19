@@ -16,14 +16,14 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyNhatKyView : Page
     {
-        private static readonly HttpClient httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
+        //private static readonly HttpClient httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
         private List<QuanLyNhatKyGridDto> _allData = new();
 
         public QuanLyNhatKyView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             // BẢO MẬT: Chỉ cho Admin (FULL_QL) truy cập
             if (!AuthService.CoQuyen("FULL_QL", "CM_NHAT_KY_HE_THONG"))
@@ -44,7 +44,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var tables = await httpClient.GetFromJsonAsync<List<string>>("api/app/quanly-nhatky/tables");
+                var tables = await ApiClient.Instance.GetFromJsonAsync<List<string>>("api/app/quanly-nhatky/tables");
                 if (tables != null && FindName("cmbBangAnhHuong") is ComboBox cmb)
                 {
                     var list = new List<string> { "Tất cả" };
@@ -69,7 +69,7 @@ namespace AppCafebookApi.View.quanly.pages
                 if (FindName("txtKeyword") is TextBox txt && !string.IsNullOrWhiteSpace(txt.Text)) queryParams.Add($"keyword={txt.Text.Trim()}");
 
                 string url = "api/app/quanly-nhatky/search" + (queryParams.Any() ? "?" + string.Join("&", queryParams) : "");
-                var res = await httpClient.GetFromJsonAsync<List<QuanLyNhatKyGridDto>>(url);
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyNhatKyGridDto>>(url);
 
                 if (res != null && FindName("dgNhatKy") is DataGrid dg)
                 {
@@ -91,7 +91,7 @@ namespace AppCafebookApi.View.quanly.pages
 
                 try
                 {
-                    var detail = await httpClient.GetFromJsonAsync<QuanLyNhatKyDetailDto>($"api/app/quanly-nhatky/{item.IdNhatKy}");
+                    var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLyNhatKyDetailDto>($"api/app/quanly-nhatky/{item.IdNhatKy}");
                     if (detail != null)
                     {
                         if (FindName("lblThongTinChung") is TextBlock lbl)

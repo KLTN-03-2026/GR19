@@ -12,7 +12,7 @@ namespace AppCafebookApi.View.Common
     public partial class PhieuGoiMonPreviewWindow : Window
     {
         private readonly int _idHoaDon;
-        private static readonly HttpClient _httpClient;
+        /*private static readonly HttpClient _httpClient;
 
         // ======================================================
         // NÂNG CẤP 1: DYNAMIC URL (Tuyệt đối không hardcode)
@@ -26,7 +26,7 @@ namespace AppCafebookApi.View.Common
                 _httpClient.BaseAddress = new Uri(apiUrl);
             }
         }
-
+        */
         public PhieuGoiMonPreviewWindow(int idHoaDon)
         {
             InitializeComponent();
@@ -36,7 +36,7 @@ namespace AppCafebookApi.View.Common
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Chặn crash nếu chưa có API
-            if (_httpClient.BaseAddress == null)
+            if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Hệ thống chưa được cấu hình URL Server.", "Thiếu cấu hình");
                 this.Close();
@@ -46,12 +46,12 @@ namespace AppCafebookApi.View.Common
             // Gắn Token
             if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
             try
             {
-                var data = await _httpClient.GetFromJsonAsync<PhieuGoiMonPrintDto>($"api/app/nhanvien/goimon/print-data/{_idHoaDon}");
+                var data = await ApiClient.Instance.GetFromJsonAsync<PhieuGoiMonPrintDto>($"api/app/nhanvien/goimon/print-data/{_idHoaDon}");
                 if (data != null)
                 {
                     lblTenQuan.Text = data.TenQuan;

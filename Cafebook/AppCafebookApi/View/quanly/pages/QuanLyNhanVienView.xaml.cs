@@ -20,7 +20,7 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyNhanVienView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
 
         private List<QuanLyNhanVienGridDto> _allNhanVienList = new List<QuanLyNhanVienGridDto>();
         private List<RoleLookupDto> _vaiTroList = new List<RoleLookupDto>();
@@ -28,7 +28,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private string? _currentAvatarFilePath = null;
         private bool _deleteAvatarRequest = false;
-
+        /*
         static QuanLyNhanVienView()
         {
             string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
@@ -37,7 +37,7 @@ namespace AppCafebookApi.View.quanly.pages
                 BaseAddress = new Uri(apiUrl)
             };
         }
-
+        */
         public QuanLyNhanVienView()
         {
             InitializeComponent();
@@ -47,7 +47,7 @@ namespace AppCafebookApi.View.quanly.pages
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             bool hasAnyHRQuyen = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU");
 
@@ -169,7 +169,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var response = await httpClient.GetFromJsonAsync<List<RoleLookupDto>>("api/app/quanly-nhanvien/roles-lookup");
+                var response = await ApiClient.Instance.GetFromJsonAsync<List<RoleLookupDto>>("api/app/quanly-nhanvien/roles-lookup");
                 if (response != null)
                 {
                     _vaiTroList = response;
@@ -199,7 +199,7 @@ namespace AppCafebookApi.View.quanly.pages
             try
             {
                 if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
-                var response = await httpClient.GetFromJsonAsync<List<QuanLyNhanVienGridDto>>("api/app/quanly-nhanvien");
+                var response = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyNhanVienGridDto>>("api/app/quanly-nhanvien");
                 if (response != null)
                 {
                     _allNhanVienList = response;
@@ -265,7 +265,7 @@ namespace AppCafebookApi.View.quanly.pages
                 try
                 {
                     if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
-                    var detail = await httpClient.GetFromJsonAsync<QuanLyNhanVienDetailDto>($"api/app/quanly-nhanvien/{selectedGridItem.IdNhanVien}");
+                    var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLyNhanVienDetailDto>($"api/app/quanly-nhanvien/{selectedGridItem.IdNhanVien}");
 
                     if (detail != null)
                     {
@@ -439,11 +439,11 @@ namespace AppCafebookApi.View.quanly.pages
                 HttpResponseMessage response;
                 if (isUpdate && _selectedNhanVien != null)
                 {
-                    response = await httpClient.PutAsync($"api/app/quanly-nhanvien/{_selectedNhanVien.IdNhanVien}", formData);
+                    response = await ApiClient.Instance.PutAsync($"api/app/quanly-nhanvien/{_selectedNhanVien.IdNhanVien}", formData);
                 }
                 else
                 {
-                    response = await httpClient.PostAsync("api/app/quanly-nhanvien", formData);
+                    response = await ApiClient.Instance.PostAsync("api/app/quanly-nhanvien", formData);
                 }
 
                 if (response.IsSuccessStatusCode)
@@ -502,7 +502,7 @@ namespace AppCafebookApi.View.quanly.pages
 
             if (MessageBox.Show($"Xác nhận xóa nhân viên: {_selectedNhanVien.HoTen}?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
-                var response = await httpClient.DeleteAsync($"api/app/quanly-nhanvien/{_selectedNhanVien.IdNhanVien}");
+                var response = await ApiClient.Instance.DeleteAsync($"api/app/quanly-nhanvien/{_selectedNhanVien.IdNhanVien}");
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Xóa thành công!");

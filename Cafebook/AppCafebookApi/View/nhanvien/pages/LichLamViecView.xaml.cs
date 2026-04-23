@@ -17,7 +17,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class LichLamViecView : Page
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private const double PIXELS_PER_HOUR = 60.0; // 1 giờ = 60 pixels
         private LichLamViec_ConfigDto? _config;
 
@@ -25,12 +25,12 @@ namespace AppCafebookApi.View.nhanvien.pages
         private DateTime _ngayBatDauHienThi;
         private int _soNgayHienThi = 7; // Mặc định xem 1 tuần
         private List<LichLamViec_CaNhanDto> _currentData = new();
-
+        /*
         static LichLamViecView()
         {
             httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
         }
-
+        */
         public LichLamViecView()
         {
             InitializeComponent();
@@ -47,7 +47,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             await LoadConfigAsync();
             await RefreshScheduleAsync();
@@ -57,7 +57,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             try
             {
-                _config = await httpClient.GetFromJsonAsync<LichLamViec_ConfigDto>("api/app/nhanvien/lichlamviec/config");
+                _config = await ApiClient.Instance.GetFromJsonAsync<LichLamViec_ConfigDto>("api/app/nhanvien/lichlamviec/config");
             }
             catch
             {
@@ -85,7 +85,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 }
 
                 var url = $"api/app/nhanvien/lichlamviec/my-schedule/{idNhanVien}?tuNgay={_ngayBatDauHienThi:yyyy-MM-dd}&denNgay={denNgay:yyyy-MM-dd}";
-                var data = await httpClient.GetFromJsonAsync<List<LichLamViec_CaNhanDto>>(url);
+                var data = await ApiClient.Instance.GetFromJsonAsync<List<LichLamViec_CaNhanDto>>(url);
 
                 _currentData = data ?? new List<LichLamViec_CaNhanDto>();
 

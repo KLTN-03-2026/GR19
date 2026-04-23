@@ -10,10 +10,10 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.QuanLy
 {
-    // CLASS WRAPPER NÀY SẼ GIẢI QUYẾT TRIỆT ĐỂ LỖI SWAGGER CRASH
     public class QuanLySanPhamSaveRequest
     {
         public string TenSanPham { get; set; } = string.Empty;
@@ -23,12 +23,13 @@ namespace CafebookApi.Controllers.App.QuanLy
         public bool TrangThaiKinhDoanh { get; set; } = true;
         public string? MoTa { get; set; }
 
-        public IFormFile? AnhBia { get; set; } // File ảnh đính kèm
-        public bool DeleteImage { get; set; }  // Cờ hiệu xóa ảnh
+        public IFormFile? AnhBia { get; set; }
+        public bool DeleteImage { get; set; } 
     }
 
     [Route("api/app/quanly-sanpham")]
     [ApiController]
+    [Authorize]
     public class QuanLySanPhamController : ControllerBase
     {
         private readonly CafebookDbContext _context;

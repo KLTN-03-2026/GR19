@@ -76,6 +76,7 @@ builder.Services.AddMemoryCache();
 var app = builder.Build();
 
 app.UseExceptionHandler("/loi-he-thong?code=500");
+app.UseExceptionHandler("/loi-he-thong?code=400");
 app.UseStatusCodePagesWithReExecute("/loi-he-thong", "?code={0}");
 
 app.UseStaticFiles();

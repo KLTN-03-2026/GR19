@@ -10,11 +10,13 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.Web.KhachHang
 {
     [Route("api/web/thucdon")]
     [ApiController]
+    [AllowAnonymous]
     public class ThucDonController : ControllerBase
     {
         private readonly CafebookDbContext _context;

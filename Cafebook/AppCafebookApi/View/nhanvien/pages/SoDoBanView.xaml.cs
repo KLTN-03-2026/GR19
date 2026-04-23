@@ -28,7 +28,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         }
         private enum SelectionMode { None, ChuyenBan, GopBan }
 
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private BanSoDoDto? _selectedBan = null;
         private List<BanSoDoDto> _allTablesCache = new List<BanSoDoDto>();
         private List<KhuVucDto> _khuVucCache = new List<KhuVucDto>();
@@ -36,7 +36,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         // ======================================================
         // NÂNG CẤP 1: DYNAMIC URL (Tuyệt đối không hardcode)
-        // ======================================================
+        /* ======================================================
         static SoDoBanView()
         {
             httpClient = new HttpClient();
@@ -46,7 +46,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 httpClient.BaseAddress = new Uri(apiUrl);
             }
         }
-
+        */
         public SoDoBanView()
         {
             InitializeComponent();
@@ -78,14 +78,14 @@ namespace AppCafebookApi.View.nhanvien.pages
             // Gắn Bearer Token
             if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
             // BẢO MẬT LỚP 1: Ẩn hiện các nút chức năng
             ApplyPermissions();
 
             // Chặn gọi API nếu chưa có URL (Chống crash)
-            if (httpClient.BaseAddress == null)
+            if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Hệ thống chưa được cấu hình URL Server. Vui lòng kiểm tra file AppConfig.json!", "Thiếu cấu hình", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -162,7 +162,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 // Tự cấp tự túc: Gọi trực tiếp API mới tạo trong SoDoBanController
                 string apiRoute = "api/app/sodoban/khuvuc-list";
 
-                _khuVucCache = (await httpClient.GetFromJsonAsync<List<KhuVucDto>>(apiRoute))
+                _khuVucCache = (await ApiClient.Instance.GetFromJsonAsync<List<KhuVucDto>>(apiRoute))
                                  ?? new List<KhuVucDto>();
 
                 if (FindName("icKhuVuc") is ItemsControl icKhuVuc)
@@ -178,7 +178,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             try
             {
-                _allTablesCache = (await httpClient.GetFromJsonAsync<List<BanSoDoDto>>("api/app/sodoban/tables"))
+                _allTablesCache = (await ApiClient.Instance.GetFromJsonAsync<List<BanSoDoDto>>("api/app/sodoban/tables"))
                                       ?? new List<BanSoDoDto>();
             }
             catch (Exception ex)
@@ -402,12 +402,12 @@ namespace AppCafebookApi.View.nhanvien.pages
                 HttpResponseMessage response;
                 if (_selectedBan.IdBan > 0)
                 {
-                    response = await httpClient.PostAsJsonAsync($"api/app/sodoban/createorder/{_selectedBan.IdBan}/{idNhanVien}", new { });
+                    response = await ApiClient.Instance.PostAsJsonAsync($"api/app/sodoban/createorder/{_selectedBan.IdBan}/{idNhanVien}", new { });
                 }
                 else
                 {
                     string loaiHoaDon = (_selectedBan.IdBan == -1) ? "Tại quán" : "Mang về";
-                    response = await httpClient.PostAsJsonAsync($"api/app/sodoban/createorder-no-table/{idNhanVien}", loaiHoaDon);
+                    response = await ApiClient.Instance.PostAsJsonAsync($"api/app/sodoban/createorder-no-table/{idNhanVien}", loaiHoaDon);
                 }
 
                 if (response.IsSuccessStatusCode)
@@ -465,7 +465,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 try
                 {
                     var request = new BaoCaoSuCoRequestDto { GhiChuSuCo = ghiChu };
-                    var response = await httpClient.PostAsJsonAsync($"api/app/sodoban/reportproblem/{_selectedBan.IdBan}/{idNhanVien}", request);
+                    var response = await ApiClient.Instance.PostAsJsonAsync($"api/app/sodoban/reportproblem/{_selectedBan.IdBan}/{idNhanVien}", request);
                     if (response.IsSuccessStatusCode)
                     {
                         await ReloadDataAsync();
@@ -541,7 +541,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                         return;
                     }
                     request.IdBanDich = targetBan.IdBan;
-                    response = await httpClient.PostAsJsonAsync("api/app/sodoban/move-table", request);
+                    response = await ApiClient.Instance.PostAsJsonAsync("api/app/sodoban/move-table", request);
                 }
                 else
                 {
@@ -556,7 +556,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                         return;
                     }
                     request.IdHoaDonDich = targetBan.IdHoaDonHienTai;
-                    response = await httpClient.PostAsJsonAsync("api/app/sodoban/merge-table", request);
+                    response = await ApiClient.Instance.PostAsJsonAsync("api/app/sodoban/merge-table", request);
                 }
 
                 if (response.IsSuccessStatusCode)

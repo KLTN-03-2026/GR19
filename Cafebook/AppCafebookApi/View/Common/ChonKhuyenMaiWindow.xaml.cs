@@ -8,7 +8,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using AppCafebookApi.Services; // Thêm để dùng AppConfigManager & AuthService
+using AppCafebookApi.Services;
 
 namespace AppCafebookApi.View.common
 {
@@ -16,7 +16,7 @@ namespace AppCafebookApi.View.common
     {
         private readonly int _idHoaDon;
         private readonly int? _currentSelectedId;
-        private static readonly HttpClient _httpClient;
+        //private static readonly HttpClient _httpClient;
         private List<KhuyenMaiHienThiGoiMonDto> _allKms = new List<KhuyenMaiHienThiGoiMonDto>();
 
         public int? SelectedId { get; private set; }
@@ -24,6 +24,7 @@ namespace AppCafebookApi.View.common
         // ======================================================
         // NÂNG CẤP 1: DYNAMIC URL (Tuyệt đối không hardcode)
         // ======================================================
+        /*
         static ChonKhuyenMaiWindow()
         {
             _httpClient = new HttpClient();
@@ -33,7 +34,7 @@ namespace AppCafebookApi.View.common
                 _httpClient.BaseAddress = new Uri(apiUrl);
             }
         }
-
+        */
         public ChonKhuyenMaiWindow(int idHoaDon, int? currentSelectedId)
         {
             InitializeComponent();
@@ -44,7 +45,7 @@ namespace AppCafebookApi.View.common
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Chặn crash nếu chưa có API
-            if (_httpClient.BaseAddress == null)
+            if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Hệ thống chưa được cấu hình URL Server.", "Thiếu cấu hình");
                 this.Close();
@@ -54,13 +55,13 @@ namespace AppCafebookApi.View.common
             // Gắn Token
             if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
             this.IsEnabled = false;
             try
             {
-                var response = await _httpClient.GetAsync($"api/app/nhanvien/goimon/khuyenmai-available/{_idHoaDon}");
+                var response = await ApiClient.Instance.GetAsync($"api/app/nhanvien/goimon/khuyenmai-available/{_idHoaDon}");
                 if (response.IsSuccessStatusCode)
                 {
                     _allKms = await response.Content.ReadFromJsonAsync<List<KhuyenMaiHienThiGoiMonDto>>() ?? new List<KhuyenMaiHienThiGoiMonDto>();

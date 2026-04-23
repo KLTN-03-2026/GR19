@@ -15,14 +15,15 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLySuCoBanView : Page
     {
+        /*
         private static readonly HttpClient httpClient;
         static QuanLySuCoBanView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
-
+        */
         public QuanLySuCoBanView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             if (!AuthService.CoQuyen("QL_SU_CO_BAN")) { MessageBox.Show("Từ chối!"); this.NavigationService?.GoBack(); return; }
             await LoadDataAsync();
         }
@@ -33,7 +34,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("lblTitle") is TextBlock title) title.Text = isHistory ? "Lịch sử sự cố đã xử lý" : "Sự cố Bàn cần xử lý";
             try
             {
-                var res = await httpClient.GetFromJsonAsync<List<QuanLySuCoBanDto>>($"api/app/quanly-sucoban?isHistory={isHistory}");
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySuCoBanDto>>($"api/app/quanly-sucoban?isHistory={isHistory}");
                 if (FindName("dgSuCo") is DataGrid dg) dg.ItemsSource = res;
             }
             catch { }
@@ -53,7 +54,7 @@ namespace AppCafebookApi.View.quanly.pages
                         IdBan = tb.IdBan ?? 0
                     };
 
-                    var response = await httpClient.PostAsJsonAsync($"api/app/quanly-sucoban/resolve/{tb.IdThongBao}", payload);
+                    var response = await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-sucoban/resolve/{tb.IdThongBao}", payload);
 
                     if (response.IsSuccessStatusCode)
                     {

@@ -2,6 +2,7 @@
 using CafebookApi.Data;
 using CafebookModel.Model.ModelApp.NhanVien;
 using CafebookModel.Model.ModelEntities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +16,7 @@ namespace CafebookApi.Controllers.App.NhanVien
 {
     [Route("api/app/nhanvien/[controller]")]
     [ApiController]
+    [Authorize]
     public class GoiMonController : ControllerBase
     {
         private readonly CafebookDbContext _context;

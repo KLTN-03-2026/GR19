@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -11,22 +10,27 @@ namespace CafebookModel.Model.ModelEntities
         [Key]
         public int IdNhatKy { get; set; }
 
-        public int? IdNhanVien { get; set; } // Người thực hiện thao tác
+        public int? IdNhanVien { get; set; }
+
+        public int? IdKhachHang { get; set; } 
+
+        [StringLength(50)]
+        public string? VaiTro { get; set; } 
 
         [Required]
         [StringLength(50)]
-        public string HanhDong { get; set; } = string.Empty; // THÊM MỚI, CẬP NHẬT, XÓA, ĐĂNG NHẬP
+        public string HanhDong { get; set; } = string.Empty;
 
         [Required]
         [StringLength(100)]
-        public string BangBiAnhHuong { get; set; } = string.Empty; // Tên bảng (VD: SanPham, HoaDon)
+        public string BangBiAnhHuong { get; set; } = string.Empty;
 
         [StringLength(100)]
-        public string? KhoaChinh { get; set; } // ID của dòng dữ liệu bị tác động
+        public string? KhoaChinh { get; set; }
 
-        public string? DuLieuCu { get; set; } // Giá trị JSON trước khi thay đổi
+        public string? DuLieuCu { get; set; }
 
-        public string? DuLieuMoi { get; set; } // Giá trị JSON sau khi thay đổi
+        public string? DuLieuMoi { get; set; }
 
         public DateTime ThoiGian { get; set; } = DateTime.Now;
 
@@ -35,5 +39,8 @@ namespace CafebookModel.Model.ModelEntities
 
         [ForeignKey("IdNhanVien")]
         public virtual NhanVien? NhanVien { get; set; }
+
+        [ForeignKey("IdKhachHang")]
+        public virtual KhachHang? KhachHang { get; set; } 
     }
 }

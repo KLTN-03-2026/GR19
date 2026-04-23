@@ -1,46 +1,39 @@
-﻿// Tệp: AppCafebookApi/View/common/PhieuGiaoHangPreviewWindow.xaml.cs
+﻿// Tệp: AppCafebookApi/View/Common/PhieuGiaoHangPreviewWindow.xaml.cs
 using CafebookModel.Model.ModelApp.NhanVien;
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media; // Cần cho VisualTreeHelper
 
-// === SỬA LỖI CS0246: Đổi 'common' (thường) thành 'Common' (hoa) ===
 namespace AppCafebookApi.View.Common
 {
     public partial class PhieuGiaoHangPreviewWindow : Window
     {
-        // SỬA: Dùng DTO của Phiếu Giao Hàng (từ GoiMonDto)
         private readonly PhieuGoiMonPrintDto _data;
 
         public PhieuGiaoHangPreviewWindow(PhieuGoiMonPrintDto data)
         {
-            InitializeComponent(); // Lỗi CS0103 đã được fix
+            InitializeComponent();
             _data = data;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // 1. Bind Thông tin quán
             lblTenQuan.Text = _data.TenQuan;
             lblDiaChi.Text = _data.DiaChiQuan;
             lblSoDienThoai.Text = $"SĐT: {_data.SdtQuan}";
 
-            // 2. Bind Thông tin Hóa đơn
             lblTieuDe.Text = "PHIẾU GIAO HÀNG";
             lblSoHoaDon.Text = $"Số HĐ: {_data.IdPhieu}";
-            lblBan.Text = $"Loại: {_data.SoBan}"; // "Giao hàng"
+
+            lblBan.Text = $"Loại: {_data.SoBan}";
             lblNhanVien.Text = $"Nhân viên: {_data.TenNhanVien}";
             lblNgay.Text = $"Giờ tạo: {_data.NgayTao:dd/MM/yyyy HH:mm}";
 
-            // 3. Bind Thông tin giao hàng
-            lblThongTinGiaoHang.Text = _data.GhiChu; // Lỗi CS1061 đã được fix (ở file Dto)
+            lblThongTinGiaoHang.Text = _data.GhiChu;
 
-            // 4. Bind Danh sách
             dgItems.ItemsSource = _data.ChiTiet;
 
-            // 5. Bind Tiền (Phiếu này không có điểm/tiền khách đưa)
-            lblTongTienGoc.Text = _data.TongTienGoc.ToString("N0"); // Lỗi CS0103 đã được fix
+            lblTongTienGoc.Text = _data.TongTienGoc.ToString("N0");
             lblGiamGia.Text = $"- {_data.GiamGia:N0}";
             lblThanhTien.Text = _data.ThanhTien.ToString("N0") + " đ";
         }

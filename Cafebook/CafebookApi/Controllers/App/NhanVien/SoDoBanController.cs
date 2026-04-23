@@ -7,11 +7,13 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.NhanVien
 {
     [Route("api/app/sodoban")]
     [ApiController]
+    [Authorize]
     public class SoDoBanController : ControllerBase
     {
         private readonly CafebookDbContext _context;
