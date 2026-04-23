@@ -39,7 +39,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
         public async Task<IActionResult> GetChinhSachData()
         {
             var keysToFetch = new[] {
-                "Sach_PhiThue", "Sach_PhiTraTreMoiNgay","Sach_SoNgayMuonToiDa", "DiemTichLuy_NhanVND", "DiemTichLuy_DoiVND",
+                "Sach_PhiThue", "Sach_PhiTraTreMoiNgay","Sach_SoNgayMuonToiDa", "Sach_PhatGiamDoMoi1Percent", "Sach_DiemPhieuThue", "DiemTichLuy_NhanVND", "DiemTichLuy_DoiVND",
                 "ThongTin_TenQuan", "ThongTin_GioiThieu", "ThongTin_DiaChi", "ThongTin_SoDienThoai",
                 "ThongTin_GioMoCua", "ThongTin_GioDongCua", "ThongTin_ThuMoCua", "LienHe_Email"
             };
@@ -55,6 +55,8 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 SoNgayMuonToiDa = GetSettingString(settings, "Sach_SoNgayMuonToiDa", "7"),
                 DiemNhanVND = GetSettingValue(settings, "DiemTichLuy_NhanVND", 10000),
                 DiemDoiVND = GetSettingValue(settings, "DiemTichLuy_DoiVND", 1000),
+                PhatGiamDoMoi1Percent = GetSettingString(settings, "Sach_PhatGiamDoMoi1Percent", "2000"),
+                DiemPhieuThue = GetSettingString(settings, "Sach_DiemPhieuThue", "5"),
 
                 TenQuan = GetSettingString(settings, "ThongTin_TenQuan", "Cafebook"),
                 GioiThieu = GetSettingString(settings, "ThongTin_GioiThieu", "Ốc đảo tri thức và không gian bình yên."),

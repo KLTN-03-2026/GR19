@@ -29,7 +29,12 @@ namespace AppCafebookApi.Services
 
                 return data;
             }
-            return null;
+            else
+            {
+                // ĐỌC LỖI THẬT TỪ SERVER VÀ HIỂN THỊ LÊN
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Lỗi từ Server ({response.StatusCode}): {errorContent}");
+            }
         }
 
         public static void Logout()

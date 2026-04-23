@@ -60,7 +60,8 @@
             <ul class="cb-policy-list">
                 <li>Phí dịch vụ thuê sách hiện tại là <strong>@(Model.ChinhSach?.PhiThue.ToString("N0") ?? "0")đ</strong> và mọi khoản phí phạt trễ hạn sẽ được khấu trừ vào tiền cọc khi bạn trả sách.</li>
                 <li>Thời gian thuê tối đa là <strong>@(Model.ChinhSach?.SoNgayMuonToiDa ?? "0") ngày</strong> . Phí phạt trễ hạn là <strong>@(Model.ChinhSach?.PhiTraTreMoiNgay.ToString("N0") ?? "0")đ</strong> cho mỗi ngày quá hạn.</li>
-                <li>Trường hợp sách bị hư hỏng nặng, chúng tôi có thể giữ lại toàn bộ tiền cọc để bù đắp chi phí.</li>
+                <li>Với mỗi lượt thuê sách thành công, hệ thống sẽ tự động tích lũy <strong>@(Model.ChinhSach?.DiemPhieuThue ?? "0")</strong> điểm thưởng vào tài khoản của Quý khách.</li>
+                <li>Trong trường hợp sách bị hư hỏng, mức phụ thu sẽ được tính dựa trên sự chênh lệch tình trạng sách (phần trăm độ mới) được ghi nhận trên phiếu thuê trước và sau khi mượn. Cụ thể, với mỗi 1% độ mới bị hao hụt, phí phạt là <strong>@(Model.ChinhSach?.PhatGiamDoMoi1Percent ?? "0") VND</strong>. Tùy mức độ thiệt hại, chúng tôi có quyền khấu trừ hoặc giữ lại toàn bộ tiền cọc.</li>
             </ul>
 
             <h3 class="cb-policy-subtitle">4. Chính sách thành viên & Tích điểm</h3>
@@ -68,6 +69,7 @@
                 <li>
                     Với mỗi <strong>@(Model.ChinhSach?.DiemNhanVND.ToString("N0") ?? "0")đ</strong> trong hóa đơn, bạn sẽ được tích <strong>1 điểm</strong>.
                 </li>
+                <li><strong>Lưu ý:</strong> Chương trình tích điểm không áp dụng cho các hóa đơn có sử dụng điểm thưởng để thanh toán hoặc giảm trừ chi phí.</li>
                 <li>
                     Mỗi <strong>1 điểm</strong> tích lũy có giá trị quy đổi thành <strong>@(Model.ChinhSach?.DiemDoiVND.ToString("N0") ?? "0")đ</strong>, được trừ tối đa 50% trực tiếp vào hóa đơn lần sau.
                 </li>
