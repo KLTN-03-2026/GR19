@@ -10,9 +10,6 @@ using System.Windows.Media.Imaging;
 
 namespace AppCafebookApi.View.Common
 {
-    // ==========================================
-    // 1. CÁC LỚP DTO CHỨA DỮ LIỆU TRẢ VỀ TỪ API
-    // ==========================================
     public class VietQrResponse
     {
         [JsonPropertyName("code")]

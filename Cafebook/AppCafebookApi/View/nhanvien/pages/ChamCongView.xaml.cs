@@ -68,19 +68,15 @@ namespace AppCafebookApi.View.nhanvien.pages
             _timerClock.Stop();
             _timerWork.Stop();
         }
-
-        // ====================================================================
-        // ĐIỀU HƯỚNG ẨN HIỆN GIỮA "ĐIỂM DANH" VÀ "LỊCH SỬ"
-        // ====================================================================
         private void BtnXemLichSu_Click(object sender, RoutedEventArgs e)
         {
             if (FindName("viewDiemDanh") is Grid vDiemDanh) vDiemDanh.Visibility = Visibility.Collapsed;
             if (FindName("viewLichSu") is Grid vLichSu) vLichSu.Visibility = Visibility.Visible;
             if (FindName("txtHeaderTitle") is TextBlock txtTitle) txtTitle.Text = "Lịch Sử Chấm Công";
-            if (FindName("txtHeaderIcon") is TextBlock txtIcon) txtIcon.Text = "📋";
-            if (FindName("btnXemLichSu") is Button btnLichSu) btnLichSu.Visibility = Visibility.Collapsed;
 
-            // Load lại lịch sử để đảm bảo data luôn mới
+            if (FindName("btnXemLichSu") is Button btnLichSu) btnLichSu.Visibility = Visibility.Collapsed;
+            if (FindName("btnQuayLai") is Button btnBack) btnBack.Visibility = Visibility.Visible;
+
             if (FindName("dpChonThang") is DatePicker dp && dp.SelectedDate.HasValue)
             {
                 _ = LoadLichSuAsync(dp.SelectedDate.Value.Month, dp.SelectedDate.Value.Year);
@@ -89,24 +85,14 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private void BtnQuayLai_Click(object sender, RoutedEventArgs e)
         {
-            // Nếu đang xem Lịch Sử -> Quay lại màn Điểm Danh
-            if (FindName("viewLichSu") is Grid vLichSu && vLichSu.Visibility == Visibility.Visible)
-            {
-                vLichSu.Visibility = Visibility.Collapsed;
-                if (FindName("viewDiemDanh") is Grid vDiemDanh) vDiemDanh.Visibility = Visibility.Visible;
-                if (FindName("txtHeaderTitle") is TextBlock txtTitle) txtTitle.Text = "Chấm Công Nhân Viên";
-                if (FindName("txtHeaderIcon") is TextBlock txtIcon) txtIcon.Text = "⏱️";
-                if (FindName("btnXemLichSu") is Button btnLichSu) btnLichSu.Visibility = Visibility.Visible;
-                return; // Kết thúc để không out khỏi page
-            }
 
-            // Nếu đang ở màn Điểm Danh -> Back thoát ra khỏi Menu
-            if (this.NavigationService != null && this.NavigationService.CanGoBack)
-            {
-                this.NavigationService.GoBack();
-            }
+            if (FindName("viewLichSu") is Grid vLichSu) vLichSu.Visibility = Visibility.Collapsed;
+            if (FindName("viewDiemDanh") is Grid vDiemDanh) vDiemDanh.Visibility = Visibility.Visible;
+            if (FindName("txtHeaderTitle") is TextBlock txtTitle) txtTitle.Text = "Chấm Công Nhân Viên";
+
+            if (FindName("btnQuayLai") is Button btnBack) btnBack.Visibility = Visibility.Collapsed;
+            if (FindName("btnXemLichSu") is Button btnLichSu) btnLichSu.Visibility = Visibility.Visible;
         }
-        // ====================================================================
 
         private void _timerClock_Tick(object? sender, EventArgs e)
         {

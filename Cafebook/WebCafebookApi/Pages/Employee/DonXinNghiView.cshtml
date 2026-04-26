@@ -1,0 +1,196 @@
+﻿@page "/nhan-vien/don-xin-nghi"
+@model WebCafebookApi.Pages.Employee.DonXinNghiViewModel
+@{
+    ViewData["Title"] = "Viết Đơn Xin Nghỉ";
+    Layout = "_Layout_Employee";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/DonXinNghi.css" asp-append-version="true" />
+}
+
+<div class="dxn-container">
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card dxn-card shadow-sm">
+                <div class="card-header bg-white border-bottom p-3">
+                    <h5 class="mb-0 fw-bold text-dark d-flex align-items-center">
+                        <span class="material-symbols-outlined me-2 text-primary">edit_document</span>
+                        Tạo Đơn Xin Nghỉ Mới
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form id="formTaoDon">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Loại Đơn <span class="text-danger">*</span></label>
+                            <select id="cboLoaiDon" class="form-select dxn-input" required>
+                                <option value="">-- Chọn loại đơn --</option>
+                                <option value="Nghỉ phép">Nghỉ phép</option>
+                                <option value="Nghỉ ốm">Nghỉ ốm</option>
+                                <option value="Việc bận cá nhân">Việc bận cá nhân</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Từ ngày <span class="text-danger">*</span></label>
+                                <input type="date" id="txtTuNgay" class="form-control dxn-input" required />
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <label class="form-label fw-bold text-muted small">Đến ngày <span class="text-danger">*</span></label>
+                                <input type="date" id="txtDenNgay" class="form-control dxn-input" required />
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted small">Lý do chi tiết <span class="text-danger">*</span></label>
+                            <textarea id="txtLyDo" class="form-control dxn-input" rows="4" placeholder="Vui lòng nêu rõ lý do xin nghỉ..." required></textarea>
+                        </div>
+
+                        <button type="submit" id="btnSubmitDon" class="btn dxn-btn-submit w-100 fw-bold d-flex justify-content-center align-items-center">
+                            <span class="material-symbols-outlined me-2">send</span> Gửi Đơn Xin Nghỉ
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card dxn-card shadow-sm h-100">
+                <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark d-flex align-items-center">
+                        <span class="material-symbols-outlined me-2 text-success">history</span>
+                        Lịch Sử Đơn Của Bạn
+                    </h5>
+                    <button class="btn btn-sm btn-outline-secondary" id="btnRefresh" title="Làm mới">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">refresh</span>
+                    </button>
+                </div>
+                <div class="card-body p-0 overflow-auto" style="max-height: 600px;">
+                    <div id="history-container" class="p-3">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const _apiBaseUrl = "@Model.ApiBaseUrl";
+        const _jwtToken = "@Model.JwtToken";
+
+        // Thiết lập giá trị min cho input date là ngày hôm nay
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById("txtTuNgay").setAttribute("min", today);
+        document.getElementById("txtDenNgay").setAttribute("min", today);
+
+        // Ràng buộc Từ ngày <= Đến ngày
+        $("#txtTuNgay").on("change", function() {
+            $("#txtDenNgay").setAttribute("min", this.value);
+        });
+
+        // Load Lịch sử
+        async function loadHistory() {
+            $("#history-container").html('<div class="text-center p-4"><div class="spinner-border text-primary"></div></div>');
+            try {
+                const res = await fetch(`${_apiBaseUrl}/history`, {
+                    headers: { 'Authorization': `Bearer ${_jwtToken}` }
+                });
+                if (!res.ok) throw new Error("Lỗi tải dữ liệu");
+                const data = await res.json();
+                renderHistory(data);
+            } catch (err) {
+                $("#history-container").html(`<div class="alert alert-danger m-3">${err.message}</div>`);
+            }
+        }
+
+        function renderHistory(list) {
+            const $cont = $("#history-container").empty();
+            if (list.length === 0) {
+                $cont.html('<div class="text-center text-muted p-5"><span class="material-symbols-outlined fs-1 text-light">inbox</span><br/>Bạn chưa có đơn xin nghỉ nào.</div>');
+                return;
+            }
+
+            list.forEach(item => {
+                let badgeClass = "bg-warning text-dark"; // Chờ duyệt
+                if (item.trangThai === "Đã duyệt") badgeClass = "bg-success text-white";
+                if (item.trangThai === "Đã từ chối") badgeClass = "bg-danger text-white";
+
+                const formatDate = (dateStr) => {
+                    const d = new Date(dateStr);
+                    return d.toLocaleDateString('vi-VN');
+                };
+
+                const ghiChuHtml = item.ghiChuPheDuyet
+                    ? `<div class="mt-2 pt-2 border-top small"><span class="fw-bold text-dark">Phản hồi từ ${item.nguoiDuyet}:</span> <span class="text-primary fst-italic">${item.ghiChuPheDuyet}</span></div>`
+                    : '';
+
+                $cont.append(`
+                    <div class="dxn-history-item mb-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold m-0" style="color: #4E342E;">${item.loaiDon}</h6>
+                            <span class="badge ${badgeClass} rounded-pill px-3 py-1">${item.trangThai}</span>
+                        </div>
+                        <div class="text-muted small mb-2 d-flex align-items-center">
+                            <span class="material-symbols-outlined me-1" style="font-size: 16px;">calendar_month</span>
+                            ${formatDate(item.ngayBatDau)} &rarr; ${formatDate(item.ngayKetThuc)}
+                        </div>
+                        <div class="small" style="color: #616161;">
+                            <span class="fw-bold">Lý do:</span> ${item.lyDo}
+                        </div>
+                        ${ghiChuHtml}
+                    </div>
+                `);
+            });
+        }
+
+        // Submit Đơn
+        $("#formTaoDon").submit(async function(e) {
+            e.preventDefault();
+
+            const tuNgay = $("#txtTuNgay").val();
+            const denNgay = $("#txtDenNgay").val();
+
+            if(tuNgay > denNgay) {
+                Swal.fire("Lỗi", "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.", "error");
+                return;
+            }
+
+            const payload = {
+                loaiDon: $("#cboLoaiDon").val(),
+                lyDo: $("#txtLyDo").val().trim(),
+                ngayBatDau: tuNgay,
+                ngayKetThuc: denNgay
+            };
+
+            const btn = $("#btnSubmitDon");
+            btn.prop("disabled", true).html('<div class="spinner-border spinner-border-sm me-2"></div> Đang gửi...');
+
+            try {
+                const res = await fetch(`${_apiBaseUrl}/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_jwtToken}` },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Đã xảy ra lỗi");
+
+                Swal.fire("Thành công", data.message, "success");
+                $("#formTaoDon")[0].reset();
+                loadHistory();
+            } catch (err) {
+                Swal.fire("Lỗi Gửi Đơn", err.message, "error");
+            } finally {
+                btn.prop("disabled", false).html('<span class="material-symbols-outlined me-2">send</span> Gửi Đơn Xin Nghỉ');
+            }
+        });
+
+        $(document).ready(() => {
+            loadHistory();
+            $("#btnRefresh").click(loadHistory);
+        });
+    </script>
+}

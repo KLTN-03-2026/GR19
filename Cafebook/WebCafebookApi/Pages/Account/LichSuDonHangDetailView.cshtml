@@ -1,0 +1,379 @@
+﻿@page "/tai-khoan/lich-su-don-hang/{id}"
+@model WebCafebookApi.Pages.Account.LichSuDonHangDetailViewModel
+@using CafebookModel.Utils
+@{
+    ViewData["Title"] = "Chi Tiết Đơn Hàng";
+    Layout = "_Layout_Account";
+    var order = Model.OrderDetails;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/LichSuDonHang.css" asp-append-version="true" />
+}
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-3 d-flex align-items-center justify-content-between">
+                <a asp-page="./LichSuDonHangView" class="text-decoration-none text-muted fw-bold">
+                    <span class="material-symbols-outlined align-middle">arrow_back_ios</span> Trở lại
+                </a>
+                @if (order != null)
+                {
+                    <h5 class="mb-0 fw-bold">
+                        MÃ HÓA ĐƠN: @order.MaDonHang
+                        <span class="badge bg-light text-dark ms-2 border">@(order.TrangThaiThanhToan == "Đã hủy" ? "ĐÃ HỦY" : order.TrangThaiGiaoHang.ToUpper())</span>
+                    </h5>
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger">@Model.ErrorMessage</div>
+            }
+            else if (order != null)
+            {
+                @if ((order.TrangThaiGiaoHang == "Chờ xác nhận" || order.TrangThaiThanhToan == "Chờ thanh toán") && order.TrangThaiThanhToan != "Đã hủy")
+                {
+                    <div class="card shadow-sm border-0 mb-4 bg-light">
+                        <div class="card-body text-end p-3">
+                            @if (order.TrangThaiThanhToan == "Chờ thanh toán")
+                            {
+                                if (order.IsStoreOpen)
+                                {
+                                    string expireTimeDetail = order.ThoiGianTao.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss");
+                                    <button onclick="repayOrder(@order.IdHoaDon)" class="btn btn-warning text-dark fw-bold w-100 mb-2 mb-sm-0 me-sm-2 d-inline-flex justify-content-center align-items-center" style="max-width: fit-content;">
+                                        <span class="material-symbols-outlined align-middle fs-6 me-1">payment</span> Thanh toán lại
+                                        <span class="badge bg-danger ms-2 countdown-timer" data-expire="@expireTimeDetail">...</span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button disabled class="btn btn-secondary text-white fw-bold me-2" title="Quán đang đóng cửa"><span class="material-symbols-outlined align-middle fs-6">payment</span> Thanh toán lại</button>
+                                }
+                            }
+                            <button class="btn btn-outline-danger fw-bold" onclick="cancelOrder(@order.IdHoaDon, '@order.MaDonHang')">Hủy đơn hàng này</button>
+                        </div>
+                    </div>
+                }
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <ul class="progress-tracker">
+                            @foreach (var evt in order.TrackingEvents)
+                            {
+                                bool isCancelled = evt.Status == "Đã hủy";
+                                string stepClass = isCancelled ? "cancelled" : "completed";
+                                string iconName = isCancelled ? "cancel" : "check";
+
+                                <li class="progress-step @stepClass">
+                                    <div class="icon"><span class="material-symbols-outlined">@iconName</span></div>
+                                    <span class="text">@evt.Status</span>
+                                    <small class="text-muted d-block mt-1">@evt.Timestamp.ToString("dd/MM HH:mm")</small>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-3 border-bottom pb-2">Địa Chỉ Nhận Hàng</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1 fw-bold">@order.HoTen</p>
+                                <p class="mb-1 text-muted">@order.SoDienThoai</p>
+                                <p class="mb-0 text-muted">@order.DiaChiGiaoHang</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-0">
+                        @if (order.TrangThaiGiaoHang == "Hoàn thành")
+                        {
+                            <div class="p-3 border-bottom text-end bg-light">
+                                <form method="post" asp-page-handler="MuaLai" class="m-0">
+                                    <input type="hidden" name="idHoaDon" value="@order.IdHoaDon" />
+                                    <button type="submit" class="btn btn-success fw-bold text-white"><span class="material-symbols-outlined align-middle fs-6">add_shopping_cart</span> Mua lại đơn này</button>
+                                </form>
+                            </div>
+                        }
+
+                        @foreach (var orderItem in order.Items)
+                        {
+                            <div class="d-flex align-items-center p-3 border-bottom">
+                                @if (order.TrangThaiGiaoHang == "Hoàn thành")
+                                {
+                                    <a href="/chi-tiet-san-pham/@Model.EncryptProductId(orderItem.IdSanPham)" class="d-flex align-items-center text-decoration-none text-dark flex-grow-1">
+                                        <img src="@orderItem.HinhAnhUrl" alt="Product" class="rounded border me-3" style="width: 70px; height: 70px; object-fit: cover;" onerror="this.onerror=null;this.src='https://placehold.co/70x70?text=Sản+Phẩm';" />
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-bold text-primary">@orderItem.TenSanPham</h6>
+                                            <span class="text-muted small">x @orderItem.SoLuong</span>
+                                        </div>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <img src="@orderItem.HinhAnhUrl" alt="Product" class="rounded border me-3" style="width: 70px; height: 70px; object-fit: cover;" onerror="this.onerror=null;this.src='https://placehold.co/70x70?text=Sản+Phẩm';" />
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 fw-bold">@orderItem.TenSanPham</h6>
+                                        <span class="text-muted small">x @orderItem.SoLuong</span>
+                                    </div>
+                                }
+                                <div class="text-end">
+                                    <span class="fw-bold text-dark d-block">@orderItem.ThanhTien.ToString("N0") đ</span>
+                                    
+                                    @if (order.TrangThaiGiaoHang == "Hoàn thành")
+                                    {
+                                        if (!orderItem.DaDanhGia)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-warning fw-bold mt-2" onclick="openReviewModal(@order.IdHoaDon, @orderItem.IdSanPham, '@orderItem.TenSanPham')">
+                                                <span class="material-symbols-outlined align-middle fs-6">rate_review</span> Đánh giá
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success mt-2 d-inline-block"><span class="material-symbols-outlined align-middle" style="font-size: 14px;">check_circle</span> Đã đánh giá</span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (order.TrangThaiGiaoHang == "Hoàn thành" && !string.IsNullOrEmpty(order.AnhXacNhanGiaoHangUrl))
+                        {
+                            <div class="p-3">
+                                <button type="button" class="btn btn-outline-info w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#imgDeliveryModal">
+                                    <span class="material-symbols-outlined align-middle fs-5">photo_camera</span> Xem ảnh giao hàng
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4 bg-light">
+                        <ul class="list-unstyled mb-0">
+                            <li class="d-flex justify-content-between mb-2"><span class="text-muted">Tổng tiền hàng</span><span class="fw-medium">@order.TongTienHang.ToString("N0") đ</span></li>
+                            <li class="d-flex justify-content-between mb-2"><span class="text-muted">Phí giao hàng</span><span class="fw-medium">@order.PhiGiaoHang.ToString("N0") đ</span></li>
+                            <li class="d-flex justify-content-between mb-2"><span class="text-muted">Giảm giá</span><span class="fw-medium text-success">- @order.GiamGia.ToString("N0") đ</span></li>
+                            <li class="d-flex justify-content-between mt-3 pt-3 border-top"><span class="fw-bold text-dark fs-5">Thành tiền</span><span class="fw-bold text-danger fs-5">@order.ThanhTien.ToString("N0") đ</span></li>
+                        </ul>
+                        <p class="mb-0 mt-3 text-end">
+                            <span class="material-symbols-outlined align-middle fs-5 text-muted">payments</span>
+                            <span class="text-muted small">Thanh toán: @order.PhuongThucThanhToan</span>
+                        </p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (Model.OrderDetails != null && Model.OrderDetails.TrangThaiGiaoHang == "Hoàn thành" && !string.IsNullOrEmpty(Model.OrderDetails.AnhXacNhanGiaoHangUrl))
+{
+    <div class="modal fade" id="imgDeliveryModal" tabindex="-1" aria-labelledby="imgDeliveryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="imgDeliveryModalLabel">Ảnh xác nhận giao hàng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center pb-4">
+                    <img src="@Model.OrderDetails.AnhXacNhanGiaoHangUrl" class="img-fluid rounded shadow-sm" style="max-height: 75vh; object-fit: contain;" alt="Ảnh giao hàng" />
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 12px;">
+            <div class="modal-header border-bottom bg-light" style="border-radius: 12px 12px 0 0;">
+                <h5 class="modal-title fw-bold text-dark">Đánh giá: <span id="reviewProductName" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="reviewForm">
+                    <input type="hidden" id="rvIdHoaDon" />
+                    <input type="hidden" id="rvIdSanPham" />
+                    
+                    <div class="text-center mb-4">
+                        <label class="form-label text-muted fw-bold d-block mb-2">Chất lượng sản phẩm thế nào?</label>
+                        <div class="rating-stars" style="color: #ffc107; cursor: pointer; font-size: 2.5rem; letter-spacing: 5px;">
+                            <span class="material-symbols-outlined star" data-val="1">star</span>
+                            <span class="material-symbols-outlined star" data-val="2">star</span>
+                            <span class="material-symbols-outlined star" data-val="3">star</span>
+                            <span class="material-symbols-outlined star" data-val="4">star</span>
+                            <span class="material-symbols-outlined star" data-val="5">star</span>
+                        </div>
+                        <input type="hidden" id="rvSoSao" value="5" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">Bình luận (Tùy chọn)</label>
+                        <textarea id="rvBinhLuan" class="form-control" rows="3" placeholder="Hãy chia sẻ cảm nhận của bạn về hương vị, bao bì..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">Hình ảnh (Tùy chọn)</label>
+                        <input type="file" id="rvHinhAnh" class="form-control" accept="image/*" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pb-4 justify-content-center">
+                <button type="button" class="btn btn-secondary px-4 fw-bold rounded-pill" data-bs-dismiss="modal">Để sau</button>
+                <button type="button" class="btn btn-warning px-5 fw-bold rounded-pill shadow-sm text-dark" onclick="submitReview()">Gửi đánh giá</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const _apiBaseUrl = "@Model.ApiBaseUrl";
+        const _jwtToken = "@Model.JwtToken";
+        const _returnUrl = window.location.origin + "/ket-qua-thanh-toan/VNPay-Process";
+
+        // Hàm Đếm ngược thời gian
+        function startCountdowns() {
+        const timers = document.querySelectorAll('.countdown-timer');
+        if (timers.length === 0) return;
+
+        setInterval(() => {
+        const now = new Date().getTime();
+        timers.forEach(timer => {
+        const expireStr = timer.getAttribute('data-expire');
+        const expireDate = new Date(expireStr).getTime();
+        const distance = expireDate - now;
+
+        if (distance < 0) {
+        timer.innerHTML = "Đã hủy";
+        timer.classList.replace('bg-danger', 'bg-secondary');
+        const btn = timer.closest('button');
+        if(btn && !btn.disabled) {
+        btn.disabled = true;
+        setTimeout(() => location.reload(), 2000);
+        }
+        } else {
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        timer.innerHTML = `${minutes}p ${seconds}s`;
+        }
+        });
+        }, 1000);
+        }
+
+        document.addEventListener("DOMContentLoaded", startCountdowns);
+
+        async function repayOrder(idHoaDon) {
+        Swal.fire({ title: 'Đang kết nối cổng thanh toán...', didOpen: () => Swal.showLoading() });
+        const res = await fetch(`${_apiBaseUrl}/repay/${idHoaDon}?returnUrl=${encodeURIComponent(_returnUrl)}`, {
+        method: 'POST', headers: { 'Authorization': 'Bearer ' + _jwtToken }
+        });
+        const data = await res.json();
+        if(res.ok) window.location.href = data.paymentUrl;
+        else Swal.fire('Lỗi', data.message, 'error');
+        }
+
+        async function cancelOrder(idHoaDon, maDonHang) {
+        const { value: reason } = await Swal.fire({
+        title: 'Hủy đơn hàng ' + maDonHang,
+        input: 'select',
+        inputOptions: { 'Tôi đổi ý không muốn mua nữa': 'Tôi đổi ý không muốn mua nữa', 'Thay đổi địa chỉ giao hàng': 'Thay đổi địa chỉ giao hàng', 'Tìm thấy chỗ khác rẻ hơn': 'Tìm thấy chỗ khác rẻ hơn', 'Khác': 'Lý do khác...' },
+        inputPlaceholder: 'Chọn lý do hủy',
+        showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Đồng ý hủy', cancelButtonText: 'Quay lại'
+        });
+
+        if (reason) {
+        let finalReason = reason;
+        if (reason === 'Khác') {
+        const { value: textReason } = await Swal.fire({ title: 'Nhập lý do hủy', input: 'text', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Xác nhận' });
+        if (!textReason) return;
+        finalReason = textReason;
+        }
+
+        Swal.fire({ title: 'Đang xử lý...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                        
+        try {
+        const res = await fetch(`${_apiBaseUrl}/cancel/${idHoaDon}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_jwtToken}` },
+        body: JSON.stringify({ lyDoHuy: finalReason })
+        });
+        if (res.ok) {
+        await Swal.fire('Thành công', 'Đơn hàng đã được hủy', 'success');
+        location.reload();
+        } else {
+        const err = await res.json();
+        Swal.fire('Lỗi', err.message, 'error');
+        }
+        } catch(e) { Swal.fire('Lỗi', 'Mất kết nối', 'error'); }
+        }
+        }
+        // --- LOGIC ĐÁNH GIÁ SẢN PHẨM ---
+        function updateStars(rating) {
+        document.getElementById('rvSoSao').value = rating;
+        document.querySelectorAll('.rating-stars .star').forEach((star, index) => {
+        if (index < rating) star.style.fontVariationSettings = "'FILL' 1";
+        else star.style.fontVariationSettings = "'FILL' 0";
+        });
+        }
+
+        document.querySelectorAll('.rating-stars .star').forEach(star => {
+        star.addEventListener('click', function() {
+        updateStars(parseInt(this.getAttribute('data-val')));
+        });
+        });
+
+        function openReviewModal(idHoaDon, idSanPham, tenSanPham) {
+        document.getElementById('rvIdHoaDon').value = idHoaDon;
+        document.getElementById('rvIdSanPham').value = idSanPham;
+        document.getElementById('reviewProductName').innerText = tenSanPham;
+        updateStars(5); // Mặc định 5 sao
+        document.getElementById('rvBinhLuan').value = '';
+        document.getElementById('rvHinhAnh').value = '';
+        var reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+        reviewModal.show();
+        }
+
+        async function submitReview() {
+        const idHoaDon = document.getElementById('rvIdHoaDon').value;
+        const idSanPham = document.getElementById('rvIdSanPham').value;
+        const soSao = document.getElementById('rvSoSao').value;
+        const binhLuan = document.getElementById('rvBinhLuan').value;
+        const hinhAnh = document.getElementById('rvHinhAnh').files[0];
+
+        // Sử dụng FormData để gửi kèm Ảnh (nếu có)
+        const formData = new FormData();
+        formData.append('idHoaDon', idHoaDon);
+        formData.append('idSanPham', idSanPham);
+        formData.append('soSao', soSao);
+        if (binhLuan) formData.append('binhLuan', binhLuan);
+        if (hinhAnh) formData.append('hinhAnh', hinhAnh);
+
+        Swal.fire({ title: 'Đang gửi đánh giá...', didOpen: () => Swal.showLoading() });
+
+        try {
+        const res = await fetch(`${_apiBaseUrl}/danh-gia`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${_jwtToken}` },
+        // BỎ CONTENT-TYPE Ở ĐÂY ĐỂ TRÌNH DUYỆT TỰ GENERATE BOUNDARY CHO FILE UPLOAD
+        body: formData
+        });
+                
+        if (res.ok) {
+        await Swal.fire('Cảm ơn bạn!', 'Đánh giá đã được ghi nhận.', 'success');
+        location.reload();
+        } else {
+        const err = await res.json();
+        Swal.fire('Lỗi', err.message || 'Lỗi khi gửi đánh giá.', 'error');
+        }
+        } catch(e) {
+        Swal.fire('Lỗi', 'Mất kết nối', 'error');
+        }
+        }
+    </script>
+}

@@ -29,9 +29,12 @@ namespace AppCafebookApi.Services
 
                 return data;
             }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized || response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                return null; 
+            }
             else
             {
-                // ĐỌC LỖI THẬT TỪ SERVER VÀ HIỂN THỊ LÊN
                 string errorContent = await response.Content.ReadAsStringAsync();
                 throw new Exception($"Lỗi từ Server ({response.StatusCode}): {errorContent}");
             }

@@ -99,7 +99,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 Email = input.Email,
                 NoiDung = input.NoiDung,
                 NgayTao = DateTime.Now,
-                TrangThai = "Chưa đọc"
+                TrangThai = "Chờ xử lý"
             };
             _context.GopYs.Add(gopY);
             await _context.SaveChangesAsync();

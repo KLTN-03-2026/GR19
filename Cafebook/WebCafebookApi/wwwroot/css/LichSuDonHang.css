@@ -1,0 +1,167 @@
+﻿/* =========================================================
+   GIAO DIỆN LỊCH SỬ ĐƠN HÀNG & CHI TIẾT (Khách Hàng)
+   ========================================================= */
+
+/* 1. TỐI ƯU RESPONSIVE & SCROLL MOBILE */
+.tab-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: 1.5rem;
+}
+
+    .tab-wrapper::-webkit-scrollbar {
+        display: none;
+    }
+
+.tab-wrapper {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.lsh-tabs .nav-link {
+    white-space: nowrap;
+    border-radius: 0;
+    font-weight: 600;
+    color: #6c757d;
+    padding: 12px 20px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+    .lsh-tabs .nav-link:hover {
+        color: var(--cf-orange, #d27d2d);
+    }
+
+    .lsh-tabs .nav-link.active {
+        color: var(--cf-orange, #d27d2d);
+        border-bottom-color: var(--cf-orange, #d27d2d);
+        background: transparent;
+    }
+
+/* 2. THẺ ĐƠN HÀNG */
+.lsh-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #eee;
+}
+
+    .lsh-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
+    }
+
+/* 3. PROGRESS TRACKER (Chi tiết đơn hàng) */
+.progress-tracker {
+    display: flex;
+    justify-content: space-between;
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+    position: relative;
+}
+
+.progress-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+    .progress-step .icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background-color: #e0e0e0;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        border: 4px solid #fff;
+        z-index: 2;
+        position: relative;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .progress-step .text {
+        display: block;
+        margin-top: 10px;
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    /* Đường kẻ nối giữa các step */
+    .progress-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 22px;
+        left: 50%;
+        width: 100%;
+        height: 4px;
+        background-color: #e0e0e0;
+        z-index: 1;
+        transition: background-color 0.3s ease;
+    }
+
+    /* Trạng thái Hoàn thành */
+    .progress-step.completed .icon {
+        background-color: var(--cf-orange, #D27D2D);
+    }
+
+    .progress-step.completed .text {
+        color: var(--cf-orange, #D27D2D);
+    }
+
+    .progress-step.completed:not(:last-child)::after {
+        background-color: var(--cf-orange, #D27D2D);
+    }
+
+    /* Trạng thái Hủy */
+    .progress-step.cancelled .icon {
+        background-color: #dc3545;
+    }
+
+    .progress-step.cancelled .text {
+        color: #dc3545;
+    }
+
+    .progress-step.cancelled:not(:last-child)::after {
+        background-color: #dc3545;
+    }
+
+/* 4. MEDIA QUERIES (Mobile/Tablet Layouts) */
+@media (max-width: 576px) {
+    .action-buttons-group {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+        .action-buttons-group button,
+        .action-buttons-group a,
+        .action-buttons-group form {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .action-buttons-group button {
+            justify-content: center;
+        }
+
+    .progress-step .text {
+        font-size: 0.75rem;
+    }
+
+    .progress-step .icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+
+    .progress-step:not(:last-child)::after {
+        top: 17px;
+    }
+}

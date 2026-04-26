@@ -6,7 +6,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien
     public class GiaoHangViewDto
     {
         public List<GiaoHangItemDto> DonGiaoHang { get; set; } = new();
-        public List<NguoiGiaoHangDto> NguoiGiaoHangSanSang { get; set; } = new(); // Sẽ chứa danh sách Nhân viên Ship nội bộ
+        public List<NguoiGiaoHangDto> NguoiGiaoHangSanSang { get; set; } = new();
     }
 
     public class GiaoHangItemDto
@@ -18,15 +18,18 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public string? DiaChiGiaoHang { get; set; }
         public decimal ThanhTien { get; set; }
         public string TrangThaiThanhToan { get; set; } = string.Empty;
-        public string? TrangThaiGiaoHang { get; set; }
+        public string? PhuongThucThanhToan { get; set; }
 
-        public int? IdNguoiGiaoHang { get; set; } // Lưu IdNhanVien của Shipper nội bộ
+        public string? TrangThaiGiaoHang { get; set; }
+        public int? IdNguoiGiaoHang { get; set; }
         public string? TenNguoiGiaoHang { get; set; }
+        public string? GhiChu { get; set; }
+        public int? IdNhanVien { get; set; }
     }
 
     public class NguoiGiaoHangDto
     {
-        public int IdNguoiGiaoHang { get; set; } // Đây là IdNhanVien
+        public int IdNguoiGiaoHang { get; set; }
         public string TenNguoiGiaoHang { get; set; } = string.Empty;
     }
 

@@ -20,6 +20,9 @@ namespace CafebookModel.Utils
         public const string UrlAvatarKH = "/images/avatars/avatarKH";
         public const string UrlBooks = "/images/books";
         public const string UrlFoods = "/images/foods";
+        public const string Urldelivery = "/images/anhgiaohang";
         public const string UrlBuildnhapkho = "/images/BuildNhapKho";
+        public const string UrlDanhGiaSanPham = "/images/danhgia";
+
     }
 }

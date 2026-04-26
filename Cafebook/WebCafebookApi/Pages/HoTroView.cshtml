@@ -1,0 +1,134 @@
+﻿@page "/ho-tro"
+@model WebCafebookApi.Pages.HoTroViewModel
+@{
+    ViewData["Title"] = "Hỗ trợ (Khách Vãng Lai)";
+    Layout = "_Layout";
+}
+@section Styles {
+    <link href="~/css/HoTro.css" rel="stylesheet" />
+}
+
+<div class="container my-5">
+    <h3 class="fw-bold">@ViewData["Title"]</h3>
+    <p class="text-muted">Xin chào! Bạn có thể hỏi AI bất kỳ thông tin nào về quán. Cuộc trò chuyện này sẽ mất khi bạn đóng trình duyệt.</p>
+    
+    <div class="htvl-card">
+        <div class="htvl-history" id="chat-history"></div>
+        <form id="chatForm" class="htvl-form">
+            <input type="hidden" id="GuestSessionId" value="@Model.HoTroData.GuestSessionId" />
+            <input type="text" id="chatMessageInput" class="htvl-input" placeholder="Nhập câu hỏi..." autocomplete="off" required />
+            <button type="submit" id="sendButton" class="htvl-btn"><span class="material-symbols-outlined">send</span></button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const apiBaseUrl = '@Model.ApiBaseUrl'.replace(/\/$/, "");
+
+        $(document).ready(function () {
+            const guestSessionId = $('#GuestSessionId').val();
+
+            function drawMessage(msg, isUser) {
+                const type = isUser ? 'user' : 'bot';
+                const icon = isUser ? 'person' : 'smart_toy';
+                let text = (msg.noiDung || '').replace(/\[BUTTON:\s*(.*?)\s*\|\s*(.*?)\]/g, "").replace(/\n/g, '<br />');
+                
+                let msgTime = msg.thoiGian ? new Date(msg.thoiGian) : new Date();
+                const time = msgTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                        
+                $('#chat-history').append(`
+                    <div class="htvl-row ${type}">
+                        <div class="htvl-avatar ${type}"><span class="material-symbols-outlined">${icon}</span></div>
+                        <div class="htvl-content">
+                            <div class="htvl-bubble">${text}</div>
+                            <div class="htvl-time ${isUser ? 'text-end' : 'text-start'}">${time}</div>
+                        </div>
+                    </div>
+                `);
+                scrollToBottom();
+            }
+
+            function showTypingIndicator() {
+                $('#chat-history').append(`
+                    <div class="htvl-row bot" id="typing-indicator-row">
+                        <div class="htvl-avatar bot"><span class="material-symbols-outlined">smart_toy</span></div>
+                        <div class="htvl-content">
+                            <div class="htvl-bubble">
+                                <div class="typing-indicator">
+                                    <span></span><span></span><span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                scrollToBottom();
+            }
+
+            function removeTypingIndicator() {
+                $('#typing-indicator-row').remove();
+            }
+
+            function scrollToBottom() {
+                $('#chat-history').scrollTop($('#chat-history')[0].scrollHeight);
+            }
+
+            async function loadHistory() {
+                try {
+                    const res = await fetch(`${apiBaseUrl}/api/web/guest/hotro/history?guestSessionId=${guestSessionId}`);
+                    const history = await res.json();
+                    $('#chat-history').empty();
+
+                    if (history.length === 0) {
+                        drawMessage({ noiDung: "Chào bạn! Mình là AI Cafebook. Mình có thể giúp gì được cho bạn ạ?", thoiGian: new Date() }, false);
+                    } else {
+                        history.forEach(msg => {
+                            drawMessage(msg, msg.loaiTinNhan === 'KhachHang');
+                        });
+                    }
+                } catch(e) {
+                    console.error("Lỗi tải lịch sử chat", e);
+                }
+            }
+
+            $('#chatForm').on('submit', async function(e) {
+                e.preventDefault();
+                const text = $('#chatMessageInput').val().trim();
+                if (!text) return;
+
+                // Disable input
+                $('#chatMessageInput').val('').prop('disabled', true);
+                $('#sendButton').prop('disabled', true);
+                
+                // Hiển thị tin nhắn người dùng và loading indicator
+                drawMessage({ noiDung: text, thoiGian: new Date() }, true);
+                showTypingIndicator();
+
+                try {
+                    const res = await fetch(`${apiBaseUrl}/api/web/guest/hotro/send`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ noiDung: text, guestSessionId: guestSessionId })
+                    });
+                    const data = await res.json();
+                    
+                    removeTypingIndicator();
+
+                    if (data.tinNhanPhanHoi) {
+                        drawMessage(data.tinNhanPhanHoi, false);
+                    }
+                } catch (error) {
+                    removeTypingIndicator();
+                    drawMessage({ noiDung: "Đã có lỗi xảy ra khi kết nối đến AI. Vui lòng thử lại sau.", thoiGian: new Date() }, false);
+                } finally {
+                    // Trả lại input cho người dùng
+                    $('#chatMessageInput').prop('disabled', false).focus();
+                    $('#sendButton').prop('disabled', false);
+                }
+            });
+
+            // Init
+            loadHistory();
+        });
+    </script>
+}

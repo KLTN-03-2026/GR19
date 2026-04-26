@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers; // <-- THÊM MỚI ĐỂ DÙNG TOKEN
+using System.Net.Http.Headers; 
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -675,7 +675,6 @@ namespace AppCafebookApi.View.nhanvien.pages
                 }
             }
 
-            // Kích hoạt QR nếu chọn Chuyển khoản
             if (_currentPhuongThuc == "Chuyển khoản")
             {
                 if (string.IsNullOrEmpty(_nganHangSoTaiKhoan) || string.IsNullOrEmpty(_nganHangMaDinhDanh))
@@ -684,7 +683,6 @@ namespace AppCafebookApi.View.nhanvien.pages
                     return;
                 }
 
-                // Ghi chú không dấu (VD: Thanh toan HD 12)
                 string noiDungCK = $"Thanh Toán Hóa đơn Cafebook{_idHoaDonGoc}";
 
                 var qrWindow = new VietQRWindow(
@@ -695,15 +693,41 @@ namespace AppCafebookApi.View.nhanvien.pages
                     $"Thanh Toán Hóa đơn Cafebook {_idHoaDonGoc}"
                 );
 
-                // Mở popup, chờ nhân viên xác nhận
                 bool? isPaid = qrWindow.ShowDialog();
                 if (isPaid != true)
                 {
-                    // Nhân viên nhấn Hủy hoặc tắt cửa sổ -> Dừng quá trình thanh toán
                     return;
                 }
             }
-
+            // Kích hoạt VNPAY nếu chọn Ví điện tử
+            if (_currentPhuongThuc == "Ví điện tử")
+            {
+                var vnpReq = new VNPayUrlRequestDto { Amount = _currentThanhTienTach, IdHoaDonGoc = _idHoaDonGoc };
+                var vnpRes = await ApiClient.Instance.PostAsJsonAsync("api/app/nhanvien/thanhtoan/vnpay-url", vnpReq);
+                
+                if (!vnpRes.IsSuccessStatusCode)
+                {
+                    MessageBox.Show(await vnpRes.Content.ReadAsStringAsync(), "Lỗi VNPAY", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                
+                var vnpData = await vnpRes.Content.ReadFromJsonAsync<VNPayUrlResponseDto>();
+                if (vnpData != null && !string.IsNullOrEmpty(vnpData.PaymentUrl))
+                {
+                    // Mở cửa sổ chứa trình duyệt VNPAY
+                    var vnpWindow = new VNPayWindow(vnpData.PaymentUrl)
+                    {
+                        Owner = Window.GetWindow(this)
+                    };
+                    
+                    bool? isPaid = vnpWindow.ShowDialog();
+                    if (isPaid != true)
+                    {
+                        // Nhân viên tắt hoặc khách hủy giao dịch
+                        return; 
+                    }
+                }
+            }
             var request = new ThanhToanRequestDto
             {
                 IdHoaDonGoc = _idHoaDonGoc,
@@ -726,7 +750,6 @@ namespace AppCafebookApi.View.nhanvien.pages
                     bool isFullPaymentServer = jsonDoc.RootElement.GetProperty("isFullPayment").GetBoolean();
                     int idHoaDonDaThanhToan = jsonDoc.RootElement.GetProperty("idHoaDonDaThanhToan").GetInt32();
 
-                    // LẤY ĐIỂM TỪ API
                     int diemCong = 0;
                     int tongDiem = 0;
                     if (jsonDoc.RootElement.TryGetProperty("diemCong", out var dProp)) diemCong = dProp.GetInt32();

@@ -1,0 +1,326 @@
+﻿@page "/nhan-vien/goi-mon/{maHoaDon?}"
+@model WebCafebookApi.Pages.Employee.GoiMonViewModel
+@using CafebookModel.Utils
+@{
+    ViewData["Title"] = "Gọi Món";
+    Layout = "_Layout_Employee";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/GoiMon.css" asp-append-version="true" />
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            Swal.fire({ icon: 'error', title: 'Lỗi', text: '@Html.Raw(Model.ErrorMessage)', confirmButtonColor: '#D32F2F' })
+            .then(() => window.location.href = '/nhan-vien/so-do-ban');
+        });
+    </script>
+}
+else
+{
+    <div class="gmw-layout-container" id="gmw-main-container">
+        
+        <nav class="gmw-danhmuc-list card shadow-sm">
+            <div class="card-body p-2">
+                <h6 class="p-2 text-muted text-uppercase fw-bold small mb-2">Danh Mục</h6>
+                <ul class="nav flex-column nav-pills" id="category-list">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-id-danhmuc="0">
+                            <span class="material-symbols-outlined">select_all</span> Tất cả
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="gmw-sanpham-grid shadow-sm">
+            <div class="p-3 border-bottom">
+                <input type="search" id="search-bar" class="form-control rounded-pill px-4" placeholder="Tìm kiếm món ăn..." />
+            </div>
+            <div class="gmw-sanpham-list" id="product-list">
+            </div>
+        </div>
+
+        <div class="gmw-hoadon-panel card shadow-sm">
+            <div class="card-header bg-white p-3 border-bottom">
+                <h5 class="fw-bold mb-0 text-dark" id="lblTieuDeHoaDon">Hóa đơn - ...</h5>
+            </div>
+            <div class="gmw-hoadon-body">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên Món</th>
+                            <th style="width: 110px; text-align: center;">SL</th>
+                            <th style="width: 50px; text-align: center;">Xóa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bill-details-body"></tbody>
+                </table>
+            </div>
+            
+            <div class="card-footer bg-white p-3 border-top">
+                <div class="gmw-bill-summary">
+                    <div class="gmw-bill-row text-muted"><span>Tổng tiền:</span><span id="lblTongTien" class="text-dark fw-bold">0 đ</span></div>
+                    
+                    <div class="gmw-bill-row text-muted mt-2 align-items-center">
+                        <span>Khuyến mãi:</span>
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" id="btnMoPopupKhuyenMai" data-bs-toggle="modal" data-bs-target="#modalKhuyenMai">
+                            <span class="material-symbols-outlined fs-6 align-middle">local_offer</span> Chọn Mã
+                        </button>
+                    </div>
+                    <div class="text-end small text-success fw-bold mt-1" id="lblTenKhuyenMaiDangDung"></div>
+
+                    <div class="gmw-bill-row text-success mt-2 fw-bold"><span>Tiền giảm:</span><span id="lblTienGiam">0 đ</span></div>
+                    <hr class="my-3" />
+                    <div class="gmw-bill-row gmw-bill-total"><span>Thành Tiền:</span><span id="lblThanhTien" class="text-danger">0 đ</span></div>
+                </div>
+                
+                <div class="gmw-actions mt-4">
+                    <button class="btn btn-warning fw-bold d-flex justify-content-center align-items-center gap-2" id="btnGuiBep">
+                        <span class="material-symbols-outlined">soup_kitchen</span> Báo Bếp
+                    </button>
+                    <a href="/nhan-vien/so-do-ban" class="btn btn-outline-secondary fw-bold d-flex justify-content-center align-items-center gap-2">
+                        <span class="material-symbols-outlined">arrow_back</span> Sơ đồ bàn
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalKhuyenMai" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark"><span class="material-symbols-outlined align-middle text-warning me-1">sell</span> Áp dụng Khuyến mãi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-light pt-3" id="promo-list-container">
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-danger w-100 fw-bold" id="btnBoChonKhuyenMai">Bỏ chọn Khuyến mãi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        const _idHoaDon = @Model.IdHoaDon;
+        const _apiBaseUrl = "@Model.ApiBaseUrl";
+        const _jwtToken = "@Model.JwtToken";
+        const _defaultImage = "@HinhAnhPaths.WebDefaultFoodIcon";
+
+        let _allSanPhams = [];
+        let _chiTietItems = {};
+        let _currentPromoId = 0; 
+        let _currentPromoName = ""; 
+        
+        const formatCurrency = (number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(number);
+
+        async function callApi(endpoint, method, data) {
+            try {
+                const res = await fetch(`${_apiBaseUrl}/${endpoint}`, {
+                    method: method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_jwtToken}` },
+                    body: data ? JSON.stringify(data) : null
+                });
+                if (!res.ok) throw new Error(await res.text());
+                const contentType = res.headers.get("content-type");
+                return contentType && contentType.includes("json") ? await res.json() : await res.text();
+            } catch (err) {
+                Swal.fire('Lỗi Thao Tác', err.message, 'error');
+                return null;
+            }
+        }
+
+        async function loadData() {
+            const data = await callApi(`load/${_idHoaDon}`, 'GET');
+            if(data) {
+                _allSanPhams = data.sanPhams;
+                data.chiTietItems.forEach(item => _chiTietItems[item.idChiTietHoaDon] = item);
+                
+                // Render Categories
+                data.danhMucs.forEach(dm => $("#category-list").append(`<li class="nav-item"><a class="nav-link" href="#" data-id="${dm.idDanhMuc}"><span class="material-symbols-outlined">label</span> ${dm.tenLoaiSP}</a></li>`));
+                
+                // Render Promos
+                data.khuyenMais.forEach(km => $("#cboKhuyenMai").append(`<option value="${km.idKhuyenMai}">${km.tenKhuyenMai}</option>`));
+                
+                renderProducts(_allSanPhams);
+                renderBill(data.hoaDonInfo);
+            }
+        }
+
+        function renderProducts(list) {
+            const $list = $("#product-list").empty();
+            if(!list.length) return $list.html('<p class="text-center text-muted p-4 w-100">Không có sản phẩm</p>');
+            list.forEach(sp => {
+                $list.append(`
+                    <div class="gmw-product-card" data-id="${sp.idSanPham}">
+                        <img src="${sp.hinhAnh}" onerror="this.onerror=null; this.src='${_defaultImage}';">
+                        <div class="p-2 text-center">
+                            <div class="gmw-product-name text-truncate fw-bold">${sp.tenSanPham}</div>
+                            <div class="gmw-product-price text-danger fw-bold">${formatCurrency(sp.donGia)}</div>
+                        </div>
+                    </div>
+                `);
+                $list.children().last().data('sanpham', sp);
+            });
+        }
+
+        function renderBill(info) {
+                    $("#lblTieuDeHoaDon").text(`Hóa đơn - ${info.soBan}`);
+                    $("#lblTongTien").text(formatCurrency(info.tongTienGoc));
+                    $("#lblTienGiam").text(formatCurrency(info.giamGia));
+                    $("#lblThanhTien").text(formatCurrency(info.thanhTien));
+            
+                    _currentPromoId = info.idKhuyenMai || 0;
+                    if(_currentPromoId === 0) {
+                        $("#lblTenKhuyenMaiDangDung").text("");
+                        $("#btnMoPopupKhuyenMai").text("Chọn Mã").removeClass("btn-success").addClass("btn-outline-primary");
+                    }
+
+                    const $body = $("#bill-details-body").empty();
+                    const items = Object.values(_chiTietItems).sort((a, b) => a.idChiTietHoaDon - b.idChiTietHoaDon);
+            
+                    if(!items.length) return $body.html('<tr><td colspan="3" class="text-center text-muted py-4">Chưa có món</td></tr>');
+            
+                    items.forEach(item => {
+                        $body.append(`
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">${item.tenSanPham}</div>
+                                    <div class="text-muted small">${formatCurrency(item.donGia)} ${item.ghiChu ? `<br/><i class="text-primary">${item.ghiChu}</i>` : ''}</div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center justify-content-center gap-2">
+                                        <button class="btn btn-sm btn-outline-danger px-2 py-0 fs-5 btn-giam" data-id="${item.idChiTietHoaDon}">-</button>
+                                        <span class="fw-bold">${item.soLuong}</span>
+                                        <button class="btn btn-sm btn-outline-success px-2 py-0 fs-5 btn-tang" data-id="${item.idChiTietHoaDon}">+</button>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm text-danger btn-xoa" data-id="${item.idChiTietHoaDon}"><span class="material-symbols-outlined fs-5">delete</span></button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                }
+
+        $(document).ready(function() {
+            loadData();
+
+            // Filter UI
+            $("#category-list").on("click", ".nav-link", function(e) {
+                e.preventDefault();
+                $("#category-list .nav-link").removeClass("active"); $(this).addClass("active");
+                const catId = $(this).data("id");
+                const kw = $("#search-bar").val().toLowerCase();
+                let filtered = catId ? _allSanPhams.filter(s => s.idDanhMuc == catId) : _allSanPhams;
+                if(kw) filtered = filtered.filter(s => s.tenSanPham.toLowerCase().includes(kw));
+                renderProducts(filtered);
+            });
+
+            $("#search-bar").on("keyup", () => $("#category-list .active").click());
+
+            // Add Product
+            $("#product-list").on("click", ".gmw-product-card", async function() {
+                const sp = $(this).data('sanpham');
+                const { value: note } = await Swal.fire({ title: `Thêm ${sp.tenSanPham}`, input: 'text', inputPlaceholder: 'Ghi chú (không bắt buộc)', showCancelButton: true, confirmButtonColor: '#6F4E37', confirmButtonText: 'Thêm' });
+                if(note !== undefined) {
+                    const res = await callApi('add-item', 'POST', { idHoaDon: _idHoaDon, idSanPham: sp.idSanPham, soLuong: 1, ghiChu: note.trim() });
+                    if(res) { _chiTietItems[res.newItem.idChiTietHoaDon] = res.newItem; renderBill(res.updatedHoaDonInfo); }
+                }
+            });
+
+            // Adjust Quantity
+            const changeQty = async (id, delta) => {
+                const item = _chiTietItems[id];
+                const res = await callApi('update-quantity', 'PUT', { idChiTietHoaDon: id, soLuongMoi: item.soLuong + delta });
+                if(res) {
+                    if(item.soLuong + delta <= 0) delete _chiTietItems[id];
+                    else item.soLuong += delta;
+                    renderBill(res);
+                }
+            };
+            $("#bill-details-body").on("click", ".btn-tang", function() { changeQty($(this).data("id"), 1); });
+            $("#bill-details-body").on("click", ".btn-giam", function() { changeQty($(this).data("id"), -1); });
+            
+            // Delete Item
+            $("#bill-details-body").on("click", ".btn-xoa", async function() {
+                const id = $(this).data("id");
+                if((await Swal.fire({title:'Xóa món?', icon:'warning', showCancelButton:true, confirmButtonColor:'#d33'})).isConfirmed){
+                    const res = await callApi(`delete-item/${id}`, 'DELETE');
+                    if(res) { delete _chiTietItems[id]; renderBill(res); }
+                }
+            });
+
+            // Send to Kitchen
+            $("#btnGuiBep").click(async function() {
+                const res = await callApi(`send-to-kitchen/${_idHoaDon}`, 'POST');
+                if(res) Swal.fire('Thành công', 'Đã báo bếp thành công!', 'success');
+            });
+        });
+        $('#modalKhuyenMai').on('show.bs.modal', async function () {
+                    const $container = $("#promo-list-container");
+                    $container.html('<div class="text-center p-4"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Đang tìm mã giảm giá...</p></div>');
+            
+                    const promos = await callApi(`khuyenmai-available/${_idHoaDon}`, 'GET');
+                    if(promos) {
+                        $container.empty();
+                        if(promos.length === 0) {
+                            $container.html('<div class="text-center text-muted p-4">Không có mã khuyến mãi nào.</div>');
+                            return;
+                        }
+
+                        promos.forEach(km => {
+                            const isDis = km.isEligible ? "" : "disabled";
+                            const reasonHtml = km.isEligible ? `<div class="gmw-promo-discount">- ${formatCurrency(km.calculatedDiscount)}</div>` : `<div class="gmw-promo-reason"><span class="material-symbols-outlined fs-6 align-middle">error</span> ${km.ineligibilityReason}</div>`;
+                            const activeBadge = (_currentPromoId === km.idKhuyenMai) ? '<div class="gmw-promo-active-badge">Đang dùng</div>' : '';
+
+                            $container.append(`
+                                <div class="gmw-promo-card ${isDis}" data-id="${km.idKhuyenMai}" data-eligible="${km.isEligible}" data-name="${km.tenChuongTrinh}">
+                                    ${activeBadge}
+                                    <div class="gmw-promo-title">${km.maKhuyenMai} - ${km.tenChuongTrinh}</div>
+                                    <div class="gmw-promo-desc mb-2">${km.dieuKienApDung}</div>
+                                    ${reasonHtml}
+                                </div>
+                            `);
+                        });
+                    }
+                });
+
+                // Click chọn 1 Khuyến Mãi trong Popup
+                $("#promo-list-container").on("click", ".gmw-promo-card", async function() {
+                    if($(this).data("eligible") === false) return; // Bỏ qua nếu ko đủ điều kiện
+
+                    const idKM = $(this).data("id");
+                    _currentPromoName = $(this).data("name");
+
+                    const res = await callApi('apply-promotion', 'PUT', { idHoaDon: _idHoaDon, idKhuyenMai: idKM });
+                    if(res) {
+                        $('#modalKhuyenMai').modal('hide');
+                        $("#lblTenKhuyenMaiDangDung").text(`Mã: ${_currentPromoName}`);
+                        $("#btnMoPopupKhuyenMai").text("Đổi Mã").removeClass("btn-outline-primary").addClass("btn-success");
+                        renderBill(res);
+                        Swal.fire({ title: 'Áp dụng mã thành công!', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+                    }
+                });
+
+                // Nút Bỏ chọn Khuyến mãi
+                $("#btnBoChonKhuyenMai").click(async function() {
+                    if(_currentPromoId === 0) return $('#modalKhuyenMai').modal('hide');
+
+                    const res = await callApi('apply-promotion', 'PUT', { idHoaDon: _idHoaDon, idKhuyenMai: 0 });
+                    if(res) {
+                        $('#modalKhuyenMai').modal('hide');
+                        _currentPromoName = "";
+                        renderBill(res);
+                        Swal.fire({ title: 'Đã hủy mã giảm giá!', icon: 'info', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+                    }
+                });
+
+    </script>
+}

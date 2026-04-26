@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Net.Mail;
 using System.Net;
-using System.Security.Claims; // Cần thiết để lấy ClaimTypes
+using System.Security.Claims;
 
 namespace CafebookApi.Controllers.App.NhanVien
 {
@@ -28,7 +28,6 @@ namespace CafebookApi.Controllers.App.NhanVien
 
         private int GetCurrentUserId()
         {
-            // ĐÃ SỬA: Hỗ trợ đọc cả Claim tiêu chuẩn NameIdentifier và IdNhanVien
             var idClaim = User.Claims.FirstOrDefault(c => c.Type == "IdNhanVien" || c.Type == ClaimTypes.NameIdentifier);
             if (idClaim != null && int.TryParse(idClaim.Value, out int idNhanVien)) return idNhanVien;
             return 0;
@@ -53,8 +52,12 @@ namespace CafebookApi.Controllers.App.NhanVien
 
                 if (!string.IsNullOrEmpty(status) && status != "Tất cả")
                 {
-                    if (status == "Đã hủy") query = query.Where(h => h.TrangThai == "Đã hủy");
-                    else query = query.Where(h => h.TrangThaiGiaoHang == status);
+                    if (status == "Đã hủy")
+                        query = query.Where(h => h.TrangThai == "Đã hủy" || h.TrangThaiGiaoHang == "Đã hủy");
+                    else if (status == "Đã giao")
+                        query = query.Where(h => h.TrangThaiGiaoHang == "Hoàn thành");
+                    else
+                        query = query.Where(h => h.TrangThaiGiaoHang == status);
                 }
 
                 if (!string.IsNullOrEmpty(search))
@@ -78,11 +81,15 @@ namespace CafebookApi.Controllers.App.NhanVien
                     DiaChiGiaoHang = h.DiaChiGiaoHang ?? (h.KhachHang != null ? h.KhachHang.DiaChi : ""),
                     ThanhTien = h.ThanhTien,
                     TrangThaiThanhToan = h.TrangThai,
+                    PhuongThucThanhToan = h.PhuongThucThanhToan ?? "COD", // Lấy phương thức thanh toán
                     TrangThaiGiaoHang = h.TrangThaiGiaoHang,
                     IdNguoiGiaoHang = h.IdNguoiGiaoHang,
-                    TenNguoiGiaoHang = h.NhanVienGiaoHang != null ? h.NhanVienGiaoHang.HoTen : null
+                    TenNguoiGiaoHang = h.NhanVienGiaoHang != null ? h.NhanVienGiaoHang.HoTen : null,
+                    GhiChu = h.GhiChu,
+                    IdNhanVien = h.IdNhanVien
                 }).ToListAsync();
 
+                // FIX LỖI COMBOBOX TRỐNG: Hoàn trả logic cũ, chỉ lọc "Đang làm việc"
                 var nguoiGiaoHang = await _context.NhanViens.AsNoTracking()
                     .Where(n => n.TrangThaiLamViec == "Đang làm việc")
                     .Select(n => new NguoiGiaoHangDto
@@ -108,6 +115,9 @@ namespace CafebookApi.Controllers.App.NhanVien
                 if (hoaDon == null || hoaDon.LoaiHoaDon != "Giao hàng") return BadRequest("Đơn hàng không hợp lệ.");
 
                 string? trangThaiCu = hoaDon.TrangThaiGiaoHang;
+
+                if (dto.TrangThaiGiaoHang == "Đã giao") dto.TrangThaiGiaoHang = "Hoàn thành";
+
                 hoaDon.TrangThaiGiaoHang = dto.TrangThaiGiaoHang;
                 hoaDon.IdNguoiGiaoHang = dto.IdNguoiGiaoHang;
 
@@ -120,7 +130,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                 if (dto.TrangThaiGiaoHang == "Trả hàng")
                     hoaDon.TrangThai = "Đã hủy";
 
-                if (dto.TrangThaiGiaoHang == "Đã giao" && hoaDon.TrangThai != "Đã thanh toán")
+                if (dto.TrangThaiGiaoHang == "Hoàn thành" && hoaDon.TrangThai != "Đã thanh toán")
                 {
                     hoaDon.TrangThai = "Đã thanh toán";
                     hoaDon.ThoiGianThanhToan = DateTime.Now;
@@ -263,7 +273,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             {
                 _context.ThongBaos.Add(new ThongBao
                 {
-                    // ĐÃ SỬA: Nếu idNhanVien <= 0, ta truyền null để tránh lỗi Foreign Key
                     IdNhanVienTao = idNhanVien > 0 ? idNhanVien : (int?)null,
                     NoiDung = $"Đơn Giao Hàng #{idHoaDon} cần chuẩn bị.",
                     ThoiGianTao = DateTime.Now,

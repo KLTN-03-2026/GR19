@@ -72,34 +72,34 @@ namespace CafebookApi.Controllers.Web.KhachHang
         [HttpGet("{id}/danhgia")]
         public async Task<IActionResult> GetReviews(int id)
         {
-            // BƯỚC 1: LẤY DỮ LIỆU THÔ TỪ DATABASE (Không gọi hàm GetFullImageUrl ở đây)
             var reviews_raw = await _context.DanhGias
                 .Where(d => d.idSanPham == id && d.TrangThai == "Hiển thị")
                 .Include(d => d.KhachHang)
-                .Include(d => d.PhanHoiDanhGias).ThenInclude(p => p.NhanVien)
+                .Include(d => d.PhanHoiDanhGias) 
                 .AsNoTracking()
                 .OrderByDescending(d => d.NgayTao)
                 .Select(d => new
                 {
                     TenKhachHang = d.KhachHang != null ? d.KhachHang.HoTen : "Khách hàng",
-                    AnhDaiDienTho = d.KhachHang != null ? d.KhachHang.AnhDaiDien : null, // Chỉ lấy tên file ảnh thô
+                    AnhDaiDienTho = d.KhachHang != null ? d.KhachHang.AnhDaiDien : null,
+                    HinhAnhDanhGiaTho = d.HinhAnhURL, 
                     SoSao = d.SoSao,
                     NgayTao = d.NgayTao,
                     BinhLuan = d.BinhLuan,
                     PhanHoi = d.PhanHoiDanhGias.OrderByDescending(p => p.NgayTao).Select(p => new PhanHoiChiTietDto
                     {
-                        TenNhanVien = p.NhanVien != null ? p.NhanVien.HoTen : "Nhân viên",
+                        TenNhanVien = "Cafebook", 
                         NoiDung = p.NoiDung,
                         NgayTao = p.NgayTao
                     }).FirstOrDefault()
                 })
-                .ToListAsync(); // <--- Chạy lệnh SQL và đưa dữ liệu lên RAM tại đây
+                .ToListAsync();
 
-            // BƯỚC 2: CHUYỂN ĐỔI DỮ LIỆU TRÊN RAM (Lúc này gọi hàm GetFullImageUrl thoải mái)
             var reviews = reviews_raw.Select(r => new DanhGiaChiTietDto
             {
                 TenKhachHang = r.TenKhachHang,
-                AvatarKhachHang = GetFullImageUrl(r.AnhDaiDienTho), // Xử lý link ảnh an toàn trên RAM
+                AvatarKhachHang = GetFullImageUrl(r.AnhDaiDienTho),
+                HinhAnhDanhGiaUrl = GetFullImageUrl(r.HinhAnhDanhGiaTho),
                 SoSao = r.SoSao,
                 NgayTao = r.NgayTao,
                 BinhLuan = r.BinhLuan,

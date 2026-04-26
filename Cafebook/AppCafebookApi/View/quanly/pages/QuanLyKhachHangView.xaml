@@ -79,7 +79,10 @@
         <Grid Grid.Row="0" Margin="0,0,0,20">
             <TextBlock Text="QUẢN LÝ KHÁCH HÀNG" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="btnNavKhuyenMai" Content="🎁 Khuyến Mãi" Style="{StaticResource ActionBtn}" Background="#2196F3" Margin="0,0,10,0" Click="BtnNavKhuyenMai_Click"/>
+
+                <Button x:Name="btnNavDeXuat" Content="💡 Đề Xuất" Style="{StaticResource ActionBtn}" Background="#FF9800" Margin="0,0,10,0" Click="BtnNavDeXuat_Click"/>
+
+                <Button x:Name="btnNavKhuyenMai" Content="🎁 Khuyến Mãi" Style="{StaticResource ActionBtn}" Background="#2196F3" Click="BtnNavKhuyenMai_Click"/>
             </StackPanel>
         </Grid>
 

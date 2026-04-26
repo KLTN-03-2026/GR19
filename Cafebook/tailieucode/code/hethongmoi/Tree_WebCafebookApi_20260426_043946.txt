@@ -1,0 +1,160 @@
+Project: WebCafebookApi
+├── Pages
+│   ├── Account
+│   │   ├── DangKyView.cshtml
+│   │   ├── DangKyView.cshtml.cs
+│   │   ├── DangNhapView.cshtml
+│   │   ├── DangNhapView.cshtml.cs
+│   │   ├── DangXuat.cshtml
+│   │   ├── DangXuat.cshtml.cs
+│   │   ├── DatLaiMatKhauView.cshtml
+│   │   ├── DatLaiMatKhauView.cshtml.cs
+│   │   ├── DoiMatKhauView.cshtml
+│   │   ├── DoiMatKhauView.cshtml.cs
+│   │   ├── HoTroKHView.cshtml
+│   │   ├── HoTroKHView.cshtml.cs
+│   │   ├── LichSuDatBanView.cshtml
+│   │   ├── LichSuDatBanView.cshtml.cs
+│   │   ├── LichSuDonHangDetailView.cshtml
+│   │   ├── LichSuDonHangDetailView.cshtml.cs
+│   │   ├── LichSuDonHangView.cshtml
+│   │   ├── LichSuDonHangView.cshtml.cs
+│   │   ├── LichSuThueSachView.cshtml
+│   │   ├── LichSuThueSachView.cshtml.cs
+│   │   ├── QuenMatKhauView.cshtml
+│   │   ├── QuenMatKhauView.cshtml.cs
+│   │   ├── TaiKhoanTongQuanView.cshtml
+│   │   ├── TaiKhoanTongQuanView.cshtml.cs
+│   │   ├── ThanhToanThanhCongView.cshtml
+│   │   ├── ThanhToanThanhCongView.cshtml.cs
+│   │   ├── ThanhToanView.cshtml
+│   │   ├── ThanhToanView.cshtml.cs
+│   │   ├── ThongTinCaNhanView.cshtml
+│   │   ├── ThongTinCaNhanView.cshtml.cs
+│   │   ├── XacMinhOtpView.cshtml
+│   │   ├── XacMinhOtpView.cshtml.cs
+│   │   ├── XacNhanMaView.cshtml
+│   │   ├── XacNhanMaView.cshtml.cs
+│   │   └── _Layout_Account.cshtml
+│   ├── ChiTietSachView.cshtml
+│   ├── ChiTietSachView.cshtml.cs
+│   ├── ChiTietSanPhamView.cshtml
+│   ├── ChiTietSanPhamView.cshtml.cs
+│   ├── ChinhSachView.cshtml
+│   ├── ChinhSachView.cshtml.cs
+│   ├── DatBanView.cshtml
+│   ├── DatBanView.cshtml.cs
+│   ├── Employee
+│   │   ├── DangKyLichView.cshtml
+│   │   ├── DangKyLichView.cshtml.cs
+│   │   ├── DangNhapEmployee.cshtml
+│   │   ├── DangNhapEmployee.cshtml.cs
+│   │   ├── DonXinNghiView.cshtml
+│   │   ├── DonXinNghiView.cshtml.cs
+│   │   ├── GoiMonView.cshtml
+│   │   ├── GoiMonView.cshtml.cs
+│   │   ├── HoTroKhachHangView.cshtml
+│   │   ├── HoTroKhachHangView.cshtml.cs
+│   │   ├── PhanHoiKhachHangView.cshtml
+│   │   ├── PhanHoiKhachHangView.cshtml.cs
+│   │   ├── ShipperGiaoHangView.cshtml
+│   │   ├── ShipperGiaoHangView.cshtml.cs
+│   │   ├── SoDoBanView.cshtml
+│   │   ├── SoDoBanView.cshtml.cs
+│   │   ├── TongQuanView.cshtml
+│   │   └── TongQuanView.cshtml.cs
+│   ├── GioHangView.cshtml
+│   ├── GioHangView.cshtml.cs
+│   ├── HoTroView.cshtml
+│   ├── HoTroView.cshtml.cs
+│   ├── LienHeView.cshtml
+│   ├── LienHeView.cshtml.cs
+│   ├── LoiWebView.cshtml
+│   ├── LoiWebView.cshtml.cs
+│   ├── Shared
+│   │   ├── _Layout.cshtml
+│   │   ├── _Layout_Employee.cshtml
+│   │   ├── _LoginPartial.cshtml
+│   │   └── _ValidationScriptsPartial.cshtml
+│   ├── ThuVienSachView.cshtml
+│   ├── ThuVienSachView.cshtml.cs
+│   ├── ThucDonView.cshtml
+│   ├── ThucDonView.cshtml.cs
+│   ├── TimKiemSachView.cshtml
+│   ├── TimKiemSachView.cshtml.cs
+│   ├── TrangChuView.cshtml
+│   ├── TrangChuView.cshtml.cs
+│   ├── _ViewImports.cshtml
+│   └── _ViewStart.cshtml
+├── Program.cs
+├── Properties
+│   ├── PublishProfiles
+│   │   ├── site65110-WebDeploy.pubxml
+│   │   └── site65110-WebDeploy.pubxml.user
+│   └── launchSettings.json
+├── Services
+│   └── SessionExtensions.cs
+├── WebCafebookApi.csproj
+├── WebCafebookApi.csproj.user
+├── appsettings.Development.json
+├── appsettings.json
+└── wwwroot
+    ├── css
+    │   ├── ChiTietSachView.css
+    │   ├── ChiTietSanPhamView.css
+    │   ├── ChinhSachView.css
+    │   ├── DangKyLich.css
+    │   ├── DangKyView.css
+    │   ├── DangNhapEmployee.css
+    │   ├── DangNhapView.css
+    │   ├── DatBanView.css
+    │   ├── DoiMatKhau.css
+    │   ├── DonXinNghi.css
+    │   ├── GioHang.css
+    │   ├── GoiMon.css
+    │   ├── HoTro.css
+    │   ├── HoTroKH.css
+    │   ├── HoTroKhachHang.css
+    │   ├── LayoutAccount.css
+    │   ├── LayoutEmployee.css
+    │   ├── LichSuDatBan.css
+    │   ├── LichSuDonHang.css
+    │   ├── LichSuThueSach.css
+    │   ├── LienHeView.css
+    │   ├── LoginPartial.css
+    │   ├── LoiWebView.css
+    │   ├── PhanHoiKhachHang.css
+    │   ├── QuenMatKhau.css
+    │   ├── ShipperGiaoHang.css
+    │   ├── SoDoBan.css
+    │   ├── TaiKhoanTongQuan.css
+    │   ├── ThanhToan.css
+    │   ├── ThuVienSachView.css
+    │   ├── ThucDonView.css
+    │   ├── TimKiemSachView.css
+    │   ├── TongQuan.css
+    │   ├── TrangChuView.css
+    │   ├── components.css
+    │   ├── core.css
+    │   ├── layout.css
+    │   └── thongtincanhan.css
+    ├── favicon.ico
+    ├── images
+    │   ├── default-avatar.png
+    │   ├── default-book-cover.png
+    │   ├── default-food-icon.png
+    │   ├── logo.ico
+    │   └── logo.png
+    ├── js
+    │   └── site.js
+    └── lib
+        ├── bootstrap
+        │   └── LICENSE
+        ├── jquery
+        │   └── LICENSE.txt
+        ├── jquery-validation
+        │   └── LICENSE.md
+        └── jquery-validation-unobtrusive
+            ├── LICENSE.txt
+            ├── jquery.validate.unobtrusive.js
+            └── jquery.validate.unobtrusive.min.js

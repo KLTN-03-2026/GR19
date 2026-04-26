@@ -1,6 +1,6 @@
 using CafebookApi.Data;
-// using CafebookApi.Services; // (Bỏ comment khi tạo xong VNPayService, AiToolService)
-// using CafebookApi.Hubs;     // (Bỏ comment khi tạo xong ChatHub)
+using CafebookApi.Services;
+using CafebookApi.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -8,8 +8,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMemoryCache();
+builder.Services.AddHostedService<CafebookApi.Services.AutoCancelOrderService>();
 builder.Services.AddHostedService<CafebookApi.Services.AutoCancelReservationService>();
 builder.Services.AddHostedService<CafebookApi.Services.DailyReminderBackgroundService>();
+
 // ==========================================================
 // 1. KẾT NỐI DATABASE
 // ==========================================================
@@ -18,26 +20,17 @@ builder.Services.AddDbContext<CafebookDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // ==========================================================
-// 2. CẤU HÌNH CORS (Bảo mật truy cập chéo)
+// 2. CẤU HÌNH CORS (ĐÃ SỬA LỖI SIGNALR)
 // ==========================================================
 builder.Services.AddCors(options =>
 {
-    // Policy chung cho App WPF và Mobile gọi API (Cho phép tất cả)
+    // Gộp chung thành 1 Policy mạnh nhất, bẻ khóa mọi chặn chéo Port
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.SetIsOriginAllowed(_ => true) // <--- CHÌA KHÓA: Chấp nhận mọi web client (cổng 5175, 5166, v.v.)
               .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-
-    // Policy chặt chẽ hơn dành riêng cho Web Frontend gọi SignalR (Bắt buộc AllowCredentials)
-    options.AddPolicy("SignalRPolicy", policy =>
-    {
-        // Thay bằng port Web thực tế của bạn (VD: localhost:5156, localhost:3000)
-        policy.WithOrigins("http://localhost:5202")
               .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+              .AllowCredentials();           // <--- BẮT BUỘC: Để SignalR WebSockets hoạt động
     });
 });
 
@@ -54,13 +47,11 @@ builder.Services.AddSwaggerGen(options =>
 
 // Thêm SignalR cho chức năng Chat / Thông báo realtime
 builder.Services.AddSignalR();
-
-// Đăng ký các Service nghiệp vụ (Sẽ tạo ở bước sau)
-// builder.Services.AddScoped<AiToolService>();
-// builder.Services.AddScoped<VNPayService>(); // <-- Chuẩn bị sẵn cho VNPay
+builder.Services.AddScoped<AiService>();
+builder.Services.AddScoped<AiToolService>();
 
 // ==========================================================
-// 4. CẤU HÌNH BẢO MẬT JWT
+// 4. CẤU HÌNH BẢO MẬT JWT VÀ SIGNALR
 // ==========================================================
 builder.Services.AddAuthentication(options =>
 {
@@ -78,6 +69,26 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"]!,
         ValidAudience = builder.Configuration["Jwt:Audience"]! ?? builder.Configuration["Jwt:Issuer"]!,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+
+    // ======================================================
+    // FIX: BẮT TOKEN CHO SIGNALR (ĐỌC TỪ QUERY STRING)
+    // ======================================================
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            // Nếu request là gửi tới Hub (đường dẫn bắt đầu bằng /chatHub)
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
+            {
+                // Lấy token từ Query String gán vào Context
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -97,7 +108,7 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 
-// Chỉ dùng UseCors 1 lần với Policy chung cho toàn bộ API
+// CỰC KỲ QUAN TRỌNG: Kích hoạt CORS ngay giữa Routing và Auth
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
@@ -105,7 +116,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Gắn Policy riêng cho endpoint SignalR để tránh lỗi khi Web kết nối
-// app.MapHub<ChatHub>("/chathub").RequireCors("SignalRPolicy");
+// Gắn Hub SignalR (Viết hoa chữ cái theo đúng chuẩn /chatHub ở phía Client)
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

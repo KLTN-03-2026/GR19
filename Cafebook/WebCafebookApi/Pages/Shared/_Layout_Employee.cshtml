@@ -1,18 +1,18 @@
 ﻿@using System.Security.Claims
 @using Microsoft.AspNetCore.Http
+@using CafebookModel.Utils
 @inject IHttpContextAccessor HttpContextAccessor
 
 @{
-    // Hàm kiểm tra Quyền (Bảo mật Lớp 1 - Ẩn hiện UI theo Claim)
     bool HasPerm(string p) => User.HasClaim("Permission", p)
                            || User.HasClaim("Permission", "FULL_NV")
                            || User.HasClaim("Permission", "FULL_QL");
 
-    // Lấy thông tin cá nhân an toàn (Null-Safety)
     var userName = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity?.Name ?? "Nhân viên";
     var userRole = User.FindFirstValue(ClaimTypes.Role) ?? "Nhân viên";
     var avatarUrl = HttpContextAccessor.HttpContext?.Session.GetString("AvatarUrl");
-    if (string.IsNullOrEmpty(avatarUrl)) avatarUrl = "/images/default-avatar.png";
+    
+    if (string.IsNullOrEmpty(avatarUrl)) avatarUrl = HinhAnhPaths.WebDefaultAvatar;
 }
 
 <!DOCTYPE html>
@@ -25,11 +25,9 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    
     <link rel="stylesheet" href="~/css/LayoutEmployee.css" asp-append-version="true" />
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-    
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="emplayout-body">
@@ -37,7 +35,7 @@
 
         <nav class="emplayout-sidebar" id="employeeSidebar">
             <div class="emplayout-sidebar-header">
-                <img src="/images/logo.png" alt="Cafebook Staff" class="emplayout-brand-logo" onerror="this.src='/images/default-avatar.png';">
+                <img src="/images/logo.png" alt="Cafebook Staff" class="emplayout-brand-logo" onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultAvatar';">
                 <span class="emplayout-brand-text">Staff Workspace</span>
                 <button class="emplayout-close-sidebar d-lg-none" id="closeSidebarBtn">
                     <span class="material-symbols-outlined">close</span>
@@ -46,19 +44,10 @@
 
             <ul class="emplayout-nav flex-column">
                 <li class="emplayout-nav-item">
-                    <a class="emplayout-nav-link @(ViewData["Title"]?.ToString() == "Tổng quan" ? "active" : "")" asp-page="/Employee/Dashboard">
+                    <a class="emplayout-nav-link @(ViewData["Title"]?.ToString() == "Tổng quan" ? "active" : "")" asp-page="/Employee/TongQuanView">
                         <span class="material-symbols-outlined">analytics</span> Bảng Tổng quan
                     </a>
                 </li>
-
-                @if (HasPerm("CM_THONG_BAO"))
-                {
-                    <li class="emplayout-nav-item">
-                        <a class="emplayout-nav-link @(ViewData["Title"]?.ToString() == "Thông báo" ? "active" : "")" asp-page="/Employee/ThongBaoView">
-                            <span class="material-symbols-outlined">notifications</span> Thông báo hệ thống
-                        </a>
-                    </li>
-                }
 
                 <div class="emplayout-nav-divider">NGHIỆP VỤ VẬN HÀNH</div>
 
@@ -71,7 +60,7 @@
                     </li>
                 }
 
-                @if (HasPerm("NV_DAT_BAN") || HasPerm("NV_THUE_SACH"))
+                @if (HasPerm("NV_HO_TRO_KH"))
                 {
                     <li class="emplayout-nav-item">
                         <a class="emplayout-nav-link @(ViewData["Title"]?.ToString() == "Hỗ trợ Khách hàng" ? "active" : "")" asp-page="/Employee/HoTroKhachHangView">
@@ -80,7 +69,7 @@
                     </li>
                 }
 
-                @if (HasPerm("QL_KHACH_HANG") || HasPerm("FULL_NV"))
+                @if (HasPerm("NV_PHAN_HOI"))
                 {
                     <li class="emplayout-nav-item">
                         <a class="emplayout-nav-link @(ViewData["Title"]?.ToString() == "Phản hồi Đánh giá" ? "active" : "")" asp-page="/Employee/PhanHoiKhachHangView">
@@ -89,7 +78,7 @@
                     </li>
                 }
 
-                @if (HasPerm("NV_GIAO_HANG"))
+                @if (HasPerm("NV_GIAO_HANG") || HasPerm("NV_SHIP_HANG"))
                 {
                     <li class="emplayout-nav-item">
                         <a class="emplayout-nav-link @(ViewData["Title"]?.ToString() == "Ứng dụng Giao hàng" ? "active" : "")" asp-page="/Employee/ShipperGiaoHangView">
@@ -100,43 +89,41 @@
 
                 <div class="emplayout-nav-divider">CÁ NHÂN & NHÂN SỰ</div>
 
-                @if (HasPerm("NV_LICH_LAM_VIEC"))
+                @if (HasPerm("NV_LICH_LAM_VIEC") || HasPerm("NV_DANG_KY_CA_LAM"))
                 {
                     <li class="emplayout-nav-item">
-                        <a class="emplayout-nav-link @(ViewData["Title"]?.ToString() == "Đăng ký Ca làm" ? "active" : "")" asp-page="/Employee/CaLamViecView">
+                        <a class="emplayout-nav-link @(ViewData["Title"]?.ToString() == "Đăng Ký Lịch Làm Việc" ? "active" : "")" asp-page="/Employee/DangKyLichView">
                             <span class="material-symbols-outlined">calendar_month</span> Đăng ký Ca làm
                         </a>
                     </li>
                 }
-
+                @if (HasPerm("NV_LICH_LAM_VIEC") || HasPerm("NV_DANG_KY_CA_LAM") || HasPerm("NV_THONG_TIN"))
+                {
                 <li class="emplayout-nav-item">
                     <a class="emplayout-nav-link @(ViewData["Title"]?.ToString() == "Viết Đơn Xin Nghỉ" ? "active" : "")" asp-page="/Employee/DonXinNghiView">
                         <span class="material-symbols-outlined">edit_document</span> Viết Đơn Xin Nghỉ
                     </a>
                 </li>
+                }
             </ul>
         </nav>
 
         <div class="emplayout-main-content">
-            
             <header class="emplayout-header shadow-sm">
                 <button class="emplayout-toggle-btn d-lg-none" id="openSidebarBtn">
                     <span class="material-symbols-outlined">menu</span>
                 </button>
-                
                 <div class="emplayout-header-right ms-auto d-flex align-items-center gap-3">
                     <a asp-page="/Employee/ThongTinCaNhanView" class="text-decoration-none emplayout-user-profile">
-                        <img src="@avatarUrl" alt="Avatar" class="emplayout-avatar" onerror="this.src='/images/default-avatar.png';">
+                        <img src="@avatarUrl" alt="Avatar" class="emplayout-avatar" onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultAvatar';">
                         <div class="emplayout-user-info d-none d-sm-block text-end">
                             <div class="fw-bold text-dark">@userName</div>
                             <div class="small text-muted" style="font-size: 0.8rem;">@userRole</div>
                         </div>
                     </a>
-
                     <div class="emplayout-header-divider d-none d-sm-block"></div>
-
-                    <form method="post" asp-page="/Employee/Login" asp-page-handler="Logout" class="m-0">
-                        <button type="submit" class="emplayout-logout-btn" title="Đăng xuất khỏi hệ thống">
+                    <form id="logoutForm" method="post" asp-page="/employee/DangNhapEmployee" asp-page-handler="Logout" class="m-0">
+                        <button type="button" onclick="confirmLogout()" class="emplayout-logout-btn" title="Đăng xuất khỏi hệ thống">
                             <span class="material-symbols-outlined">logout</span>
                             <span class="d-none d-md-inline ms-1">Đăng xuất</span>
                         </button>
@@ -155,19 +142,37 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <script>
         $(document).ready(function () {
-        $('#openSidebarBtn').click(function () {
-        $('#employeeSidebar').addClass('show');
-        });
-
-        $('#closeSidebarBtn').click(function () {
-        $('#employeeSidebar').removeClass('show');
-        });
+        $('#openSidebarBtn').click(function () { $('#employeeSidebar').addClass('show'); });
+        $('#closeSidebarBtn').click(function () { $('#employeeSidebar').removeClass('show'); });
         });
     </script>
-
     @await RenderSectionAsync("Scripts", required: false)
+    <script>
+        $(document).ready(function () {
+        $('#openSidebarBtn').click(function () { $('#employeeSidebar').addClass('show'); });
+        $('#closeSidebarBtn').click(function () { $('#employeeSidebar').removeClass('show'); });
+        });
+
+        // HÀM HIỂN THỊ XÁC NHẬN ĐĂNG XUẤT
+        function confirmLogout() {
+        Swal.fire({
+        title: 'Đăng xuất?',
+        text: "Bạn có chắc chắn muốn kết thúc phiên làm việc?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',   // Nút đỏ (Cảnh báo)
+        cancelButtonColor: '#6c757d', // Nút xám (Hủy)
+        confirmButtonText: 'Có, Đăng xuất',
+        cancelButtonText: 'Hủy bỏ'
+        }).then((result) => {
+        if (result.isConfirmed) {
+        // Nếu người dùng chọn "Có", form mới thực sự được submit lên Server
+        document.getElementById('logoutForm').submit();
+        }
+        });
+        }
+    </script>
 </body>
 </html>

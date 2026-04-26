@@ -1,0 +1,307 @@
+﻿@page "/nhan-vien/phan-hoi-khach-hang"
+@model WebCafebookApi.Pages.Employee.PhanHoiKhachHangViewModel
+@using CafebookModel.Utils
+@{
+    ViewData["Title"] = "Phản hồi Đánh giá";
+    Layout = "_Layout_Employee";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/PhanHoiKhachHang.css" asp-append-version="true" />
+}
+
+<div class="phkh-container">
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-white p-4 border-0 pb-0">
+            <h3 class="fw-bold mb-3 text-dark">Trung Tâm Phản Hồi</h3>
+            <ul class="nav nav-tabs phkh-nav-tabs" id="phkhTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active fw-bold" id="review-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
+                        <span class="material-symbols-outlined align-middle me-1">star</span> Đánh Giá Sản Phẩm
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" id="feedback-tab" data-bs-toggle="tab" data-bs-target="#feedbacks" type="button">
+                        <span class="material-symbols-outlined align-middle me-1">chat</span> Góp Ý Hệ Thống
+                    </button>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="card-body p-4 bg-light">
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="reviews">
+                    <div id="review-list" class="row g-4">
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="feedbacks">
+                    <ul class="nav nav-pills mb-3" id="pills-feedback" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#pills-pending">Chờ xử lý</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-pill px-4 fw-bold text-muted" data-bs-toggle="pill" data-bs-target="#pills-history">Lịch sử Góp ý</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="pills-pending">
+                            <div class="table-responsive bg-white rounded-3 shadow-sm border border-light">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light text-dark">
+                                        <tr>
+                                            <th class="ps-4">Khách Hàng</th>
+                                            <th>Nội Dung Góp Ý</th>
+                                            <th>Thời Gian</th>
+                                            <th class="text-center pe-4">Thao Tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="feedback-pending-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="pills-history">
+                            <div class="table-responsive bg-white rounded-3 shadow-sm border border-light opacity-75">
+                                <table class="table align-middle mb-0">
+                                    <thead class="bg-light text-dark">
+                                        <tr>
+                                            <th class="ps-4">Khách Hàng</th>
+                                            <th>Nội Dung Góp Ý</th>
+                                            <th>Thời Gian</th>
+                                            <th class="text-center pe-4">Trạng Thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="feedback-history-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="feedbackEmailModal" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content rounded-4 border-0 shadow">
+                            <div class="modal-header bg-light border-0 pb-3 rounded-top-4">
+                                <div>
+                                    <h5 class="fw-bold mb-1"><span class="material-symbols-outlined align-middle text-primary me-1">forward_to_inbox</span> Gửi Email Phản Hồi</h5>
+                                    <div class="small text-muted" id="fb-customer-info">Gửi tới: ...</div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div class="alert alert-secondary border-0 small fst-italic mb-3" id="fb-original-content">
+                                    "Nội dung khách góp ý..."
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="fw-bold small">Nội dung Email trả lời:</label>
+                                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-0" id="btnAutoTemplate">Dùng mẫu cảm ơn</button>
+                                </div>
+                                <textarea id="feedbackEmailText" class="form-control phkh-textarea" rows="6" placeholder="Nhập nội dung email sẽ gửi cho khách hàng..."></textarea>
+                                <button id="btnSendFeedbackEmail" class="btn btn-primary w-100 mt-4 fw-bold rounded-pill py-3 shadow-sm d-flex justify-content-center align-items-center gap-2">
+                                    <span class="material-symbols-outlined">send</span> XÁC NHẬN GỬI & ĐÓNG GÓP Ý
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="replyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold">Phản hồi khách hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <textarea id="replyText" class="form-control phkh-textarea" rows="4" placeholder="Nhập nội dung phản hồi..."></textarea>
+                <button id="btnConfirmReply" class="btn btn-primary w-100 mt-3 fw-bold rounded-pill py-2">GỬI PHẢN HỒI</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const _apiBaseUrl = "@Model.ApiBaseUrl";
+        const _jwtToken = "@Model.JwtToken";
+        let _currentReviewId = null;
+        let _currentFeedbackId = null;
+
+        async function loadReviews() {
+            const res = await fetch(`${_apiBaseUrl}/reviews`, { headers: { 'Authorization': `Bearer ${_jwtToken}` } });
+            const data = await res.json();
+            const $list = $("#review-list").empty();
+
+            data.forEach(d => {
+                let stars = '';
+                for(let i=1; i<=5; i++) stars += `<span class="material-symbols-outlined fs-5 ${i <= d.soSao ? 'text-warning' : 'text-light'}">star</span>`;
+                
+                let repliesHtml = d.danhSachPhanHoi.map(p => `
+                   <div class="phkh-reply-item mt-2 p-2 rounded bg-light border-start border-primary border-4">
+                        <div class="fw-bold small text-primary">${p.tenNhanVien} <span class="text-muted fw-normal float-end">${new Date(p.ngayTao).toLocaleString()}</span></div>
+                             <div class="small">${p.noiDung}</div>
+                            </div>
+                        `).join('');
+                        let imageHtml = d.hinhAnhUrl ? `
+                            <div class="mb-3">
+                                <div class="small fw-bold text-muted mb-1">
+                                    <span class="material-symbols-outlined fs-6 align-middle">image</span> Ảnh đính kèm:
+                                </div>
+                                <a href="${d.hinhAnhUrl}" target="_blank" title="Nhấn để xem ảnh gốc">
+                                    <img src="${d.hinhAnhUrl}" class="phkh-review-img rounded-3 border shadow-sm" alt="[LỖI ĐƯỜNG DẪN: Không tải được ảnh]">
+                                </a>
+                                <div class="form-text text-muted" style="font-size: 0.75rem;">* Nhấn vào ảnh để xem kích thước đầy đủ</div>
+                            </div>
+                        ` : '';
+
+                $list.append(`
+                            <div class="col-md-6 col-xl-4">
+                                <div class="card phkh-review-card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <h6 class="fw-bold text-dark m-0">${d.tenKhachHang}</h6>
+                                            <div class="phkh-stars">${stars}</div>
+                                        </div>
+                                        <div class="badge bg-info-subtle text-info mb-2">${d.tenSanPham}</div>
+                                        <p class="text-muted small mb-3">${d.binhLuan || '<i>Không có bình luận</i>'}</p>
+                                
+                                        ${imageHtml}
+
+                                        <div class="phkh-replies-area mb-3">${repliesHtml}</div>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill" onclick="openReplyModal(${d.idDanhGia})">Phản hồi</button>
+                                            <button class="btn ${d.trangThai === 'Hiển thị' ? 'btn-outline-danger' : 'btn-outline-success'} btn-sm rounded-pill" onclick="toggleReview(${d.idDanhGia})">
+                                                ${d.trangThai === 'Hiển thị' ? 'Ẩn đánh giá' : 'Hiện đánh giá'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                `);
+            });
+        }
+
+        async function loadFeedbacks() {
+            const res = await fetch(`${_apiBaseUrl}/feedbacks`, { headers: { 'Authorization': `Bearer ${_jwtToken}` } });
+            const data = await res.json();
+            
+            const $pendingBody = $("#feedback-pending-body").empty();
+            const $historyBody = $("#feedback-history-body").empty();
+
+            let pendingCount = 0;
+            let historyCount = 0;
+
+            data.forEach(g => {
+                const dateStr = new Date(g.ngayTao).toLocaleString('vi-VN', {hour: '2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric'});
+                
+                if (g.trangThai === 'Chờ xử lý') {
+                    pendingCount++;
+                    // Mã hóa object để quăng vào button
+                    const safeGopY = encodeURIComponent(JSON.stringify(g));
+                    $pendingBody.append(`
+                        <tr>
+                            <td class="ps-4"><div class="fw-bold text-dark">${g.hoTen}</div><div class="small text-muted">${g.email}</div></td>
+                            <td><div class="text-truncate fw-medium" style="max-width: 350px;">${g.noiDung}</div></td>
+                            <td><div class="small text-muted"><span class="material-symbols-outlined fs-6 align-middle">schedule</span> ${dateStr}</div></td>
+                            <td class="text-center pe-4">
+                                <button class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm" onclick="openFeedbackEmailModal('${safeGopY}')">Xử lý ngay</button>
+                            </td>
+                        </tr>
+                    `);
+                } else {
+                    historyCount++;
+                    $historyBody.append(`
+                        <tr>
+                            <td class="ps-4"><div class="fw-bold text-dark">${g.hoTen}</div><div class="small text-muted">${g.email}</div></td>
+                            <td><div class="text-truncate text-muted" style="max-width: 350px;">${g.noiDung}</div></td>
+                            <td><div class="small text-muted">${dateStr}</div></td>
+                            <td class="text-center pe-4"><span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill"><span class="material-symbols-outlined fs-6 align-middle">done_all</span> ${g.trangThai}</span></td>
+                        </tr>
+                    `);
+                }
+            });
+
+            if(pendingCount === 0) $pendingBody.html('<tr><td colspan="4" class="text-center p-5 text-muted fst-italic">Tuyệt vời! Không có góp ý nào đang chờ xử lý.</td></tr>');
+            if(historyCount === 0) $historyBody.html('<tr><td colspan="4" class="text-center p-5 text-muted fst-italic">Chưa có lịch sử xử lý.</td></tr>');
+        }
+
+        // Functions for Modals & Actions
+        function openReplyModal(id) {
+            _currentReviewId = id;
+            $("#replyText").val('');
+            $("#replyModal").modal('show');
+        }
+
+        $("#btnConfirmReply").click(async () => {
+            const content = $("#replyText").val().trim();
+            if(!content) return;
+            const res = await fetch(`${_apiBaseUrl}/reply-review/${_currentReviewId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_jwtToken}` },
+                body: JSON.stringify({ noiDung: content })
+            });
+            if(res.ok) { $("#replyModal").modal('hide'); Swal.fire('Thành công', 'Đã gửi phản hồi', 'success'); loadReviews(); }
+        });
+
+        async function toggleReview(id) {
+            const res = await fetch(`${_apiBaseUrl}/toggle-review/${id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${_jwtToken}` } });
+            if(res.ok) loadReviews();
+        }
+
+        window.openFeedbackEmailModal = function(encodedData) {
+            const g = JSON.parse(decodeURIComponent(encodedData));
+            _currentFeedbackId = g.idGopY;
+            $("#fb-customer-info").html(`Gửi tới: <strong class="text-dark">${g.hoTen}</strong> (${g.email})`);
+            $("#fb-original-content").text(`"${g.noiDung}"`);
+            $("#feedbackEmailText").val('');
+            $("#feedbackEmailModal").modal('show');
+        };
+
+        $("#btnAutoTemplate").click(function() {
+            const template = "Cảm ơn bạn đã đóng góp ý kiến để giúp quán ngày một hoàn thiện hơn. Chúng tôi đã ghi nhận phản hồi của bạn và sẽ khắc phục/cải thiện trong thời gian sớm nhất.\n\nChúc bạn một ngày làm việc tràn đầy năng lượng!";
+            $("#feedbackEmailText").val(template);
+        });
+
+        $("#btnSendFeedbackEmail").click(async function() {
+            const content = $("#feedbackEmailText").val().trim();
+            if(!content) return Swal.fire('Lỗi', 'Vui lòng nhập nội dung email', 'warning');
+
+            $("#feedbackEmailModal").modal('hide');
+            Swal.fire({
+                title: 'Đang gửi Email...',
+                html: 'Vui lòng không đóng trình duyệt lúc này.',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const res = await fetch(`${_apiBaseUrl}/reply-feedback/${_currentFeedbackId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_jwtToken}` },
+                    body: JSON.stringify({ NoiDungEmail: content })
+                });
+
+                if(res.ok) {
+                    Swal.fire('Thành công', 'Đã gửi email phản hồi và đóng góp ý!', 'success');
+                    loadFeedbacks();
+                } else {
+                    const err = await res.json();
+                    Swal.fire('Lỗi gửi mail', err.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi', 'Mất kết nối máy chủ', 'error');
+            }
+        });
+
+        // Initialize
+        $(document).ready(() => {
+            loadReviews();
+            loadFeedbacks();
+        });
+    </script>
+}

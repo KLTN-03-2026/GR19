@@ -21,10 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\Web\NhanVien\" />
-    <Folder Include="Hubs\" />
-    <Folder Include="wwwroot\images\anhdanhgia\monan\" />
-    <Folder Include="wwwroot\images\anhdanhgia\sach\" />
     <Folder Include="wwwroot\images\avatars\avatarNV\" />
     <Folder Include="wwwroot\images\avatars\avatarKH\" />
     <Folder Include="wwwroot\images\books\" />

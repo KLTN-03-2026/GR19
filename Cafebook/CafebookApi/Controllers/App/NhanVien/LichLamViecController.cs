@@ -65,7 +65,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             }
             catch
             {
-                // Fallback mặc định nếu có lỗi DB
                 return Ok(new LichLamViec_ConfigDto { GioMoCua = new TimeSpan(7, 0, 0), GioDongCua = new TimeSpan(22, 0, 0) });
             }
         }

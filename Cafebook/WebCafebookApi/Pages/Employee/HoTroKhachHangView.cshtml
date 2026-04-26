@@ -1,0 +1,291 @@
+﻿@page "/nhan-vien/ho-tro-khach-hang/"
+@model WebCafebookApi.Pages.Employee.HoTroKhachHangViewModel
+@{
+    ViewData["Title"] = "Trung tâm Hỗ trợ Khách hàng";
+    Layout = "_Layout_Employee";
+}
+
+@section Styles {
+    <link href="~/css/HoTroKhachHang.css" rel="stylesheet" />
+}
+
+<div class="htnv-dashboard-grid">
+    @* CỘT 1: DANH SÁCH PHIẾU *@
+    <div class="htnv-ticket-list-wrapper">
+        <div class="htnv-header-box">
+            <h5>Hộp thư hỗ trợ</h5>
+            <input type="text" id="ticketSearchInput" class="htnv-search-input" placeholder="Tìm kiếm hội thoại...">
+        </div>
+        <div class="htnv-ticket-list" id="ticket-list-container">
+            <div class="htnv-empty-state p-3">Đang tải danh sách...</div>
+        </div>
+    </div>
+
+    @* CỘT 2: KHUNG CHAT *@
+    <div class="htnv-chat-column" id="chat-column">
+        <div class="htnv-chat-header" id="chat-header" style="display: none;">
+            <div class="htnv-chat-info">
+                <strong id="chatHeaderName"></strong>
+                <small id="chatHeaderStatus"></small>
+            </div>
+            <div class="htnv-chat-actions">
+                <span class="material-symbols-outlined" id="chatSearchIcon" title="Tìm kiếm trong hội thoại">search</span>
+            </div>
+        </div>
+
+        <div class="htnv-search-bar" id="chat-search-bar" style="display: none;">
+            <input type="text" id="chatSearchInput" placeholder="Tìm kiếm trong chat..." />
+            <span class="htnv-search-count" id="chatSearchResultCount">0/0</span>
+            <button class="htnv-btn-icon" id="chatSearchPrev"><span class="material-symbols-outlined">expand_less</span></button>
+            <button class="htnv-btn-icon" id="chatSearchNext"><span class="material-symbols-outlined">expand_more</span></button>
+            <button class="htnv-btn-icon" id="chatSearchClose"><span class="material-symbols-outlined">close</span></button>
+        </div>
+
+        <div class="htnv-chat-history" id="chat-history">
+            <div class="htnv-empty-state">
+                <span class="material-symbols-outlined fs-1">arrow_back</span>
+                <p>Vui lòng chọn một phiếu hỗ trợ từ danh sách bên trái.</p>
+            </div>
+        </div>
+
+        <form method="post" id="chatForm" class="htnv-chat-form" asp-antiforgery="true">
+            <input type="hidden" id="JwtToken" value="@Model.JwtToken" />
+            <div class="htnv-input-wrapper">
+                <input id="chatMessageInput" class="htnv-chat-input" placeholder="Nhân viên nhập phản hồi..." autocomplete="off" disabled />
+            </div>
+            <button type="submit" id="sendButton" class="btn htnv-btn-send" disabled>
+                <span class="material-symbols-outlined">send</span>
+            </button>
+            <button type="button" id="resolveButton" class="btn btn-success" disabled>
+                Đã xử lý
+            </button>
+        </form>
+    </div>
+
+    @* CỘT 3: THÔNG TIN PHIẾU *@
+    <div class="htnv-summary-col" id="summary-column">
+        <div class="htnv-summary-card card">
+            <div class="htnv-summary-header">Thông tin Phiếu Hỗ Trợ</div>
+            <div class="htnv-summary-body" id="summary-card-content">
+                <div class="htnv-empty-state"><p>Chưa chọn phiếu.</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        const apiBaseUrl = '@Model.ApiBaseUrl'.replace(/\/$/, "");
+        $(document).ready(function () {
+        const $ticketListContainer = $('#ticket-list-container');
+        const $chatHistory = $('#chat-history');
+        const $summaryCardContent = $('#summary-card-content');
+        const $chatForm = $('#chatForm');
+        const $chatInput = $('#chatMessageInput');
+        const $sendButton = $('#sendButton');
+        const $resolveButton = $('#resolveButton');
+            
+        const jwtToken = $('#JwtToken').val() || null;
+        const antiForgeryToken = $('input[name="__RequestVerificationToken"]').val();
+
+        let currentTicketId = null;
+        let currentGroupName = null;
+        let currentTicketData = null;
+
+        const headers = { 'Content-Type': 'application/json', 'RequestVerificationToken': antiForgeryToken };
+        if (jwtToken) headers['Authorization'] = 'Bearer ' + jwtToken;
+
+        // 1. Hàm vẽ 1 tin nhắn duy nhất (Dùng cho cả Load và Realtime) [cite: 23, 24]
+        function appendSingleMessage(msg) {
+        const isUser = msg.loaiTinNhan === 'KhachHang';
+        const isStaff = msg.loaiTinNhan === 'NhanVien';
+        const rowClass = isUser ? 'htnv-user-row' : (isStaff ? 'htnv-staff-row' : 'htnv-bot-row');
+        const avatarClass = isUser ? 'htnv-avatar-user' : (isStaff ? 'htnv-avatar-staff' : 'htnv-avatar-bot');
+        const avatarIcon = isUser ? 'person' : (isStaff ? 'support_agent' : 'smart_toy');
+        const bubbleClass = isUser ? 'htnv-bubble-user' : (isStaff ? 'htnv-bubble-staff' : 'htnv-bubble-bot');
+                
+        let cleanText = (msg.noiDung || '').replace(/\[BUTTON:\s*(.*?)\s*\|\s*(.*?)\]/g, "");
+        cleanText = cleanText.replace(/\n/g, '<br />').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        const time = new Date(msg.thoiGian).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                
+        const html = `
+        <div class="htnv-message-row ${rowClass}">
+        <div class="htnv-avatar ${avatarClass}"><span class="material-symbols-outlined">${avatarIcon}</span></div>
+        <div class="htnv-msg-content">
+        <div class="htnv-bubble ${bubbleClass}">${cleanText}</div>
+        <div class="htnv-bubble-time ${isUser ? 'text-end' : 'text-start'}">${time}</div>
+        </div>
+        </div>`;
+                
+        $chatHistory.append(html);
+        $chatHistory.scrollTop($chatHistory[0].scrollHeight); // Cuộn xuống cuối [cite: 25]
+        }
+
+        // 2. Load danh sách phiếu hỗ trợ
+        async function loadTicketList() {
+        try {
+        const response = await fetch(`${apiBaseUrl}/api/web/nhanvien/hotro/tickets`, { method: 'GET', headers: headers });
+        if (!response.ok) throw new Error('Failed to load');
+        const tickets = await response.json();
+                    
+        if (tickets.length === 0) {
+        $ticketListContainer.html('<div class="htnv-empty-state p-3">Không có yêu cầu hỗ trợ nào.</div>');
+        return;
+        }
+        $ticketListContainer.empty();
+        tickets.forEach(ticket => {
+        const time = new Date(ticket.thoiGianTao).toLocaleString('vi-VN');
+        const isPending = ticket.trangThai === 'Chờ xử lý';
+        const statusClass = isPending ? 'htnv-status-pending' : '';
+        const indicatorHtml = isPending ? '<span class="htnv-status-indicator"></span>' : '';
+        const statusColor = isPending ? 'text-danger' : 'text-success';
+                        
+        const ticketHtml = `
+        <div class="htnv-ticket-item ${statusClass}" data-id="${ticket.idThongBao}">
+        <div class="d-flex justify-content-between">
+        <strong>${ticket.tenKhachHang}</strong>
+        <span class="htnv-ticket-time ${statusColor}">${ticket.trangThai}</span>
+        </div>
+        <div class="htnv-ticket-preview">${ticket.noiDungYeuCau || '...'}</div>
+        <small>${time}</small>
+        ${indicatorHtml}
+        </div>`;
+        $ticketListContainer.append(ticketHtml);
+        });
+        } catch (error) {
+        $ticketListContainer.html('<div class="htnv-empty-state p-3">Lỗi tải danh sách.</div>');
+        }
+        }
+
+        // 3. Load chi tiết và Join phòng chat
+        async function loadTicketDetail(id) {
+        if (!id) return;
+        currentTicketId = id;
+        $('.htnv-ticket-item').removeClass('active');
+        $(`.htnv-ticket-item[data-id="${id}"]`).addClass('active');
+
+        $chatInput.prop('disabled', true); $sendButton.prop('disabled', true);
+                
+        try {
+        const response = await fetch(`${apiBaseUrl}/api/web/nhanvien/hotro/ticket/${id}`, { method: 'GET', headers: headers });
+        const ticketData = await response.json();
+        currentTicketData = ticketData;
+                    
+        $chatHistory.empty();
+        if (ticketData.lichSuChat && ticketData.lichSuChat.length > 0) {
+        ticketData.lichSuChat.forEach(msg => appendSingleMessage(msg));
+        } else {
+        $chatHistory.html('<div class="htnv-empty-state">Chưa có tin nhắn</div>');
+        }
+
+        $summaryCardContent.html(`
+        <p><strong>Khách hàng:</strong> <span>${ticketData.tenKhachHang}</span></p>
+        <p><strong>Phiếu:</strong> <span>#${ticketData.idThongBao}</span></p>
+        <p><strong>Trạng thái:</strong> <span class="badge bg-warning text-dark fs-6" id="chatHeaderStatus">${ticketData.trangThai}</span></p>
+        <hr />
+        <p><strong>Yêu cầu ban đầu:</strong> <div class="htnv-request-content">${ticketData.noiDungYeuCau || ''}</div></p>
+        <p><strong>Ghi chú hệ thống:</strong> <div class="htnv-request-content" style="border: 1px dashed var(--cf-terracotta-dark)">${ticketData.ghiChuTuAI || ''}</div></p>
+        `);
+                    
+        $('#chat-header').show();
+        $('#chatHeaderName').text(ticketData.tenKhachHang);
+
+        // Xác định Room SignalR chuẩn xác
+        const newGroupName = (ticketData.idKhachHang && ticketData.idKhachHang > 0)
+        ? `khach_${ticketData.idKhachHang}`
+        : `guest_${ticketData.guestSessionId}`;
+                    
+        if (currentGroupName !== newGroupName) {
+        currentGroupName = newGroupName;
+        if (hubConnection.state === signalR.HubConnectionState.Connected) {
+        await hubConnection.invoke("JoinGroup", currentGroupName);
+        }
+        }
+        $chatInput.prop('disabled', false); $sendButton.prop('disabled', false);
+        if (ticketData.trangThai !== 'Đã xử lý') $resolveButton.prop('disabled', false);
+        } catch (error) {
+        $chatHistory.html('<div class="htnv-empty-state">Lỗi tải dữ liệu.</div>');
+        }
+        }
+
+        // 4. Cấu hình SignalR Realtime [cite: 33, 34]
+        const hubOptions = jwtToken ? { accessTokenFactory: () => jwtToken } : {};
+        const hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl(apiBaseUrl + "/chatHub", hubOptions)
+        .build();
+                
+        // FIX: Nhận tin nhắn và vẽ trực tiếp (Append) không cần F5
+        hubConnection.on("ReceiveMessage", function (message) {
+        const idTicket = message.idThongBaoHoTro || message.IdThongBaoHoTro;
+        if (currentTicketId && idTicket == currentTicketId) {
+        appendSingleMessage(message);
+        } else {
+        loadTicketList(); // Load lại danh sách bên trái để hiện thông báo mới
+        }
+        });
+            
+        hubConnection.on("ReloadTicketList", loadTicketList);
+            
+        async function startConnection() {
+        try { await hubConnection.start(); } catch (err) { console.error("SignalR Error", err); }
+        }
+
+        // 5. Sự kiện gửi tin nhắn (Staff Feedback)
+        $chatForm.on('submit', async function (e) {
+        e.preventDefault();
+        if (!currentTicketId || !currentGroupName || !currentTicketData) return;
+                
+        const text = $chatInput.val().trim();
+        if (!text) return;
+                
+        $chatInput.val('').prop('disabled', true);
+        $sendButton.prop('disabled', true);
+ 
+        try {
+        // Ép kiểu số nguyên (int) để khớp với tham số Hub [cite: 13]
+        const tId = parseInt(currentTicketId, 10);
+        const kId = currentTicketData.idKhachHang ? parseInt(currentTicketData.idKhachHang, 10) : null;
+        const gId = currentTicketData.guestSessionId || null;
+                
+        await hubConnection.invoke("SendMessageFromStaff", currentGroupName, text, tId, kId, gId);
+        $('#chatHeaderStatus').text('Đã trả lời');
+        } catch (err) {
+        alert('Lỗi gửi tin nhắn: ' + err.message);
+        } finally {
+        $chatInput.prop('disabled', false).focus();
+        $sendButton.prop('disabled', false);
+        }
+        });
+            
+        // 6. Xử lý đóng phiếu
+        $resolveButton.on('click', async function () {
+        if (!currentTicketId || !confirm("Đóng phiếu hỗ trợ này?")) return;
+        try {
+        const res = await fetch(`${apiBaseUrl}/api/web/nhanvien/hotro/resolve/${currentTicketId}`, { method: 'POST', headers: headers });
+        if (res.ok) {
+        loadTicketList();
+        $('#chat-header').hide();
+        $chatHistory.html('<div class="htnv-empty-state">Phiếu đã đóng.</div>');
+        currentTicketId = null;
+        }
+        } catch (err) { alert("Lỗi xử lý."); }
+        });
+
+        // Tìm kiếm
+        $('#ticketSearchInput').on('keyup', function () {
+        const term = $(this).val().toLowerCase();
+        $('.htnv-ticket-item').each(function () {
+        $(this).toggle($(this).text().toLowerCase().includes(term));
+        });
+        });
+
+        $ticketListContainer.on('click', '.htnv-ticket-item', function () { loadTicketDetail($(this).data('id')); });
+
+        startConnection();
+        loadTicketList();
+        });
+    </script>
+}

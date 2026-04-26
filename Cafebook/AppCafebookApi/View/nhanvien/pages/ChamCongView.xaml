@@ -108,9 +108,11 @@
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock x:Name="txtHeaderTitle" Text="Chấm Công Nhân Viên" FontSize="26" FontWeight="Black" Foreground="{StaticResource PrimaryBrownBrush}"/>
             </StackPanel>
+
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <Button x:Name="btnXemLichSu" Content="📋 Xem Lịch Sử" Style="{StaticResource ActionBtn}" Background="{StaticResource AccentOrangeBrush}" Margin="0,0,10,0" Click="BtnXemLichSu_Click"/>
-                <Button Content="🡄 Quay lại" Style="{StaticResource ActionBtn}" Background="#9E9E9E" Click="BtnQuayLai_Click"/>
+
+                <Button x:Name="btnQuayLai" Content="⏱️ Chấm Công" Style="{StaticResource ActionBtn}" Background="#9E9E9E" Visibility="Collapsed" Click="BtnQuayLai_Click"/>
             </StackPanel>
         </Grid>
 

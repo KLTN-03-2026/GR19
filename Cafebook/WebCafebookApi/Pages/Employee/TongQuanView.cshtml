@@ -1,0 +1,86 @@
+﻿@page "/nhan-vien/tong-quan"
+@model WebCafebookApi.Pages.Employee.TongQuanViewModel
+@using CafebookModel.Utils
+
+@{
+    ViewData["Title"] = "Tổng quan";
+    Layout = "_Layout_Employee";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/TongQuan.css" asp-append-version="true" />
+}
+
+<div class="tqnv-container">
+    <div class="row g-4">
+        <div class="col-lg-5 col-xl-4">
+            <div class="tqnv-card tqnv-profile-card">
+                <div class="tqnv-profile-header">
+                    <img src="@(Model.DashboardData.ThongTin.AnhDaiDien ?? HinhAnhPaths.WebDefaultAvatar)"
+                         alt="Avatar" class="tqnv-avatar-large"
+                         onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultAvatar';">
+                    <h3 class="tqnv-profile-name">@(Model.DashboardData.ThongTin.HoTen ?? "Đang cập nhật")</h3>
+                    <span class="tqnv-badge tqnv-role-badge">@Model.DashboardData.ThongTin.TenVaiTro</span>
+                    
+                    @if (Model.DashboardData.ThongTin.TrangThaiLamViec == "Đang làm việc")
+                    {
+                        <span class="tqnv-badge tqnv-status-active">Đang làm việc</span>
+                    }
+                    else
+                    {
+                        <span class="tqnv-badge tqnv-status-inactive">@Model.DashboardData.ThongTin.TrangThaiLamViec</span>
+                    }
+                </div>
+
+                <div class="tqnv-profile-details">
+                    <div class="tqnv-detail-item"><span class="material-symbols-outlined tqnv-icon">mail</span><span>@(Model.DashboardData.ThongTin.Email ?? "Chưa cập nhật")</span></div>
+                    <div class="tqnv-detail-item"><span class="material-symbols-outlined tqnv-icon">call</span><span>@(Model.DashboardData.ThongTin.SoDienThoai ?? "Chưa cập nhật")</span></div>
+                    <div class="tqnv-detail-item"><span class="material-symbols-outlined tqnv-icon">badge</span><span>ID: #@Model.DashboardData.ThongTin.IdNhanVien</span></div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a asp-page="/Employee/ThongTinCaNhanView" class="btn tqnv-btn-outline w-100">Cập nhật thông tin</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7 col-xl-8">
+            <div class="tqnv-card tqnv-notification-card">
+                <div class="tqnv-card-header">
+                    <h4 class="tqnv-card-title"><span class="material-symbols-outlined me-2 text-warning">notifications_active</span> Thông báo mới</h4>
+                </div>
+                <div class="tqnv-notification-list">
+                    @if (Model.DashboardData.DanhSachThongBao.Any())
+                    {
+                        foreach (var item in Model.DashboardData.DanhSachThongBao)
+                        {
+                            <div class="tqnv-noti-item @(item.DaXem ? "read" : "unread")">
+                                <div class="tqnv-noti-icon"><span class="material-symbols-outlined">@(item.DaXem ? "mark_email_read" : "mail")</span></div>
+                                <div class="tqnv-noti-content">
+                                    <h6 class="tqnv-noti-title">@item.LoaiThongBao</h6>
+                                    <p class="tqnv-noti-desc">@item.NoiDung</p>
+                                    <span class="tqnv-noti-time">@item.ThoiGianTao.ToString("dd/MM/yyyy HH:mm") - Bởi: @item.TenNhanVienTao</span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="tqnv-empty-state"><span class="material-symbols-outlined tqnv-empty-icon">check_circle</span><p>Không có thông báo nào.</p></div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var errorMsg = '@Html.Raw(Model.ErrorMessage?.Replace("'", "\\'"))';
+            if (errorMsg && errorMsg.trim() !== '') {
+                Swal.fire({ icon: 'error', title: 'Đã xảy ra lỗi', text: errorMsg, confirmButtonColor: '#D32F2F' });
+            }
+        });
+    </script>
+}

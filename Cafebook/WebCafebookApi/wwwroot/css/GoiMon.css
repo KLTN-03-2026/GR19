@@ -1,0 +1,169 @@
+﻿.gmw-layout-container {
+    display: flex;
+    gap: 1.5rem;
+    height: calc(100vh - 100px);
+}
+
+.gmw-danhmuc-list {
+    flex: 0 0 220px;
+    border-radius: 12px;
+}
+
+    .gmw-danhmuc-list .nav-link {
+        color: #4E342E;
+        font-weight: 600;
+        padding: 10px 16px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+        .gmw-danhmuc-list .nav-link:hover {
+            background-color: #FFF8E1;
+        }
+
+        .gmw-danhmuc-list .nav-link.active {
+            background-color: #6F4E37;
+            color: white;
+            box-shadow: 0 4px 10px rgba(111,78,55,0.3);
+        }
+
+.gmw-sanpham-grid {
+    flex: 1;
+    background: #F9F9F9;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.gmw-sanpham-list {
+    padding: 1rem;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    align-content: flex-start;
+}
+
+.gmw-product-card {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #EEE;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+}
+
+    .gmw-product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        border-color: #D27D2D;
+    }
+
+    .gmw-product-card img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        background: #EEE;
+    }
+
+.gmw-hoadon-panel {
+    flex: 0 0 450px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.gmw-hoadon-body {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.gmw-bill-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gmw-bill-total {
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.gmw-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+/* CSS CHO POPUP KHUYẾN MÃI */
+.gmw-promo-card {
+    border: 2px solid #EEEEEE;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    background-color: #FFFFFF;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+    .gmw-promo-card:hover {
+        border-color: #D27D2D;
+        background-color: #FFFDF8;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(210, 125, 45, 0.15);
+    }
+
+    .gmw-promo-card.disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        background-color: #F9F9F9;
+    }
+
+        .gmw-promo-card.disabled:hover {
+            border-color: #EEEEEE;
+            transform: none;
+            box-shadow: none;
+        }
+
+.gmw-promo-title {
+    font-weight: 800;
+    color: #4E342E;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.gmw-promo-desc {
+    font-size: 0.9rem;
+    color: #616161;
+}
+
+.gmw-promo-discount {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #2E7D32; /* Xanh lá */
+}
+
+.gmw-promo-reason {
+    font-size: 0.85rem;
+    color: #D32F2F; /* Đỏ báo lỗi */
+    font-style: italic;
+    margin-top: 8px;
+}
+
+.gmw-promo-active-badge {
+    position: absolute;
+    top: 12px;
+    right: -30px;
+    background: #66BB6A;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 4px 30px;
+    transform: rotate(45deg);
+}

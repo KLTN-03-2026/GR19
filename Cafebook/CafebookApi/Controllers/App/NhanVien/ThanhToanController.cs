@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mail; 
+using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 
@@ -27,7 +27,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             _context = context;
         }
 
-        // Hàm helper tải cài đặt
         private async Task LoadCaiDat()
         {
             _settings = await _context.CaiDats
@@ -38,9 +37,12 @@ namespace CafebookApi.Controllers.App.NhanVien
                     c.TenCaiDat == "ThongTin_DiaChi" ||
                     c.TenCaiDat == "ThongTin_SoDienThoai" ||
                     c.TenCaiDat == "Wifi_MatKhau" ||
-                    c.TenCaiDat == "NganHang_SoTaiKhoan" ||             // <-- THÊM
-                    c.TenCaiDat == "NganHang_ChuTaiKhoan" ||            // <-- THÊM
-                    c.TenCaiDat == "NganHang_MaDinhDanhNganHang")       // <-- THÊM
+                    c.TenCaiDat == "NganHang_SoTaiKhoan" ||
+                    c.TenCaiDat == "NganHang_ChuTaiKhoan" ||
+                    c.TenCaiDat == "NganHang_MaDinhDanhNganHang"||
+                    c.TenCaiDat == "VNPay_Url" ||
+                    c.TenCaiDat == "VNPay_TmnCode" ||
+                    c.TenCaiDat == "VNPay_HashSecret")
                 .AsNoTracking()
                 .ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
 
@@ -50,13 +52,10 @@ namespace CafebookApi.Controllers.App.NhanVien
             if (_tiLeDoiDiem == 0) _tiLeDoiDiem = 1000;
         }
 
-        /// <summary>
-        /// Tải dữ liệu cho màn hình ThanhToanView
-        /// </summary>
         [HttpGet("load/{idHoaDon}")]
         public async Task<IActionResult> LoadThanhToanData(int idHoaDon)
         {
-            await LoadCaiDat(); // Tải cài đặt
+            await LoadCaiDat();
 
             var hoaDon = await _context.HoaDons
                 .Include(h => h.Ban)
@@ -121,7 +120,6 @@ namespace CafebookApi.Controllers.App.NhanVien
                 .Select(kh => new KhachHangTimKiemDto
                 {
                     IdKhachHang = kh.IdKhachHang,
-                    // SỬA: Chỉ dùng HoTen và SoDienThoai
                     DisplayText = kh.HoTen + (kh.SoDienThoai != null ? $" - {kh.SoDienThoai}" : ""),
                     KhachHangData = kh
                 }).ToListAsync();
@@ -130,11 +128,11 @@ namespace CafebookApi.Controllers.App.NhanVien
             {
                 HoaDonInfo = hoaDonInfo,
                 ChiTietItems = chiTietItems,
-                IdKhuyenMaiDaApDung = khuyenMaiLink?.IdKhuyenMai, // Trả về ID
+                IdKhuyenMaiDaApDung = khuyenMaiLink?.IdKhuyenMai,
                 PhuThusDaApDung = phuThusDaApDung,
                 PhuThusKhaDung = phuThusKhaDung,
                 KhachHang = khachHang,
-                KhachHangsList = khachHangsList, // Trả về DS Khách hàng
+                KhachHangsList = khachHangsList,
                 DiemTichLuy_DoiVND = _tiLeDoiDiem,
                 DiemTichLuy_NhanVND = _tiLeNhanDiem,
 
@@ -143,31 +141,25 @@ namespace CafebookApi.Controllers.App.NhanVien
                 SoDienThoai = _settings.GetValueOrDefault("ThongTin_SoDienThoai", "N/A"),
                 WifiMatKhau = _settings.GetValueOrDefault("Wifi_MatKhau", "N/A"),
 
-                // TRẢ VỀ DỮ LIỆU NGÂN HÀNG
                 NganHang_SoTaiKhoan = _settings.GetValueOrDefault("NganHang_SoTaiKhoan", ""),
                 NganHang_ChuTaiKhoan = _settings.GetValueOrDefault("NganHang_ChuTaiKhoan", ""),
                 NganHang_MaDinhDanhNganHang = _settings.GetValueOrDefault("NganHang_MaDinhDanhNganHang", "")
             });
         }
 
-        // Trong file: ThanhToanController.cs
-        // THAY THẾ HÀM CŨ BẰNG HÀM NÀY:
-
         [HttpPost("find-or-create-customer")]
         public async Task<IActionResult> FindOrCreateCustomer([FromBody] string query)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
-                return Ok(null); // Không nhập -> Khách vãng lai
+                return Ok(null);
             }
 
-            // 1. Chỉ tìm kiếm theo SĐT
             var khachHang = await _context.KhachHangs
                 .FirstOrDefaultAsync(kh => kh.SoDienThoai == query);
 
             if (khachHang != null)
             {
-                // 1.1. Nếu tìm thấy, trả về
                 var khDto = new KhachHangTimKiemDto
                 {
                     IdKhachHang = khachHang.IdKhachHang,
@@ -178,19 +170,15 @@ namespace CafebookApi.Controllers.App.NhanVien
                 return Ok(khDto);
             }
 
-            // 2. Không tìm thấy -> Kiểm tra xem có phải SĐT hợp lệ không
             if (IsValidPhone(query))
             {
-                // 2.1. Nếu là SĐT hợp lệ -> Tạo tài khoản mới
                 var newKhachHang = new KhachHang
                 {
                     HoTen = $"Khách SĐT {query}",
                     SoDienThoai = query,
-
-                    // Cung cấp giá trị mặc định duy nhất thay vì NULL
                     Email = $"{query}@temp.cafebook.com",
                     TenDangNhap = query,
-                    MatKhau = "123456", // Mật khẩu tạm thời
+                    MatKhau = "123456",
                     TaiKhoanTam = true,
                     NgayTao = DateTime.Now,
                     DiemTichLuy = 0,
@@ -198,9 +186,8 @@ namespace CafebookApi.Controllers.App.NhanVien
                 };
 
                 _context.KhachHangs.Add(newKhachHang);
-                await _context.SaveChangesAsync(); // Dòng 185 (dòng gây lỗi) giờ sẽ chạy được
+                await _context.SaveChangesAsync();
 
-                // 3. Đóng gói DTO cho khách hàng vừa tạo
                 var newKhachHangDto = new KhachHangTimKiemDto
                 {
                     IdKhachHang = newKhachHang.IdKhachHang,
@@ -212,20 +199,15 @@ namespace CafebookApi.Controllers.App.NhanVien
             }
             else
             {
-                // 2.3. Nếu là Tên hoặc Email -> KHÔNG TẠO, coi như khách vãng lai
                 return Ok(null);
             }
         }
 
-        // =========================================================================
-        // API ĐỘC LẬP: Lấy danh sách Khuyến Mãi (Dành riêng cho module Thanh Toán)
-        // =========================================================================
         [HttpGet("khuyenmai-available/{idHoaDon}")]
         public async Task<IActionResult> GetAvailableKhuyenMai(int idHoaDon)
         {
             try
             {
-                // QUAN TRỌNG: Phải Include ChiTietHoaDons để check IdSanPhamApDung
                 var hoaDon = await _context.HoaDons
                     .Include(h => h.ChiTietHoaDons)
                     .AsNoTracking()
@@ -239,7 +221,6 @@ namespace CafebookApi.Controllers.App.NhanVien
 
                 foreach (var km in allKms)
                 {
-                    // Lọc qua hàm Helper kiểm tra điều kiện toàn diện
                     var (isEligible, reason, discountValue) = CheckEligibility(km, hoaDon, now);
 
                     var dto = new KhuyenMaiHienThiThanhToanDto
@@ -269,7 +250,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             }
         }
 
-        // Hàm Helper: Kiểm tra điều kiện KM dùng chung
         private (bool IsEligible, string? Reason, decimal CalculatedDiscount) CheckEligibility(KhuyenMai km, HoaDon hoaDon, DateTime now)
         {
             decimal calculatedDiscount = 0m;
@@ -287,7 +267,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             if (km.GioBatDau.HasValue && km.GioKetThuc.HasValue && (now.TimeOfDay < km.GioBatDau || now.TimeOfDay > km.GioKetThuc))
                 return (false, $"Chỉ áp dụng trong khung giờ {km.GioBatDau:hh\\:mm} - {km.GioKetThuc:hh\\:mm}.", 0);
 
-            // LOGIC CHECK NGÀY 2,3,4,5,6,7,8
             if (!string.IsNullOrWhiteSpace(km.NgayTrongTuan))
             {
                 string homNay = "";
@@ -308,7 +287,6 @@ namespace CafebookApi.Controllers.App.NhanVien
                 }
             }
 
-            // Tính toán giá trị giảm & Kiểm tra Sản phẩm áp dụng
             decimal tongTienGocChoKM = hoaDon.TongTienGoc;
             if (km.IdSanPhamApDung.HasValue)
             {
@@ -449,34 +427,27 @@ namespace CafebookApi.Controllers.App.NhanVien
             decimal giamGiaKM = 0;
             decimal giamGiaDiem = 0;
 
-            // ==========================================
-            // XỬ LÝ KHUYẾN MÃI TRONG THANH TOÁN
-            // ==========================================
             if (req.IdKhuyenMai.HasValue && req.IdKhuyenMai > 0)
             {
                 var km = await _context.KhuyenMais.FindAsync(req.IdKhuyenMai.Value);
                 if (km != null)
                 {
-                    // 1. KIỂM TRA NGHIÊM NGẶT NGAY LÚC THANH TOÁN
                     if (km.SoLuongConLai.HasValue && km.SoLuongConLai <= 0)
                     {
                         return BadRequest($"Thanh toán thất bại: Khuyến mãi '{km.TenChuongTrinh}' đã hết lượt sử dụng trong hệ thống. Vui lòng gỡ khuyến mãi này ra khỏi hóa đơn!");
                     }
 
-                    // 2. Tính toán tiền giảm
                     giamGiaKM = await CalculateDiscount(km, hoaDonThanhToan.TongTienGoc, chiTietTach);
 
                     var existingLink = await _context.HoaDonKhuyenMais
                         .AsNoTracking()
                         .FirstOrDefaultAsync(hkm => hkm.IdHoaDon == hoaDonThanhToan.IdHoaDon && hkm.IdKhuyenMai == km.IdKhuyenMai);
 
-                    // 3. Lưu liên kết nếu chưa có
                     if (existingLink == null)
                     {
                         _context.HoaDonKhuyenMais.Add(new HoaDon_KhuyenMai { IdHoaDon = hoaDonThanhToan.IdHoaDon, IdKhuyenMai = km.IdKhuyenMai });
                     }
 
-                    // 4. TRỪ SỐ LƯỢNG CHÍNH THỨC (Vì đã pass qua vòng kiểm tra <= 0 ở trên)
                     if (km.SoLuongConLai.HasValue)
                     {
                         km.SoLuongConLai -= 1;
@@ -511,16 +482,7 @@ namespace CafebookApi.Controllers.App.NhanVien
 
             hoaDonThanhToan.GiamGia = giamGiaKM + giamGiaDiem;
 
-            if (hoaDonThanhToan.IdNhanVien.HasValue)
-            {
-                await TruKho(hoaDonThanhToan.IdNhanVien.Value, chiTietTach);
-            }
-            else
-            {
-                // Trường hợp này không nên xảy ra ở App WPF,
-                // nhưng chúng ta vẫn nên ghi log hoặc báo lỗi
-                throw new InvalidOperationException("Không thể trừ kho vì hoá đơn thiếu IdNhanVien.");
-            }
+            // XÓA BỎ LỜI GỌI HÀM TRUKHO Ở ĐÂY
 
             hoaDonThanhToan.TrangThai = "Đã thanh toán";
             hoaDonThanhToan.ThoiGianThanhToan = DateTime.Now;
@@ -549,10 +511,10 @@ namespace CafebookApi.Controllers.App.NhanVien
                     if (diemMoi > 0)
                     {
                         khachHang.DiemTichLuy += diemMoi;
-                        diemCongMoi = diemMoi; // Lưu lại điểm vừa được cộng
+                        diemCongMoi = diemMoi;
                     }
                 }
-                tongDiemSauThanhToan = khachHang.DiemTichLuy; // Lấy tổng điểm hiện tại
+                tongDiemSauThanhToan = khachHang.DiemTichLuy;
             }
 
             bool hoaDonGocDaThanhToanHet = false;
@@ -581,62 +543,36 @@ namespace CafebookApi.Controllers.App.NhanVien
             });
         }
 
-        #region Hàm Helper (Trừ kho, Tính KM, Validate)
-
-        private async Task TruKho(int idNhanVien, ICollection<ChiTietHoaDon> chiTietList)
+        [HttpPost("vnpay-url")]
+        public async Task<IActionResult> GenerateVNPayUrl([FromBody] VNPayUrlRequestDto req)
         {
-            foreach (var chiTiet in chiTietList)
-            {
-                // Lấy danh sách định lượng của sản phẩm (bao gồm nguyên liệu và đơn vị sử dụng)
-                var dinhLuongList = await _context.DinhLuongs
-                    .Include(d => d.NguyenLieu)
-                    .Include(d => d.DonViSuDung)
-                    .Where(d => d.IdSanPham == chiTiet.IdSanPham)
-                    .ToListAsync();
+            await LoadCaiDat();
+            string vnp_Url = _settings.GetValueOrDefault("VNPay_Url", "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html");
+            string vnp_TmnCode = _settings.GetValueOrDefault("VNPay_TmnCode", "");
+            string vnp_HashSecret = _settings.GetValueOrDefault("VNPay_HashSecret", "");
 
-                foreach (var dl in dinhLuongList)
-                {
-                    if (dl.NguyenLieu != null && dl.DonViSuDung != null)
-                    {
-                        var nguyenLieu = dl.NguyenLieu;
-                        decimal luongTru1SP = 0;
+            if (string.IsNullOrEmpty(vnp_TmnCode) || string.IsNullOrEmpty(vnp_HashSecret))
+                return BadRequest("Chưa cấu hình VNPAY (TmnCode, HashSecret) trong bảng CaiDat.");
 
-                        // 1. KIỂM TRA ĐƠN VỊ ĐỂ ÁP DỤNG PHÉP TÍNH CHUẨN XÁC
-                        if (dl.DonViSuDung.LaDonViCoBan)
-                        {
-                            // Nếu là đơn vị cơ bản (vd: kg, lít, hộp) -> Trừ thẳng số lượng
-                            luongTru1SP = dl.SoLuongSuDung;
-                        }
-                        else
-                        {
-                            // Nếu KHÔNG phải đơn vị cơ bản (vd: gram, ml) -> Lấy số lượng CHIA cho hệ số quy đổi
-                            // (Ví dụ: 200 ml / 1000 = 0.2 lít)
-                            decimal heSoQuyDoi = dl.DonViSuDung.GiaTriQuyDoi > 0 ? dl.DonViSuDung.GiaTriQuyDoi : 1m; // Chống lỗi chia cho 0
-                            luongTru1SP = dl.SoLuongSuDung / heSoQuyDoi;
-                        }
+            var vnpay = new CafebookModel.Utils.VNPayHelper();
+            vnpay.AddRequestData("vnp_Version", "2.1.0");
+            vnpay.AddRequestData("vnp_Command", "pay");
+            vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
+            vnpay.AddRequestData("vnp_Amount", ((long)(req.Amount * 100)).ToString());
+            vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+            vnpay.AddRequestData("vnp_CurrCode", "VND");
+            vnpay.AddRequestData("vnp_IpAddr", "127.0.0.1");
+            vnpay.AddRequestData("vnp_Locale", "vn");
+            vnpay.AddRequestData("vnp_OrderInfo", $"Thanh toan HD {req.IdHoaDonGoc}");
+            vnpay.AddRequestData("vnp_OrderType", "other");
 
-                        // 2. Nhân với số lượng món mà khách gọi trong chi tiết hóa đơn
-                        decimal luongCanTruTong = luongTru1SP * chiTiet.SoLuong;
+            vnpay.AddRequestData("vnp_ReturnUrl", "https://localhost/vnpay-app-return");
+            vnpay.AddRequestData("vnp_TxnRef", $"{req.IdHoaDonGoc}_{DateTime.Now.Ticks}");
 
-                        // 3. Thực hiện trừ tồn kho theo đơn vị gốc
-                        nguyenLieu.TonKho -= luongCanTruTong;
-
-                        // 4. Cảnh báo kho (Chỉ tạo thông báo khi chạm mức tối thiểu)
-                        if (nguyenLieu.TonKho <= nguyenLieu.TonKhoToiThieu)
-                        {
-                            _context.ThongBaos.Add(new ThongBao
-                            {
-                                IdNhanVienTao = idNhanVien,
-                                NoiDung = $"Cảnh báo: Tồn kho '{nguyenLieu.TenNguyenLieu}' sắp hết. Hiện chỉ còn {nguyenLieu.TonKho:N2} {nguyenLieu.DonViTinh}.",
-                                ThoiGianTao = DateTime.Now,
-                                LoaiThongBao = "CanhBaoKho",
-                                IdLienQuan = nguyenLieu.IdNguyenLieu
-                            });
-                        }
-                    }
-                }
-            }
+            string paymentUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
+            return Ok(new VNPayUrlResponseDto { PaymentUrl = paymentUrl });
         }
+        #region Hàm Helper 
 
         private async Task<decimal> CalculateDiscount(KhuyenMai km, decimal tongTienGoc, ICollection<ChiTietHoaDon> chiTietList)
         {
@@ -657,14 +593,13 @@ namespace CafebookApi.Controllers.App.NhanVien
                     giamGia = km.GiamToiDa.Value;
                 }
             }
-            else // SoTien
+            else
             {
                 giamGia = km.GiaTriGiam;
             }
             return await Task.FromResult(giamGia);
         }
 
-        // --- HÀM HELPER MỚI ---
         private bool IsValidEmail(string email)
         {
             try

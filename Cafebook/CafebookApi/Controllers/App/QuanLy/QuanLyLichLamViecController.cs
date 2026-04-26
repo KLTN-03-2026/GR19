@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.App.QuanLy
 {
-    // DTO phục vụ cho tính năng Copy Tuần
     public class CopyTuanDto { public DateTime SourceDate { get; set; } }
 
     [Route("api/app/quanly-lichlamviec")]
@@ -92,7 +91,6 @@ namespace CafebookApi.Controllers.App.QuanLy
                     GhiChu = nc.GhiChu
                 };
 
-                // [ĐÃ SỬA LỖI TỰ NHẢY]: Phải lọc thêm IdVaiTro để NhanVien không bị lặp qua các slot khác của cùng Ca
                 var registered = lichs.Where(l => l.NgayLam == nc.NgayLam && l.IdCa == nc.IdCa && l.NhanVien.IdVaiTro == nc.IdVaiTro).ToList();
 
                 item.NhanViens = registered.Select(r => new QuanLyLichLamViec_NhanVienDangKyDto
@@ -102,7 +100,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                     TenNhanVien = r.NhanVien!.HoTen,
                     TenVaiTro = r.NhanVien.VaiTro!.TenVaiTro,
                     TrangThai = r.TrangThai,
-                    GhiChu = r.GhiChu // Lấy nhiệm vụ hiển thị lên UI
+                    GhiChu = r.GhiChu 
                 }).ToList();
 
                 result.Add(item);
@@ -138,7 +136,6 @@ namespace CafebookApi.Controllers.App.QuanLy
             var entity = await _context.NhuCauCaLams.FindAsync(id);
             if (entity == null) return NotFound();
 
-            // [MỚI] Tự động quét và xóa toàn bộ nhân viên đã đăng ký vào Ca này để dọn chỗ trống
             var lichs = await _context.LichLamViecs
                 .Include(l => l.NhanVien)
                 .Where(l => l.NgayLam == entity.NgayLam && l.IdCa == entity.IdCa && l.NhanVien.IdVaiTro == entity.IdVaiTro)
@@ -161,14 +158,12 @@ namespace CafebookApi.Controllers.App.QuanLy
 
             var sourceNhuCaus = await _context.NhuCauCaLams.Where(nc => nc.NgayLam.Date == sourceDate.Date).ToListAsync();
 
-            // Gỡ bỏ toàn bộ lịch cũ của các ngày khác
             var existingNhuCaus = await _context.NhuCauCaLams.Where(nc => nc.NgayLam >= startOfWeek && nc.NgayLam <= endOfWeek && nc.NgayLam.Date != sourceDate.Date).ToListAsync();
             var existingLichs = await _context.LichLamViecs.Where(l => l.NgayLam >= startOfWeek && l.NgayLam <= endOfWeek && l.NgayLam.Date != sourceDate.Date).ToListAsync();
 
             _context.LichLamViecs.RemoveRange(existingLichs);
             _context.NhuCauCaLams.RemoveRange(existingNhuCaus);
 
-            // Copy ngày gốc sang 6 ngày còn lại
             for (int i = 0; i < 7; i++)
             {
                 var targetDate = startOfWeek.AddDays(i);
@@ -202,7 +197,6 @@ namespace CafebookApi.Controllers.App.QuanLy
             var caMoi = await _context.CaLamViecs.FindAsync(dto.IdCa);
             if (caMoi == null) return NotFound("Ca làm không tồn tại.");
 
-            // 1. KIỂM TRA TRÙNG GIỜ CA LÀM
             var caHienTais = await _context.LichLamViecs
                 .Include(l => l.CaLamViec)
                 .Where(l => l.IdNhanVien == dto.IdNhanVien && l.NgayLam == dto.NgayLam.Date)
@@ -212,14 +206,12 @@ namespace CafebookApi.Controllers.App.QuanLy
             {
                 if (l.IdCa == dto.IdCa) return Conflict("Nhân viên này đã được phân vào ca này rồi!");
 
-                // Trùng lịch khi (Bắt đầu A < Kết thúc B) VÀ (Kết thúc A > Bắt đầu B)
                 if (caMoi.GioBatDau < l.CaLamViec.GioKetThuc && caMoi.GioKetThuc > l.CaLamViec.GioBatDau)
                 {
                     return Conflict($"Nhân viên này đã có lịch làm ({l.CaLamViec.TenCa}) trùng giờ với ca bạn đang chọn.");
                 }
             }
 
-            // 2. KIỂM TRA VƯỢT QUÁ SỐ LƯỢNG (SoLuongCan)
             var nhuCau = await _context.NhuCauCaLams.FirstOrDefaultAsync(nc => nc.NgayLam == dto.NgayLam.Date && nc.IdCa == dto.IdCa && nc.IdVaiTro == nv.IdVaiTro);
             if (nhuCau != null)
             {
@@ -230,14 +222,13 @@ namespace CafebookApi.Controllers.App.QuanLy
                 }
             }
 
-            // 3. LƯU DỮ LIỆU
             var entity = new LichLamViec
             {
                 IdNhanVien = dto.IdNhanVien,
                 IdCa = dto.IdCa,
                 NgayLam = dto.NgayLam.Date,
                 TrangThai = dto.TrangThai,
-                GhiChu = dto.GhiChu // LƯU NHIỆM VỤ CA LÀM
+                GhiChu = dto.GhiChu 
             };
             _context.LichLamViecs.Add(entity);
             await _context.SaveChangesAsync();

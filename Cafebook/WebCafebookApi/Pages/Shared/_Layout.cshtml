@@ -7,6 +7,7 @@
     var cart = HttpContextAccessor.HttpContext?.Session.Get<List<CartItemDto>>(WebCafebookApi.Services.SessionExtensions.CartKey);
     var cartCount = cart?.Count ?? 0;
     
+    // Biến này xác định khách đã đăng nhập
     bool isKhachHang = User.Identity?.IsAuthenticated == true && User.IsInRole("KhachHang");
 }
 <!DOCTYPE html>
@@ -43,9 +44,19 @@
                         <span class="ms-1 d-none d-md-inline fw-bold">Đặt Bàn</span>
                     </a>
                     
-                    <a asp-page="/HoTroView" class="btn btn-outline-secondary d-flex align-items-center" title="Hỗ Trợ">
-                        <span class="material-symbols-outlined fs-6">support_agent</span>
-                    </a>
+                    @* 1. XỬ LÝ NÚT HỖ TRỢ TRÊN MOBILE *@
+                    @if (isKhachHang)
+                    {
+                        <a asp-page="/Account/HoTroKHView" class="btn btn-outline-secondary d-flex align-items-center" title="Hỗ Trợ">
+                            <span class="material-symbols-outlined fs-6">support_agent</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-page="/HoTroView" class="btn btn-outline-secondary d-flex align-items-center" title="Hỗ Trợ">
+                            <span class="material-symbols-outlined fs-6">support_agent</span>
+                        </a>
+                    }
 
                     @if (isKhachHang)
                     {
@@ -77,7 +88,16 @@
                         
                         <li class="nav-item d-none d-lg-block"><a class="nav-link cf-nav-link" asp-page="/DatBanView">Đặt Bàn</a></li>
                         <li class="nav-item"><a class="nav-link cf-nav-link" asp-page="/LienHeView">Liên Hệ</a></li>
-                        <li class="nav-item d-none d-lg-block"><a class="nav-link cf-nav-link" asp-page="/HoTroView">Hỗ Trợ</a></li>
+                        
+                        @* 2. XỬ LÝ NÚT HỖ TRỢ TRÊN DESKTOP *@
+                        @if (isKhachHang)
+                        {
+                            <li class="nav-item d-none d-lg-block"><a class="nav-link cf-nav-link" asp-page="/Account/HoTroKHView">Hỗ Trợ</a></li>
+                        }
+                        else
+                        {
+                            <li class="nav-item d-none d-lg-block"><a class="nav-link cf-nav-link" asp-page="/HoTroView">Hỗ Trợ</a></li>
+                        }
                     </ul>
 
                     <div class="d-flex align-items-center flex-lg-row flex-column align-items-lg-center align-items-start">

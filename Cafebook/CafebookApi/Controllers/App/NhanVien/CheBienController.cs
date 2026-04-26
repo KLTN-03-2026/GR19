@@ -25,7 +25,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         [HttpGet("load")]
         public async Task<IActionResult> LoadCheBienItems()
         {
-            // NÂNG CẤP: Thêm AsNoTracking() để tối ưu tốc độ tải dữ liệu
             var items = await _context.TrangThaiCheBiens
                 .AsNoTracking()
                 .Where(cb => cb.TrangThai == "Chờ làm" || cb.TrangThai == "Đang làm")
@@ -47,7 +46,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             return Ok(items);
         }
 
-        // NÂNG CẤP: Đổi thành HttpPut để đồng bộ với PutAsJsonAsync trên WPF
         [HttpPut("start/{idTrangThaiCheBien}")]
         public async Task<IActionResult> StartItem(int idTrangThaiCheBien)
         {
@@ -64,7 +62,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             return Conflict("Món đã được làm hoặc đã hoàn thành.");
         }
 
-        // NÂNG CẤP: Đổi thành HttpPut để đồng bộ với PutAsJsonAsync trên WPF
         [HttpPut("complete/{idTrangThaiCheBien}")]
         public async Task<IActionResult> CompleteItem(int idTrangThaiCheBien)
         {
@@ -75,14 +72,61 @@ namespace CafebookApi.Controllers.App.NhanVien
             {
                 item.TrangThai = "Hoàn thành";
                 item.ThoiGianHoanThanh = DateTime.Now;
+                var hoaDon = await _context.HoaDons.FindAsync(item.IdHoaDon);
+                int idNhanVien = hoaDon?.IdNhanVien ?? 1; 
+
+                await TruKhoChoMonAn(item.IdSanPham, item.SoLuong, idNhanVien);
+
                 await _context.SaveChangesAsync();
 
-                // CẬP NHẬT TRẠNG THÁI GIAO HÀNG
                 await UpdateGiaoHangStatusIfCompleted(item.IdHoaDon);
 
                 return Ok(new { message = "Đã hoàn thành món." });
             }
             return Conflict("Món này chưa được bắt đầu làm.");
+        }
+
+        private async Task TruKhoChoMonAn(int idSanPham, int soLuong, int idNhanVien)
+        {
+            var dinhLuongList = await _context.DinhLuongs
+                .Include(d => d.NguyenLieu)
+                .Include(d => d.DonViSuDung)
+                .Where(d => d.IdSanPham == idSanPham)
+                .ToListAsync();
+
+            foreach (var dl in dinhLuongList)
+            {
+                if (dl.NguyenLieu != null && dl.DonViSuDung != null)
+                {
+                    var nguyenLieu = dl.NguyenLieu;
+                    decimal luongTru1SP = 0;
+
+                    if (dl.DonViSuDung.LaDonViCoBan)
+                    {
+                        luongTru1SP = dl.SoLuongSuDung;
+                    }
+                    else
+                    {
+                        decimal heSoQuyDoi = dl.DonViSuDung.GiaTriQuyDoi > 0 ? dl.DonViSuDung.GiaTriQuyDoi : 1m;
+                        luongTru1SP = dl.SoLuongSuDung / heSoQuyDoi;
+                    }
+
+                    decimal luongCanTruTong = luongTru1SP * soLuong;
+                    nguyenLieu.TonKho -= luongCanTruTong;
+
+                    if (nguyenLieu.TonKho <= nguyenLieu.TonKhoToiThieu)
+                    {
+                        _context.ThongBaos.Add(new ThongBao
+                        {
+                            IdNhanVienTao = idNhanVien,
+                            NoiDung = $"Cảnh báo: Tồn kho '{nguyenLieu.TenNguyenLieu}' sắp hết. Hiện chỉ còn {nguyenLieu.TonKho:N2} {nguyenLieu.DonViTinh}.",
+                            ThoiGianTao = DateTime.Now,
+                            LoaiThongBao = "CanhBaoKho",
+                            IdLienQuan = nguyenLieu.IdNguyenLieu
+                        });
+                    }
+                }
+            }
         }
 
         private async Task UpdateGiaoHangStatusIfCompleted(int idHoaDon)
@@ -114,7 +158,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         [HttpGet("congthuc/{idSanPham}")]
         public async Task<IActionResult> GetCongThuc(int idSanPham)
         {
-            // NÂNG CẤP: Thêm AsNoTracking() 
             var items = await _context.DinhLuongs
                 .AsNoTracking()
                 .Where(d => d.IdSanPham == idSanPham)
@@ -131,9 +174,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             return Ok(items);
         }
 
-        // =========================================================================
-        // API ĐỘC LẬP: Lấy lịch sử chế biến trong ngày
-        // =========================================================================
         [HttpGet("history")]
         public async Task<IActionResult> GetHistoryToday()
         {
@@ -157,7 +197,6 @@ namespace CafebookApi.Controllers.App.NhanVien
                         TrangThai = cb.TrangThai,
                         ThoiGianGoi = cb.ThoiGianGoi,
                         NhomIn = cb.NhomIn ?? "Bếp"
-                        // Nếu DTO của bạn có ThoiGianHoanThanh thì map thêm vào đây
                     })
                     .ToListAsync();
 

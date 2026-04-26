@@ -27,6 +27,7 @@
 	<ItemGroup>
 		<PackageReference Include="EPPlus" Version="8.5.1" />
 		<PackageReference Include="LiveCharts.Wpf" Version="0.9.7" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3912.50" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="System.Net.Http.Json" Version="9.0.10" />
 	</ItemGroup>

@@ -29,6 +29,7 @@ namespace CafebookModel.Model.ModelWeb.KhachHang
         public int SoSao { get; set; }
         public DateTime NgayTao { get; set; }
         public string? BinhLuan { get; set; }
+        public string? HinhAnhDanhGiaUrl { get; set; }
         public PhanHoiChiTietDto? PhanHoi { get; set; }
     }
 

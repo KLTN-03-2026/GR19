@@ -1,0 +1,168 @@
+﻿@page "/tai-khoan/lich-su-don-hang/"
+@model WebCafebookApi.Pages.Account.LichSuDonHangViewModel
+@{
+    ViewData["Title"] = "Lịch sử mua hàng";
+    Layout = "_Layout_Account";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/LichSuDonHang.css" asp-append-version="true" />
+}
+
+<div class="container py-4">
+    
+    <div class="mb-4">
+        <form method="get" class="d-flex gap-2 w-100">
+            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><span class="material-symbols-outlined fs-5">search</span></span>
+                <input type="text" name="SearchQuery" class="form-control border-start-0 ps-0" placeholder="Tìm tên món hoặc mã hóa đơn (VD: #30)..." value="@Model.SearchQuery" />
+            </div>
+            <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm d-none d-sm-block">Tìm kiếm</button>
+        </form>
+    </div>
+
+    <div class="tab-wrapper mb-4">
+        <ul class="nav nav-tabs lsh-tabs flex-nowrap m-0 border-0">
+            @foreach (var tab in Model.StatusTabs)
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(Model.StatusFilter == tab ? "active" : "")" href="?StatusFilter=@Uri.EscapeDataString(tab)&SearchQuery=@Uri.EscapeDataString(Model.SearchQuery ?? "")">@tab</a>
+                </li>
+            }
+        </ul>
+    </div>
+
+    @if (!Model.FilteredOrders.Any())
+    {
+        <div class="text-center py-5 bg-white rounded-3 shadow-sm border">
+            <span class="material-symbols-outlined text-muted opacity-50" style="font-size: 4rem;">search_off</span>
+            <p class="text-muted mt-3 fw-medium">Không tìm thấy đơn hàng nào phù hợp.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var order in Model.FilteredOrders)
+        {
+            <div class="card lsh-card border-0 shadow-sm mb-4 rounded-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom px-3 px-md-4 py-3">
+                    <span class="fw-bold text-dark">Mã Hóa Đơn: @order.MaDonHang</span>
+                    <span class="badge @(order.TrangThaiThanhToan == "Đã hủy" ? "bg-danger" : "bg-warning text-dark") px-3 py-2 rounded-pill">
+                        @(order.TrangThaiThanhToan == "Đã hủy" ? "ĐÃ HỦY" : order.TrangThaiGiaoHang.ToUpper())
+                    </span>
+                </div>
+                
+                <div class="card-body px-3 px-md-4 py-3 d-flex flex-column flex-sm-row align-items-start align-items-sm-center">
+                    <img src="@order.HinhAnhUrl" class="rounded-3 border me-0 me-sm-4 mb-3 mb-sm-0" style="width: 80px; height: 80px; object-fit: cover;" onerror="this.onerror=null;this.src='https://placehold.co/80x80?text=Sản+Phẩm';" />
+                    <div class="flex-grow-1 w-100">
+                        <h6 class="mb-1 fw-bold text-dark fs-5 text-truncate" style="max-width: 90%;">@order.TenSanPham</h6>
+                        @if (order.SoLuongSanPhamKhac > 0)
+                        {
+                            <small class="text-muted d-block mb-2">và @order.SoLuongSanPhamKhac sản phẩm khác</small>
+                        }
+                        <div class="text-danger fw-bold fs-5 mt-2 mt-sm-0">@order.ThanhTien.ToString("N0") đ</div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light px-3 px-md-4 py-3">
+                    <div class="d-flex flex-wrap gap-2 justify-content-end action-buttons-group">
+                        @if (order.TrangThaiThanhToan == "Chờ thanh toán")
+                        {
+                            if (order.IsStoreOpen)
+                            {
+                                string expireTime = order.ThoiGianTao.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss");
+                                <button onclick="repayOrder(@order.IdHoaDon)" class="btn btn-warning text-dark fw-bold d-flex align-items-center justify-content-center">
+                                    Thanh toán lại
+                                    <span class="badge bg-danger ms-2 countdown-timer" data-expire="@expireTime">...</span>
+                                </button>
+                            }
+                            else
+                            {
+                                <button disabled class="btn btn-secondary fw-bold" title="Cửa hàng đang đóng cửa">Thanh toán lại</button>
+                            }
+                        }
+                        
+                        @if (order.TrangThaiGiaoHang == "Chờ xác nhận" || (order.TrangThaiThanhToan == "Chờ thanh toán" && order.TrangThaiGiaoHang != "Chờ lấy hàng"))
+                        {
+                            <button onclick="cancelOrder(@order.IdHoaDon, '@order.MaDonHang')" class="btn btn-outline-danger fw-bold">Hủy đơn</button>
+                        }
+
+                        @if (order.TrangThaiGiaoHang == "Hoàn thành")
+                        {
+                            <form method="post" class="m-0 flex-grow-1 flex-sm-grow-0" asp-page-handler="MuaLai">
+                                <input type="hidden" name="idHoaDon" value="@order.IdHoaDon" />
+                                <button type="submit" class="btn btn-outline-success fw-bold w-100">Mua lại</button>
+                            </form>
+                        }
+                        
+                        <a asp-page="./LichSuDonHangDetailView" asp-route-id="@Model.EncodeId(order.IdHoaDon)" class="btn btn-outline-secondary fw-bold">Chi tiết</a>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const _api = "@Model.ApiBaseUrl";
+        const _token = "@Model.JwtToken";
+        const _returnUrl = window.location.origin + "/ket-qua-thanh-toan/VNPay-Process";
+
+        // LOGIC ĐẾM NGƯỢC THỜI GIAN TRỰC TIẾP TRÊN NÚT
+        function startCountdowns() {
+        const timers = document.querySelectorAll('.countdown-timer');
+        if (timers.length === 0) return;
+
+        setInterval(() => {
+        const now = new Date().getTime();
+        timers.forEach(timer => {
+        const expireStr = timer.getAttribute('data-expire');
+        const expireDate = new Date(expireStr).getTime();
+        const distance = expireDate - now;
+
+        if (distance < 0) {
+        timer.innerHTML = "Đã hủy";
+        timer.classList.replace('bg-danger', 'bg-secondary');
+        const btn = timer.closest('button');
+        if(btn && !btn.disabled) {
+        btn.disabled = true;
+        setTimeout(() => location.reload(), 2000); // Tự tải lại trang sau khi hết hạn
+        }
+        } else {
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        timer.innerHTML = `${minutes}p ${seconds}s`;
+        }
+        });
+        }, 1000);
+        }
+
+        document.addEventListener("DOMContentLoaded", startCountdowns);
+
+        async function repayOrder(id) {
+        Swal.fire({ title: 'Đang kết nối VNPay...', didOpen: () => Swal.showLoading() });
+        const res = await fetch(`${_api}/repay/${id}?returnUrl=${encodeURIComponent(_returnUrl)}`, {
+        method: 'POST', headers: { 'Authorization': 'Bearer ' + _token }
+        });
+        const data = await res.json();
+        if(res.ok) window.location.href = data.paymentUrl;
+        else Swal.fire('Lỗi', data.message, 'error');
+        }
+
+        async function cancelOrder(id, ma) {
+        const { value: reason } = await Swal.fire({
+        title: 'Hủy đơn ' + ma, input: 'text', inputPlaceholder: 'Lý do hủy...', showCancelButton: true
+        });
+        if (reason) {
+        const res = await fetch(`${_api}/cancel/${id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token },
+        body: JSON.stringify({ lyDoHuy: reason })
+        });
+        if (res.ok) location.reload();
+        else { const err = await res.json(); Swal.fire('Lỗi', err.message, 'error'); }
+        }
+        }
+    </script>
+}

@@ -42,7 +42,7 @@ namespace CafebookModel.Model.ModelEntities
         public string? DiaChiGiaoHang { get; set; }
         [StringLength(20)]
         public string? SoDienThoaiGiaoHang { get; set; }
-
+        public string? AnhGiaoHang { get; set; }
         public int? IdNguoiGiaoHang { get; set; } // Sẽ lưu IdNhanVien của Shipper
 
         [ForeignKey("IdBan")]

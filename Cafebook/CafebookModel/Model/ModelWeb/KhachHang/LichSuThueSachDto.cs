@@ -39,5 +39,6 @@ namespace CafebookModel.Model.ModelWeb.KhachHang
         public int TotalCount { get; set; }
         public int TotalPages { get; set; }
         public int CurrentPage { get; set; }
+        public decimal PhatGiamDoMoi1Percent { get; set; }
     }
 }

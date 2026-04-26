@@ -8,5 +8,5 @@ TO DISK = N'E:\Tai Lieu Hoc Tap\N19 KLTN 032026\Cafebook\DatabaseCafebook\Cafebo
 WITH FORMAT,
      MEDIANAME = 'SQLServerBackups',
      NAME = 'Full Backup of CafebookDB',
-     STATS = 1; -- Hiển thị tiến trình mỗi 10%
+     STATS = 20; -- Hiển thị tiến trình mỗi 10%
 GO

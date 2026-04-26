@@ -1,0 +1,208 @@
+﻿/* ==========================================================
+   MODULE: TỔNG QUAN NHÂN VIÊN (Tiền tố: tqnv-)
+========================================================== */
+
+.tqnv-container {
+    padding: 10px 0;
+}
+
+.tqnv-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+    height: 100%;
+    border: 1px solid #E0E0E0;
+    transition: transform 0.2s ease;
+}
+
+/* -- Profile Card -- */
+.tqnv-profile-header {
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed #E0E0E0;
+    margin-bottom: 20px;
+}
+
+.tqnv-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #FFF8E1;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+}
+
+.tqnv-profile-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #3E2723;
+    margin-bottom: 10px;
+}
+
+.tqnv-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0 5px;
+}
+
+.tqnv-role-badge {
+    background-color: #E3F2FD;
+    color: #1976D2;
+}
+
+.tqnv-status-active {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+}
+
+.tqnv-status-inactive {
+    background-color: #FFEBEE;
+    color: #D32F2F;
+}
+
+.tqnv-profile-details {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.tqnv-detail-item {
+    display: flex;
+    align-items: center;
+    color: #616161;
+    font-size: 0.95rem;
+}
+
+    .tqnv-detail-item .tqnv-icon {
+        margin-right: 15px;
+        color: #9E9E9E;
+        font-size: 1.3rem;
+    }
+
+.tqnv-btn-outline {
+    border: 2px solid #6F4E37;
+    color: #6F4E37;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 0;
+    transition: all 0.3s ease;
+}
+
+    .tqnv-btn-outline:hover {
+        background-color: #6F4E37;
+        color: #fff;
+    }
+
+/* -- Notification Card -- */
+.tqnv-card-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #EEEEEE;
+}
+
+.tqnv-card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #4E342E;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.tqnv-notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+    /* Tùy chỉnh thanh cuộn */
+    .tqnv-notification-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .tqnv-notification-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .tqnv-notification-list::-webkit-scrollbar-thumb {
+        background: #BCAAA4;
+        border-radius: 4px;
+    }
+
+.tqnv-noti-item {
+    display: flex;
+    padding: 15px;
+    border-radius: 10px;
+    background-color: #FAFAFA;
+    border: 1px solid #EEEEEE;
+    transition: background-color 0.2s ease;
+}
+
+    .tqnv-noti-item:hover {
+        background-color: #F5F5F5;
+    }
+
+    .tqnv-noti-item.unread {
+        background-color: #FFF3E0; /* Màu cam nhạt báo hiệu chưa đọc */
+        border-left: 4px solid #E65100;
+    }
+
+.tqnv-noti-icon {
+    margin-right: 15px;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2px;
+}
+
+.tqnv-noti-item.unread .tqnv-noti-icon {
+    color: #E65100;
+}
+
+.tqnv-noti-item.read .tqnv-noti-icon {
+    color: #9E9E9E;
+}
+
+.tqnv-noti-content {
+    flex: 1;
+}
+
+.tqnv-noti-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #212121;
+    margin-bottom: 5px;
+}
+
+.tqnv-noti-desc {
+    font-size: 0.9rem;
+    color: #616161;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.tqnv-noti-time {
+    font-size: 0.8rem;
+    color: #9E9E9E;
+    font-weight: 500;
+}
+
+.tqnv-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9E9E9E;
+}
+
+.tqnv-empty-icon {
+    font-size: 3rem;
+    color: #E0E0E0;
+    margin-bottom: 10px;
+}

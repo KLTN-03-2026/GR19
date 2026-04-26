@@ -413,8 +413,18 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void BtnNavKhuyenMai_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("QL_KHUYEN_MAI"))
+            if (AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI"))
                 this.NavigationService?.Navigate(new QuanLyKhuyenMaiView());
+            else
+                MessageBox.Show("Bạn không có quyền truy cập trang Khuyến mãi!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        private void BtnNavDeXuat_Click(object sender, RoutedEventArgs e)
+        {
+            if (AuthService.CoQuyen("FULL_QL", "QL_DE_XUAT"))
+                this.NavigationService?.Navigate(new QuanLyDeXuatView());
+            else
+                MessageBox.Show("Bạn không có quyền truy cập trang Đề xuất!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 }

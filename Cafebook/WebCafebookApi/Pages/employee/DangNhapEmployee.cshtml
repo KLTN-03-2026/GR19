@@ -1,8 +1,10 @@
-﻿@page "dang-nhap-nhan-vien"
-@model WebCafebookApi.Pages.employee.DangNhapEmployeeModel
+﻿@page "/nhan-vien/dang-nhap-nhan-vien"
+@model WebCafebookApi.Pages.Employee.DangNhapEmployeeModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @{
     ViewData["Title"] = "Đăng nhập Hệ thống";
-    Layout = null; 
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -24,7 +26,7 @@
         <div class="emplogin-container">
 
             <div class="emplogin-brand">
-                <img src="/images/logo.png" alt="Cafebook Staff" class="emplogin-logo" onerror="this.src='/images/default-avatar.png';">
+                <img src="/images/logo.png" alt="Cafebook Staff" class="emplogin-logo" onerror="this.onerror=null; this.src='/anhmacdinh/avatars/default-avatar.png';">
                 <div class="emplogin-brand-text">
                     <h1 class="emplogin-brand-title">Workspace</h1>
                     <p class="emplogin-brand-slogan">Hệ thống Nhân viên Cafebook</p>
@@ -71,7 +73,6 @@
 
     <script>
         $(document).ready(function () {
-        // Quy tắc 7: Xử lý hiển thị SweetAlert2 thay cho Alert mặc định
         var errorMsg = '@Html.Raw(Model.ErrorMessage?.Replace("'", "\\'"))';
         if (errorMsg && errorMsg.trim() !== '') {
         Swal.fire({
@@ -83,7 +84,6 @@
         });
         }
 
-        // Chống Double-Tap / Spam Click
         $('#employeeLoginForm').on('submit', function (e) {
         if ($(this).valid()) {
         var btn = $('#btnLogin');

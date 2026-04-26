@@ -13,10 +13,10 @@ namespace AppCafebookApi.View.Common
 {
     public partial class PhieuLuongPreviewWindow : Window
     {
-        private static readonly HttpClient httpClient;
+        //private static readonly HttpClient httpClient;
         private int _idPhieuLuong;
 
-        static PhieuLuongPreviewWindow() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        //static PhieuLuongPreviewWindow() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
 
         public PhieuLuongPreviewWindow(int idPhieuLuong)
         {
@@ -26,7 +26,7 @@ namespace AppCafebookApi.View.Common
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             await LoadChiTietAsync();
         }
 
@@ -35,7 +35,7 @@ namespace AppCafebookApi.View.Common
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var detail = await httpClient.GetFromJsonAsync<PhatLuongDetailDto>($"api/app/phatluong/chitiet/{_idPhieuLuong}");
+                var detail = await ApiClient.Instance.GetFromJsonAsync<PhatLuongDetailDto>($"api/app/phatluong/chitiet/{_idPhieuLuong}");
                 if (detail != null)
                 {
                     // Gán thông tin Cấu hình quán
@@ -84,7 +84,7 @@ namespace AppCafebookApi.View.Common
                 if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                 try
                 {
-                    HttpResponseMessage res = await httpClient.PutAsJsonAsync($"api/app/phatluong/xacnhan/{_idPhieuLuong}", new { });
+                    HttpResponseMessage res = await ApiClient.Instance.PutAsJsonAsync($"api/app/phatluong/xacnhan/{_idPhieuLuong}", new { });
                     if (res.IsSuccessStatusCode)
                     {
                         MessageBox.Show("Xác nhận thành công!");

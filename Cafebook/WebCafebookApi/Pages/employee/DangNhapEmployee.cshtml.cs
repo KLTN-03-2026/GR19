@@ -1,14 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using CafebookModel.Model.Shared; // Tuân thủ Quy tắc 1 & 5: Dùng đúng DTO Shared
+using CafebookModel.Model.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
 
-namespace WebCafebookApi.Pages.employee
+namespace WebCafebookApi.Pages.Employee
 {
+    [IgnoreAntiforgeryToken]
     public class DangNhapEmployeeModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -37,18 +38,15 @@ namespace WebCafebookApi.Pages.employee
 
         public async Task OnGetAsync(string? returnUrl = null)
         {
-            // Reset Authentication và Session
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             HttpContext.Session.Remove("JwtToken");
             HttpContext.Session.Remove("AvatarUrl");
 
-            ReturnUrl = returnUrl ?? Url.Content("~/Employee/Dashboard");
+            ReturnUrl = returnUrl ?? Url.Content("~/Employee/TongQuanView");
         }
 
         public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
         {
-            ReturnUrl = returnUrl ?? Url.Content("~/Employee/Dashboard");
-
             if (!ModelState.IsValid)
             {
                 return Page();
@@ -56,17 +54,13 @@ namespace WebCafebookApi.Pages.employee
 
             try
             {
-                // Quy tắc 2: Dùng IHttpClientFactory cấu hình sẵn
                 var httpClient = _httpClientFactory.CreateClient("ApiClient");
-
-                // Map dữ liệu từ View Input sang API DTO
                 var apiRequest = new LoginRequest
                 {
                     Username = Input.TenDangNhap,
                     Password = Input.MatKhau
                 };
 
-                // Gọi Endpoint API dùng chung
                 var response = await httpClient.PostAsJsonAsync("api/shared/Auth/login-nhan-vien", apiRequest);
 
                 if (response.IsSuccessStatusCode)
@@ -75,7 +69,6 @@ namespace WebCafebookApi.Pages.employee
 
                     if (apiResponse != null && !string.IsNullOrEmpty(apiResponse.Token))
                     {
-                        // Quy tắc 3: Cấu hình Claims an toàn
                         var claims = new List<Claim>
                         {
                             new Claim(ClaimTypes.NameIdentifier, apiResponse.IdNhanVien.ToString()),
@@ -83,7 +76,6 @@ namespace WebCafebookApi.Pages.employee
                             new Claim(ClaimTypes.Role, apiResponse.TenVaiTro)
                         };
 
-                        // Add danh sách quyền để kiểm tra phân quyền (Authorization)
                         if (apiResponse.Quyen != null)
                         {
                             foreach (var quyen in apiResponse.Quyen)
@@ -101,16 +93,27 @@ namespace WebCafebookApi.Pages.employee
 
                         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
 
-                        // Quy tắc 6: Lưu JWT để đính kèm vào HttpClient các request sau
-                        HttpContext.Session.SetString("JwtToken", apiResponse.Token);
-                        HttpContext.Session.SetString("AvatarUrl", apiResponse.AnhDaiDien ?? "");
+                        string avatar = apiResponse.AnhDaiDien ?? "";
+                        if (!string.IsNullOrEmpty(avatar) && !avatar.StartsWith("http"))
+                        {
+                            var apiBaseUrl = httpClient.BaseAddress?.ToString().TrimEnd('/');
+                            if (!avatar.StartsWith("/")) avatar = "/" + avatar;
+                            avatar = $"{apiBaseUrl}{avatar}";
+                        }
 
-                        return LocalRedirect(ReturnUrl);
+                        HttpContext.Session.SetString("JwtToken", apiResponse.Token);
+                        HttpContext.Session.SetString("AvatarUrl", avatar);
+
+                        if (string.IsNullOrEmpty(returnUrl) || returnUrl == "/")
+                        {
+                            return RedirectToPage("/Employee/TongQuanView");
+                        }
+
+                        return LocalRedirect(returnUrl);
                     }
                 }
                 else
                 {
-                    // Đọc nội dung lỗi API trả về (401 Unauthorized, 403 Forbidden)
                     var errorContent = await response.Content.ReadAsStringAsync();
                     try
                     {
@@ -121,10 +124,7 @@ namespace WebCafebookApi.Pages.employee
                             return Page();
                         }
                     }
-                    catch
-                    {
-                        // Bỏ qua lỗi parse Json
-                    }
+                    catch { }
                 }
 
                 ErrorMessage = "Tài khoản hoặc mật khẩu không chính xác.";
@@ -135,6 +135,15 @@ namespace WebCafebookApi.Pages.employee
                 ErrorMessage = "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.";
                 return Page();
             }
+        }
+
+        public async Task<IActionResult> OnPostLogout()
+        {
+            HttpContext.Session.Clear();
+
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            return RedirectToPage("/Employee/DangNhapEmployee");
         }
     }
 }

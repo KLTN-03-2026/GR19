@@ -1,0 +1,68 @@
+﻿/* ==================================================
+   GIAO DIỆN SHIPPER GIAO HÀNG (Prefix: .sgh-)
+   ================================================== */
+.sgh-container {
+    padding: 1rem;
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* Tab Navigation */
+.sgh-nav-tabs {
+    border-bottom: 2px solid #EEEEEE;
+    gap: 15px;
+}
+
+    .sgh-nav-tabs .nav-link {
+        border: none;
+        color: #9E9E9E;
+        padding: 12px 20px;
+        background: transparent;
+        transition: all 0.3s;
+        border-bottom: 3px solid transparent;
+    }
+
+        .sgh-nav-tabs .nav-link:hover {
+            color: #6F4E37;
+            background: #FFF8E1;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .sgh-nav-tabs .nav-link.active {
+            color: #6F4E37;
+            border-bottom: 3px solid #6F4E37;
+            background: transparent;
+        }
+
+/* Card Đơn hàng */
+.sgh-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #E0E0E0 !important;
+    background-color: #FFFFFF;
+}
+
+    .sgh-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+        border-color: #D27D2D !important;
+    }
+
+    .sgh-card .btn {
+        transition: all 0.2s ease;
+    }
+
+        .sgh-card .btn:active {
+            transform: scale(0.95);
+        }
+
+/* Animation mượt mà khi load trang */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

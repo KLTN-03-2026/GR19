@@ -1,5 +1,6 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelWeb.KhachHang;
+using CafebookModel.Model.ModelEntities; 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -38,10 +39,18 @@ namespace CafebookApi.Controllers.Web.KhachHang
             if (userId == 0) return Unauthorized(new { Message = "Phiên đăng nhập không hợp lệ." });
 
             int pageSize = 5;
+            decimal phatGiamDoMoi = 0;
+            var settingPhat = await _context.Set<CaiDat>().AsNoTracking()
+                .FirstOrDefaultAsync(c => c.TenCaiDat.Trim() == "Sach_PhatGiamDoMoi1Percent");
+
+            if (settingPhat != null && decimal.TryParse(settingPhat.GiaTri.Trim(), out decimal parsedVal))
+            {
+                phatGiamDoMoi = parsedVal;
+            }
 
             var query = _context.PhieuThueSachs
-                .Include(p => p.ChiTietPhieuThues).ThenInclude(ct => ct.Sach)          // Lấy tên Sách
-                .Include(p => p.PhieuTraSachs).ThenInclude(pt => pt.ChiTietPhieuTras)  // Lấy biên bản Trả
+                .Include(p => p.ChiTietPhieuThues).ThenInclude(ct => ct.Sach)          
+                .Include(p => p.PhieuTraSachs).ThenInclude(pt => pt.ChiTietPhieuTras) 
                 .Where(p => p.IdKhachHang == userId)
                 .AsQueryable();
 
@@ -163,7 +172,8 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 Items = items,
                 TotalCount = totalCount,
                 TotalPages = totalPages,
-                CurrentPage = page
+                CurrentPage = page,
+                PhatGiamDoMoi1Percent = phatGiamDoMoi
             });
         }
     }

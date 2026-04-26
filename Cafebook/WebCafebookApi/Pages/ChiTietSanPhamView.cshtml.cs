@@ -1,5 +1,4 @@
-using CafebookModel.Model.ModelWeb; // Nơi chứa CartItemDto
-using CafebookModel.Model.ModelWeb.KhachHang; // TRỎ ĐÚNG THƯ MỤC
+using CafebookModel.Model.ModelWeb.KhachHang; 
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -8,7 +7,6 @@ using System.Linq;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using WebCafebookApi.Services;
-// Alias để tránh lỗi "ambiguous reference" của SessionExtensions
 using MySessionExt = WebCafebookApi.Services.SessionExtensions;
 
 namespace WebCafebookApi.Pages

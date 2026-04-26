@@ -1,0 +1,353 @@
+﻿@page "/nhan-vien/dang-ky-lich"
+@model WebCafebookApi.Pages.Employee.DangKyLichViewModel
+@{
+    ViewData["Title"] = "Đăng Ký Lịch Làm Việc";
+    Layout = "_Layout_Employee";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/DangKyLich.css" asp-append-version="true" />
+}
+
+<div class="dkl-container">
+    <div class="card shadow-sm border-0 rounded-4">
+        
+        <div class="card-header bg-white p-4 border-0 pb-0">
+            <div class="row align-items-center mb-3">
+                <div class="col">
+                    <h3 class="fw-bold mb-0 text-dark">Quản Lý Ca Làm Việc</h3>
+                    <p class="text-muted small mb-0">Xem nhu cầu và theo dõi ca đã đăng ký</p>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs dkl-nav-tabs" id="shiftTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-bold" id="available-tab" data-bs-toggle="tab" data-bs-target="#available-shifts" type="button" role="tab">
+                        <span class="material-symbols-outlined align-middle fs-5 me-1">event_available</span> Ca Cần Người
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold" id="my-tab" data-bs-toggle="tab" data-bs-target="#my-shifts" type="button" role="tab">
+                        <span class="material-symbols-outlined align-middle fs-5 me-1">fact_check</span> Ca Của Tôi
+                    </button>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="tab-content">
+                
+                <div class="tab-pane fade show active" id="available-shifts" role="tabpanel">
+                    
+                    <div class="d-flex justify-content-between align-items-center bg-light p-3 border-bottom">
+                        <div class="btn-group shadow-sm" role="group">
+                            <input type="radio" class="btn-check" name="vbtn-radio" id="viewList" autocomplete="off" checked>
+                            <label class="btn btn-outline-secondary fw-bold" for="viewList"><span class="material-symbols-outlined align-middle">table_rows</span> Danh sách (Ngày)</label>
+
+                            <input type="radio" class="btn-check" name="vbtn-radio" id="viewKanban" autocomplete="off">
+                            <label class="btn btn-outline-secondary fw-bold" for="viewKanban"><span class="material-symbols-outlined align-middle">view_kanban</span> Kanban (Tuần)</label>
+                        </div>
+                        
+                        <div class="d-flex gap-2 align-items-center">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold" id="btnPrev">&lt; Trở lại</button>
+                            <input type="date" id="date-filter" class="form-control form-control-sm rounded-pill px-3 shadow-none border-secondary" style="width: 140px;" />
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold" id="btnNext">Tiếp &gt;</button>
+                        </div>
+                    </div>
+
+                    <div id="mode-list" class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-white">
+                                <tr class="text-muted small text-uppercase">
+                                    <th class="ps-4">Ngày Làm</th>
+                                    <th>Ca Làm</th>
+                                    <th>Số Lượng</th>
+                                    <th>Trạng Thái</th>
+                                    <th class="text-center pe-4">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="list-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="mode-kanban" class="p-3 bg-light d-none">
+                        <div class="dkl-weekly-board" id="kanban-board"></div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="my-shifts" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr class="text-muted small text-uppercase">
+                                    <th class="ps-4">Ngày Làm</th>
+                                    <th>Ca Làm</th>
+                                    <th>Ghi chú của tôi</th>
+                                    <th>Kết Quả</th>
+                                    <th class="text-center pe-4">Hủy Đơn</th>
+                                </tr>
+                            </thead>
+                            <tbody id="my-list-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const _apiBaseUrl = "@Model.ApiBaseUrl";
+        const _jwtToken = "@Model.JwtToken";
+        
+        let _config = null;
+        let _currentData = [];
+        let _currentMode = 'list'; // 'list' | 'kanban'
+
+        const _daysMap = {
+            2: "Thứ Hai", 3: "Thứ Ba", 4: "Thứ Tư", 5: "Thứ Năm",
+            6: "Thứ Sáu", 7: "Thứ Bảy", 8: "Chủ Nhật"
+        };
+
+        function getMonday(d) {
+            d = new Date(d);
+            var day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        async function init() {
+            try {
+                const res = await fetch(`${_apiBaseUrl}/config`, { headers: { 'Authorization': `Bearer ${_jwtToken}` } });
+                if(res.ok) _config = await res.json();
+            } catch(e) { console.error("Lỗi lấy config", e); }
+
+            const today = new Date().toISOString().split('T')[0];
+            $("#date-filter").val(today);
+            loadData(today);
+        }
+
+        async function loadData(selectedDate) {
+            const monday = getMonday(selectedDate);
+            const mondayStr = monday.toISOString().split('T')[0];
+
+            $("#list-body, #my-list-body").html('<tr><td colspan="5" class="text-center p-4"><div class="spinner-border text-primary"></div></td></tr>');
+            $("#kanban-board").html('<div class="text-center p-4 w-100"><div class="spinner-border text-primary"></div></div>');
+
+            try {
+                const response = await fetch(`${_apiBaseUrl}/weekly-shifts?monday=${mondayStr}`, { headers: { 'Authorization': `Bearer ${_jwtToken}` }, cache: 'no-store' });
+                if (!response.ok) throw new Error("Lỗi tải dữ liệu");
+                _currentData = await response.json();
+                
+                renderUI();
+            } catch (error) {
+                Swal.fire('Lỗi', 'Không thể tải dữ liệu.', 'error');
+            }
+        }
+
+        function renderUI() {
+            const selDate = $("#date-filter").val();
+            
+            // Render Ca Của Tôi (Tất cả trong tuần)
+            renderMyShifts(_currentData.filter(x => x.trangThaiCuaToi !== 'Chưa đăng ký'));
+
+            // Lọc & Render Ca Cần Người
+            if (_currentMode === 'list') {
+                const dayData = _currentData.filter(x => x.trangThaiCuaToi === 'Chưa đăng ký' && x.ngayLam.startsWith(selDate));
+                renderList(dayData);
+            } else {
+                const weekData = _currentData.filter(x => x.trangThaiCuaToi === 'Chưa đăng ký');
+                renderKanban(weekData, getMonday(selDate));
+            }
+        }
+
+        function renderList(data) {
+            const $body = $("#list-body").empty();
+            if(data.length === 0) return $body.append('<tr><td colspan="5" class="text-center p-5 text-muted">Không có ca trống trong ngày này.</td></tr>');
+
+            data.forEach(s => {
+                const dateFormatted = new Date(s.ngayLam).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                let statusBadge = '', actionBtn = '';
+
+                if (s.isQuaHan) {
+                    statusBadge = '<span class="badge bg-secondary">Đã qua giờ</span>';
+                    actionBtn = '<button type="button" class="btn btn-light btn-sm rounded-pill px-3" disabled>Khóa</button>';
+                } else if (s.soLuongDaDangKy >= s.soLuongCan) {
+                    statusBadge = '<span class="badge bg-danger-subtle text-danger border">Đã đủ người</span>';
+                    actionBtn = '<button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" disabled>Đã chốt</button>';
+                } else {
+                    statusBadge = `<span class="badge bg-light text-dark border">Cần ${s.soLuongCan - s.soLuongDaDangKy} người</span>`;
+                    actionBtn = `<button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold" onclick="registerShift(${s.idNhuCau}, '${s.tenCa}')">Đăng ký</button>`;
+                }
+
+                $body.append(`
+                    <tr class="${s.isQuaHan ? 'opacity-50' : ''}">
+                        <td class="ps-4 fw-bold text-dark">${dateFormatted}</td>
+                        <td>
+                            <div class="fw-bold text-primary">${s.tenCa}</div>
+                            <div class="small text-muted">${s.gioBatDau.substring(0,5)} - ${s.gioKetThuc.substring(0,5)}</div>
+                            ${s.ghiChu ? `<div class="small text-info fst-italic mt-1">${s.ghiChu}</div>` : ''}
+                        </td>
+                        <td><span class="text-muted">${s.soLuongDaDangKy}/${s.soLuongCan}</span></td>
+                        <td>${statusBadge}</td>
+                        <td class="text-center pe-4">${actionBtn}</td>
+                    </tr>
+                `);
+            });
+        }
+
+        function renderKanban(data, monday) {
+            const $board = $("#kanban-board").empty();
+            if(!_config) return;
+
+            // Chỉ vẽ các cột tương ứng với cấu hình mở cửa (2-8)
+            _config.thuMoCua.forEach(dayNum => {
+                let offset = dayNum === 8 ? 6 : dayNum - 2; // Chủ nhật là index 6
+                let colDate = new Date(monday);
+                colDate.setDate(monday.getDate() + offset);
+                let dateStr = colDate.toISOString().split('T')[0];
+                
+                let shiftsForDay = data.filter(d => d.ngayLam.startsWith(dateStr));
+                let isToday = (dateStr === new Date().toISOString().split('T')[0]);
+
+                let $col = $(`
+                    <div class="dkl-column ${isToday ? 'today-col' : ''}">
+                        <div class="dkl-col-header">
+                            <div class="fw-bold text-uppercase">${_daysMap[dayNum]}</div>
+                            <div class="small text-muted">${colDate.toLocaleDateString('vi-VN')}</div>
+                        </div>
+                        <div class="dkl-col-body"></div>
+                    </div>
+                `);
+                
+                let $body = $col.find(".dkl-col-body");
+
+                if(shiftsForDay.length === 0) {
+                    $body.append('<div class="text-center text-muted small mt-4 fst-italic">Trống</div>');
+                } else {
+                    shiftsForDay.forEach(s => {
+                        let isFull = s.soLuongDaDangKy >= s.soLuongCan;
+                        let cClass = s.isQuaHan ? "card-expired" : (isFull ? "card-full" : "card-available");
+                        let sBadge = s.isQuaHan ? `<span class="badge bg-secondary w-100">Qua giờ</span>` : (isFull ? `<span class="badge bg-danger w-100">Đã đủ</span>` : `<span class="badge bg-light text-dark border w-100">Cần ${s.soLuongCan - s.soLuongDaDangKy}</span>`);
+                        let aBtn = (s.isQuaHan || isFull) ? '' : `<button type="button" class="btn btn-primary btn-sm w-100 mt-2 fw-bold" onclick="registerShift(${s.idNhuCau}, '${s.tenCa}')">Đăng ký</button>`;
+
+                        $body.append(`
+                            <div class="dkl-card ${cClass}">
+                                <div class="fw-bold text-primary mb-1">${s.tenCa}</div>
+                                <div class="small text-muted mb-2 fw-medium">
+                                    <span class="material-symbols-outlined fs-6 align-middle">schedule</span> ${s.gioBatDau.substring(0,5)} - ${s.gioKetThuc.substring(0,5)}
+                                </div>
+                                ${sBadge}
+                                ${aBtn}
+                            </div>
+                        `);
+                    });
+                }
+                $board.append($col);
+            });
+        }
+
+        function renderMyShifts(data) {
+            const $body = $("#my-list-body").empty();
+            if(data.length === 0) return $body.append('<tr><td colspan="5" class="text-center p-5 text-muted">Bạn chưa đăng ký ca nào.</td></tr>');
+
+            data.forEach(s => {
+                const dateFormatted = new Date(s.ngayLam).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                let badge = s.trangThaiCuaToi === 'Chờ duyệt'
+                    ? '<span class="badge bg-warning-subtle text-warning border border-warning-subtle"><span class="material-symbols-outlined fs-6 align-middle">hourglass_empty</span> Chờ quản lý duyệt</span>'
+                    : '<span class="badge bg-success-subtle text-success border border-success-subtle"><span class="material-symbols-outlined fs-6 align-middle">check_circle</span> Lịch chính thức</span>';
+                
+                let actionBtn = s.trangThaiCuaToi === 'Chờ duyệt'
+                    ? `<button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="cancelShift(${s.idLichCuaToi})">Hủy ca</button>`
+                    : '<span class="text-muted small fst-italic">Không thể hủy</span>';
+
+                $body.append(`
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">${dateFormatted}</td>
+                        <td>
+                            <div class="fw-bold text-primary">${s.tenCa}</div>
+                            <div class="small text-muted">${s.gioBatDau.substring(0,5)} - ${s.gioKetThuc.substring(0,5)}</div>
+                        </td>
+                        <td>${s.ghiChuCuaToi ? `<span class="badge bg-light text-dark text-wrap text-start border p-2"><span class="material-symbols-outlined fs-6 align-middle text-primary">push_pin</span> ${s.ghiChuCuaToi}</span>` : '<span class="text-muted small">--</span>'}</td>
+                        <td>${badge}</td>
+                        <td class="text-center pe-4">${actionBtn}</td>
+                    </tr>
+                `);
+            });
+        }
+
+        async function registerShift(idNhuCau, tenCa) {
+            const { value: note } = await Swal.fire({
+                title: `Đăng ký ${tenCa}`,
+                input: 'text',
+                inputLabel: 'Bạn muốn đăng ký vị trí nào? (VD: Thu ngân, Phục vụ tầng 2...)',
+                inputPlaceholder: 'Ghi chú cho quản lý...',
+                showCancelButton: true,
+                confirmButtonText: 'Xác nhận',
+                cancelButtonText: 'Đóng',
+                confirmButtonColor: '#6F4E37'
+            });
+
+            if (note !== undefined) {
+                try {
+                    const response = await fetch(`${_apiBaseUrl}/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_jwtToken}` },
+                        body: JSON.stringify({ idNhuCau, ghiChuNhanVien: note })
+                    });
+
+                    if (response.ok) {
+                        Swal.fire({ title: 'Thành công', text: 'Yêu cầu đã được gửi.', icon: 'success', timer: 1500, showConfirmButton: false });
+                        loadData($("#date-filter").val());
+                        var tab = new bootstrap.Tab(document.querySelector('#my-tab'));
+                        tab.show();
+                    } else {
+                        let msg = "Lỗi."; try { const err = await response.json(); msg = err.message || msg; } catch(e) {}
+                        Swal.fire('Không thể đăng ký', msg, 'warning');
+                    }
+                } catch (error) { Swal.fire('Lỗi', 'Mất kết nối máy chủ', 'error'); }
+            }
+        }
+
+        async function cancelShift(idLich) {
+            if ((await Swal.fire({title: 'Hủy đăng ký?', text: "Rút lại yêu cầu này?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#D32F2F', confirmButtonText: 'Hủy'})).isConfirmed) {
+                const response = await fetch(`${_apiBaseUrl}/cancel/${idLich}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${_jwtToken}` } });
+                if (response.ok) {
+                    Swal.fire({ title: 'Đã hủy', icon: 'success', timer: 1000, showConfirmButton: false });
+                    loadData($("#date-filter").val());
+                } else {
+                    let msg = "Lỗi."; try { const err = await response.json(); msg = err.message || msg; } catch(e) {}
+                    Swal.fire('Lỗi', msg, 'error');
+                }
+            }
+        }
+
+        $(document).ready(function() {
+            // Chuyển Mode List / Kanban
+            $("input[name='vbtn-radio']").change(function() {
+                _currentMode = this.id === 'viewKanban' ? 'kanban' : 'list';
+                if(_currentMode === 'kanban') { $("#mode-list").addClass("d-none"); $("#mode-kanban").removeClass("d-none"); }
+                else { $("#mode-kanban").addClass("d-none"); $("#mode-list").removeClass("d-none"); }
+                renderUI();
+            });
+
+            // Thay đổi Ngày/Tuần
+            $("#date-filter").on("change", function() { loadData($(this).val()); });
+            
+            $("#btnPrev").click(function() {
+                let d = new Date($("#date-filter").val());
+                d.setDate(d.getDate() - (_currentMode === 'list' ? 1 : 7));
+                $("#date-filter").val(d.toISOString().split('T')[0]).trigger('change');
+            });
+            
+            $("#btnNext").click(function() {
+                let d = new Date($("#date-filter").val());
+                d.setDate(d.getDate() + (_currentMode === 'list' ? 1 : 7));
+                $("#date-filter").val(d.toISOString().split('T')[0]).trigger('change');
+            });
+
+            init();
+        });
+    </script>
+}

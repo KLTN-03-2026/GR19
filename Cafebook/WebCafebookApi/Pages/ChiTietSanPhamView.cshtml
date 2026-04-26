@@ -160,12 +160,20 @@
                                 <small class="text-muted d-block mb-2">@rv.NgayTao.ToString("dd/MM/yyyy HH:mm")</small>
                                 @if (!string.IsNullOrEmpty(rv.BinhLuan))
                                 {
-                                    <p>@rv.BinhLuan</p>
+                                    <p class="mb-2">@rv.BinhLuan</p>
                                 }
+
+                                @if (!string.IsNullOrEmpty(rv.HinhAnhDanhGiaUrl))
+                                {
+                                    <div class="mb-3">
+                                        <img src="@rv.HinhAnhDanhGiaUrl" alt="Ảnh đánh giá" class="rounded shadow-sm border" style="max-width: 120px; max-height: 120px; object-fit: cover;" />
+                                    </div>
+                                }
+
                                 @if (rv.PhanHoi != null)
                                 {
                                     <div class="review-reply">
-                                        <strong style="color: var(--cf-dark-brown);">Quản trị viên đã trả lời:</strong>
+                                        <strong style="color: var(--cf-dark-brown);">Phản hồi từ @rv.PhanHoi.TenNhanVien:</strong>
                                         <p class="mb-0 mt-1">@rv.PhanHoi.NoiDung</p>
                                     </div>
                                 }

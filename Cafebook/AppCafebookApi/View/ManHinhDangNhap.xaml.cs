@@ -1,4 +1,5 @@
-﻿using System;
+﻿// File: AppCafebookApi/View/ManHinhDangNhap.xaml.cs
+using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
@@ -64,6 +65,12 @@ namespace AppCafebookApi.View
                 return;
             }
 
+            if (loginReq.Password.Length < 6)
+            {
+                MessageBox.Show("Mật khẩu không được dưới 6 ký tự!", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             btnLogin.IsEnabled = false;
             btnLogin.Content = "ĐANG ĐĂNG NHẬP...";
 
@@ -81,7 +88,6 @@ namespace AppCafebookApi.View
                 if (loginResponse != null)
                 {
                     string targetWorkspace = "";
-
                     bool isSuperManager = loginResponse.TenVaiTro == "Quản lý" && AuthService.CoQuyen("FULL_QL");
 
                     if (isSuperManager)
@@ -91,14 +97,8 @@ namespace AppCafebookApi.View
 
                         bool? result = chonKhongGian.ShowDialog();
 
-                        if (result == true)
-                        {
-                            targetWorkspace = chonKhongGian.SelectedWorkspace;
-                        }
-                        else
-                        {
-                            return;
-                        }
+                        if (result == true) targetWorkspace = chonKhongGian.SelectedWorkspace;
+                        else return;
                     }
                     else
                     {
@@ -131,7 +131,6 @@ namespace AppCafebookApi.View
                         if (isSaved == true)
                         {
                             ApiClient.ResetInstance();
-
                             _countConnectionError = 0;
                             isRetrying = true;
                             BtnLogin_Click(sender, e);
