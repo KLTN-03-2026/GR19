@@ -56,8 +56,58 @@ namespace CafebookApi.Controllers.Web.KhachHang
                         SoLuong = item.SoLuong,
                         HinhAnhUrl = anhUrl
                     };
-                }).Where(x => x.DonGia > 0).ToList()
+                }).Where(x => x.DonGia > 0).ToList(),
+
+                CanCheckout = true
             };
+
+            if (result.Items.Any())
+            {
+                var productIdsInCart = result.Items.Select(x => x.IdSanPham).ToList();
+
+                var dinhLuongs = await _context.DinhLuongs.AsNoTracking()
+                    .Include(d => d.NguyenLieu)
+                    .Include(d => d.DonViSuDung)
+                    .Where(d => productIdsInCart.Contains(d.IdSanPham))
+                    .ToListAsync();
+
+                var nguyenLieuIds = dinhLuongs.Select(d => d.IdNguyenLieu).Distinct().ToList();
+                var tonKhoAo = await _context.NguyenLieus.AsNoTracking()
+                    .Where(n => nguyenLieuIds.Contains(n.IdNguyenLieu))
+                    .ToDictionaryAsync(n => n.IdNguyenLieu, n => n.TonKho);
+
+                foreach (var item in result.Items)
+                {
+                    var dlOfItem = dinhLuongs.Where(d => d.IdSanPham == item.IdSanPham).ToList();
+
+                    foreach (var dl in dlOfItem)
+                    {
+                        decimal heSoQuyDoi = (dl.DonViSuDung != null && dl.DonViSuDung.GiaTriQuyDoi > 0) ? dl.DonViSuDung.GiaTriQuyDoi : 1m;
+                        decimal luongCanDungMotSP = (dl.DonViSuDung != null && dl.DonViSuDung.LaDonViCoBan)
+                            ? dl.SoLuongSuDung
+                            : dl.SoLuongSuDung / heSoQuyDoi;
+
+                        decimal luongCanDungTong = luongCanDungMotSP * item.SoLuong;
+
+                        if (tonKhoAo.ContainsKey(dl.IdNguyenLieu))
+                        {
+                            if (tonKhoAo[dl.IdNguyenLieu] < luongCanDungTong)
+                            {
+                                item.IsOutOfStock = true; 
+                                item.OutOfStockMessage = $"Hết nguyên liệu: {dl.NguyenLieu.TenNguyenLieu}";
+
+                                result.CanCheckout = false; 
+                                result.CheckoutWarning = "Một số món trong giỏ đã hết nguyên liệu chế biến. Vui lòng giảm số lượng hoặc xóa để tiếp tục thanh toán.";
+                                break; 
+                            }
+                            else
+                            {
+                                tonKhoAo[dl.IdNguyenLieu] -= luongCanDungTong;
+                            }
+                        }
+                    }
+                }
+            }
 
             if (!string.IsNullOrEmpty(request.MaKhuyenMaiApDung))
             {

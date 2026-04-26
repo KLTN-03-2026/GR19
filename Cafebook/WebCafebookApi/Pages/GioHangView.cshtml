@@ -50,6 +50,12 @@
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <div>
                                             <h5 class="fw-bold mb-1 text-dark gh-product-title">@item.TenSanPham</h5>
+                                            @if (item.IsOutOfStock)
+                                            {
+                                                <p class="text-danger small mb-0" style="font-size: 0.8rem;">
+                                                    <i class="material-symbols-outlined fs-6 align-middle">error</i> @item.OutOfStockMessage
+                                                </p>
+                                            }
                                             <p class="text-danger fw-bold mb-0">@item.DonGia.ToString("N0") đ</p>
                                         </div>
                                         <form method="post" asp-page-handler="Remove" class="m-0">
@@ -140,9 +146,22 @@
                             Tích lũy được <b class="text-dark">@( (int)(Model.Cart.TongTienHang / 10000) )</b> điểm sau đơn hàng này.
                         </div>
 
-                        <a asp-page="/Account/ThanhToanView" class="btn btn-brown w-100 py-3 rounded-pill fw-bold fs-6">
-                            TIẾN HÀNH THANH TOÁN
-                        </a>
+                        @if (!Model.Cart.CanCheckout)
+                        {
+                            <div class="alert alert-danger border-0 small mb-3 px-3 py-2 rounded-3 text-center fw-bold">
+                                <i class="material-symbols-outlined fs-6 align-middle me-1">warning</i>
+                                @Model.Cart.CheckoutWarning
+                            </div>
+                            <button class="btn btn-secondary w-100 py-3 rounded-pill fw-bold fs-6" disabled>
+                                TẠM NGƯNG THANH TOÁN
+                            </button>
+                        }
+                        else
+                        {
+                            <a asp-page="/Account/ThanhToanView" class="btn btn-brown w-100 py-3 rounded-pill fw-bold fs-6">
+                                TIẾN HÀNH THANH TOÁN
+                            </a>
+                        }
                         <a asp-page="/ThucDonView" class="btn btn-light text-muted w-100 mt-3 py-2 border rounded-pill fw-semibold">
                             <i class="fas fa-arrow-left me-2"></i>Tiếp tục mua thêm
                         </a>

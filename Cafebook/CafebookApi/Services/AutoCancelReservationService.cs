@@ -7,7 +7,6 @@ using MimeKit;
 
 namespace CafebookApi.Services
 {
-    // Kế thừa BackgroundService để ASP.NET Core tự động chạy nó khi Server Start
     public class AutoCancelReservationService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
@@ -23,82 +22,108 @@ namespace CafebookApi.Services
         {
             _logger.LogInformation("Dịch vụ hủy bàn tự động đã khởi động.");
 
-            // Cài đặt Timer lặp lại mỗi 5 phút
-            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(5));
-
-            try
+            while (!stoppingToken.IsCancellationRequested)
             {
-                // Vòng lặp vô tận, chỉ dừng khi Server bị tắt (stoppingToken)
-                while (await timer.WaitForNextTickAsync(stoppingToken))
+                try
                 {
-                    await ProcessCancellationsAsync();
+                    TimeSpan gioMoCua = new TimeSpan(7, 0, 0);
+                    TimeSpan gioDongCua = new TimeSpan(22, 0, 0);
+
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var context = scope.ServiceProvider.GetRequiredService<CafebookDbContext>();
+
+                        var settings = await context.CaiDats.AsNoTracking()
+                            .Where(c => c.TenCaiDat == "ThongTin_GioMoCua" || c.TenCaiDat == "ThongTin_GioDongCua")
+                            .ToListAsync(stoppingToken);
+
+                        var moCuaStr = settings.FirstOrDefault(c => c.TenCaiDat == "ThongTin_GioMoCua")?.GiaTri;
+                        var dongCuaStr = settings.FirstOrDefault(c => c.TenCaiDat == "ThongTin_GioDongCua")?.GiaTri;
+
+                        if (TimeSpan.TryParse(moCuaStr, out TimeSpan parsedMo)) gioMoCua = parsedMo;
+                        if (TimeSpan.TryParse(dongCuaStr, out TimeSpan parsedDong)) gioDongCua = parsedDong;
+
+                        var now = DateTime.Now;
+                        var timeOfDay = now.TimeOfDay;
+                        bool isClosed = timeOfDay > gioDongCua.Add(TimeSpan.FromMinutes(30)) || timeOfDay < gioMoCua;
+
+                        if (isClosed)
+                        {
+                            var nextRun = now.Date.Add(gioMoCua);
+                            if (now > nextRun) nextRun = nextRun.AddDays(1);
+                            var delay = nextRun - now;
+
+                            _logger.LogInformation($"[AutoCancelReservation] Quán đã đóng cửa. Hệ thống ngủ đông đến: {nextRun:dd/MM/yyyy HH:mm:ss}");
+                            await Task.Delay(delay, stoppingToken);
+                            continue; 
+                        }
+
+                        await ProcessCancellationsAsync(context);
+                    }
+
+                    await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogInformation("Dịch vụ hủy bàn tự động đã dừng.");
+                catch (TaskCanceledException)
+                {
+                    _logger.LogInformation("Dịch vụ hủy bàn tự động đã dừng an toàn.");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"[AutoCancelReservation] Lỗi: {ex.Message}");
+                    await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken); 
+                }
             }
         }
 
-        private async Task ProcessCancellationsAsync()
+        private async Task ProcessCancellationsAsync(CafebookDbContext _context)
         {
-            // BẮT BUỘC: Tạo scope mới để lấy DbContext (vì DbContext là Scoped, còn BackgroundService là Singleton)
-            using var scope = _serviceProvider.CreateScope();
-            var _context = scope.ServiceProvider.GetRequiredService<CafebookDbContext>();
+            var now = DateTime.Now;
+            var timeLimit = now.AddMinutes(-15);
+            var ignoreOldLimit = now.AddHours(-12); 
 
-            try
+            var lateReservations = await _context.PhieuDatBans
+                .Include(p => p.Ban)
+                .Include(p => p.KhachHang)
+                .Where(p => (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận") &&
+                            p.ThoiGianDat < timeLimit &&
+                            p.ThoiGianDat > ignoreOldLimit)
+                .ToListAsync();
+
+            if (lateReservations.Any())
             {
-                var now = DateTime.Now;
-                var timeLimit = now.AddMinutes(-15);
-                var ignoreOldLimit = now.AddHours(-12); // Chặn lỗi AM/PM quá khứ
+                var smtp = await GetSmtpSettingsAsync(_context);
+                var settingsDict = await GetGeneralSettingsAsync(_context);
 
-                var lateReservations = await _context.PhieuDatBans
-                    .Include(p => p.Ban)
-                    .Include(p => p.KhachHang)
-                    .Where(p => (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận") &&
-                                p.ThoiGianDat < timeLimit &&
-                                p.ThoiGianDat > ignoreOldLimit)
-                    .ToListAsync();
-
-                if (lateReservations.Any())
+                foreach (var phieu in lateReservations)
                 {
-                    var smtp = await GetSmtpSettingsAsync(_context);
-                    var settingsDict = await GetGeneralSettingsAsync(_context);
+                    phieu.TrangThai = "Đã hủy";
+                    phieu.GhiChu = string.IsNullOrEmpty(phieu.GhiChu)
+                        ? "Tự động hủy do khách trễ 15p"
+                        : phieu.GhiChu + " | Tự động hủy do trễ 15p";
 
-                    foreach (var phieu in lateReservations)
+                    if (phieu.Ban != null && phieu.Ban.TrangThai != "Có khách")
                     {
-                        phieu.TrangThai = "Đã hủy";
-                        phieu.GhiChu = string.IsNullOrEmpty(phieu.GhiChu)
-                            ? "Tự động hủy do khách trễ 15p"
-                            : phieu.GhiChu + " | Tự động hủy do trễ 15p";
-
-                        if (phieu.Ban != null && phieu.Ban.TrangThai != "Có khách")
-                        {
-                            phieu.Ban.TrangThai = "Trống";
-                        }
-
-                        var emailKhach = phieu.KhachHang?.Email;
-                        if (!string.IsNullOrEmpty(emailKhach) && !string.IsNullOrEmpty(smtp.username) && !string.IsNullOrEmpty(smtp.password))
-                        {
-                            var khachInfo = phieu.KhachHang ?? new KhachHang { HoTen = phieu.HoTenKhach ?? "Khách hàng", Email = emailKhach };
-                            string soBanStr = phieu.Ban?.SoBan ?? "N/A";
-
-                            // Gửi mail độc lập không block tiến trình quét
-                            _ = Task.Run(() => SendCancellationEmailAsync(phieu, khachInfo, soBanStr, smtp.host, smtp.port, smtp.username, smtp.password, smtp.fromName, settingsDict));
-                        }
+                        phieu.Ban.TrangThai = "Trống";
                     }
-                    await _context.SaveChangesAsync();
-                    _logger.LogInformation($"Đã tự động hủy {lateReservations.Count} bàn quá hạn.");
+
+                    var emailKhach = phieu.KhachHang?.Email;
+                    if (!string.IsNullOrEmpty(emailKhach) && !string.IsNullOrEmpty(smtp.username) && !string.IsNullOrEmpty(smtp.password))
+                    {
+                        var khachInfo = phieu.KhachHang ?? new KhachHang { HoTen = phieu.HoTenKhach ?? "Khách hàng", Email = emailKhach };
+                        string soBanStr = phieu.Ban?.SoBan ?? "N/A";
+
+                        _ = Task.Run(() => SendCancellationEmailAsync(phieu, khachInfo, soBanStr, smtp.host, smtp.port, smtp.username, smtp.password, smtp.fromName, settingsDict));
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Lỗi khi chạy quét hủy bàn: {ex.Message}");
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"[AutoCancelReservation] Đã giải phóng và hủy tự động {lateReservations.Count} bàn quá hạn.");
             }
         }
 
         // ==========================================================
-        // CÁC HÀM HELPER BÊ TỪ CONTROLLER SANG (Có truyền thêm _context)
+        // CÁC HÀM HELPER 
         // ==========================================================
         private async Task<Dictionary<string, string>> GetGeneralSettingsAsync(CafebookDbContext _context)
         {
@@ -107,17 +132,19 @@ namespace CafebookApi.Services
 
         private async Task<(string host, int port, string username, string password, string fromName)> GetSmtpSettingsAsync(CafebookDbContext _context)
         {
-            var smtpHost = await _context.CaiDats.AsNoTracking().FirstOrDefaultAsync(c => c.TenCaiDat == "Smtp_Host");
-            var smtpPort = await _context.CaiDats.AsNoTracking().FirstOrDefaultAsync(c => c.TenCaiDat == "Smtp_Port");
-            var smtpUser = await _context.CaiDats.AsNoTracking().FirstOrDefaultAsync(c => c.TenCaiDat == "Smtp_Username");
-            var smtpPass = await _context.CaiDats.AsNoTracking().FirstOrDefaultAsync(c => c.TenCaiDat == "Smtp_Password");
-            var smtpName = await _context.CaiDats.AsNoTracking().FirstOrDefaultAsync(c => c.TenCaiDat == "Smtp_FromName");
+            var keysToFetch = new[] { "Smtp_Host", "Smtp_Port", "Smtp_Username", "Smtp_Password", "Smtp_FromName" };
 
-            string host = smtpHost?.GiaTri ?? "smtp.gmail.com";
-            int port = int.TryParse(smtpPort?.GiaTri, out int p) ? p : 587;
-            string username = smtpUser?.GiaTri ?? "";
-            string password = smtpPass?.GiaTri ?? "";
-            string fromName = smtpName?.GiaTri ?? "Cafebook Hỗ Trợ";
+            var smtpSettings = await _context.CaiDats.AsNoTracking()
+                .Where(c => keysToFetch.Contains(c.TenCaiDat))
+                .ToListAsync();
+
+            string host = smtpSettings.FirstOrDefault(c => c.TenCaiDat == "Smtp_Host")?.GiaTri ?? "smtp.gmail.com";
+            string? portStr = smtpSettings.FirstOrDefault(c => c.TenCaiDat == "Smtp_Port")?.GiaTri;
+            int port = int.TryParse(portStr, out int p) ? p : 587;
+
+            string username = smtpSettings.FirstOrDefault(c => c.TenCaiDat == "Smtp_Username")?.GiaTri ?? "";
+            string password = smtpSettings.FirstOrDefault(c => c.TenCaiDat == "Smtp_Password")?.GiaTri ?? "";
+            string fromName = smtpSettings.FirstOrDefault(c => c.TenCaiDat == "Smtp_FromName")?.GiaTri ?? "Cafebook Hỗ Trợ";
 
             return (host, port, username, password, fromName);
         }
@@ -190,7 +217,7 @@ namespace CafebookApi.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Lỗi gửi email hủy bàn (chạy ngầm): {ex.Message}");
+                _logger.LogError($"[AutoCancelReservation] Lỗi gửi email hủy bàn: {ex.Message}");
             }
         }
     }

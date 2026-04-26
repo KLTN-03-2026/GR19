@@ -8,6 +8,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMemoryCache();
+builder.Services.AddHostedService<CafebookApi.Services.DatabaseBackupService>();
 builder.Services.AddHostedService<CafebookApi.Services.AutoCancelOrderService>();
 builder.Services.AddHostedService<CafebookApi.Services.AutoCancelReservationService>();
 builder.Services.AddHostedService<CafebookApi.Services.DailyReminderBackgroundService>();

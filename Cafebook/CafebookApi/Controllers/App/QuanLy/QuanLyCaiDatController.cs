@@ -60,6 +60,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                 "DiemTichLuy" => "⭐ Hệ thống Điểm thưởng",
                 "HR" => "👥 Quản trị Nhân sự (HR)",
                 "LienHe" => "📞 Thông tin Liên hệ",
+                "NganHang" => "🏦 Thông tin Ngân hàng",
                 "Sach" => "📚 Quản lý Mượn/Trả sách",
                 "Smtp" => "📧 Cấu hình Email (SMTP)",
                 "ThongTin" => "🏠 Thông tin Cửa hàng",

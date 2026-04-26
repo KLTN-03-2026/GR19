@@ -23,6 +23,9 @@ namespace CafebookModel.Model.ModelWeb.KhachHang
         public decimal DonGia { get; set; }
         public int SoLuong { get; set; }
         public decimal ThanhTien => DonGia * SoLuong;
+
+        public bool IsOutOfStock { get; set; } = false;
+        public string? OutOfStockMessage { get; set; }
     }
 
     public class GioHangKhuyenMaiDto
@@ -55,5 +58,8 @@ namespace CafebookModel.Model.ModelWeb.KhachHang
                 return tienSauGiam + PhiGiaoHang;
             }
         }
+
+        public bool CanCheckout { get; set; } = true;
+        public string? CheckoutWarning { get; set; }
     }
 }

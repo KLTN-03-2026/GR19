@@ -9,6 +9,8 @@ namespace CafebookApi.Data
     public class CafebookDbContext : DbContext
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
+        public bool IsAiOperation { get; set; } = false;
+        public int? AiCustomerId { get; set; }
 
         public CafebookDbContext(DbContextOptions<CafebookDbContext> options, IHttpContextAccessor httpContextAccessor)
             : base(options)
@@ -219,7 +221,12 @@ namespace CafebookApi.Data
                 }
             }
 
-            // 3. THU THẬP CÁC THAY ĐỔI
+            if (IsAiOperation && AiCustomerId.HasValue)
+            {
+                currentCustomerId = AiCustomerId.Value;
+                currentRole = "Khách hàng (Qua AI)";
+            }
+
             var entries = ChangeTracker.Entries()
                 .Where(e => e.Entity is not CafebookModel.Model.ModelEntities.NhatKyHeThong &&
                            (e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted))
@@ -229,11 +236,16 @@ namespace CafebookApi.Data
 
             foreach (var entry in entries)
             {
+                if (currentStaffId == null && currentCustomerId == null)
+                {
+                    continue;
+                }
+
                 var audit = new CafebookModel.Model.ModelEntities.NhatKyHeThong
                 {
                     IdNhanVien = currentStaffId,
-                    IdKhachHang = currentCustomerId, // Gán IdKhachHang
-                    VaiTro = currentRole,            // Gán VaiTro
+                    IdKhachHang = currentCustomerId,
+                    VaiTro = currentRole,
                     BangBiAnhHuong = entry.Entity.GetType().Name,
                     ThoiGian = DateTime.Now,
                     DiaChiIP = ipAddress
@@ -242,29 +254,24 @@ namespace CafebookApi.Data
                 var key = entry.Properties.FirstOrDefault(p => p.Metadata.IsPrimaryKey());
                 audit.KhoaChinh = key?.CurrentValue?.ToString();
 
-                // HanhDong giờ đây chỉ còn thuần túy là THAO TÁC
                 switch (entry.State)
                 {
                     case EntityState.Added:
                         audit.HanhDong = "THÊM MỚI";
                         audit.DuLieuMoi = JsonSerializer.Serialize(entry.CurrentValues.ToObject());
                         break;
-
                     case EntityState.Deleted:
                         audit.HanhDong = "XÓA";
                         audit.DuLieuCu = JsonSerializer.Serialize(entry.OriginalValues.ToObject());
                         break;
-
                     case EntityState.Modified:
                         audit.HanhDong = "CẬP NHẬT";
                         var oldValues = new Dictionary<string, object?>();
                         var newValues = new Dictionary<string, object?>();
-
                         foreach (var prop in entry.OriginalValues.Properties)
                         {
                             var oldVal = entry.OriginalValues[prop];
                             var newVal = entry.CurrentValues[prop];
-
                             if (!Equals(oldVal, newVal))
                             {
                                 oldValues[prop.Name] = oldVal;
@@ -287,4 +294,3 @@ namespace CafebookApi.Data
         }
     }
 }
-    

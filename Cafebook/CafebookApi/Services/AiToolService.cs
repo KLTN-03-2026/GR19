@@ -17,19 +17,18 @@ namespace CafebookApi.Services
         // ==================================================================================
         // ĐỊNH NGHĨA LINK (Chuẩn hóa SEO URL theo Quy tắc 2)
         // ==================================================================================
-        private const string LinkLienHe = "/lien-he";
-        private const string LinkTaiKhoan = "/tai-khoan/tong-quan";
-        private const string LinkThongTinCaNhan = "/tai-khoan/thong-tin";
-        private const string LinkLichSuThue = "/tai-khoan/lich-su-thue-sach";
-        private const string LinkLichSuDatBan = "/tai-khoan/lich-su-dat-ban";
-        private const string LinkLichSuDonHang = "/tai-khoan/lich-su-don-hang";
-        private const string LinkDoiMatKhau = "/tai-khoan/doi-mat-khau";
+        private const string LinkLienHe = "/LienHeView";
+        private const string LinkTaiKhoan = "/Account/TaiKhoanTongQuanView";
+        private const string LinkThongTinCaNhan = "/Account/ThongTinCaNhanView";
+        private const string LinkLichSuThue = "/Account/LichSuThueSachView";
+        private const string LinkLichSuDatBan = "/Account/LichSuDatBanView";
+        private const string LinkLichSuDonHang = "/Account/LichSuDonHangView";
+        private const string LinkDoiMatKhau = "/Account/DoiMatKhauView";
+        private const string LinkChinhSach = "/ChinhSachView";
 
-        // Các link chi tiết truyền tham số (Dạng /route/{id})
-        private const string LinkDetailDonHang = "/tai-khoan/don-hang/";
-        private const string LinkDetailSach = "/sach/";
-        private const string LinkDetailSP = "/san-pham/";
-        private const string LinkChinhSach = "/chinh-sach-bao-mat";
+        private const string LinkDetailDonHang = "/Account/LichSuDonHangDetailView?id=";
+        private const string LinkDetailSach = "/ChiTietSachView?id=";
+        private const string LinkDetailSP = "/ChiTietSanPhamView?id=";
 
         public AiToolService(CafebookDbContext context)
         {
@@ -43,12 +42,13 @@ namespace CafebookApi.Services
         public async Task<object> GetThongTinChungAsync()
         {
             var keys = new List<string> {
-                "TenQuan", "DiaChi", "SoDienThoai", "GioiThieu",
-                "Wifi_Ten", "Wifi_MatKhau",
-                "LienHe_GioMoCua", "LienHe_Facebook", "LienHe_Zalo", "LienHe_Email", "LienHe_Website",
-                "DiemTichLuy_DoiVND", "DiemTichLuy_NhanVND",
-                "Sach_SoNgayMuonToiDa", "Sach_PhiThue", "Sach_PhiTraTreMoiNgay", "Sach_DiemPhieuThue"
-            };
+            "ThongTin_TenQuan", "ThongTin_DiaChi", "ThongTin_SoDienThoai", "ThongTin_GioiThieu",
+            "ThongTin_GioMoCua", "ThongTin_GioDongCua", "ThongTin_ThuMoCua",
+            "Wifi_MatKhau",
+            "LienHe_Facebook", "LienHe_Zalo", "LienHe_Email", "LienHe_Website",
+            "DiemTichLuy_DoiVND", "DiemTichLuy_NhanVND",
+            "Sach_SoNgayMuonToiDa", "Sach_PhiThue", "Sach_PhiTraTreMoiNgay", "Sach_DiemPhieuThue", "Sach_PhatGiamDoMoi1Percent"
+        };
 
             var settings = await _context.CaiDats.AsNoTracking()
                 .Where(c => keys.Contains(c.TenCaiDat))
@@ -61,15 +61,14 @@ namespace CafebookApi.Services
             {
                 ThongTinCoBan = new
                 {
-                    TenQuan = GetVal("TenQuan"),
-                    DiaChi = GetVal("DiaChi"),
-                    Hotline = GetVal("SoDienThoai"),
-                    GioMoCua = GetVal("LienHe_GioMoCua"),
-                    GioiThieu = GetVal("GioiThieu")
+                    TenQuan = GetVal("ThongTin_TenQuan"),
+                    DiaChi = GetVal("ThongTin_DiaChi"),
+                    Hotline = GetVal("ThongTin_SoDienThoai"),
+                    ThoiGianHoatDong = $"{GetVal("ThongTin_GioMoCua")} - {GetVal("ThongTin_GioDongCua")} (Mở cửa thứ: {GetVal("ThongTin_ThuMoCua")})",
+                    GioiThieu = GetVal("ThongTin_GioiThieu")
                 },
                 Wifi = new
                 {
-                    TenMang = GetVal("Wifi_Ten"),
                     MatKhau = GetVal("Wifi_MatKhau")
                 },
                 QuyDinhSach = new
@@ -77,24 +76,26 @@ namespace CafebookApi.Services
                     HanMuon = $"{GetVal("Sach_SoNgayMuonToiDa")} ngày",
                     PhiThue = $"{FormatMoney(GetVal("Sach_PhiThue"))} (trừ khi trả sách)",
                     PhatQuaHan = $"{FormatMoney(GetVal("Sach_PhiTraTreMoiNgay"))}/ngày",
+                    PhatHuHong = $"{FormatMoney(GetVal("Sach_PhatGiamDoMoi1Percent"))} cho mỗi 1% độ mới sụt giảm",
                     DiemThuong = $"{GetVal("Sach_DiemPhieuThue")} điểm/phiếu"
                 },
                 ChinhSachDiem = new
                 {
                     TichLuy = $"Mỗi {FormatMoney(GetVal("DiemTichLuy_NhanVND"))} trên hóa đơn = 1 điểm",
-                    QuyDoi = $"1 điểm = {FormatMoney(GetVal("DiemTichLuy_DoiVND"))} (Được dùng điểm thanh toán tối đa 50% giá trị đơn hàng)"
+                    QuyDoi = $"1 điểm = {FormatMoney(GetVal("DiemTichLuy_DoiVND"))} (Được dùng điểm trừ vào hóa đơn)"
                 },
                 LienKetXH = new
                 {
                     Facebook = GetVal("LienHe_Facebook"),
                     Zalo = GetVal("LienHe_Zalo"),
-                    Website = GetVal("LienHe_Website")
+                    Website = GetVal("LienHe_Website"),
+                    Email = GetVal("LienHe_Email")
                 },
                 Actions = new List<object>
-                {
-                    new { Label = "Thông tin liên hệ", Link = LinkLienHe },
-                    new { Label = "Chính sách & Quy định", Link = LinkChinhSach }
-                }
+        {
+            new { Label = "Thông tin liên hệ", Link = LinkLienHe },
+            new { Label = "Chính sách & Quy định", Link = LinkChinhSach }
+        }
             };
         }
 
@@ -134,7 +135,7 @@ namespace CafebookApi.Services
             return new
             {
                 Name = sp.TenSanPham,
-                Category = sp.DanhMuc?.TenDanhMuc ?? "Khác", // Safe-null navigation
+                Category = sp.DanhMuc?.TenDanhMuc ?? "Khác", 
                 Price = sp.GiaBan,
                 Desc = sp.MoTa,
                 Status = sp.TrangThaiKinhDoanh ? "Đang kinh doanh" : "Ngừng kinh doanh",
@@ -305,67 +306,78 @@ namespace CafebookApi.Services
             if (isConflict)
                 return new { Error = $"Rất tiếc, bàn {ban.SoBan} đã có người đặt trong khung giờ {thoiGianDat:HH:mm}." };
 
-            int finalIdKhach;
-            if (idKhachHang.HasValue && idKhachHang > 0)
+            try
             {
-                finalIdKhach = idKhachHang.Value;
-            }
-            else
-            {
-                var guest = await _context.KhachHangs.FirstOrDefaultAsync(k => k.SoDienThoai == sdt);
-                if (guest == null)
+                _context.IsAiOperation = true;
+
+                int finalIdKhach;
+                if (idKhachHang.HasValue && idKhachHang > 0)
                 {
-                    guest = new KhachHang
-                    {
-                        HoTen = hoTen,
-                        SoDienThoai = sdt,
-                        Email = string.IsNullOrEmpty(email) ? null : email,
-                        TaiKhoanTam = true,
-                        TenDangNhap = sdt,
-                        MatKhau = Guid.NewGuid().ToString("N").Substring(0, 10), // Tăng độ dài mật khẩu ngẫu nhiên
-                        NgayTao = DateTime.Now,
-                        BiKhoa = false
-                    };
-                    _context.KhachHangs.Add(guest);
-                    await _context.SaveChangesAsync();
+                    finalIdKhach = idKhachHang.Value;
+                    _context.AiCustomerId = finalIdKhach;
                 }
-                finalIdKhach = guest.IdKhachHang;
+                else
+                {
+                    var guest = await _context.KhachHangs.FirstOrDefaultAsync(k => k.SoDienThoai == sdt);
+                    if (guest == null)
+                    {
+                        guest = new KhachHang
+                        {
+                            HoTen = hoTen,
+                            SoDienThoai = sdt,
+                            Email = string.IsNullOrEmpty(email) ? null : email,
+                            TaiKhoanTam = true,
+                            TenDangNhap = sdt,
+                            MatKhau = Guid.NewGuid().ToString("N").Substring(0, 10),
+                            NgayTao = DateTime.Now,
+                            BiKhoa = false
+                        };
+                        _context.KhachHangs.Add(guest);
+                        await _context.SaveChangesAsync();
+                    }
+                    finalIdKhach = guest.IdKhachHang;
+                    _context.AiCustomerId = finalIdKhach; 
+                }
+
+                var phieu = new PhieuDatBan
+                {
+                    IdBan = ban.IdBan,
+                    IdKhachHang = finalIdKhach,
+                    SoLuongKhach = soNguoi,
+                    ThoiGianDat = thoiGianDat,
+                    GhiChu = ghiChu,
+                    TrangThai = "Chờ xác nhận",
+                    HoTenKhach = hoTen,
+                    SdtKhach = sdt
+                };
+                _context.PhieuDatBans.Add(phieu);
+
+                var tb = new ThongBao
+                {
+                    NoiDung = $"Khách {hoTen} ({sdt}) đặt {ban.SoBan} lúc {thoiGianDat:HH:mm dd/MM}",
+                    LoaiThongBao = "DatBan",
+                    ThoiGianTao = DateTime.Now,
+                    DaXem = false,
+                    IdLienQuan = phieu.IdPhieuDatBan
+                };
+                _context.ThongBaos.Add(tb);
+
+                await _context.SaveChangesAsync();
+
+                return new
+                {
+                    Status = "Success",
+                    Message = $"Đặt bàn {ban.SoBan} thành công! Mã phiếu: {phieu.IdPhieuDatBan}.",
+                    CanhBao = "Lưu ý: Bàn sẽ tự động hủy nếu quý khách đến trễ quá 15 phút.",
+                    Actions = new[] { new { Label = "Quản lý đặt bàn", Link = LinkLichSuDatBan } }
+                };
             }
-
-            var phieu = new PhieuDatBan
+            finally
             {
-                IdBan = ban.IdBan,
-                IdKhachHang = finalIdKhach,
-                SoLuongKhach = soNguoi,
-                ThoiGianDat = thoiGianDat,
-                GhiChu = ghiChu,
-                TrangThai = "Chờ xác nhận",
-                HoTenKhach = hoTen,
-                SdtKhach = sdt
-            };
-            _context.PhieuDatBans.Add(phieu);
-
-            var tb = new ThongBao
-            {
-                NoiDung = $"Khách {hoTen} ({sdt}) đặt {ban.SoBan} lúc {thoiGianDat:HH:mm dd/MM}",
-                LoaiThongBao = "DatBan",
-                ThoiGianTao = DateTime.Now,
-                DaXem = false,
-                IdLienQuan = phieu.IdPhieuDatBan
-            };
-            _context.ThongBaos.Add(tb);
-            await _context.SaveChangesAsync();
-
-            return new
-            {
-                Status = "Success",
-                Message = $"Đặt bàn {ban.SoBan} thành công! Mã phiếu: {phieu.IdPhieuDatBan}.",
-                CanhBao = "Lưu ý: Bàn sẽ tự động hủy nếu quý khách đến trễ quá 15 phút.",
-                Actions = new[] { new { Label = "Quản lý đặt bàn", Link = LinkLichSuDatBan } }
-            };
+                _context.IsAiOperation = false;
+                _context.AiCustomerId = null;
+            }
         }
-
-        // --- HELPER CLASSES ---
         private class OpeningHours
         {
             public TimeSpan Open { get; set; } = new TimeSpan(6, 0, 0);
@@ -620,7 +632,7 @@ namespace CafebookApi.Services
                     MaDon = h.IdHoaDon,
                     NgayDat = h.ThoiGianTao.ToString("dd/MM HH:mm"),
                     TongTien = h.ThanhTien,
-                    TrangThaiHienTai = h.TrangThaiGiaoHang ?? h.TrangThai, // Safe coalescing string
+                    TrangThaiHienTai = h.TrangThaiGiaoHang ?? h.TrangThai,
                     MonAn = h.ChiTietHoaDons.Take(3).Select(ct => ct.SanPham.TenSanPham).ToList()
                 })
                 .FirstOrDefaultAsync();

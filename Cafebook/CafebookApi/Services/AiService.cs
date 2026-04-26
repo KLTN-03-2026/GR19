@@ -1,10 +1,10 @@
 ﻿using CafebookApi.Data;
-using Microsoft.AspNetCore.Hosting; // BẮT BUỘC để dùng IWebHostEnvironment
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
-using System.IO; // BẮT BUỘC để đọc file
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -21,7 +21,7 @@ namespace CafebookApi.Services
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IServiceProvider _serviceProvider;
         private readonly AiToolService _toolService;
-        private readonly IWebHostEnvironment _env; // Thêm Environment để đọc file tĩnh
+        private readonly IWebHostEnvironment _env; 
         private static readonly JsonSerializerOptions _jsonOptions;
 
         private enum AiProvider { Gemini, OpenAI, Ollama }
@@ -377,7 +377,6 @@ namespace CafebookApi.Services
                         if (!DateTime.TryParse(timeStr, out DateTime thoiGianDat)) thoiGianDat = DateTime.Now;
                         return (await _toolService.DatBanThucSuAsync(GetArg("tenBan", ""), GetArg("soNguoi", 2), thoiGianDat, GetArg("hoTen", ""), GetArg("sdt", ""), GetArg("email", ""), GetArg("ghiChu", ""), idKhachHang), toolName);
 
-                    // Đã mở Comment lại cho TONG QUAN TAI KHOAN
                     case "GET_TONG_QUAN_TAI_KHOAN":
                         if (!idKhachHang.HasValue) return ("Yêu cầu đăng nhập để xem thông tin.", toolName);
                         return (await _toolService.GetTongQuanTaiKhoanAsync(idKhachHang.Value), toolName);
@@ -440,30 +439,33 @@ namespace CafebookApi.Services
             }
         }
 
+
         // ============================================================
-        // 7. SYSTEM PROMPT (Nâng cấp đọc từ file txt)
+        // 7. SYSTEM PROMPT (Nâng cấp phân quyền gọi nhân viên)
         // ============================================================
 
         private async Task<string> BuildSystemPromptAsync(int? idKhachHang)
         {
             string trangThaiKhach = idKhachHang.HasValue && idKhachHang > 0
-                ? $"KHÁCH HÀNG: THÀNH VIÊN (ID: {idKhachHang}).\n   -> QUYỀN HẠN: Được phép tra cứu toàn bộ lịch sử (Đặt bàn, Đơn hàng, Thuê sách) và Hủy đặt bàn."
-                : "KHÁCH HÀNG: VÃNG LAI (Chưa đăng nhập).\n   -> HẠN CHẾ: KHÔNG ĐƯỢC tiết lộ thông tin cá nhân/lịch sử. Nếu khách yêu cầu chức năng quản lý -> Gợi ý đăng nhập.";
+                ? $"KHÁCH HÀNG: THÀNH VIÊN (ID: {idKhachHang}).\n" +
+                  $"   -> QUYỀN HẠN: Tra cứu toàn bộ lịch sử (Đặt bàn, Đơn hàng, Thuê sách) và Hủy đặt bàn.\n" +
+                  $"   -> ĐẶC QUYỀN GỌI NHÂN VIÊN: NẾU khách yêu cầu gặp nhân viên hỗ trợ thực tế, BẠN ĐƯỢC PHÉP thêm chuỗi [NEEDS_SUPPORT] vào câu trả lời để hệ thống tự động chuyển tín hiệu cho nhân viên."
+                : "KHÁCH HÀNG: VÃNG LAI (Chưa đăng nhập).\n" +
+                  "   -> HẠN CHẾ 1: KHÔNG ĐƯỢC tiết lộ thông tin cá nhân hay lịch sử.\n" +
+                  "   -> HẠN CHẾ 2 (LƯU Ý QUAN TRỌNG): Khách vãng lai KHÔNG CÓ QUYỀN gọi nhân viên. TUYỆT ĐỐI KHÔNG xuất ra chuỗi [NEEDS_SUPPORT] dưới bất kỳ hình thức nào. Nếu khách yêu cầu nhân viên, hãy lịch sự từ chối và thông báo rằng họ cần Đăng nhập tài khoản để sử dụng đặc quyền này.";
 
             string promptTemplate = "";
             string filePath = Path.Combine(_env.ContentRootPath, "SettingCafebook", "BuildSystemPromptAI.txt");
 
-            // Đọc file nếu tồn tại. Nếu mất file (VD lúc publish quên copy), trả về một câu lệnh dự phòng để app không bị crash (Rule 4: An toàn dữ liệu)
             if (File.Exists(filePath))
             {
                 promptTemplate = await File.ReadAllTextAsync(filePath);
             }
             else
             {
-                promptTemplate = "Bạn là Trợ lý AI của Cafebook. Hãy lịch sự và yêu cầu hỗ trợ nhân viên bằng lệnh [NEEDS_SUPPORT]. Ngữ cảnh:\n{trangThaiKhach}\nThời gian: {ThoiGianHienTai}";
+                promptTemplate = "Bạn là Trợ lý AI của Cafebook. Hãy lịch sự và hỗ trợ khách hàng trong khả năng của bạn.\nNgữ cảnh:\n{trangThaiKhach}\nThời gian: {ThoiGianHienTai}";
             }
 
-            // Thay thế các biến động vào mẫu text đã đọc từ file
             return promptTemplate
                 .Replace("{trangThaiKhach}", trangThaiKhach)
                 .Replace("{ThoiGianHienTai}", DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
@@ -494,7 +496,6 @@ namespace CafebookApi.Services
                 tools.Add(new { name = "GET_DIEM_TICH_LUY", description = "Lấy thông tin về điểm tích lũy của khách hàng.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
                 tools.Add(new { name = "GET_THONG_TIN_CA_NHAN", description = "Lấy thông tin profile: Họ tên, Email, SĐT, Ngày tham gia (Không bao gồm điểm).", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
 
-                // Đã gộp GET_TONG_QUAN_TAI_KHOAN làm 1
                 tools.Add(new { name = "GET_TONG_QUAN_TAI_KHOAN", description = "Tra cứu thông tin cá nhân, số điểm tích lũy, số điện thoại, email của khách hàng.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
 
                 tools.Add(new { name = "GET_LICH_SU_DAT_BAN", description = "Xem lịch sử đặt bàn (Bàn hôm nay, bàn cũ).", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
