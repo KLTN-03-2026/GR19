@@ -2,12 +2,11 @@
 @using WebCafebookApi.Services
 @using CafebookModel.Model.ModelWeb.KhachHang
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
-
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     var cart = HttpContextAccessor.HttpContext?.Session.Get<List<CartItemDto>>(WebCafebookApi.Services.SessionExtensions.CartKey);
     var cartCount = cart?.Count ?? 0;
     
-    // Biến này xác định khách đã đăng nhập
     bool isKhachHang = User.Identity?.IsAuthenticated == true && User.IsInRole("KhachHang");
 }
 <!DOCTYPE html>
@@ -44,7 +43,6 @@
                         <span class="ms-1 d-none d-md-inline fw-bold">Đặt Bàn</span>
                     </a>
                     
-                    @* 1. XỬ LÝ NÚT HỖ TRỢ TRÊN MOBILE *@
                     @if (isKhachHang)
                     {
                         <a asp-page="/Account/HoTroKHView" class="btn btn-outline-secondary d-flex align-items-center" title="Hỗ Trợ">
@@ -89,7 +87,6 @@
                         <li class="nav-item d-none d-lg-block"><a class="nav-link cf-nav-link" asp-page="/DatBanView">Đặt Bàn</a></li>
                         <li class="nav-item"><a class="nav-link cf-nav-link" asp-page="/LienHeView">Liên Hệ</a></li>
                         
-                        @* 2. XỬ LÝ NÚT HỖ TRỢ TRÊN DESKTOP *@
                         @if (isKhachHang)
                         {
                             <li class="nav-item d-none d-lg-block"><a class="nav-link cf-nav-link" asp-page="/Account/HoTroKHView">Hỗ Trợ</a></li>
@@ -185,7 +182,278 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    
+
+    @* ==========================================
+       START: BÓNG CHAT NỔI & POPUP CHAT
+       ========================================== *@
+    @{
+        var currentPath = ViewContext.HttpContext.Request.Path.Value ?? "";
+        bool isSupportPage = currentPath.Contains("/ho-tro", StringComparison.OrdinalIgnoreCase)
+                          || currentPath.Contains("/HoTro", StringComparison.OrdinalIgnoreCase)
+                          || currentPath.Contains("/Account/HoTro", StringComparison.OrdinalIgnoreCase);
+
+        var guestSessionId = HttpContextAccessor.HttpContext?.Session.GetString("GuestChatSession");
+        if (string.IsNullOrEmpty(guestSessionId))
+        {
+            guestSessionId = "guest_fallback_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            HttpContextAccessor.HttpContext?.Session.SetString("GuestChatSession", guestSessionId);
+        }
+
+        string apiBaseUrl = Configuration.GetSection("ApiSettings")["BaseUrl"] ?? Configuration["ApiBaseUrl"] ?? "http://localhost:5202";
+        apiBaseUrl = apiBaseUrl.TrimEnd('/');
+    }
+
+    @if (!isSupportPage)
+    {
+        <style>
+            /* Bổ sung màu sắc cho nhân viên trong Popup Layout */
+            .popup-avatar.staff { background: #1976D2; }
+            .popup-msg-row.staff .popup-bubble { background: #E3F2FD; color: #0D47A1; border: 1px solid #BBDEFB; border-bottom-left-radius: 4px; }
+        </style>
+
+        <div id="cafebook-floating-chat" class="floating-chat-widget" style="display: none;">
+            <button id="toggle-chat-popup" class="floating-chat-btn" title="Trợ lý AI Cafebook">
+                <span class="material-symbols-outlined">forum</span>
+                <span class="chat-badge" style="display: none;"></span>
+            </button>
+        </div>
+
+        <div id="cafebook-chat-popup" class="chat-popup-window" style="display: none;">
+            <div class="chat-popup-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined">local_cafe</span>
+                    <div>
+                        <h6 class="mb-0 fw-bold">AI Cafebook</h6>
+                        <small style="font-size: 0.75rem; opacity: 0.9;">Luôn sẵn sàng hỗ trợ</small>
+                    </div>
+                </div>
+                <button type="button" id="close-chat-popup" class="btn-close btn-close-white" style="font-size: 0.8rem;"></button>
+            </div>
+            <div class="chat-popup-body" id="popup-chat-history"></div>
+            <form id="popupChatForm" class="chat-popup-footer">
+                <input type="hidden" id="PopupGuestSessionId" value="@guestSessionId" />
+                <input type="text" id="popupChatMessageInput" class="popup-input" placeholder="Nhập câu hỏi..." autocomplete="off" required />
+                <button type="submit" id="popupSendButton" class="popup-btn">
+                    <span class="material-symbols-outlined">send</span>
+                </button>
+            </form>
+        </div>
+
+        <script>
+            $(document).ready(function () {
+                const apiBaseUrl = '@apiBaseUrl';
+                const guestSessionId = $('#PopupGuestSessionId').val();
+                
+                // BIẾN XÁC ĐỊNH ĐĂNG NHẬP ĐỂ CHỌN API
+                const isKhachHang = @isKhachHang.ToString().ToLower();
+                const jwtToken = '@(HttpContextAccessor.HttpContext?.Session.GetString("JwtToken") ?? "")';
+                const idKhach = '@(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "")';
+
+                // NẾU LÀ KHÁCH HÀNG: LẤY SESSION ĐANG MỞ TỪ LOCALSTORAGE
+                let currentSessionId = guestSessionId;
+                if (isKhachHang) {
+                    currentSessionId = localStorage.getItem('cf_kh_session_' + idKhach) || guestSessionId;
+                }
+
+                // CẤU HÌNH API ĐỘNG TÙY TRẠNG THÁI LOGIN (ĐÍNH KÈM TOKEN NẾU LOGIN)
+                const chatHeaders = (isKhachHang && jwtToken)
+                    ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwtToken }
+                    : { 'Content-Type': 'application/json' };
+
+                const historyUrl = isKhachHang
+                    ? `${apiBaseUrl}/api/web/khachhang/hotro/history?sessionId=${currentSessionId}`
+                    : `${apiBaseUrl}/api/web/guest/hotro/history?guestSessionId=${currentSessionId}`;
+
+                const sendUrl = isKhachHang
+                    ? `${apiBaseUrl}/api/web/khachhang/hotro/send`
+                    : `${apiBaseUrl}/api/web/guest/hotro/send`;
+
+                // SIGNALR CHO POPUP (NẾU ĐÃ ĐĂNG NHẬP & CHAT VỚI NHÂN VIÊN)
+                let isRealtimeModePopup = false;
+                let currentIdThongBaoPopup = null;
+                let hubConnectionPopup = null;
+
+                const $floatingBtn = $('#cafebook-floating-chat');
+                const $popup = $('#cafebook-chat-popup');
+                const $toggleBtn = $('#toggle-chat-popup');
+                const $closeBtn = $('#close-chat-popup');
+                const $badge = $('.chat-badge');
+
+                // Toggle Popup
+                $toggleBtn.on('click', function () {
+                    $popup.fadeToggle(200); 
+                    const isVisible = $popup.is(':visible');
+                    localStorage.setItem('isChatPopupOpen', isVisible);
+                    if (isVisible) {
+                        $badge.hide();
+                        scrollToBottomPopup();
+                        $('#popupChatMessageInput').focus();
+                    }
+                });
+
+                $closeBtn.on('click', function () {
+                    $popup.fadeOut(200);
+                    localStorage.setItem('isChatPopupOpen', 'false');
+                });
+
+                // Vẽ tin nhắn UI
+                function drawPopupMessage(msg, isUser, isStaff = false) {
+                    const type = isUser ? 'user' : (isStaff ? 'staff' : 'bot');
+                    const icon = isUser ? 'person' : (isStaff ? 'support_agent' : 'local_cafe'); 
+                    let rawText = msg.noiDung || '';
+                    let actionButtonsHtml = '';
+                    
+                    const buttonRegex = /\[BUTTON:\s*(.*?)\s*\|\s*(.*?)\]/g;
+                    let match;
+                    while ((match = buttonRegex.exec(rawText)) !== null) {
+                        let label = match[1].trim();
+                        let link = match[2].trim();
+                        actionButtonsHtml += `<a href="${link}" class="htvl-btn-action" style="font-size: 0.8rem; padding: 4px 10px; background: white; border: 1px solid #D84315; border-radius: 12px; color: #D84315; text-decoration: none; display: inline-block; margin-right: 5px; margin-top: 5px;">${label} &rarr;</a>`;
+                    }
+
+                    let textContent = rawText.replace(buttonRegex, "").replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').trim().replace(/\n/g, '<br />');
+                    let msgTime = msg.thoiGian ? new Date(msg.thoiGian) : new Date();
+                    const time = msgTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                    let actionContainer = actionButtonsHtml !== '' ? `<div class="mt-1">${actionButtonsHtml}</div>` : '';
+
+                    $('#popup-chat-history').append(`
+                        <div class="popup-msg-row ${type}">
+                            <div class="popup-avatar ${type}"><span class="material-symbols-outlined">${icon}</span></div>
+                            <div class="popup-content">
+                                <div class="popup-bubble">${textContent}</div>
+                                ${actionContainer}
+                                <div class="popup-time">${time}</div>
+                            </div>
+                        </div>
+                    `);
+                    scrollToBottomPopup();
+                }
+
+                function showPopupTyping() {
+                    $('#popup-chat-history').append(`
+                        <div class="popup-msg-row bot" id="popup-typing-row">
+                            <div class="popup-avatar bot"><span class="material-symbols-outlined">local_cafe</span></div>
+                            <div class="popup-content">
+                                <div class="popup-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>
+                            </div>
+                        </div>
+                    `);
+                    scrollToBottomPopup();
+                }
+
+                function scrollToBottomPopup() {
+                    const chatHistory = document.getElementById('popup-chat-history');
+                    if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
+                }
+
+                // KHỞI ĐỘNG SIGNALR NẾU ĐƯỢC CHUYỂN TỚI NHÂN VIÊN TRONG POPUP
+                async function startSignalRPopup() {
+                    if (hubConnectionPopup) return;
+                    hubConnectionPopup = new signalR.HubConnectionBuilder().withUrl(apiBaseUrl + "/chatHub").build();
+                    hubConnectionPopup.on("ReceiveMessage", msg => {
+                        if (msg.loaiTinNhan !== 'KhachHang') {
+                            drawPopupMessage(msg, false, msg.loaiTinNhan === 'NhanVien');
+                            if (!$popup.is(':visible')) { $badge.show(); }
+                        }
+                    });
+                    await hubConnectionPopup.start();
+                    await hubConnectionPopup.invoke("JoinGroup", `khach_${idKhach}`);
+                }
+
+                // TẢI LỊCH SỬ VÀ HIỂN THỊ NÚT
+                async function loadPopupHistory() {
+                    try {
+                        const res = await fetch(historyUrl, { headers: chatHeaders });
+                        const history = await res.json();
+                        $('#popup-chat-history').empty();
+
+                        // LUÔN HIỆN NÚT NẾU ĐÃ ĐĂNG NHẬP HOẶC KHÁCH VÃNG LAI CÓ LỊCH SỬ
+                        if (history.length > 0 || isKhachHang) {
+                            $floatingBtn.show(); 
+                            
+                            history.forEach(msg => {
+                                if (msg.idThongBaoHoTro > 0) currentIdThongBaoPopup = msg.idThongBaoHoTro;
+                                drawPopupMessage(msg, msg.loaiTinNhan === 'KhachHang', msg.loaiTinNhan === 'NhanVien');
+                            });
+
+                            // Nếu đang có ticket nhân viên -> Bật realtime trên popup luôn
+                            if (isKhachHang && currentIdThongBaoPopup) {
+                                isRealtimeModePopup = true;
+                                startSignalRPopup();
+                            }
+
+                            if (localStorage.getItem('isChatPopupOpen') === 'true') {
+                                $popup.show();
+                                setTimeout(scrollToBottomPopup, 300);
+                            }
+                        } else {
+                            $floatingBtn.hide();
+                            localStorage.setItem('isChatPopupOpen', 'false');
+                        }
+                    } catch(e) { console.error("Lỗi tải chat", e); }
+                }
+
+                // GỬI TIN NHẮN TỪ POPUP
+                $('#popupChatForm').on('submit', async function(e) {
+                    e.preventDefault();
+                    const text = $('#popupChatMessageInput').val().trim();
+                    if (!text) return;
+
+                    $('#popupChatMessageInput').val('').prop('disabled', true);
+                    $('#popupSendButton').prop('disabled', true);
+                    
+                    drawPopupMessage({ noiDung: text, thoiGian: new Date() }, true);
+                    showPopupTyping();
+
+                    // NHÁNH 1: KHÁCH ĐÃ LOGIN VÀ ĐANG CHAT REALTIME TRONG POPUP
+                    if (isKhachHang && isRealtimeModePopup && hubConnectionPopup) {
+                        await hubConnectionPopup.invoke("SendMessageFromClient", `khach_${idKhach}`, text, parseInt(idKhach), currentSessionId, parseInt(currentIdThongBaoPopup));
+                        $('#popup-typing-row').remove();
+                        $('#popupChatMessageInput').prop('disabled', false).focus();
+                        $('#popupSendButton').prop('disabled', false);
+                    } 
+                    // NHÁNH 2: GỬI LÊN API AI (CHUNG CHO CẢ GUEST LẪN KHÁCH ĐÃ LOGIN)
+                    else {
+                        try {
+                            const bodyData = isKhachHang 
+                                ? JSON.stringify({ noiDung: text, sessionId: currentSessionId })
+                                : JSON.stringify({ noiDung: text, guestSessionId: guestSessionId });
+
+                            const res = await fetch(sendUrl, {
+                                method: 'POST',
+                                headers: chatHeaders,
+                                body: bodyData
+                            });
+                            const data = await res.json();
+                            $('#popup-typing-row').remove();
+
+                            if (data.tinNhanPhanHoi) {
+                                drawPopupMessage(data.tinNhanPhanHoi, false, data.tinNhanPhanHoi.loaiTinNhan === 'NhanVien');
+                                $floatingBtn.show();
+                                if (!$popup.is(':visible')) { $badge.show(); }
+                            }
+
+                            if (isKhachHang && data.daChuyenNhanVien) {
+                                currentIdThongBaoPopup = data.idThongBaoHoTro;
+                                isRealtimeModePopup = true;
+                                startSignalRPopup();
+                            }
+                        } catch (error) {
+                            $('#popup-typing-row').remove();
+                            drawPopupMessage({ noiDung: "Lỗi kết nối. Vui lòng thử lại.", thoiGian: new Date() }, false);
+                        } finally {
+                            $('#popupChatMessageInput').prop('disabled', false).focus();
+                            $('#popupSendButton').prop('disabled', false);
+                        }
+                    }
+                });
+
+                // Khởi tạo
+                loadPopupHistory();
+            });
+        </script>
+    }
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

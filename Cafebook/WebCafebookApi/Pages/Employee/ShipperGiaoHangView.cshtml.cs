@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -19,9 +20,13 @@ namespace WebCafebookApi.Pages.Employee
 
         public IActionResult OnGet()
         {
-            // Kiểm tra Token, nếu mất Session thì đá về trang Đăng nhập
             JwtToken = HttpContext.Session.GetString("JwtToken");
-            if (string.IsNullOrEmpty(JwtToken)) return RedirectToPage("/Employee/DangNhapEmployee");
+
+            if (string.IsNullOrEmpty(JwtToken))
+            {
+                string currentUrl = Request.Path + Request.QueryString;
+                return RedirectToPage("/Employee/DangNhapEmployee", new { ReturnUrl = currentUrl });
+            }
 
             var client = _httpClientFactory.CreateClient("ApiClient");
             ApiBaseUrl = $"{client.BaseAddress}api/web/nhanvien/giaohangweb";

@@ -68,6 +68,27 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/dang-nhap";
         options.AccessDeniedPath = "/AccessDenied";
         options.LogoutPath = "/Account/DangXuat";
+
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnRedirectToLogin = context =>
+            {
+                var requestPath = context.Request.Path;
+
+                if (requestPath.StartsWithSegments("/nhan-vien", StringComparison.OrdinalIgnoreCase) ||
+                    requestPath.StartsWithSegments("/Employee", StringComparison.OrdinalIgnoreCase))
+                {
+                    var returnUrl = Uri.EscapeDataString(context.Request.Path + context.Request.QueryString);
+                    context.Response.Redirect($"/nhan-vien/dang-nhap-nhan-vien?ReturnUrl={returnUrl}");
+                }
+                else
+                {
+                    context.Response.Redirect(context.RedirectUri);
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddRazorPages();

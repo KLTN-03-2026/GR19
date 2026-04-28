@@ -1,58 +1,121 @@
 ﻿/* ==========================================================
-   MODULE: TỔNG QUAN NHÂN VIÊN (Tiền tố: tqnv-)
+   MODULE: TỔNG QUAN NHÂN VIÊN (Material Coffee Theme)
 ========================================================== */
+:root {
+    --tq-primary: #5D4037; /* Nâu đậm */
+    --tq-secondary: #8D6E63; /* Nâu xám */
+    --tq-accent: #D84315; /* Cam đất (Cảnh báo/Chưa đọc) */
+    --tq-surface: #FFFFFF; /* Nền thẻ */
+    --tq-background: #F5F5F6; /* Nền trang */
+    --tq-text-main: #3E2723; /* Chữ chính */
+    --tq-text-muted: #757575; /* Chữ phụ */
+    --tq-border: #EFEBE9; /* Viền nhạt */
+
+    --tq-shadow-sm: 0 2px 4px rgba(93, 64, 55, 0.05);
+    --tq-shadow-md: 0 4px 12px rgba(93, 64, 55, 0.08);
+    --tq-shadow-hover: 0 8px 24px rgba(93, 64, 55, 0.12);
+    --tq-radius-lg: 16px;
+    --tq-radius-md: 12px;
+}
 
 .tqnv-container {
-    padding: 10px 0;
+    padding: 10px 0 20px 0;
 }
 
+/* Hiệu ứng trượt lên & mờ dần khi load trang */
+.fade-in-up {
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* -- Thẻ Card Chung -- */
 .tqnv-card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    background: var(--tq-surface);
+    border-radius: var(--tq-radius-lg);
+    box-shadow: var(--tq-shadow-md);
     padding: 24px;
     height: 100%;
-    border: 1px solid #E0E0E0;
-    transition: transform 0.2s ease;
+    border: 1px solid var(--tq-border);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* -- Profile Card -- */
+    .tqnv-card:hover {
+        box-shadow: var(--tq-shadow-hover);
+    }
+
+/* ==========================================================
+   1. PROFILE CARD
+========================================================== */
 .tqnv-profile-header {
     text-align: center;
-    padding-bottom: 20px;
-    border-bottom: 1px dashed #E0E0E0;
-    margin-bottom: 20px;
+    padding-bottom: 24px;
+    border-bottom: 1px dashed #D7CCC8;
+    margin-bottom: 24px;
+}
+
+.tqnv-avatar-wrapper {
+    display: inline-block;
+    position: relative;
+    margin-bottom: 16px;
 }
 
 .tqnv-avatar-large {
-    width: 120px;
-    height: 120px;
+    width: 130px;
+    height: 130px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid #FFF8E1;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    margin-bottom: 15px;
+    border: 4px solid var(--tq-surface);
+    box-shadow: 0 4px 14px rgba(93, 64, 55, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.tqnv-avatar-wrapper:hover .tqnv-avatar-large {
+    transform: scale(1.05) rotate(2deg);
 }
 
 .tqnv-profile-name {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 700;
-    color: #3E2723;
-    margin-bottom: 10px;
+    color: var(--tq-text-main);
+    margin-bottom: 12px;
+}
+
+.tqnv-badges-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .tqnv-badge {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 24px;
     font-size: 0.85rem;
     font-weight: 600;
-    margin: 0 5px;
+    letter-spacing: 0.3px;
 }
 
+    .tqnv-badge .icon-small {
+        font-size: 1.1rem;
+        margin-right: 6px;
+    }
+
 .tqnv-role-badge {
-    background-color: #E3F2FD;
-    color: #1976D2;
+    background-color: #EFEBE9;
+    color: var(--tq-primary);
 }
 
 .tqnv-status-active {
@@ -62,112 +125,191 @@
 
 .tqnv-status-inactive {
     background-color: #FFEBEE;
-    color: #D32F2F;
+    color: #C62828;
 }
 
 .tqnv-profile-details {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 16px;
 }
 
 .tqnv-detail-item {
     display: flex;
     align-items: center;
-    color: #616161;
-    font-size: 0.95rem;
+    padding: 10px;
+    border-radius: var(--tq-radius-md);
+    transition: background 0.2s;
 }
 
-    .tqnv-detail-item .tqnv-icon {
-        margin-right: 15px;
-        color: #9E9E9E;
-        font-size: 1.3rem;
+    .tqnv-detail-item:hover {
+        background-color: #FAFAFA;
     }
 
+.tqnv-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background-color: #EFEBE9;
+    color: var(--tq-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+}
+
+.tqnv-detail-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.tqnv-detail-label {
+    font-size: 0.75rem;
+    color: var(--tq-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.tqnv-detail-value {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--tq-text-main);
+}
+
+/* Nút bấm viền Material */
 .tqnv-btn-outline {
-    border: 2px solid #6F4E37;
-    color: #6F4E37;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid var(--tq-primary);
+    color: var(--tq-primary);
     font-weight: 600;
-    border-radius: 8px;
-    padding: 8px 0;
-    transition: all 0.3s ease;
+    border-radius: 10px;
+    padding: 10px 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
 }
 
     .tqnv-btn-outline:hover {
-        background-color: #6F4E37;
+        background-color: var(--tq-primary);
         color: #fff;
+        box-shadow: var(--tq-shadow-md);
     }
 
-/* -- Notification Card -- */
+/* ==========================================================
+   2. NOTIFICATION CARD
+========================================================== */
 .tqnv-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 1px solid #EEEEEE;
+    border-bottom: 1px solid var(--tq-border);
 }
 
 .tqnv-card-title {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    color: #4E342E;
+    color: var(--tq-primary);
     display: flex;
     align-items: center;
     margin: 0;
+}
+
+.text-accent {
+    color: var(--tq-accent);
+}
+
+.tqnv-noti-count {
+    font-size: 0.85rem;
+    color: var(--tq-accent);
+    background: #FBE9E7;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
 }
 
 .tqnv-notification-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 500px;
+    max-height: 520px;
     overflow-y: auto;
-    padding-right: 5px;
+    padding-right: 8px;
 }
 
-    /* Tùy chỉnh thanh cuộn */
+    /* Thanh cuộn tinh tế */
     .tqnv-notification-list::-webkit-scrollbar {
         width: 6px;
     }
 
     .tqnv-notification-list::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
+        background: transparent;
     }
 
     .tqnv-notification-list::-webkit-scrollbar-thumb {
-        background: #BCAAA4;
-        border-radius: 4px;
+        background: #D7CCC8;
+        border-radius: 10px;
     }
+
+        .tqnv-notification-list::-webkit-scrollbar-thumb:hover {
+            background: #BCAAA4;
+        }
 
 .tqnv-noti-item {
     display: flex;
-    padding: 15px;
-    border-radius: 10px;
+    position: relative;
+    padding: 16px;
+    border-radius: var(--tq-radius-md);
     background-color: #FAFAFA;
-    border: 1px solid #EEEEEE;
-    transition: background-color 0.2s ease;
+    border: 1px solid #F5F5F5;
+    transition: all 0.3s ease;
 }
 
+    /* Hiệu ứng nổi lên khi hover */
     .tqnv-noti-item:hover {
-        background-color: #F5F5F5;
+        background-color: #fff;
+        transform: translateY(-2px);
+        box-shadow: var(--tq-shadow-md);
+        border-color: var(--tq-border);
     }
 
     .tqnv-noti-item.unread {
-        background-color: #FFF3E0; /* Màu cam nhạt báo hiệu chưa đọc */
-        border-left: 4px solid #E65100;
+        background-color: #FFF3E0;
+        border: 1px solid #FFE0B2;
     }
 
-.tqnv-noti-icon {
-    margin-right: 15px;
+.tqnv-unread-indicator {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 10px;
+    height: 10px;
+    background-color: var(--tq-accent);
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(216, 67, 21, 0.1);
+}
+
+.tqnv-noti-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
     display: flex;
-    align-items: flex-start;
-    padding-top: 2px;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    flex-shrink: 0;
 }
 
-.tqnv-noti-item.unread .tqnv-noti-icon {
-    color: #E65100;
+.tqnv-noti-item.unread .tqnv-noti-icon-wrapper {
+    background-color: #FBE9E7;
+    color: var(--tq-accent);
 }
 
-.tqnv-noti-item.read .tqnv-noti-icon {
+.tqnv-noti-item.read .tqnv-noti-icon-wrapper {
+    background-color: #EEEEEE;
     color: #9E9E9E;
 }
 
@@ -177,32 +319,100 @@
 
 .tqnv-noti-title {
     font-weight: 700;
-    font-size: 1rem;
-    color: #212121;
-    margin-bottom: 5px;
-}
-
-.tqnv-noti-desc {
-    font-size: 0.9rem;
-    color: #616161;
-    margin-bottom: 8px;
-    line-height: 1.4;
+    font-size: 1.05rem;
+    color: var(--tq-text-main);
+    margin-bottom: 6px;
+    padding-right: 20px; /* Nhường chỗ cho dấu chấm đỏ */
 }
 
 .tqnv-noti-time {
     font-size: 0.8rem;
-    color: #9E9E9E;
+    color: var(--tq-text-muted);
+    white-space: nowrap;
+}
+
+.tqnv-noti-desc {
+    font-size: 0.95rem;
+    color: #616161;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.tqnv-noti-footer {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--tq-secondary);
     font-weight: 500;
 }
 
+    .tqnv-noti-footer .icon-tiny {
+        font-size: 1rem;
+        margin-right: 4px;
+    }
+
+/* Trạng thái trống (Empty State) */
 .tqnv-empty-state {
     text-align: center;
-    padding: 40px 20px;
-    color: #9E9E9E;
+    padding: 60px 20px;
+    color: var(--tq-text-muted);
+}
+
+.tqnv-empty-icon-circle {
+    width: 80px;
+    height: 80px;
+    background: #EFEBE9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px auto;
 }
 
 .tqnv-empty-icon {
-    font-size: 3rem;
-    color: #E0E0E0;
-    margin-bottom: 10px;
+    font-size: 2.5rem;
+    color: var(--tq-secondary);
+}
+
+.tqnv-empty-state h5 {
+    color: var(--tq-primary);
+    font-weight: 700;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+@media (max-width: 991px) {
+    .tqnv-card {
+        padding: 20px;
+    }
+
+    .tqnv-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .tqnv-noti-count {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 576px) {
+    .tqnv-noti-item {
+        flex-direction: column;
+    }
+
+    .tqnv-noti-icon-wrapper {
+        margin-bottom: 12px;
+    }
+
+    .tqnv-profile-details {
+        gap: 12px;
+    }
+
+    .tqnv-avatar-large {
+        width: 100px;
+        height: 100px;
+    }
 }

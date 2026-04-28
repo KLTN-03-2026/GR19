@@ -19,13 +19,22 @@ namespace WebCafebookApi.Pages.Employee
         public string ApiBaseUrl { get; set; } = "";
         public string? JwtToken { get; set; }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
             string? url = _configuration.GetSection("ApiSettings")["BaseUrl"];
             if (string.IsNullOrWhiteSpace(url)) url = _configuration["ApiBaseUrl"];
 
             ApiBaseUrl = string.IsNullOrWhiteSpace(url) ? "http://localhost:5202" : url.TrimEnd('/');
+
             JwtToken = HttpContext.Session.GetString("JwtToken");
+
+            if (string.IsNullOrEmpty(JwtToken))
+            {
+                string currentUrl = Request.Path + Request.QueryString;
+                return RedirectToPage("/Employee/DangNhapEmployee", new { ReturnUrl = currentUrl });
+            }
+
+            return Page(); 
         }
     }
 }

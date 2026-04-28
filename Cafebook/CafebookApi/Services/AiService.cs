@@ -21,7 +21,7 @@ namespace CafebookApi.Services
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IServiceProvider _serviceProvider;
         private readonly AiToolService _toolService;
-        private readonly IWebHostEnvironment _env; 
+        private readonly IWebHostEnvironment _env;
         private static readonly JsonSerializerOptions _jsonOptions;
 
         private enum AiProvider { Gemini, OpenAI, Ollama }
@@ -36,7 +36,6 @@ namespace CafebookApi.Services
             };
         }
 
-        // Đã inject thêm IWebHostEnvironment
         public AiService(IServiceProvider serviceProvider, IHttpClientFactory httpClientFactory, AiToolService toolService, IWebHostEnvironment env)
         {
             _httpClientFactory = httpClientFactory;
@@ -46,16 +45,14 @@ namespace CafebookApi.Services
         }
 
         // ============================================================
-        // 1. CẤU HÌNH & TỰ ĐỘNG PHÁT HIỆN API (DETECT PROVIDER)
+        // 1. CẤU HÌNH & TỰ ĐỘNG PHÁT HIỆN API
         // ============================================================
 
         private AiProvider DetectProvider(string endpoint)
         {
             if (string.IsNullOrEmpty(endpoint)) return AiProvider.Gemini;
-
             if (endpoint.Contains("googleapis.com")) return AiProvider.Gemini;
             if (endpoint.Contains("localhost") || endpoint.Contains("127.0.0.1")) return AiProvider.Ollama;
-
             return AiProvider.OpenAI;
         }
 
@@ -64,7 +61,12 @@ namespace CafebookApi.Services
             using (var scope = _serviceProvider.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<CafebookDbContext>();
-                var settings = await context.CaiDats.AsNoTracking().ToListAsync();
+
+                // TỐI ƯU: Chỉ Select đúng 3 record cần thiết từ SQL Server, tránh load rác vào RAM
+                var aiKeys = new[] { "AI_Chat_API_Key", "AI_Chat_Endpoint", "AI_Chat_API_model" };
+                var settings = await context.CaiDats.AsNoTracking()
+                    .Where(c => aiKeys.Contains(c.TenCaiDat))
+                    .ToListAsync();
 
                 string apiKey = settings.FirstOrDefault(c => c.TenCaiDat == "AI_Chat_API_Key")?.GiaTri ?? "";
                 string apiEndpoint = settings.FirstOrDefault(c => c.TenCaiDat == "AI_Chat_Endpoint")?.GiaTri ?? "";
@@ -83,7 +85,7 @@ namespace CafebookApi.Services
         }
 
         // ============================================================
-        // 2. LUỒNG XỬ LÝ CHÍNH (MAIN FLOW)
+        // 2. LUỒNG XỬ LÝ CHÍNH
         // ============================================================
 
         public async Task<string?> GetAnswerAsync(string userQuestion, int? idKhachHang, List<object> chatHistory)
@@ -114,35 +116,26 @@ namespace CafebookApi.Services
                     break;
             }
 
-            // Đọc Prompt động từ file
             string systemPrompt = await BuildSystemPromptAsync(idKhachHang);
             var toolsDefinition = GetToolDefinitions(idKhachHang);
 
             object payload;
             if (provider == AiProvider.Gemini)
-            {
                 payload = BuildGeminiPayload(systemPrompt, chatHistory, userQuestion, toolsDefinition);
-            }
             else
-            {
                 payload = BuildOpenAIPayload(systemPrompt, chatHistory, userQuestion, toolsDefinition, modelName);
-            }
 
             var aiResponse = await CallApiAsync(client, requestUrl, payload);
             if (aiResponse == null) return "Xin lỗi, hiện tại tôi không thể kết nối đến máy chủ AI (Lỗi kết nối).";
 
             if (provider == AiProvider.Gemini)
-            {
                 return await HandleGeminiFlow(client, requestUrl, (dynamic)payload, aiResponse.Value, idKhachHang);
-            }
             else
-            {
                 return await HandleOpenAIFlow(client, requestUrl, (dynamic)payload, aiResponse.Value, idKhachHang, provider);
-            }
         }
 
         // ============================================================
-        // 3. XỬ LÝ LUỒNG THEO PROVIDER (Giữ nguyên logic của bạn)
+        // 3. XỬ LÝ LUỒNG
         // ============================================================
 
         private async Task<string?> HandleGeminiFlow(HttpClient client, string url, dynamic payload, JsonElement response, int? idKhachHang)
@@ -213,7 +206,7 @@ namespace CafebookApi.Services
         }
 
         // ============================================================
-        // 4. PAYLOAD BUILDERS & 5. PARSERS (Giữ nguyên, hoàn toàn chuẩn xác)
+        // 4. PAYLOAD BUILDERS & PARSERS
         // ============================================================
 
         private object BuildGeminiPayload(string systemPrompt, List<object> history, string userMsg, List<object> tools)
@@ -221,7 +214,7 @@ namespace CafebookApi.Services
             var contents = new List<object>
             {
                 new { role = "user", parts = new[] { new { text = systemPrompt } } },
-                new { role = "model", parts = new[] { new { text = "OK. Em đã hiểu nhiệm vụ." } } }
+                new { role = "model", parts = new[] { new { text = "OK. Em đã hiểu nhiệm vụ và sẽ tuân thủ tuyệt đối." } } }
             };
 
             if (history != null) contents.AddRange(history);
@@ -323,7 +316,7 @@ namespace CafebookApi.Services
         }
 
         // ============================================================
-        // 6. THỰC THI TOOL (Đã fix lỗi bị Comment)
+        // 5. THỰC THI TOOL
         // ============================================================
 
         private async Task<(object? toolResult, string toolName)> ExecuteToolCallAsync(object functionCall, int? idKhachHang, AiProvider provider)
@@ -439,20 +432,20 @@ namespace CafebookApi.Services
             }
         }
 
-
         // ============================================================
-        // 7. SYSTEM PROMPT (Nâng cấp phân quyền gọi nhân viên)
+        // 6. SYSTEM PROMPT (TÍCH HỢP FILE NGOÀI & FALLBACK)
         // ============================================================
 
         private async Task<string> BuildSystemPromptAsync(int? idKhachHang)
         {
             string trangThaiKhach = idKhachHang.HasValue && idKhachHang > 0
                 ? $"KHÁCH HÀNG: THÀNH VIÊN (ID: {idKhachHang}).\n" +
-                  $"   -> QUYỀN HẠN: Tra cứu toàn bộ lịch sử (Đặt bàn, Đơn hàng, Thuê sách) và Hủy đặt bàn.\n" +
+                  $"   -> QUYỀN HẠN: Tra cứu toàn bộ lịch sử cá nhân (Đặt bàn, Đơn hàng, Thuê sách) và Hủy đặt bàn.\n" +
                   $"   -> ĐẶC QUYỀN GỌI NHÂN VIÊN: NẾU khách yêu cầu gặp nhân viên hỗ trợ thực tế, BẠN ĐƯỢC PHÉP thêm chuỗi [NEEDS_SUPPORT] vào câu trả lời để hệ thống tự động chuyển tín hiệu cho nhân viên."
                 : "KHÁCH HÀNG: VÃNG LAI (Chưa đăng nhập).\n" +
-                  "   -> HẠN CHẾ 1: KHÔNG ĐƯỢC tiết lộ thông tin cá nhân hay lịch sử.\n" +
-                  "   -> HẠN CHẾ 2 (LƯU Ý QUAN TRỌNG): Khách vãng lai KHÔNG CÓ QUYỀN gọi nhân viên. TUYỆT ĐỐI KHÔNG xuất ra chuỗi [NEEDS_SUPPORT] dưới bất kỳ hình thức nào. Nếu khách yêu cầu nhân viên, hãy lịch sự từ chối và thông báo rằng họ cần Đăng nhập tài khoản để sử dụng đặc quyền này.";
+                  "   -> QUYỀN HẠN CƠ BẢN: CÔNG KHAI trả lời mọi thông tin chung về QUÁN (Địa chỉ, giờ mở cửa, wifi, menu món ăn, sách thư viện, khuyến mãi).\n" +
+                  "   -> HẠN CHẾ 1: TUYỆT ĐỐI KHÔNG tra cứu thông tin cá nhân, điểm tích lũy hay lịch sử tài khoản của bất kỳ khách hàng nào. Nếu bị hỏi, yêu cầu đăng nhập.\n" +
+                  "   -> HẠN CHẾ 2: Khách vãng lai KHÔNG CÓ QUYỀN gọi nhân viên. TUYỆT ĐỐI KHÔNG xuất ra chuỗi [NEEDS_SUPPORT] dưới mọi hình thức.";
 
             string promptTemplate = "";
             string filePath = Path.Combine(_env.ContentRootPath, "SettingCafebook", "BuildSystemPromptAI.txt");
@@ -463,7 +456,31 @@ namespace CafebookApi.Services
             }
             else
             {
-                promptTemplate = "Bạn là Trợ lý AI của Cafebook. Hãy lịch sự và hỗ trợ khách hàng trong khả năng của bạn.\nNgữ cảnh:\n{trangThaiKhach}\nThời gian: {ThoiGianHienTai}";
+                promptTemplate = @"Bạn là Trợ lý AI của quán cà phê & thư viện Cafebook. Phong cách: Thân thiện, tự nhiên, chuyên nghiệp, xưng 'Em/Mình' và gọi khách là 'Anh/Chị/Bạn'.
+
+QUY TẮC CỐT LÕI (TUÂN THỦ TUYỆT ĐỐI):
+1. BẢO MẬT HỆ THỐNG & DỮ LIỆU: Chỉ trả lời dựa trên thông tin thu được từ TOOLS. TUYỆT ĐỐI KHÔNG tự bịa dữ liệu, không tiết lộ tên Tool hay giải thích về token mã hóa.
+
+2. QUY TẮC TRA CỨU & GỢI Ý (RẤT QUAN TRỌNG):
+   - Khi khách hỏi 'Quán có món X không?' -> BẮT BUỘC gọi Tool KIEM_TRA_SAN_PHAM / TIM_MON_THEO_LOAI.
+   - Khi khách nhờ gợi ý (Ví dụ: 'Có gì ngon không?', 'Gợi ý đi', 'Ok') -> BẮT BUỘC gọi Tool GET_GOI_Y_SAN_PHAM hoặc GET_GOI_Y_SACH. TUYỆT ĐỐI KHÔNG tự bịa ra tên món ăn/sách khi chưa gọi Tool.
+
+3. TRẢ LỜI VỀ TÌNH TRẠNG:
+   - Món ăn: Nếu Status là 'Đang kinh doanh' -> có sẵn. Nếu 'Ngừng kinh doanh' -> báo tạm hết.
+   - Sách: Nếu Status 'Có sẵn' -> còn trên kệ. Nếu 'Đã hết' -> đã có người mượn. (TUYỆT ĐỐI KHÔNG gợi ý hay cung cấp tính năng 'Thuê sách trực tuyến').
+
+4. ĐỊNH DẠNG: Tiền tệ 50.000đ. Ngày tháng dd/MM/yyyy HH:mm.
+
+5. QUY TẮC NÚT BẤM (BUTTON - ÉP BUỘC):
+   - NẾU kết quả từ Tool trả về một mảng `Actions` (gồm Label và Link), BẠN BẮT BUỘC PHẢI TẠO NÚT CHO TỪNG PHẦN TỬ TRONG MẢNG ĐÓ.
+   - Cú pháp chuẩn: [BUTTON: Label | Link]. (Ví dụ: [BUTTON: Xem chi tiết | /chi-tiet/abc...])
+   - Đặt tất cả các nút ở cuối cùng của câu trả lời. Giữ nguyên 100% đường dẫn Link mã hóa.
+
+6. LUỒNG ĐẶT BÀN: Hỏi số người và thời gian -> Dùng KIEM_TRA_BAN -> Khách chốt -> Dùng DAT_BAN_THUC_SU.
+
+NGỮ CẢNH HIỆN TẠI:
+- {trangThaiKhach}
+- Thời gian: {ThoiGianHienTai}";
             }
 
             return promptTemplate
@@ -472,39 +489,38 @@ namespace CafebookApi.Services
         }
 
         // ============================================================
-        // 8. TOOL DEFINITIONS (Đã xóa các bản sao trùng lặp)
+        // 7. TOOL DEFINITIONS
         // ============================================================
 
         private List<object> GetToolDefinitions(int? idKhachHang)
         {
             var tools = new List<object>
             {
-                new { name = "GET_THONG_TIN_CHUNG", description = "Lấy thông tin: Giờ mở cửa, Wifi, Địa chỉ, Hotline, Quy định quán.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } },
-                new { name = "GET_KHUYEN_MAI", description = "Tra cứu các chương trình khuyến mãi đang diễn ra.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } },
-                new { name = "KIEM_TRA_SAN_PHAM", description = "Tìm món ăn/đồ uống theo tên.", parameters = new { type = "object", properties = new { tenSanPham = new { type = "string" } }, required = new[] { "tenSanPham" } } },
-                new { name = "TIM_MON_THEO_LOAI", description = "Tìm món theo danh mục (VD: Trà, Cà phê, Bánh ngọt).", parameters = new { type = "object", properties = new { loaiMon = new { type = "string" } }, required = new[] { "loaiMon" } } },
-                new { name = "GET_GOI_Y_SAN_PHAM", description = "Gợi ý ngẫu nhiên một vài món ngon cho khách.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } },
-                new { name = "KIEM_TRA_SACH", description = "Tìm sách theo tên sách.", parameters = new { type = "object", properties = new { tenSach = new { type = "string" } }, required = new[] { "tenSach" } } },
+                new { name = "GET_THONG_TIN_CHUNG", description = "Lấy thông tin chung của quán: Giờ mở cửa, Wifi, Địa chỉ, Hotline, Quy định.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } },
+                new { name = "GET_KHUYEN_MAI", description = "Tra cứu khuyến mãi đang diễn ra.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } },
+
+                new { name = "KIEM_TRA_SAN_PHAM", description = "BẮT BUỘC gọi khi khách hỏi món cụ thể. LƯU Ý QUAN TRỌNG: Chỉ truyền vào TỪ KHÓA LÕI ngắn gọn nhất (VD: 'bạc xỉu', 'đen đá', 'trà đào'), TUYỆT ĐỐI KHÔNG truyền cả câu dài.", parameters = new { type = "object", properties = new { tenSanPham = new { type = "string" } }, required = new[] { "tenSanPham" } } },
+                new { name = "TIM_MON_THEO_LOAI", description = "BẮT BUỘC gọi khi khách hỏi về một nhóm danh mục chung (VD: có trà sữa không, có cafe không, có trà không, có bánh không).", parameters = new { type = "object", properties = new { loaiMon = new { type = "string" } }, required = new[] { "loaiMon" } } },
+
+                new { name = "GET_GOI_Y_SAN_PHAM", description = "BẮT BUỘC gọi khi khách nhờ tư vấn món ngon, hoặc khách nói 'có gì ngon không', 'gợi ý đi', hoặc khách đồng ý cho bạn gợi ý (VD: 'ok', 'ừ').", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } },
+                new { name = "KIEM_TRA_SACH", description = "BẮT BUỘC gọi khi khách hỏi quán có cuốn sách cụ thể nào không. LƯU Ý: Chỉ trích xuất tên chính của sách, bỏ các từ thừa thãi.", parameters = new { type = "object", properties = new { tenSach = new { type = "string" } }, required = new[] { "tenSach" } } },
                 new { name = "TIM_SACH_THEO_TAC_GIA", description = "Tìm sách theo tên tác giả.", parameters = new { type = "object", properties = new { tenTacGia = new { type = "string" } }, required = new[] { "tenTacGia" } } },
-                new { name = "GET_GOI_Y_SACH", description = "Gợi ý sách hay ngẫu nhiên.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } },
-                new { name = "KIEM_TRA_BAN", description = "BƯỚC 1: Kiểm tra danh sách bàn trống phù hợp số người.", parameters = new { type = "object", properties = new { soNguoi = new { type = "integer" } }, required = new[] { "soNguoi" } } },
-                new { name = "DAT_BAN_THUC_SU", description = "BƯỚC 2: Thực hiện đặt bàn (Chỉ gọi khi khách đã chốt bàn).", parameters = new { type = "object", properties = new { tenBan = new { type = "string" }, soNguoi = new { type = "integer" }, thoiGianDat = new { type = "string", description = "Format: yyyy-MM-dd HH:mm" }, hoTen = new { type = "string" }, sdt = new { type = "string" }, email = new { type = "string" }, ghiChu = new { type = "string" } }, required = new[] { "tenBan", "soNguoi", "thoiGianDat", "hoTen", "sdt" } } }
+                new { name = "GET_GOI_Y_SACH", description = "BẮT BUỘC gọi khi khách nhờ tư vấn sách hay, hoặc đồng ý cho bạn gợi ý sách.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } },
+                new { name = "KIEM_TRA_BAN", description = "Kiểm tra danh sách bàn trống.", parameters = new { type = "object", properties = new { soNguoi = new { type = "integer" } }, required = new[] { "soNguoi" } } },
+                new { name = "DAT_BAN_THUC_SU", description = "Thực hiện đặt bàn (Chỉ gọi khi khách đã chốt).", parameters = new { type = "object", properties = new { tenBan = new { type = "string" }, soNguoi = new { type = "integer" }, thoiGianDat = new { type = "string", description = "Format: yyyy-MM-dd HH:mm" }, hoTen = new { type = "string" }, sdt = new { type = "string" }, email = new { type = "string" }, ghiChu = new { type = "string" } }, required = new[] { "tenBan", "soNguoi", "thoiGianDat", "hoTen", "sdt" } } }
             };
 
             if (idKhachHang.HasValue && idKhachHang > 0)
             {
-                tools.Add(new { name = "GET_DIEM_TICH_LUY", description = "Lấy thông tin về điểm tích lũy của khách hàng.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
-                tools.Add(new { name = "GET_THONG_TIN_CA_NHAN", description = "Lấy thông tin profile: Họ tên, Email, SĐT, Ngày tham gia (Không bao gồm điểm).", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
-
-                tools.Add(new { name = "GET_TONG_QUAN_TAI_KHOAN", description = "Tra cứu thông tin cá nhân, số điểm tích lũy, số điện thoại, email của khách hàng.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
-
-                tools.Add(new { name = "GET_LICH_SU_DAT_BAN", description = "Xem lịch sử đặt bàn (Bàn hôm nay, bàn cũ).", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
-                tools.Add(new { name = "HUY_DAT_BAN", description = "Hủy phiếu đặt bàn (Cần ID phiếu).", parameters = new { type = "object", properties = new { idPhieuDat = new { type = "integer" }, lyDo = new { type = "string" } }, required = new[] { "idPhieuDat" } } });
-                tools.Add(new { name = "GET_LICH_SU_THUE_SACH", description = "Xem sách đang thuê, trễ hạn, tiền phạt.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
-                tools.Add(new { name = "GET_LICH_SU_DON_HANG", description = "Xem lịch sử mua F&B.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
-                tools.Add(new { name = "THEO_DOI_DON_HANG", description = "Xem trạng thái chi tiết đơn hàng cụ thể (Pha chế/Giao hàng).", parameters = new { type = "object", properties = new { idHoaDon = new { type = "integer" } }, required = new[] { "idHoaDon" } } });
+                tools.Add(new { name = "GET_DIEM_TICH_LUY", description = "Lấy điểm tích lũy.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
+                tools.Add(new { name = "GET_THONG_TIN_CA_NHAN", description = "Lấy thông tin profile khách hàng.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
+                tools.Add(new { name = "GET_TONG_QUAN_TAI_KHOAN", description = "Tra cứu tổng quan cá nhân và điểm.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
+                tools.Add(new { name = "GET_LICH_SU_DAT_BAN", description = "Xem lịch sử đặt bàn.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
+                tools.Add(new { name = "HUY_DAT_BAN", description = "Hủy phiếu đặt bàn.", parameters = new { type = "object", properties = new { idPhieuDat = new { type = "integer" }, lyDo = new { type = "string" } }, required = new[] { "idPhieuDat" } } });
+                tools.Add(new { name = "GET_LICH_SU_THUE_SACH", description = "Xem sách đang thuê.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
+                tools.Add(new { name = "GET_LICH_SU_DON_HANG", description = "Xem lịch sử đơn hàng.", parameters = new { type = "object", properties = new { }, required = Array.Empty<string>() } });
+                tools.Add(new { name = "THEO_DOI_DON_HANG", description = "Theo dõi đơn hàng chi tiết.", parameters = new { type = "object", properties = new { idHoaDon = new { type = "integer" } }, required = new[] { "idHoaDon" } } });
             }
-
             return tools;
         }
     }

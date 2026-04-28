@@ -7,8 +7,8 @@ using System.Security.Claims;
 
 namespace WebCafebookApi.Pages.Account
 {
-    [Authorize] 
-    [Authorize(Roles = "KhachHang")] 
+    [Authorize]
+    [Authorize(Roles = "KhachHang")]
     public class HoTroKHViewModel : PageModel
     {
         private readonly IConfiguration _config;
@@ -17,6 +17,9 @@ namespace WebCafebookApi.Pages.Account
         public HoTroKHViewDto HoTroData { get; set; } = new HoTroKHViewDto();
         public string ApiBaseUrl { get; set; } = "";
         public string? JwtToken { get; set; }
+
+        // BIẾN MỚI ĐỂ LƯU PHIÊN KHÁCH VÃNG LAI
+        public string GuestSessionId { get; set; } = "";
 
         public void OnGet()
         {
@@ -27,6 +30,9 @@ namespace WebCafebookApi.Pages.Account
             HoTroData.IdKhachHang = id;
             HoTroData.TenKhachHang = User.FindFirstValue(ClaimTypes.GivenName) ?? User.FindFirstValue(ClaimTypes.Name) ?? "Khách hàng";
             JwtToken = HttpContext.Session.GetString("JwtToken");
+
+            // LẤY SESSION CHAT TRƯỚC KHI ĐĂNG NHẬP
+            GuestSessionId = HttpContext.Session.GetString("GuestChatSession") ?? "";
         }
     }
 }

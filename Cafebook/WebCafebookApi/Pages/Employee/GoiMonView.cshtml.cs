@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.DataProtection; 
+using Microsoft.AspNetCore.DataProtection;
 
 namespace WebCafebookApi.Pages.Employee
 {
@@ -9,7 +9,7 @@ namespace WebCafebookApi.Pages.Employee
     public class GoiMonViewModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IDataProtector _protector; 
+        private readonly IDataProtector _protector;
 
         public int IdHoaDon { get; set; }
         public string ApiBaseUrl { get; set; } = string.Empty;
@@ -44,7 +44,12 @@ namespace WebCafebookApi.Pages.Employee
             }
 
             JwtToken = HttpContext.Session.GetString("JwtToken");
-            if (string.IsNullOrEmpty(JwtToken)) return RedirectToPage("/Employee/DangNhapEmployee");
+
+            if (string.IsNullOrEmpty(JwtToken))
+            {
+                string currentUrl = Request.Path + Request.QueryString;
+                return RedirectToPage("/Employee/DangNhapEmployee", new { ReturnUrl = currentUrl });
+            }
 
             var client = _httpClientFactory.CreateClient("ApiClient");
             ApiBaseUrl = $"{client.BaseAddress}api/web/nhanvien/goimonweb";

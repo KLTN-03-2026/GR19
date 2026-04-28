@@ -1,7 +1,7 @@
 ﻿@page "/nhan-vien/giao-hang"
 @model WebCafebookApi.Pages.Employee.ShipperGiaoHangViewModel
 @{
-    ViewData["Title"] = "Ứng dụng Giao hàng";
+    ViewData["Title"] = "Giao hàng Cafebook";
     Layout = "_Layout_Employee";
 }
 
@@ -9,37 +9,63 @@
     <link rel="stylesheet" href="~/css/ShipperGiaoHang.css" asp-append-version="true" />
 }
 
-<div class="sgh-container">
-    <div class="card shadow-sm border-0 rounded-4">
-        <div class="card-header bg-white p-4 border-0 pb-0">
-            <h3 class="fw-bold mb-3 text-dark">Hệ thống Giao vận</h3>
-            <ul class="nav nav-tabs sgh-nav-tabs" id="shipTabs" role="tablist">
-                <li class="nav-item"><button class="nav-link active fw-bold" id="available-tab" data-bs-toggle="tab" data-bs-target="#available" type="button"><span class="material-symbols-outlined align-middle me-1">inventory_2</span> Đơn chờ lấy</button></li>
-                <li class="nav-item"><button class="nav-link fw-bold" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button"><span class="material-symbols-outlined align-middle me-1">local_shipping</span> Đang giao</button></li>
-                <li class="nav-item"><button class="nav-link fw-bold text-danger" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button"><span class="material-symbols-outlined align-middle me-1">account_balance_wallet</span> Đối soát COD</button></li>
-            </ul>
+<div class="sgh-container fade-in-up">
+    <div class="sgh-header shadow-sm mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="sgh-logo-box"><span class="material-symbols-outlined">local_shipping</span></div>
+            <h3 class="fw-bold m-0 text-primary-header">Điều phối Giao nhận</h3>
         </div>
-        <div class="card-body p-3 bg-light">
-            <div class="tab-content">
-                <div class="tab-pane fade show active" id="available"><div id="available-list" class="row g-3"></div></div>
-                <div class="tab-pane fade" id="active"><div id="active-list" class="row g-3"></div></div>
-                <div class="tab-pane fade" id="history">
-                    <div class="row g-3 justify-content-center">
-                        <div class="col-12 col-md-8 col-lg-6">
-                            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: linear-gradient(135deg, #FFEBEE 0%, #FFFFFF 100%); border-left: 5px solid #D32F2F !important;">
-                                <div class="card-body p-4 text-center">
-                                    <div class="text-muted fw-bold mb-2 text-uppercase">TỔNG TIỀN MẶT COD CẦN NỘP</div>
-                                    <h1 class="display-4 fw-bold text-danger mb-3" id="summaryTotalMoney">0 đ</h1>
-                                    <div class="d-flex justify-content-center gap-4">
-                                        <div class="badge bg-success-subtle text-success fs-6 px-3 py-2 border"><span id="summarySuccess">0</span> Đã giao</div>
-                                        <div class="badge bg-danger-subtle text-danger fs-6 px-3 py-2 border"><span id="summaryFail">0</span> Đã hủy</div>
-                                    </div>
+        
+        <ul class="nav nav-pills sgh-nav-pills" id="shipTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active material-ripple" id="available-tab" data-bs-toggle="tab" data-bs-target="#available" type="button">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span class="tab-label">Sẵn sàng</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link material-ripple" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button">
+                    <span class="material-symbols-outlined">route</span>
+                    <span class="tab-label">Đang giao</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link material-ripple btn-history" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button">
+                    <span class="material-symbols-outlined">payments</span>
+                    <span class="tab-label">Đối soát</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="tab-content" id="sgh-main-content">
+        <div class="tab-pane fade show active" id="available" role="tabpanel">
+            <div id="available-list" class="row g-3"></div>
+        </div>
+
+        <div class="tab-pane fade" id="active" role="tabpanel">
+            <div id="active-list" class="row g-3"></div>
+        </div>
+
+        <div class="tab-pane fade" id="history" role="tabpanel">
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-7">
+                    <div class="sgh-cod-summary-card shadow-sm mb-4 overflow-hidden">
+                        <div class="card-body p-4 text-center position-relative">
+                            <div class="text-uppercase small fw-bold text-muted letter-spacing-1 mb-2">Tiền mặt COD cần nộp</div>
+                            <h1 class="display-5 fw-black text-accent mb-3" id="summaryTotalMoney">0 đ</h1>
+                            <div class="d-flex justify-content-center gap-2">
+                                <div class="badge-custom bg-success-light text-success">
+                                    <span class="material-symbols-outlined fs-6">task_alt</span> <span id="summarySuccess">0</span> đơn
+                                </div>
+                                <div class="badge-custom bg-danger-light text-danger">
+                                    <span class="material-symbols-outlined fs-6">error_outline</span> <span id="summaryFail">0</span> đơn
                                 </div>
                             </div>
-                            <h6 class="fw-bold text-muted mb-3 text-uppercase">Lịch sử đơn hôm nay</h6>
-                            <div id="history-list" class="d-flex flex-column gap-2"></div>
                         </div>
                     </div>
+                    <h6 class="fw-bold text-primary-header mb-3 px-2">Lịch sử giao trong ngày</h6>
+                    <div id="history-list" class="d-flex flex-column gap-3"></div>
                 </div>
             </div>
         </div>
@@ -47,19 +73,21 @@
 </div>
 
 <div class="modal fade" id="orderDetailModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content rounded-4 border-0 shadow-lg">
-            <div class="modal-header border-0 bg-light pb-2">
-                <h5 class="modal-title fw-bold text-dark"><span class="material-symbols-outlined align-middle me-1 text-primary">receipt_long</span> Chi tiết Đơn hàng</h5>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content sgh-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold"><span class="material-symbols-outlined me-1">receipt_long</span> Chi tiết đơn</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-0">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-white text-muted small">
-                        <tr><th class="ps-4">Tên Món</th><th class="text-center">SL</th><th class="text-end pe-4">Thành Tiền</th></tr>
-                    </thead>
-                    <tbody id="detail-items-body"></tbody>
-                </table>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mb-0">
+                        <thead class="text-muted small">
+                            <tr class="border-bottom"><th class="ps-0">Sản phẩm</th><th class="text-center">SL</th><th class="text-end pe-0">Giá</th></tr>
+                        </thead>
+                        <tbody id="detail-items-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -67,91 +95,123 @@
 
 <div class="modal fade" id="codModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow-lg">
-            <div class="modal-header bg-success text-white border-0 rounded-top-4">
-                <h5 class="modal-title fw-bold"><span class="material-symbols-outlined align-middle">payments</span> Thu Tiền Mặt (COD)</h5>
+        <div class="modal-content sgh-modal-cod">
+            <div class="modal-header bg-primary-coffee text-white">
+                <h5 class="modal-title fw-bold"><span class="material-symbols-outlined me-2">calculate</span> Thu tiền khách</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4 bg-light">
-                <div class="mb-3 d-flex justify-content-between align-items-center border-bottom pb-2">
-                    <span class="fw-bold text-muted">Cần thu của khách:</span>
-                    <span class="fs-3 fw-bold text-danger" id="codTotalAmount">0 đ</span>
+            <div class="modal-body p-4">
+                <div class="cod-input-section text-center mb-4">
+                    <div class="text-muted small mb-1">Số tiền cần thu</div>
+                    <div class="fs-2 fw-black text-danger" id="codTotalAmount">0 đ</div>
                 </div>
-                <div class="mb-3">
-                    <label class="fw-bold small text-muted mb-1">Khách đưa (Nhập hoặc chọn số):</label>
-                    <input type="text" id="codCustomerGiven" class="form-control form-control-lg fw-bold text-end text-primary" placeholder="0" inputmode="numeric" />
+                
+                <div class="form-group mb-3">
+                    <label class="fw-bold text-muted small mb-2">Số tiền khách đưa</label>
+                    <div class="input-group input-group-lg">
+                        <input type="text" id="codCustomerGiven" class="form-control fw-bold border-2 text-center" placeholder="0" inputmode="numeric" />
+                    </div>
                 </div>
+
                 <div class="row g-2 mb-4" id="codQuickButtons"></div>
-                <div class="mb-4 d-flex justify-content-between align-items-center p-3 bg-white rounded-3 border">
-                    <span class="fw-bold text-muted">Tiền thối lại:</span>
-                    <span class="fs-4 fw-bold text-success" id="codChangeAmount">0 đ</span>
+
+                <div class="change-box d-flex justify-content-between align-items-center p-3 rounded-4 mb-4">
+                    <span class="fw-bold text-muted">Tiền thối:</span>
+                    <span class="fs-4 fw-bold" id="codChangeAmount">0 đ</span>
                 </div>
-                <button id="btnConfirmCod" class="btn btn-success w-100 fw-bold rounded-pill py-3 shadow-sm" disabled>
-                    <span class="material-symbols-outlined align-middle me-1">check_circle</span> ĐÃ THU ĐỦ TIỀN
+
+                <button id="btnConfirmCod" class="btn btn-primary-coffee btn-lg w-100 rounded-pill py-3 fw-bold shadow-sm material-ripple" disabled>
+                    <span class="material-symbols-outlined me-2">check_circle</span> XÁC NHẬN ĐÃ THU
                 </button>
             </div>
         </div>
     </div>
 </div>
-
 @section Scripts {
     <script>
         const _apiBaseUrl = "@Model.ApiBaseUrl";
         const _jwtToken = "@Model.JwtToken";
-        let _currentCodOrderId = null; let _currentCodTotal = 0;
+        let _currentCodOrderId = null;
+        let _currentCodTotal = 0;
 
         const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
 
+        // Hàm load dữ liệu chính
         async function loadOrders() {
-            const resAvail = await fetch(`${_apiBaseUrl}/available-orders`, { headers: { 'Authorization': `Bearer ${_jwtToken}` }, cache: 'no-store' });
-            renderList(await resAvail.json(), "#available-list", true);
+            try {
+                // 1. Load đơn hàng sẵn sàng
+                const resAvail = await fetch(`${_apiBaseUrl}/available-orders`, {
+                    headers: { 'Authorization': `Bearer ${_jwtToken}` },
+                    cache: 'no-store'
+                });
+                if(resAvail.ok) renderList(await resAvail.json(), "#available-list", true);
 
-            const resMy = await fetch(`${_apiBaseUrl}/my-orders`, { headers: { 'Authorization': `Bearer ${_jwtToken}` }, cache: 'no-store' });
-            renderList(await resMy.json(), "#active-list", false);
+                // 2. Load đơn hàng đang giao của tôi
+                const resMy = await fetch(`${_apiBaseUrl}/my-orders`, {
+                    headers: { 'Authorization': `Bearer ${_jwtToken}` },
+                    cache: 'no-store'
+                });
+                if(resMy.ok) renderList(await resMy.json(), "#active-list", false);
 
-            const resHistory = await fetch(`${_apiBaseUrl}/history-summary`, { headers: { 'Authorization': `Bearer ${_jwtToken}` }, cache: 'no-store' });
-            renderHistory(await resHistory.json());
+                // 3. Load tổng hợp lịch sử
+                const resHistory = await fetch(`${_apiBaseUrl}/history-summary`, {
+                    headers: { 'Authorization': `Bearer ${_jwtToken}` },
+                    cache: 'no-store'
+                });
+                if(resHistory.ok) renderHistory(await resHistory.json());
+                
+            } catch (error) {
+                console.error("Lỗi load dữ liệu:", error);
+            }
         }
 
+        // Hàm Render danh sách đơn hàng (Sửa lỗi khớp với UI mới)
         function renderList(data, containerId, isNew) {
             const $cont = $(containerId).empty();
-            if(data.length === 0) return $cont.html('<div class="text-center p-5 text-muted fst-italic">Không có đơn hàng nào.</div>');
-
+            
+            if (!data || data.length === 0) {
+                return $cont.html('<div class="col-12 text-center p-5 text-muted fst-italic">Hiện không có đơn hàng nào cần xử lý.</div>');
+            }
+    
             data.forEach(d => {
-                // LOGIC CHÍNH XÁC KIỂM TRA COD
+                // Kiểm tra điều kiện COD [cite: 150]
                 const isCod = (d.phuongThucThanhToan === "COD" || d.phuongThucThanhToan === "Tiền mặt") && d.trangThaiThanhToan !== "Đã thanh toán";
                 
+                // Badge phương thức thanh toán [cite: 151]
                 const pttBadge = isCod
-                    ? '<span class="badge bg-warning text-dark"><span class="material-symbols-outlined fs-6 align-middle">payments</span> Thu COD</span>'
-                    : `<span class="badge bg-success-subtle text-success border"><span class="material-symbols-outlined fs-6 align-middle">credit_card</span> ${d.phuongThucThanhToan} (Đã thanh toán)</span>`;
+                    ? '<span class="badge badge-cod rounded-pill px-3 py-2"><span class="material-symbols-outlined fs-6 align-middle me-1">payments</span> Thu COD</span>'
+                    : '<span class="badge badge-paid rounded-pill px-3 py-2"><span class="material-symbols-outlined fs-6 align-middle me-1">check_circle</span> Đã thanh toán</span>';
 
+                // Nút bấm thao tác [cite: 152, 153]
                 const actionBtn = isNew
-                    ? `<button class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm" onclick="acceptOrder(${d.idHoaDon})">NHẬN ĐƠN NÀY</button>`
+                    ? `<button class="btn btn-primary-coffee w-100 rounded-pill fw-bold py-3 shadow-sm material-ripple" onclick="acceptOrder(${d.idHoaDon})">NHẬN GIAO ĐƠN NÀY</button>`
                     : `<div class="d-flex gap-2">
-                        <button class="btn btn-success flex-grow-1 rounded-pill fw-bold py-2 shadow-sm" onclick="triggerCompleteOrder(${d.idHoaDon}, ${isCod}, ${d.thanhTien})">
-                            <span class="material-symbols-outlined align-middle me-1">camera_alt</span> GIAO XONG
-                        </button>
-                        <button class="btn btn-outline-danger rounded-pill px-3" onclick="failOrder(${d.idHoaDon})"><span class="material-symbols-outlined align-middle">close</span></button>
+                        <button class="btn btn-success flex-grow-1 rounded-pill fw-bold py-3 shadow-sm material-ripple" onclick="triggerCompleteOrder(${d.idHoaDon}, ${isCod}, ${d.thanhTien})">GIAO XONG</button>
+                        <button class="btn btn-outline-danger rounded-pill px-3 material-ripple" onclick="failOrder(${d.idHoaDon})"><span class="material-symbols-outlined">close</span></button>
                        </div>`;
 
+                // Append Card vào container với cấu trúc UI mới [cite: 155, 157, 158, 159, 160]
                 $cont.append(`
                     <div class="col-12 col-md-6 col-lg-4">
-                        <div class="card sgh-card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card sgh-card shadow-sm h-100">
                             <div class="card-body p-4">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <span class="text-muted small fw-bold d-block">#${d.idHoaDon}</span>
-                                        ${pttBadge}
-                                    </div>
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <span class="badge bg-light text-dark border rounded-pill px-3">#${d.idHoaDon}</span>
                                     <div class="text-end">
-                                        <span class="fw-bold text-danger fs-5 d-block">${formatVND(d.thanhTien)}</span>
+                                        <div class="fw-black text-accent fs-4">${formatVND(d.thanhTien)}</div>
                                         <button class="btn btn-sm btn-link text-primary p-0 text-decoration-none small" onclick="openOrderDetails(${d.idHoaDon})">Xem chi tiết món</button>
                                     </div>
                                 </div>
-                                <hr class="text-muted opacity-25">
-                                <h5 class="fw-bold text-dark mb-3">${d.tenKhachHang}</h5>
-                                <div class="mb-2 small d-flex align-items-center"><span class="material-symbols-outlined fs-6 me-2 text-primary">phone</span> <a href="tel:${d.soDienThoai}" class="text-decoration-none fw-bold">${d.soDienThoai}</a></div>
-                                <div class="mb-4 small d-flex align-items-start"><span class="material-symbols-outlined fs-6 me-2 text-primary">location_on</span> ${d.diaChi}</div>
+                                <div class="mb-3">${pttBadge}</div>
+                                <h5 class="fw-bold text-dark mb-2">${d.tenKhachHang}</h5>
+                                <div class="d-flex align-items-center mb-2 small">
+                                    <span class="material-symbols-outlined fs-6 me-2 text-primary">call</span>
+                                    <a href="tel:${d.soDienThoai}" class="text-decoration-none fw-bold text-primary">${d.soDienThoai}</a>
+                                </div>
+                                <div class="d-flex align-items-start mb-4 small">
+                                    <span class="material-symbols-outlined fs-6 me-2 text-primary">location_on</span>
+                                    <span class="text-muted">${d.diaChi}</span>
+                                </div>
                                 ${actionBtn}
                             </div>
                         </div>
@@ -160,12 +220,16 @@
             });
         }
 
+        // Hàm Render lịch sử và đối soát [cite: 163, 164, 165, 166, 168]
         function renderHistory(summary) {
             $("#summaryTotalMoney").text(formatVND(summary.tongTienMatCam));
             $("#summarySuccess").text(summary.tongDonHoanThanh);
             $("#summaryFail").text(summary.tongDonHuy);
+            
             const $list = $("#history-list").empty();
-            if(summary.lichSuDonHang.length === 0) return $list.html('<div class="text-center p-4 text-muted fst-italic">Chưa có lịch sử giao hàng hôm nay.</div>');
+            if(!summary.lichSuDonHang || summary.lichSuDonHang.length === 0) {
+                return $list.html('<div class="text-center p-4 text-muted fst-italic">Chưa có lịch sử giao hàng hôm nay.</div>');
+            }
 
             summary.lichSuDonHang.forEach(d => {
                 const isSuccess = d.trangThaiGiaoHang === "Hoàn thành";
@@ -190,90 +254,128 @@
             });
         }
 
-        // TẢI CHI TIẾT MÓN HÀNG VÀO MODAL
+        // --- Các hàm xử lý Logic nghiệp vụ (Giữ nguyên logic của bạn) ---
+
         async function openOrderDetails(idHoaDon) {
             $("#detail-items-body").html('<tr><td colspan="3" class="text-center p-4"><div class="spinner-border text-primary"></div></td></tr>');
             $("#orderDetailModal").modal('show');
-            
             try {
                 const res = await fetch(`${_apiBaseUrl}/order-details/${idHoaDon}`, { headers: { 'Authorization': `Bearer ${_jwtToken}` } });
                 const data = await res.json();
                 const $body = $("#detail-items-body").empty();
-                
                 data.forEach(item => {
                     $body.append(`
                         <tr>
-                            <td class="ps-4">
+                            <td class="ps-0">
                                 <div class="fw-bold text-dark">${item.tenSanPham}</div>
                                 ${item.ghiChuMon ? `<div class="small text-primary fst-italic">${item.ghiChuMon}</div>` : ''}
                             </td>
                             <td class="text-center fw-bold">x${item.soLuong}</td>
-                            <td class="text-end pe-4 fw-medium">${formatVND(item.thanhTien)}</td>
+                            <td class="text-end pe-0 fw-medium">${formatVND(item.thanhTien)}</td>
                         </tr>
                     `);
                 });
-            } catch(e) { $("#detail-items-body").html('<tr><td colspan="3" class="text-center text-danger">Lỗi tải dữ liệu món.</td></tr>'); }
+            } catch(e) { $("#detail-items-body").html('<tr><td colspan="3" class="text-center text-danger">Lỗi tải dữ liệu.</td></tr>'); }
         }
 
         async function acceptOrder(id) {
             const formData = new FormData(); formData.append("tacVu", "NhanDon");
             const res = await fetch(`${_apiBaseUrl}/update-status/${id}`, { method: 'POST', headers: { 'Authorization': `Bearer ${_jwtToken}` }, body: formData });
-            if(res.ok) { Swal.fire({ title: 'Đã nhận đơn', icon: 'success', toast: true, position: 'top-end', timer: 1500, showConfirmButton: false }); loadOrders(); }
+            if(res.ok) {
+                Swal.fire({ title: 'Đã nhận đơn', icon: 'success', toast: true, position: 'top-end', timer: 1500, showConfirmButton: false });
+                loadOrders();
+            }
         }
 
         function triggerCompleteOrder(id, isCod, totalAmount) {
-            if(isCod) { _currentCodOrderId = id; _currentCodTotal = totalAmount; openCodCalculator(totalAmount); }
-            else captureProofAndSubmit(id);
+            if(isCod) {
+                _currentCodOrderId = id; _currentCodTotal = totalAmount;
+                openCodCalculator(totalAmount);
+            } else {
+                captureProofAndSubmit(id);
+            }
         }
 
         function openCodCalculator(total) {
-            $("#codTotalAmount").text(formatVND(total)); $("#codCustomerGiven").val(""); $("#codChangeAmount").text("0 đ").removeClass("text-danger").addClass("text-success"); $("#btnConfirmCod").prop("disabled", true);
+            $("#codTotalAmount").text(formatVND(total));
+            $("#codCustomerGiven").val("");
+            $("#codChangeAmount").text("0 đ").removeClass("text-danger").addClass("text-success");
+            $("#btnConfirmCod").prop("disabled", true);
+            
             const $btns = $("#codQuickButtons").empty();
             const presets = [total, 100000, 200000, 500000].filter((v, i, a) => v >= total && a.indexOf(v) === i).sort((a,b) => a-b);
-            presets.forEach(p => { let label = p === total ? "Đưa Đủ" : (p/1000 + "K"); $btns.append(`<div class="col-3"><button class="btn btn-outline-secondary w-100 fw-bold px-0 btn-quick-cash" data-val="${p}">${label}</button></div>`); });
+            presets.forEach(p => {
+                let label = p === total ? "Đưa Đủ" : (p/1000 + "K");
+                $btns.append(`<div class="col-3"><button class="btn btn-outline-secondary w-100 fw-bold px-0 btn-quick-cash" data-val="${p}">${label}</button></div>`);
+            });
             $("#codModal").modal('show');
         }
 
         $("#codCustomerGiven").on('input', function() {
-            let given = parseInt($(this).val().replace(/\D/g, '') || 0);
+            let val = $(this).val().replace(/\D/g, '');
+            let given = parseInt(val || 0);
             $(this).val(given === 0 ? '' : given.toLocaleString('vi-VN'));
             calculateChange(given);
         });
 
         $("#codQuickButtons").on("click", ".btn-quick-cash", function() {
-            let given = parseInt($(this).data("val")); $("#codCustomerGiven").val(given.toLocaleString('vi-VN')); calculateChange(given);
+            let given = parseInt($(this).data("val"));
+            $("#codCustomerGiven").val(given.toLocaleString('vi-VN'));
+            calculateChange(given);
         });
 
         function calculateChange(given) {
             let change = given - _currentCodTotal;
-            if (change < 0) { $("#codChangeAmount").text(`Thiếu: ${formatVND(Math.abs(change))}`).removeClass("text-success").addClass("text-danger"); $("#btnConfirmCod").prop("disabled", true); }
-            else { $("#codChangeAmount").text(formatVND(change)).removeClass("text-danger").addClass("text-success"); $("#btnConfirmCod").prop("disabled", false); }
+            if (change < 0) {
+                $("#codChangeAmount").text(`Thiếu: ${formatVND(Math.abs(change))}`).removeClass("text-success").addClass("text-danger");
+                $("#btnConfirmCod").prop("disabled", true);
+            } else {
+                $("#codChangeAmount").text(formatVND(change)).removeClass("text-danger").addClass("text-success");
+                $("#btnConfirmCod").prop("disabled", false);
+            }
         }
 
-        $("#btnConfirmCod").click(function() { $("#codModal").modal('hide'); setTimeout(() => { captureProofAndSubmit(_currentCodOrderId); }, 400); });
+        $("#btnConfirmCod").click(function() {
+            $("#codModal").modal('hide');
+            setTimeout(() => { captureProofAndSubmit(_currentCodOrderId); }, 400);
+        });
 
         async function captureProofAndSubmit(id) {
             const { value: file } = await Swal.fire({
                 title: 'Chụp ảnh xác nhận', text: 'Hãy chụp gói hàng để làm bằng chứng giao thành công.', input: 'file',
-                inputAttributes: { 'accept': 'image/*', 'capture': 'environment', 'aria-label': 'Chụp ảnh bằng chứng' },
-                showCancelButton: true, confirmButtonText: 'Xác Nhận Giao Xong', cancelButtonText: 'Đóng', confirmButtonColor: '#4CAF50'
+                inputAttributes: { 'accept': 'image/*', 'capture': 'environment' },
+                showCancelButton: true, confirmButtonText: 'Xác Nhận Giao Xong', confirmButtonColor: '#4CAF50'
             });
 
             if (file) {
-                Swal.fire({ title: 'Đang lưu hệ thống...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                const formData = new FormData(); formData.append("tacVu", "HoanThanh"); formData.append("proofImage", file);
+                Swal.fire({ title: 'Đang xử lý...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const formData = new FormData();
+                formData.append("tacVu", "HoanThanh");
+                formData.append("proofImage", file);
                 try {
                     const res = await fetch(`${_apiBaseUrl}/update-status/${id}`, { method: 'POST', headers: { 'Authorization': `Bearer ${_jwtToken}` }, body: formData });
-                    if(res.ok) { Swal.fire('Thành công!', 'Giao hàng hoàn tất.', 'success'); loadOrders(); }
-                    else Swal.fire('Lỗi', 'Không thể cập nhật trạng thái.', 'error');
-                } catch(e) { Swal.fire('Lỗi', 'Mất kết nối mạng', 'error'); }
+                    if(res.ok) {
+                        Swal.fire('Thành công!', 'Đơn hàng hoàn tất.', 'success');
+                        loadOrders();
+                    } else {
+                        Swal.fire('Lỗi', 'Cập nhật thất bại.', 'error');
+                    }
+                } catch(e) { Swal.fire('Lỗi', 'Lỗi kết nối mạng.', 'error'); }
             }
         }
 
         async function failOrder(id) {
-            const { value: reason } = await Swal.fire({ title: 'Lý do hủy đơn?', input: 'text', inputPlaceholder: 'Khách không nghe máy, boom hàng...', showCancelButton: true, confirmButtonColor: '#d33' });
+            const { value: reason } = await Swal.fire({
+                title: 'Lý do hủy đơn?',
+                input: 'text',
+                inputPlaceholder: 'Khách không nghe máy, boom hàng...',
+                showCancelButton: true,
+                confirmButtonColor: '#d33'
+            });
             if (reason) {
-                const formData = new FormData(); formData.append("tacVu", "Huy"); formData.append("lyDoHuy", reason);
+                const formData = new FormData();
+                formData.append("tacVu", "Huy");
+                formData.append("lyDoHuy", reason);
                 const res = await fetch(`${_apiBaseUrl}/update-status/${id}`, { method: 'POST', headers: { 'Authorization': `Bearer ${_jwtToken}` }, body: formData });
                 if(res.ok) loadOrders();
             }

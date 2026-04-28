@@ -246,8 +246,16 @@ namespace AppCafebookApi.View.nhanvien.pages
                     {
                         existingItem.SoLuong = newItem.SoLuong;
                         existingItem.ThanhTien = newItem.ThanhTien;
+
+                        int index = _chiTietItems.IndexOf(existingItem);
+                        if (index >= 0) _chiTietItems[index] = existingItem;
                     }
-                    else _chiTietItems.Add(newItem);
+                    else
+                    {
+                        _chiTietItems.Add(newItem);
+                    }
+
+                    if (FindName("btnThanhToan") is Button btnT) btnT.IsEnabled = false;
 
                     dgChiTietHoaDon.Items.Refresh();
                 }
@@ -278,6 +286,41 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (result == MessageBoxResult.Yes) await UpdateQuantityAsync(item, 0);
         }
 
+        private void TxtSoLuong_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
+        private async void TxtSoLuong_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            var item = textBox?.DataContext as ChiTietDto;
+            if (item == null || textBox == null) return;
+
+            if (int.TryParse(textBox.Text, out int newCount))
+            {
+                if (newCount < 0) newCount = 0;
+                if (newCount != item.SoLuong)
+                {
+                    await UpdateQuantityAsync(item, newCount);
+                }
+            }
+            else
+            {
+                textBox.Text = item.SoLuong.ToString();
+            }
+        }
+
+        private void TxtSoLuong_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                var request = new System.Windows.Input.TraversalRequest(System.Windows.Input.FocusNavigationDirection.Next);
+                request.Wrapped = true;
+                ((TextBox)sender).MoveFocus(request);
+            }
+        }
+
         private async Task UpdateQuantityAsync(ChiTietDto item, int soLuongMoi)
         {
             var request = new UpdateSoLuongRequest { IdChiTietHoaDon = item.IdChiTietHoaDon, SoLuongMoi = soLuongMoi };
@@ -288,11 +331,35 @@ namespace AppCafebookApi.View.nhanvien.pages
                 {
                     var hoaDonInfo = await response.Content.ReadFromJsonAsync<HoaDonInfoDto>();
                     if (hoaDonInfo != null) UpdateBillUI(hoaDonInfo);
-                    if (soLuongMoi <= 0) _chiTietItems.Remove(item);
-                    else { item.SoLuong = soLuongMoi; item.ThanhTien = item.SoLuong * item.DonGia; }
-                    dgChiTietHoaDon.Items.Refresh();
+
+                    int index = _chiTietItems.IndexOf(item);
+                    if (index >= 0)
+                    {
+                        if (soLuongMoi <= 0)
+                        {
+                            _chiTietItems.Remove(item);
+                        }
+                        else
+                        {
+                            item.SoLuong = soLuongMoi;
+                            item.ThanhTien = item.SoLuong * item.DonGia;
+                            _chiTietItems.RemoveAt(index);
+                            _chiTietItems.Insert(index, item);
+                        }
+                    }
+
+                    if (FindName("btnThanhToan") is Button btnT) btnT.IsEnabled = false;
                 }
-                else MessageBox.Show(await response.Content.ReadAsStringAsync(), "Lỗi cập nhật");
+                else
+                {
+                    MessageBox.Show(await response.Content.ReadAsStringAsync(), "Lỗi cập nhật");
+                    int index = _chiTietItems.IndexOf(item);
+                    if (index >= 0)
+                    {
+                        _chiTietItems.RemoveAt(index);
+                        _chiTietItems.Insert(index, item);
+                    }
+                }
             }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi API"); }
         }
@@ -328,7 +395,10 @@ namespace AppCafebookApi.View.nhanvien.pages
                 if (response.IsSuccessStatusCode)
                 {
                     var hoaDonInfo = await response.Content.ReadFromJsonAsync<HoaDonInfoDto>();
-                    if (hoaDonInfo != null) { await LoadDataAsync(); UpdateBillUI(hoaDonInfo); }
+                    if (hoaDonInfo != null)
+                    {
+                        UpdateBillUI(hoaDonInfo); 
+                    }
                 }
                 else MessageBox.Show(await response.Content.ReadAsStringAsync(), "Lỗi áp dụng KM");
             }
@@ -386,7 +456,8 @@ namespace AppCafebookApi.View.nhanvien.pages
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Đã lưu và gửi các món mới đến bếp/pha chế.", "Đã lưu");
-                    await LoadDataAsync(); // Cập nhật để mở khóa Thanh Toán
+
+                    if (FindName("btnThanhToan") is Button btnT) btnT.IsEnabled = true;
                 }
                 else MessageBox.Show(await response.Content.ReadAsStringAsync(), "Lỗi Lưu Hóa Đơn");
             }
@@ -401,12 +472,10 @@ namespace AppCafebookApi.View.nhanvien.pages
                 var response = await ApiClient.Instance.PostAsync($"api/app/nhanvien/goimon/print-and-notify-kitchen/{_idHoaDon}/{AuthService.CurrentUser.IdNhanVien}", null);
                 if (response.IsSuccessStatusCode)
                 {
-                    await LoadDataAsync(); // Cập nhật để mở khóa Thanh Toán
+                    if (FindName("btnThanhToan") is Button btnT) btnT.IsEnabled = true;
 
                     var printWindow = new PhieuGoiMonPreviewWindow(_idHoaDon);
                     printWindow.ShowDialog();
-
-                    // Bỏ lệnh GoBack() để người dùng ở lại bấm tiếp nút Thanh Toán
                 }
                 else MessageBox.Show(await response.Content.ReadAsStringAsync(), "Lỗi In Phiếu");
             }

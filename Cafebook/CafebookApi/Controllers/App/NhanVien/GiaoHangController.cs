@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Net.Mail;
 using System.Net;
 using System.Security.Claims;
+using CafebookModel.Utils;
 
 namespace CafebookApi.Controllers.App.NhanVien
 {
@@ -39,12 +40,14 @@ namespace CafebookApi.Controllers.App.NhanVien
         }
 
         [HttpGet("load")]
-        public async Task<IActionResult> LoadGiaoHangData([FromQuery] string? search, [FromQuery] string? status)
+        public async Task<IActionResult> LoadGiaoHangData([FromQuery] string? search, [FromQuery] string? status, [FromQuery] DateTime? date)
         {
             try
             {
+                DateTime filterDate = date ?? DateTime.Today;
+
                 var query = _context.HoaDons.AsNoTracking()
-                    .Where(h => h.LoaiHoaDon == "Giao hàng")
+                    .Where(h => h.LoaiHoaDon == "Giao hàng" && h.ThoiGianTao.Date == filterDate.Date)
                     .Include(h => h.KhachHang)
                     .Include(h => h.NhanVienGiaoHang)
                     .OrderByDescending(h => h.ThoiGianTao)
@@ -55,7 +58,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                     if (status == "Đã hủy")
                         query = query.Where(h => h.TrangThai == "Đã hủy" || h.TrangThaiGiaoHang == "Đã hủy");
                     else if (status == "Đã giao")
-                        query = query.Where(h => h.TrangThaiGiaoHang == "Hoàn thành");
+                        query = query.Where(h => h.TrangThaiGiaoHang == "Hoàn thành" || h.TrangThaiGiaoHang == "Đã giao");
                     else
                         query = query.Where(h => h.TrangThaiGiaoHang == status);
                 }
@@ -81,23 +84,22 @@ namespace CafebookApi.Controllers.App.NhanVien
                     DiaChiGiaoHang = h.DiaChiGiaoHang ?? (h.KhachHang != null ? h.KhachHang.DiaChi : ""),
                     ThanhTien = h.ThanhTien,
                     TrangThaiThanhToan = h.TrangThai,
-                    PhuongThucThanhToan = h.PhuongThucThanhToan ?? "COD", // Lấy phương thức thanh toán
+                    PhuongThucThanhToan = h.PhuongThucThanhToan ?? "COD",
                     TrangThaiGiaoHang = h.TrangThaiGiaoHang,
                     IdNguoiGiaoHang = h.IdNguoiGiaoHang,
                     TenNguoiGiaoHang = h.NhanVienGiaoHang != null ? h.NhanVienGiaoHang.HoTen : null,
                     GhiChu = h.GhiChu,
-                    IdNhanVien = h.IdNhanVien
+                    IdNhanVien = h.IdNhanVien,
+                    AnhGiaoHang = h.AnhGiaoHang
                 }).ToListAsync();
 
-                // FIX LỖI COMBOBOX TRỐNG: Hoàn trả logic cũ, chỉ lọc "Đang làm việc"
                 var nguoiGiaoHang = await _context.NhanViens.AsNoTracking()
                     .Where(n => n.TrangThaiLamViec == "Đang làm việc")
                     .Select(n => new NguoiGiaoHangDto
                     {
                         IdNguoiGiaoHang = n.IdNhanVien,
                         TenNguoiGiaoHang = n.HoTen
-                    })
-                    .ToListAsync();
+                    }).ToListAsync();
 
                 return Ok(new GiaoHangViewDto { DonGiaoHang = donGiaoHang, NguoiGiaoHangSanSang = nguoiGiaoHang });
             }
@@ -117,50 +119,27 @@ namespace CafebookApi.Controllers.App.NhanVien
                 string? trangThaiCu = hoaDon.TrangThaiGiaoHang;
 
                 if (dto.TrangThaiGiaoHang == "Đã giao") dto.TrangThaiGiaoHang = "Hoàn thành";
-
-                hoaDon.TrangThaiGiaoHang = dto.TrangThaiGiaoHang;
-                hoaDon.IdNguoiGiaoHang = dto.IdNguoiGiaoHang;
-
-                if (dto.IdNguoiGiaoHang.HasValue && string.IsNullOrEmpty(dto.TrangThaiGiaoHang))
-                    hoaDon.TrangThaiGiaoHang = "Chờ lấy hàng";
-
-                if (dto.TrangThaiGiaoHang == "Hủy" || dto.TrangThaiGiaoHang == "Đã hủy")
-                    hoaDon.TrangThai = "Đã hủy";
-
-                if (dto.TrangThaiGiaoHang == "Trả hàng")
-                    hoaDon.TrangThai = "Đã hủy";
-
-                if (dto.TrangThaiGiaoHang == "Hoàn thành" && hoaDon.TrangThai != "Đã thanh toán")
-                {
-                    hoaDon.TrangThai = "Đã thanh toán";
-                    hoaDon.ThoiGianThanhToan = DateTime.Now;
-                    if (string.IsNullOrEmpty(hoaDon.PhuongThucThanhToan)) hoaDon.PhuongThucThanhToan = "COD";
-                }
-
-                var settingsDict = await GetGeneralSettingsAsync();
+                hoaDon.TrangThaiGiaoHang = dto.TrangThaiGiaoHang ?? hoaDon.TrangThaiGiaoHang;
+                hoaDon.IdNguoiGiaoHang = dto.IdNguoiGiaoHang ?? hoaDon.IdNguoiGiaoHang;
 
                 if (dto.TrangThaiGiaoHang == "Đang chuẩn bị" && (trangThaiCu == "Chờ xác nhận" || trangThaiCu == null))
                 {
                     await CreateOrUpdateCheBienItems(idHoaDon, idNhanVien);
+                    var settingsDict = await GetGeneralSettingsAsync();
                     if (hoaDon.KhachHang != null && !string.IsNullOrEmpty(hoaDon.KhachHang.Email))
                     {
                         _ = SendStatusEmailAsync(hoaDon.KhachHang.Email, hoaDon.KhachHang.HoTen, idHoaDon, "Đang chuẩn bị", null, settingsDict);
                     }
                 }
-
-                if (dto.TrangThaiGiaoHang == "Đang giao" && trangThaiCu != "Đang giao")
+                if (dto.TrangThaiGiaoHang == "Đã hủy" || dto.TrangThaiGiaoHang == "Trả hàng")
                 {
-                    string tenShipper = "Nhân viên giao hàng nội bộ";
-                    if (dto.IdNguoiGiaoHang.HasValue)
-                    {
-                        var shipper = await _context.NhanViens.FindAsync(dto.IdNguoiGiaoHang.Value);
-                        if (shipper != null) tenShipper = shipper.HoTen;
-                    }
+                    hoaDon.TrangThai = "Đã hủy";
+                }
 
-                    if (hoaDon.KhachHang != null && !string.IsNullOrEmpty(hoaDon.KhachHang.Email))
-                    {
-                        _ = SendStatusEmailAsync(hoaDon.KhachHang.Email, hoaDon.KhachHang.HoTen, idHoaDon, "Đang giao", tenShipper, settingsDict);
-                    }
+                if (dto.TrangThaiGiaoHang == "Hoàn thành" && hoaDon.TrangThai != "Đã thanh toán")
+                {
+                    hoaDon.TrangThai = "Đã thanh toán";
+                    hoaDon.ThoiGianThanhToan = DateTime.Now;
                 }
 
                 await _context.SaveChangesAsync();

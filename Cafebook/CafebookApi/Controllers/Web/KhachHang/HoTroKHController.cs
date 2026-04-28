@@ -54,16 +54,47 @@ namespace CafebookApi.Controllers.Web.KhachHang
         }
 
         [HttpGet("sessions")]
-        public async Task<IActionResult> GetSessions()
+        public async Task<IActionResult> GetSessions([FromQuery] string? guestSessionId)
         {
             var idKhachHang = GetCurrentUserId();
 
+            // ========================================================
+            // ĐỒNG BỘ LIỀN MẠCH: CHUYỂN CHỦ SỞ HỮU ĐOẠN CHAT VÃNG LAI
+            // ========================================================
+            if (!string.IsNullOrEmpty(guestSessionId))
+            {
+                var unlinkedChats = await _context.ChatLichSus
+                    .Where(c => c.GuestSessionId == guestSessionId && c.IdKhachHang == null).ToListAsync();
+                var unlinkedTickets = await _context.ThongBaoHoTros
+                    .Where(t => t.GuestSessionId == guestSessionId && t.IdKhachHang == null).ToListAsync();
+
+                bool hasChanges = false;
+                if (unlinkedChats.Any())
+                {
+                    foreach (var c in unlinkedChats) c.IdKhachHang = idKhachHang;
+                    hasChanges = true;
+                }
+                if (unlinkedTickets.Any())
+                {
+                    foreach (var t in unlinkedTickets) t.IdKhachHang = idKhachHang;
+                    hasChanges = true;
+                }
+                if (hasChanges) await _context.SaveChangesAsync();
+            }
+
+            // Lấy danh sách các session đang mở
             var validSessionIds = await _context.ThongBaoHoTros
                 .AsNoTracking()
                 .Where(t => t.IdKhachHang == idKhachHang && t.TrangThai != "Đã xử lý")
                 .Select(t => t.GuestSessionId)
                 .Distinct()
                 .ToListAsync();
+
+            if (!string.IsNullOrEmpty(guestSessionId) && !validSessionIds.Contains(guestSessionId))
+            {
+                bool hasHistory = await _context.ChatLichSus.AnyAsync(c => c.GuestSessionId == guestSessionId && c.IdKhachHang == idKhachHang);
+                if (hasHistory) validSessionIds.Add(guestSessionId);
+            }
 
             if (!validSessionIds.Any()) return Ok(new List<ChatSessionKHDto>());
 
@@ -87,10 +118,20 @@ namespace CafebookApi.Controllers.Web.KhachHang
                     .Where(c => c.GuestSessionId == s.SessionId && c.LoaiTinNhan == "KhachHang" && c.LoaiChat == "Web_HTTP")
                     .OrderBy(c => c.ThoiGian).Select(c => c.NoiDungHoi).FirstOrDefaultAsync();
 
+                string title = "Trò chuyện với AI";
+                if (s.IdThongBao > 0)
+                {
+                    title = "Yêu cầu hỗ trợ";
+                }
+                else if (!string.IsNullOrEmpty(firstMsg))
+                {
+                    title = firstMsg.Length > 25 ? firstMsg.Substring(0, 25) + "..." : firstMsg;
+                }
+
                 sessions.Add(new ChatSessionKHDto
                 {
                     SessionId = s.SessionId,
-                    Title = !string.IsNullOrEmpty(firstMsg) ? firstMsg : "Yêu cầu hỗ trợ",
+                    Title = title,
                     LastActive = s.LastActive,
                     IdThongBao = s.IdThongBao
                 });
@@ -140,21 +181,18 @@ namespace CafebookApi.Controllers.Web.KhachHang
             var idKhachHang = GetCurrentUserId();
             var responseDto = new SendChatKHResponseDto();
 
-            // 1. KIỂM TRA XEM PHIÊN CHAT NÀY ĐÃ CÓ TICKET HỖ TRỢ CHƯA
             var existingTicket = await _context.ThongBaoHoTros
                 .FirstOrDefaultAsync(t => t.IdKhachHang == idKhachHang
                                      && t.GuestSessionId == request.SessionId
                                      && t.TrangThai != "Đã xử lý");
 
-            // TRƯỜNG HỢP 1: ĐÃ CÓ NHÂN VIÊN TIẾP NHẬN (HOẶC ĐANG CHỜ)
             if (existingTicket != null)
             {
-                // Lưu tin nhắn của khách vào lịch sử (loại chat Realtime/Staff)
                 var msgRealtime = new ChatLichSu
                 {
                     IdKhachHang = idKhachHang,
                     GuestSessionId = request.SessionId,
-                    NoiDungHoi = "Chat Realtime", // Đánh dấu để frontend biết đây là luồng trực tuyến
+                    NoiDungHoi = "Chat Realtime", 
                     NoiDungTraLoi = request.NoiDung,
                     ThoiGian = DateTime.Now,
                     LoaiChat = "Web_SignalR",
@@ -164,7 +202,6 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 _context.ChatLichSus.Add(msgRealtime);
                 await _context.SaveChangesAsync();
 
-                // Bắn SignalR thông báo cho nhân viên biết có tin nhắn mới trong Ticket này
                 await _chatHubContext.Clients.All.SendAsync("ReloadTicketList");
 
                 responseDto.TinNhanCuaKhach = new ChatMessageDto
@@ -174,13 +211,12 @@ namespace CafebookApi.Controllers.Web.KhachHang
                     ThoiGian = msgRealtime.ThoiGian,
                     LoaiTinNhan = "KhachHang"
                 };
-                responseDto.DaChuyenNhanVien = true; // Báo cho frontend bật chế độ Realtime
+                responseDto.DaChuyenNhanVien = true;
                 responseDto.IdThongBaoHoTro = existingTicket.IdThongBao;
 
                 return Ok(responseDto);
             }
 
-            // TRƯỜNG HỢP 2: PHIÊN CHAT MỚI - GỌI AI NHƯ BÌNH THƯỜNG
             var history = await _context.ChatLichSus
                 .AsNoTracking()
                 .Where(c => c.IdKhachHang == idKhachHang && c.GuestSessionId == request.SessionId)

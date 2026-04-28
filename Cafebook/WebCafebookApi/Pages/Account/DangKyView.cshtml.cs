@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using CafebookModel.Model.ModelWeb.KhachHang;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -30,14 +32,44 @@ namespace WebCafebookApi.Pages.Account
             [Required(ErrorMessage = "Vui lòng xác nhận mật khẩu.")]
             [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp.")]
             public string ConfirmPassword { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "Vui lòng nhập mã xác thực.")]
+            public string CaptchaResult { get; set; } = string.Empty;
         }
 
-        public void OnGet(string? returnUrl = null) { ReturnUrl = returnUrl; }
+        private void GenerateCaptcha()
+        {
+            const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            var random = new Random();
+            var captcha = new string(Enumerable.Repeat(chars, 5)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+
+            HttpContext.Session.SetString("CaptchaCode", captcha);
+            ViewData["CaptchaCode"] = captcha;
+        }
+
+        public void OnGet(string? returnUrl = null)
+        {
+            ReturnUrl = returnUrl;
+            GenerateCaptcha(); 
+        }
 
         public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+            {
+                GenerateCaptcha(); 
+                return Page();
+            }
+
+            var expectedCaptcha = HttpContext.Session.GetString("CaptchaCode");
+            if (string.IsNullOrEmpty(expectedCaptcha) || !string.Equals(expectedCaptcha, Input.CaptchaResult, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("Input.CaptchaResult", "Mã xác thực không chính xác.");
+                GenerateCaptcha(); 
+                return Page();
+            }
 
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
             var apiRequest = new DangKyRequestDto { Email = Input.Email, SoDienThoai = Input.SoDienThoai, Password = Input.Password };
@@ -56,6 +88,8 @@ namespace WebCafebookApi.Pages.Account
                         TempData["TempPhone"] = apiResponse.TempPhone;
                         TempData["OtpMessage"] = apiResponse.Message;
 
+                        HttpContext.Session.Remove("CaptchaCode");
+
                         return RedirectToPage("/Account/XacMinhOtpView", new { returnUrl = returnUrl });
                     }
                     else if (apiResponse.IsOfficialAccount)
@@ -67,6 +101,8 @@ namespace WebCafebookApi.Pages.Account
                     ModelState.AddModelError(string.Empty, apiResponse.Message ?? "Lỗi đăng ký.");
                 }
             }
+
+            GenerateCaptcha(); 
             return Page();
         }
     }

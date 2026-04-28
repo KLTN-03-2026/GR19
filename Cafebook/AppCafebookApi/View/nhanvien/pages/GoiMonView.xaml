@@ -342,7 +342,19 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button x:Name="btnGiamSL" Content="-" Style="{StaticResource DataGridButtonStyle}" Click="BtnGiamSL_Click" Padding="0" Width="20" Height="20"/>
-                                    <TextBlock Text="{Binding SoLuong}" Margin="8,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
+
+                                    <TextBox x:Name="txtSoLuong" 
+                         Text="{Binding SoLuong, Mode=OneWay}" 
+                         Width="35" Margin="8,0" 
+                         TextAlignment="Center" 
+                         VerticalAlignment="Center" 
+                         FontWeight="SemiBold"
+                         BorderThickness="0,0,0,1"
+                         Background="Transparent"
+                         PreviewTextInput="TxtSoLuong_PreviewTextInput"
+                         LostFocus="TxtSoLuong_LostFocus"
+                         KeyDown="TxtSoLuong_KeyDown"/>
+
                                     <Button x:Name="btnTangSL" Content="+" Style="{StaticResource DataGridButtonStyle}" Click="BtnTangSL_Click" Padding="0" Width="20" Height="20"/>
                                 </StackPanel>
                             </DataTemplate>

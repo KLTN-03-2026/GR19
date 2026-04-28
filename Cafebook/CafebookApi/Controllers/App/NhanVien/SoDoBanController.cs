@@ -74,13 +74,33 @@ namespace CafebookApi.Controllers.App.NhanVien
         [HttpPost("createorder/{idBan}/{idNhanVien}")]
         public async Task<IActionResult> CreateOrder(int idBan, int idNhanVien)
         {
-            var ban = await _context.Bans.FindAsync(idBan);
+            var ban = await _context.Bans
+                                    .Where(b => b.IdBan == idBan)
+                                    .FirstOrDefaultAsync();
+
             if (ban == null) return NotFound("Không tìm thấy bàn.");
+
             if (ban.TrangThai != "Trống" && ban.TrangThai != "Đã đặt")
                 return Conflict("Bàn này đang bận hoặc đang bảo trì.");
 
-            var nhanVien = await _context.NhanViens.FindAsync(idNhanVien);
-            if (nhanVien == null) return NotFound("Nhân viên không hợp lệ.");
+            var now = DateTime.Now;
+            var khoangThoiGianAnToan = now.AddMinutes(90);
+
+            var phieuDatSapToi = await _context.PhieuDatBans
+                .Where(p => p.IdBan == idBan &&
+                            p.ThoiGianDat > now &&
+                            p.ThoiGianDat <= khoangThoiGianAnToan &&
+                            (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận"))
+                .OrderBy(p => p.ThoiGianDat)
+                .FirstOrDefaultAsync();
+
+            if (ban.TrangThai == "Trống" && phieuDatSapToi != null)
+            {
+                return Conflict($"Bàn này đã được đặt trước vào lúc {phieuDatSapToi.ThoiGianDat:HH:mm}. Quãng thời gian không đủ để nhận khách vãng lai!");
+            }
+
+            bool isNhanVienHopLe = await _context.NhanViens.AnyAsync(nv => nv.IdNhanVien == idNhanVien);
+            if (!isNhanVienHopLe) return NotFound("Nhân viên không hợp lệ.");
 
             var hoaDon = new HoaDon
             {
@@ -93,6 +113,12 @@ namespace CafebookApi.Controllers.App.NhanVien
 
             _context.HoaDons.Add(hoaDon);
             ban.TrangThai = "Có khách";
+
+            if (phieuDatSapToi != null && ban.TrangThai == "Đã đặt")
+            {
+                phieuDatSapToi.TrangThai = "Đã đến";
+            }
+
             await _context.SaveChangesAsync();
 
             return Ok(new { idHoaDon = hoaDon.IdHoaDon });

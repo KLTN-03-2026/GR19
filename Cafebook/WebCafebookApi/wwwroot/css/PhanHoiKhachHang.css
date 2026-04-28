@@ -1,63 +1,232 @@
-﻿.phkh-container {
-    padding: 1rem;
-    animation: fadeIn 0.4s ease-out;
+﻿/* PHẢN HỒI KHÁCH HÀNG - CAFEBOOK MATERIAL THEME */
+:root {
+    --phkh-primary: #5D4037; /* Nâu cà phê đậm */
+    --phkh-primary-light: #8D6E63;
+    --phkh-accent: #D84315; /* Cam đất */
+    --phkh-bg-light: #FDFBF9; /* Kem sáng */
+    --phkh-bg-surface: #FFF3E0; /* Be nhạt */
+    --phkh-border: #EFEBE9;
+    --phkh-text-dark: #3E2723;
+    --phkh-text-muted: #795548;
 }
 
-.phkh-nav-tabs .nav-link {
-    border: none;
-    color: #9E9E9E;
-    padding: 12px 20px;
-    transition: 0.3s;
-    border-bottom: 3px solid transparent;
+body {
+    background-color: var(--phkh-bg-light);
 }
 
-    .phkh-nav-tabs .nav-link.active {
-        color: #6F4E37;
-        border-bottom-color: #6F4E37;
-        background: none;
+.phkh-container {
+    padding-bottom: 40px;
+}
+
+.text-primary-coffee {
+    color: var(--phkh-primary) !important;
+}
+
+.bg-primary-coffee {
+    background-color: var(--phkh-primary) !important;
+    color: white;
+}
+
+/* Dashboard Stats Card */
+.phkh-stat-card {
+    background: linear-gradient(135deg, var(--phkh-primary), #3E2723);
+    color: white;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 10px 20px rgba(93, 64, 55, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.phkh-stat-score {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+/* Header Panel & Filter Bar */
+.phkh-header-panel, .phkh-filter-bar {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid var(--phkh-border);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.phkh-icon-circle {
+    width: 56px;
+    height: 56px;
+    background: var(--phkh-bg-surface);
+    color: var(--phkh-accent);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .phkh-icon-circle .material-symbols-outlined {
+        font-size: 32px;
     }
 
+/* Search Input */
+.phkh-search-input {
+    border-radius: 50px;
+    padding: 10px 20px 10px 45px;
+    border: 1px solid var(--phkh-border);
+    background: var(--phkh-bg-light) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="%238D6E63"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>') no-repeat 15px center;
+    transition: all 0.3s ease;
+}
+
+    .phkh-search-input:focus {
+        border-color: var(--phkh-primary);
+        box-shadow: 0 0 0 4px rgba(93, 64, 55, 0.1);
+        outline: none;
+    }
+
+/* Custom Switch Toggle */
+.form-switch .form-check-input {
+    width: 3em;
+    margin-left: -3em;
+}
+
+    .form-switch .form-check-input:checked {
+        background-color: var(--phkh-accent);
+        border-color: var(--phkh-accent);
+    }
+
+/* Nav Pills */
+.phkh-nav-pills {
+    background: #F5F5F5;
+    padding: 6px;
+    border-radius: 16px;
+    display: inline-flex;
+    flex-wrap: wrap; /* Hỗ trợ mobile */
+}
+
+    .phkh-nav-pills .nav-link {
+        border-radius: 12px;
+        color: var(--phkh-text-muted);
+        font-weight: 600;
+        padding: 10px 20px;
+        transition: all 0.3s;
+    }
+
+        .phkh-nav-pills .nav-link.active {
+            background-color: white;
+            color: var(--phkh-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+/* Review Cards */
 .phkh-review-card {
-    transition: transform 0.2s;
-    border: 1px solid #eee !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid var(--phkh-border) !important;
+    border-radius: 20px;
 }
 
     .phkh-review-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        box-shadow: 0 12px 24px rgba(93, 64, 55, 0.08) !important;
     }
 
 .phkh-review-img {
     width: 100%;
-    height: 150px;
+    height: 180px;
     object-fit: cover;
-    background: #f0f0f0;
-}
-
-.phkh-textarea {
     border-radius: 12px;
-    border: 2px solid #eee;
-    padding: 15px;
+    transition: opacity 0.3s;
 }
 
-    .phkh-textarea:focus {
-        border-color: #6F4E37;
-        box-shadow: none;
+    .phkh-review-img:hover {
+        opacity: 0.9;
+        cursor: pointer;
     }
 
+/* Reply Area */
 .phkh-reply-item {
+    background: var(--phkh-bg-surface);
+    border-left: 4px solid var(--phkh-accent);
+    padding: 12px;
+    border-radius: 0 12px 12px 0;
     font-size: 0.85rem;
-    line-height: 1.4;
+    color: var(--phkh-text-dark);
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
+/* Tables for Feedbacks */
+.phkh-table-head th {
+    background-color: #FAFAFA;
+    color: var(--phkh-primary-light);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--phkh-border);
+}
+
+/* Modals */
+.phkh-modal {
+    border-radius: 28px;
+    border: none;
+}
+
+.phkh-textarea-material {
+    border-radius: 16px;
+    border: 2px solid var(--phkh-border);
+    padding: 16px;
+    transition: all 0.3s;
+}
+
+    .phkh-textarea-material:focus {
+        border-color: var(--phkh-primary);
+        box-shadow: 0 0 0 4px rgba(93, 64, 55, 0.1);
+        outline: none;
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
+/* Buttons */
+.btn-primary-coffee {
+    background: var(--phkh-primary);
+    color: white;
+    border: none;
+    transition: 0.3s;
+}
+
+    .btn-primary-coffee:hover {
+        background: #3E2723;
+        color: white;
+        transform: scale(1.02);
     }
+
+.btn-outline-coffee {
+    border: 2px solid var(--phkh-primary);
+    color: var(--phkh-primary);
+}
+
+    .btn-outline-coffee:hover {
+        background: var(--phkh-primary);
+        color: white;
+    }
+
+/* Animations */
+@keyframes fadeScaleUp {
+    0% {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.anim-item {
+    animation: fadeScaleUp 0.4s ease-out backwards;
+}
+.modal {
+    z-index: 99999 !important;
+}
+
+.modal-backdrop {
+    z-index: 99998 !important;
 }

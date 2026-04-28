@@ -1,9 +1,11 @@
 using CafebookModel.Model.ModelWeb.KhachHang;
+using Microsoft.AspNetCore.Http; // Đảm bảo có thư viện này để dùng Session
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -16,7 +18,6 @@ namespace WebCafebookApi.Pages.Account
         private readonly IMemoryCache _cache;
         private readonly Random _random = new Random();
 
-        // Không cần truyền EmailService nữa
         public QuenMatKhauViewModel(IHttpClientFactory httpClientFactory, IMemoryCache cache)
         {
             _httpClientFactory = httpClientFactory;
@@ -34,18 +35,44 @@ namespace WebCafebookApi.Pages.Account
             [Required(ErrorMessage = "Vui lòng nhập email.")]
             [EmailAddress(ErrorMessage = "Định dạng email không hợp lệ.")]
             public string Email { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "Vui lòng nhập mã xác thực.")]
+            public string CaptchaResult { get; set; } = string.Empty;
         }
 
-        public void OnGet() { }
+        private void GenerateCaptcha()
+        {
+            const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            var captcha = new string(Enumerable.Repeat(chars, 5)
+                .Select(s => s[_random.Next(s.Length)]).ToArray());
+
+            HttpContext.Session.SetString("CaptchaCode", captcha);
+            ViewData["CaptchaCode"] = captcha;
+        }
+
+        public void OnGet()
+        {
+            GenerateCaptcha();
+        }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+            {
+                GenerateCaptcha();
+                return Page();
+            }
 
-            // 1. Tạo mã xác nhận động
+            var expectedCaptcha = HttpContext.Session.GetString("CaptchaCode");
+            if (string.IsNullOrEmpty(expectedCaptcha) || !string.Equals(expectedCaptcha, Input.CaptchaResult, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("Input.CaptchaResult", "Mã xác thực không chính xác.");
+                GenerateCaptcha(); 
+                return Page();
+            }
+
             string verificationCode = _random.Next(100000, 999999).ToString("D6");
 
-            // 2. Gói dữ liệu gửi xuống API
             var req = new GuiMaXacNhanRequestDto
             {
                 Email = Input.Email,
@@ -54,16 +81,16 @@ namespace WebCafebookApi.Pages.Account
 
             try
             {
-                // Dùng ApiClient động (Đọc từ file config)
                 var client = _httpClientFactory.CreateClient("ApiClient");
                 var response = await client.PostAsJsonAsync("api/web/quenmatkhau/gui-ma", req);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // Chỉ lưu Cache khi API xác nhận Email hợp lệ và đã gửi mail thành công
                     string cacheKey = $"ForgotPassword_{Input.Email}";
                     var cacheEntryOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
                     _cache.Set(cacheKey, verificationCode, cacheEntryOptions);
+
+                    HttpContext.Session.Remove("CaptchaCode");
 
                     TempData["VerificationEmail"] = Input.Email;
                     return RedirectToPage("./XacNhanMaView");
@@ -72,12 +99,14 @@ namespace WebCafebookApi.Pages.Account
                 {
                     var error = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
                     ModelState.AddModelError(string.Empty, error?.Message ?? "Có lỗi xảy ra, vui lòng thử lại.");
+                    GenerateCaptcha(); 
                     return Page();
                 }
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, $"Lỗi kết nối máy chủ: {ex.Message}");
+                GenerateCaptcha(); 
                 return Page();
             }
         }

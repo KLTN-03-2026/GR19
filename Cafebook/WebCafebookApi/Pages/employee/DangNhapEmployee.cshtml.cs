@@ -34,6 +34,20 @@ namespace WebCafebookApi.Pages.Employee
             [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
             [DataType(DataType.Password)]
             public string MatKhau { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "Vui lòng nhập mã xác thực")]
+            public string CaptchaResult { get; set; } = string.Empty;
+        }
+
+        private void GenerateCaptcha()
+        {
+            const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            var random = new Random();
+            var captcha = new string(Enumerable.Repeat(chars, 5)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+
+            HttpContext.Session.SetString("CaptchaCode", captcha);
+            ViewData["CaptchaCode"] = captcha;
         }
 
         public async Task OnGetAsync(string? returnUrl = null)
@@ -43,12 +57,23 @@ namespace WebCafebookApi.Pages.Employee
             HttpContext.Session.Remove("AvatarUrl");
 
             ReturnUrl = returnUrl ?? Url.Content("~/Employee/TongQuanView");
+
+            GenerateCaptcha();
         }
 
         public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
         {
             if (!ModelState.IsValid)
             {
+                GenerateCaptcha(); 
+                return Page();
+            }
+
+            var expectedCaptcha = HttpContext.Session.GetString("CaptchaCode");
+            if (string.IsNullOrEmpty(expectedCaptcha) || !string.Equals(expectedCaptcha, Input.CaptchaResult, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("Input.CaptchaResult", "Mã xác thực không chính xác.");
+                GenerateCaptcha(); 
                 return Page();
             }
 
@@ -104,6 +129,8 @@ namespace WebCafebookApi.Pages.Employee
                         HttpContext.Session.SetString("JwtToken", apiResponse.Token);
                         HttpContext.Session.SetString("AvatarUrl", avatar);
 
+                        HttpContext.Session.Remove("CaptchaCode");
+
                         if (string.IsNullOrEmpty(returnUrl) || returnUrl == "/")
                         {
                             return RedirectToPage("/Employee/TongQuanView");
@@ -121,6 +148,7 @@ namespace WebCafebookApi.Pages.Employee
                         if (errorJson.TryGetProperty("message", out var msg))
                         {
                             ErrorMessage = msg.GetString();
+                            GenerateCaptcha(); 
                             return Page();
                         }
                     }
@@ -128,11 +156,13 @@ namespace WebCafebookApi.Pages.Employee
                 }
 
                 ErrorMessage = "Tài khoản hoặc mật khẩu không chính xác.";
+                GenerateCaptcha();
                 return Page();
             }
             catch (Exception)
             {
                 ErrorMessage = "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.";
+                GenerateCaptcha();
                 return Page();
             }
         }
@@ -140,9 +170,7 @@ namespace WebCafebookApi.Pages.Employee
         public async Task<IActionResult> OnPostLogout()
         {
             HttpContext.Session.Clear();
-
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
             return RedirectToPage("/Employee/DangNhapEmployee");
         }
     }

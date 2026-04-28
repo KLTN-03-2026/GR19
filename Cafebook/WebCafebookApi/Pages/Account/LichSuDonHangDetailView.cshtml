@@ -37,7 +37,7 @@
                 {
                     <div class="card shadow-sm border-0 mb-4 bg-light">
                         <div class="card-body text-end p-3">
-                            @if (order.TrangThaiThanhToan == "Chờ thanh toán")
+                            @if (order.TrangThaiThanhToan == "Chờ thanh toán" && order.PhuongThucThanhToan != "COD")
                             {
                                 if (order.IsStoreOpen)
                                 {

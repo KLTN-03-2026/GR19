@@ -76,6 +76,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
                     ThanhTien = h.ThanhTien,
                     TrangThaiGiaoHang = h.TrangThaiGiaoHang ?? "Chờ xác nhận",
                     TrangThaiThanhToan = h.TrangThai,
+                    PhuongThucThanhToan = h.PhuongThucThanhToan ?? "COD",
                     TenSanPham = h.ChiTietHoaDons.FirstOrDefault() != null ? h.ChiTietHoaDons.FirstOrDefault()!.SanPham.TenSanPham : "Sản phẩm",
                     SoLuongSanPhamKhac = h.ChiTietHoaDons.Count > 1 ? h.ChiTietHoaDons.Count - 1 : 0,
                     HinhAnhUrl = h.ChiTietHoaDons.FirstOrDefault() != null ? h.ChiTietHoaDons.FirstOrDefault()!.SanPham.HinhAnh : null,

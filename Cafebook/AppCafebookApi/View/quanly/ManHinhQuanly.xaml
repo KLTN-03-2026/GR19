@@ -336,5 +336,25 @@
             </Border>
         </Border>
 
+        <Border x:Name="ToastNotification" 
+        Grid.Column="0" 
+        Background="#323232" 
+        CornerRadius="8" 
+        Padding="15,10"
+        HorizontalAlignment="Left" 
+        VerticalAlignment="Bottom" 
+        Margin="-300,0,0,140"
+        Panel.ZIndex="999" 
+        Opacity="0" 
+        IsHitTestVisible="False">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="2" BlurRadius="10" Opacity="0.3" Color="Black"/>
+            </Border.Effect>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="🔔" Margin="0,0,10,0" VerticalAlignment="Center" FontSize="16"/>
+                <TextBlock x:Name="txtToastMessage" Text="Bạn có thông báo mới!" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="200"/>
+            </StackPanel>
+        </Border>
+
     </Grid>
 </Window>

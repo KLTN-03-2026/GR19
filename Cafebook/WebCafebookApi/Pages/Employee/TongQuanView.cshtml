@@ -11,35 +11,69 @@
     <link rel="stylesheet" href="~/css/TongQuan.css" asp-append-version="true" />
 }
 
-<div class="tqnv-container">
+<div class="tqnv-container fade-in-up">
     <div class="row g-4">
         <div class="col-lg-5 col-xl-4">
             <div class="tqnv-card tqnv-profile-card">
                 <div class="tqnv-profile-header">
-                    <img src="@(Model.DashboardData.ThongTin.AnhDaiDien ?? HinhAnhPaths.WebDefaultAvatar)"
-                         alt="Avatar" class="tqnv-avatar-large"
-                         onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultAvatar';">
+                    <div class="tqnv-avatar-wrapper">
+                        <img src="@(Model.DashboardData.ThongTin.AnhDaiDien ?? HinhAnhPaths.WebDefaultAvatar)"
+                             alt="Avatar" class="tqnv-avatar-large"
+                             onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultAvatar';">
+                    </div>
                     <h3 class="tqnv-profile-name">@(Model.DashboardData.ThongTin.HoTen ?? "Đang cập nhật")</h3>
-                    <span class="tqnv-badge tqnv-role-badge">@Model.DashboardData.ThongTin.TenVaiTro</span>
                     
-                    @if (Model.DashboardData.ThongTin.TrangThaiLamViec == "Đang làm việc")
-                    {
-                        <span class="tqnv-badge tqnv-status-active">Đang làm việc</span>
-                    }
-                    else
-                    {
-                        <span class="tqnv-badge tqnv-status-inactive">@Model.DashboardData.ThongTin.TrangThaiLamViec</span>
-                    }
+                    <div class="tqnv-badges-container">
+                        <span class="tqnv-badge tqnv-role-badge">
+                            <span class="material-symbols-outlined icon-small">work</span>
+                            @Model.DashboardData.ThongTin.TenVaiTro
+                        </span>
+                        
+                        @if (Model.DashboardData.ThongTin.TrangThaiLamViec == "Đang làm việc")
+                        {
+                            <span class="tqnv-badge tqnv-status-active">
+                                <span class="material-symbols-outlined icon-small">check_circle</span>
+                                Đang làm việc
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="tqnv-badge tqnv-status-inactive">
+                                <span class="material-symbols-outlined icon-small">cancel</span>
+                                @Model.DashboardData.ThongTin.TrangThaiLamViec
+                            </span>
+                        }
+                    </div>
                 </div>
 
                 <div class="tqnv-profile-details">
-                    <div class="tqnv-detail-item"><span class="material-symbols-outlined tqnv-icon">mail</span><span>@(Model.DashboardData.ThongTin.Email ?? "Chưa cập nhật")</span></div>
-                    <div class="tqnv-detail-item"><span class="material-symbols-outlined tqnv-icon">call</span><span>@(Model.DashboardData.ThongTin.SoDienThoai ?? "Chưa cập nhật")</span></div>
-                    <div class="tqnv-detail-item"><span class="material-symbols-outlined tqnv-icon">badge</span><span>ID: #@Model.DashboardData.ThongTin.IdNhanVien</span></div>
+                    <div class="tqnv-detail-item">
+                        <div class="tqnv-icon-box"><span class="material-symbols-outlined">mail</span></div>
+                        <div class="tqnv-detail-text">
+                            <span class="tqnv-detail-label">Email</span>
+                            <span class="tqnv-detail-value">@(Model.DashboardData.ThongTin.Email ?? "Chưa cập nhật")</span>
+                        </div>
+                    </div>
+                    <div class="tqnv-detail-item">
+                        <div class="tqnv-icon-box"><span class="material-symbols-outlined">call</span></div>
+                        <div class="tqnv-detail-text">
+                            <span class="tqnv-detail-label">Số điện thoại</span>
+                            <span class="tqnv-detail-value">@(Model.DashboardData.ThongTin.SoDienThoai ?? "Chưa cập nhật")</span>
+                        </div>
+                    </div>
+                    <div class="tqnv-detail-item">
+                        <div class="tqnv-icon-box"><span class="material-symbols-outlined">badge</span></div>
+                        <div class="tqnv-detail-text">
+                            <span class="tqnv-detail-label">Mã nhân sự</span>
+                            <span class="tqnv-detail-value">#@Model.DashboardData.ThongTin.IdNhanVien</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="text-center mt-4">
-                    <a asp-page="/Employee/ThongTinCaNhanView" class="btn tqnv-btn-outline w-100">Cập nhật thông tin</a>
+                    <a asp-page="/Employee/ThongTinCaNhanView" class="btn tqnv-btn-outline w-100 material-ripple">
+                        <span class="material-symbols-outlined me-2">edit_square</span> Cập nhật thông tin
+                    </a>
                 </div>
             </div>
         </div>
@@ -47,26 +81,48 @@
         <div class="col-lg-7 col-xl-8">
             <div class="tqnv-card tqnv-notification-card">
                 <div class="tqnv-card-header">
-                    <h4 class="tqnv-card-title"><span class="material-symbols-outlined me-2 text-warning">notifications_active</span> Thông báo mới</h4>
+                    <h4 class="tqnv-card-title">
+                        <span class="material-symbols-outlined me-2 text-accent">notifications_active</span>
+                        Thông báo hệ thống
+                    </h4>
+                    <span class="tqnv-noti-count">@Model.DashboardData.DanhSachThongBao.Count(x => !x.DaXem) thông báo mới</span>
                 </div>
+                
                 <div class="tqnv-notification-list">
                     @if (Model.DashboardData.DanhSachThongBao.Any())
                     {
                         foreach (var item in Model.DashboardData.DanhSachThongBao)
                         {
                             <div class="tqnv-noti-item @(item.DaXem ? "read" : "unread")">
-                                <div class="tqnv-noti-icon"><span class="material-symbols-outlined">@(item.DaXem ? "mark_email_read" : "mail")</span></div>
-                                <div class="tqnv-noti-content">
-                                    <h6 class="tqnv-noti-title">@item.LoaiThongBao</h6>
-                                    <p class="tqnv-noti-desc">@item.NoiDung</p>
-                                    <span class="tqnv-noti-time">@item.ThoiGianTao.ToString("dd/MM/yyyy HH:mm") - Bởi: @item.TenNhanVienTao</span>
+                                <div class="tqnv-noti-icon-wrapper">
+                                    <span class="material-symbols-outlined">@(item.DaXem ? "drafts" : "mail")</span>
                                 </div>
+                                <div class="tqnv-noti-content">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="tqnv-noti-title">@item.LoaiThongBao</h6>
+                                        <span class="tqnv-noti-time">@item.ThoiGianTao.ToString("dd/MM/yyyy HH:mm")</span>
+                                    </div>
+                                    <p class="tqnv-noti-desc">@item.NoiDung</p>
+                                    <div class="tqnv-noti-footer">
+                                        <span class="material-symbols-outlined icon-tiny">person</span> Gửi bởi: @item.TenNhanVienTao
+                                    </div>
+                                </div>
+                                @if (!item.DaXem)
+                                {
+                                    <div class="tqnv-unread-indicator"></div>
+                                }
                             </div>
                         }
                     }
                     else
                     {
-                        <div class="tqnv-empty-state"><span class="material-symbols-outlined tqnv-empty-icon">check_circle</span><p>Không có thông báo nào.</p></div>
+                        <div class="tqnv-empty-state">
+                            <div class="tqnv-empty-icon-circle">
+                                <span class="material-symbols-outlined tqnv-empty-icon">coffee</span>
+                            </div>
+                            <h5>Mọi thứ đều ổn!</h5>
+                            <p>Bạn không có thông báo mới nào vào lúc này.</p>
+                        </div>
                     }
                 </div>
             </div>
@@ -79,7 +135,12 @@
         $(document).ready(function () {
             var errorMsg = '@Html.Raw(Model.ErrorMessage?.Replace("'", "\\'"))';
             if (errorMsg && errorMsg.trim() !== '') {
-                Swal.fire({ icon: 'error', title: 'Đã xảy ra lỗi', text: errorMsg, confirmButtonColor: '#D32F2F' });
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Đã xảy ra lỗi',
+                    text: errorMsg,
+                    confirmButtonColor: '#D84315'
+                });
             }
         });
     </script>

@@ -150,6 +150,34 @@ main {
     color: rgba(255, 255, 255, 0.3);
 }
 
+/* === NÚT THAO TÁC NHANH TRÊN MOBILE & TABLET === */
+.mobile-quick-actions .btn {
+    border-radius: 20px;
+    padding: 5px 10px;
+    border-width: 1.5px;
+}
+
+.mobile-quick-actions .cf-cart-btn {
+    margin-right: 0;
+    padding: 0.2rem;
+}
+
+    .mobile-quick-actions .cf-cart-btn .material-symbols-outlined {
+        font-size: 1.6rem;
+    }
+
+/* Đảm bảo nút hamburger không bị padding thừa ép các nút khác */
+.navbar-toggler {
+    padding: 2px !important;
+}
+
+/* Tối ưu các nút trên Mobile Bar */
+.mobile-quick-actions .btn-outline-primary {
+    border-radius: 4px;
+    font-weight: 700;
+    border-width: 1.5px;
+}
+
 /* === MOBILE RESPONSIVE CHO LAYOUT === */
 @media (max-width: 991.98px) {
     .cf-navbar .navbar-collapse {
@@ -180,29 +208,309 @@ main {
         gap: 15px;
     }
 }
-/* === NÚT THAO TÁC NHANH TRÊN MOBILE & TABLET === */
-.mobile-quick-actions .btn {
-    border-radius: 20px;
-    padding: 5px 10px;
-    border-width: 1.5px;
+
+
+/* ==========================================
+   START: BÓNG CHAT NỔI VÀ POPUP (WIDGET UI)
+   ========================================== */
+
+/* 1. NÚT BÓNG CHAT */
+.floating-chat-widget {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 999999; /* Z-index rất cao để nổi trên tất cả */
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
 }
 
-.mobile-quick-actions .cf-cart-btn {
-    margin-right: 0;
-    padding: 0.2rem;
+.floating-chat-btn {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #D84315, #E65100);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(216, 67, 21, 0.4);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    border: none;
+    outline: none;
+    cursor: pointer;
 }
 
-    .mobile-quick-actions .cf-cart-btn .material-symbols-outlined {
-        font-size: 1.6rem;
+    .floating-chat-btn .material-symbols-outlined {
+        font-size: 30px;
     }
 
-/* Đảm bảo nút hamburger không bị padding thừa ép các nút khác */
-.navbar-toggler {
-    padding: 2px !important;
+    .floating-chat-btn:hover {
+        transform: scale(1.1) translateY(-5px);
+        box-shadow: 0 10px 25px rgba(216, 67, 21, 0.5);
+        color: white;
+    }
+
+.chat-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #FFD54F;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid white;
+    animation: pulse 2s infinite;
 }
-/* Tối ưu các nút trên Mobile Bar */
-.mobile-quick-actions .btn-outline-primary {
-    border-radius: 4px;
-    font-weight: 700;
-    border-width: 1.5px;
+
+/* 2. CỬA SỔ POPUP */
+.chat-popup-window {
+    position: fixed;
+    bottom: 100px; /* Nằm trên nút tròn */
+    right: 30px;
+    width: 360px;
+    height: 520px;
+    background: var(--cf-surface, #FFFFFF);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(78, 52, 46, 0.15);
+    display: flex;
+    flex-direction: column;
+    z-index: 999999; /* Z-index rất cao */
+    overflow: hidden;
+    animation: slideUpFade 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.chat-popup-header {
+    background: linear-gradient(135deg, var(--cf-terra, #D84315), #E65100);
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 2;
+}
+
+.chat-popup-body {
+    flex-grow: 1;
+    background: var(--cf-beige, #F9F9F9);
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+}
+
+.chat-popup-footer {
+    display: flex;
+    padding: 12px;
+    background: white;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    gap: 8px;
+    align-items: center;
+}
+
+.popup-input {
+    flex-grow: 1;
+    border: 1px solid #E0E0E0;
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.3s;
+    background: #FAFAFA;
+}
+
+    .popup-input:focus {
+        border-color: var(--cf-terra, #D84315);
+        background: white;
+    }
+
+.popup-btn {
+    background: var(--cf-terra, #D84315);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+    .popup-btn:hover:not(:disabled) {
+        transform: scale(1.1);
+    }
+
+    .popup-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+/* 3. NỘI DUNG TIN NHẮN BÊN TRONG POPUP */
+.popup-msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 4px;
+    animation: slideInUp 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+    .popup-msg-row.user {
+        flex-direction: row-reverse;
+    }
+
+.popup-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+    .popup-avatar.bot {
+        background: var(--cf-brown, #5D4037);
+    }
+
+    .popup-avatar.user {
+        background: var(--cf-terra, #D84315);
+    }
+
+    .popup-avatar .material-symbols-outlined {
+        font-size: 18px;
+    }
+
+.popup-content {
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+}
+
+.popup-msg-row.user .popup-content {
+    align-items: flex-end;
+}
+
+.popup-msg-row.bot .popup-content {
+    align-items: flex-start;
+}
+
+.popup-bubble {
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    word-wrap: break-word;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.popup-msg-row.user .popup-bubble {
+    background: linear-gradient(135deg, #FF7043, #D84315);
+    color: white;
+    border-bottom-right-radius: 4px; /* Vuông góc ở đuôi */
+}
+
+.popup-msg-row.bot .popup-bubble {
+    background: white;
+    color: #3E2723;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-bottom-left-radius: 4px;
+}
+
+.popup-time {
+    font-size: 0.7rem;
+    color: #8D6E63;
+    margin-top: 4px;
+}
+
+/* 4. ANIMATIONS VÀ RESPONSIVE CHO WIDGET CHAT */
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 213, 79, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 213, 79, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 213, 79, 0);
+    }
+}
+
+@media (max-width: 768px) {
+    .floating-chat-widget {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .floating-chat-btn {
+        width: 50px;
+        height: 50px;
+    }
+
+        .floating-chat-btn .material-symbols-outlined {
+            font-size: 24px;
+        }
+
+    .chat-badge {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .chat-popup-window {
+        width: 100%;
+        height: 100vh; /* Mở full màn hình trên điện thoại */
+        bottom: 0;
+        right: 0;
+        border-radius: 0;
+        z-index: 9999999;
+    }
 }

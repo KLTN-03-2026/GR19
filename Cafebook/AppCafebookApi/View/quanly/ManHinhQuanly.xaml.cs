@@ -19,25 +19,18 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using AppCafebookApi.View.nhanvien.pages;
 using CafebookModel.Model.ModelApp.NhanVien;
+using System.Threading;
 
 namespace AppCafebookApi.View.quanly
 {
     public partial class ManHinhQuanly : Window
     {
         private ToggleButton? currentNavButton;
-        //private static readonly HttpClient httpClient;
         private DispatcherTimer _notificationTimer;
-        private Page? _targetPageForNotification = null; // Lưu trang đích khi click thông báo
-        /*
-        static ManHinhQuanly()
-        {
-            string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:";
-            httpClient = new HttpClient
-            {
-                BaseAddress = new Uri(apiUrl)
-            };
-        }
-        */
+        private Page? _targetPageForNotification = null; 
+        private int _lastLatestNotificationId = 0;
+        private CancellationTokenSource? _toastCts; 
+
         public ManHinhQuanly()
         {
             InitializeComponent();
@@ -105,13 +98,11 @@ namespace AppCafebookApi.View.quanly
                 btnNhanSu.Visibility = Visibility.Visible;
                 btnKhachHang.Visibility = Visibility.Visible;
 
-                // Thêm các nút này
                 btnThongTinCaNhan.Visibility = Visibility.Visible;
                 btnChamCong.Visibility = Visibility.Visible;
                 btnLichLamViecCuaToi.Visibility = Visibility.Visible;
                 btnPhieuLuongCuaToi.Visibility = Visibility.Visible;
 
-                // Hiển thị cả 2 nút thông báo
                 btnThongBao.Visibility = Visibility.Visible;
                 btnQuanLyThongBao.Visibility = Visibility.Visible;
                 return;
@@ -127,16 +118,13 @@ namespace AppCafebookApi.View.quanly
             btnNhanSu.Visibility = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
             btnKhachHang.Visibility = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI") ? Visibility.Visible : Visibility.Collapsed;
 
-            // Thêm phân quyền cho nhóm cá nhân (Dùng chung quyền cá nhân như bên nhân viên)
             btnThongTinCaNhan.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THONG_TIN") ? Visibility.Visible : Visibility.Collapsed;
             btnChamCong.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG") ? Visibility.Visible : Visibility.Collapsed;
             btnLichLamViecCuaToi.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_LICH_LAM_VIEC") ? Visibility.Visible : Visibility.Collapsed;
             btnPhieuLuongCuaToi.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_PHIEU_LUONG") ? Visibility.Visible : Visibility.Collapsed;
 
-            // Nút cái chuông ngoài màn hình chính
             btnThongBao.Visibility = AuthService.CoQuyen("FULL_QL", "CM_THONG_BAO") ? Visibility.Visible : Visibility.Collapsed;
 
-            // Nút "Tới màn hình Quản lý Thông báo" ở dưới cùng của Popup
             btnQuanLyThongBao.Visibility = AuthService.CoQuyen("FULL_QL", "QL_THONG_BAO") ? Visibility.Visible : Visibility.Collapsed;
         }
 
@@ -144,13 +132,11 @@ namespace AppCafebookApi.View.quanly
         {
             if (AuthService.CurrentUser == null) return;
 
-            // Chỉ kiểm tra nếu user có quyền chấm công
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG", "QL_CHAM_CONG"))
                 return;
 
             try
             {
-                // Gọi API lấy trạng thái
                 string url = $"api/app/chamcong/status/{AuthService.CurrentUser.IdNhanVien}";
                 var response = await ApiClient.Instance.GetFromJsonAsync<ChamCongDashboardDto>(url);
 
@@ -197,13 +183,6 @@ namespace AppCafebookApi.View.quanly
         {
             var clickedButton = sender as ToggleButton;
             if (clickedButton == null) return;
-            /*
-            if (clickedButton == currentNavButton)
-            {
-                clickedButton.IsChecked = true;
-                return;
-            }
-            */
             Page? pageToNavigate = null;
             bool hasPermission = false;
 
@@ -296,10 +275,6 @@ namespace AppCafebookApi.View.quanly
             currentNavButton.IsChecked = true;
         }
 
-        // =================================================================================
-        // HỆ THỐNG THÔNG BÁO 
-        // =================================================================================
-
         private void BtnThongBao_Click(object sender, RoutedEventArgs e)
         {
             popThongBao.IsOpen = !popThongBao.IsOpen;
@@ -311,7 +286,6 @@ namespace AppCafebookApi.View.quanly
 
             try
             {
-                // 1. Quét danh sách các quyền nghiệp vụ hiện tại của user để API phân loại chính xác
                 var myRoles = new List<string>();
                 if (AuthService.CoQuyen("FULL_QL")) myRoles.Add("FULL_QL");
                 if (AuthService.CoQuyen("QL_BAN")) myRoles.Add("QL_BAN");
@@ -324,12 +298,11 @@ namespace AppCafebookApi.View.quanly
                 string roles = string.Join(",", myRoles);
                 string rName = Uri.EscapeDataString(AuthService.CurrentUser.TenVaiTro ?? "");
 
-                // 2. PHẢI CÓ THAM SỐ roleName để API không báo lỗi 400
                 string url = $"api/shared/thongbao/my-notifications?userId={AuthService.CurrentUser.IdNhanVien}&userRoles={roles}&roleName={rName}";
 
                 var response = await ApiClient.Instance.GetFromJsonAsync<SharedThongBaoResponseDto>(url);
 
-                if (response != null)
+                if (response != null && response.Notifications != null)
                 {
                     lstThongBao.ItemsSource = response.Notifications;
 
@@ -342,11 +315,80 @@ namespace AppCafebookApi.View.quanly
                     {
                         BadgeThongBao.Visibility = Visibility.Collapsed;
                     }
+
+                    if (response.Notifications.Any())
+                    {
+                        var maxIdInList = response.Notifications.Max(n => n.IdThongBao);
+
+                        if (_lastLatestNotificationId != 0 && maxIdInList > _lastLatestNotificationId)
+                        {
+                            var newNotifs = response.Notifications.Where(n => n.IdThongBao > _lastLatestNotificationId).ToList();
+                            var newCount = newNotifs.Count;
+
+                            var trulyLatestNotif = newNotifs.OrderByDescending(n => n.IdThongBao).First();
+
+                            string msg = newCount == 1 ? trulyLatestNotif.NoiDung : $"Bạn vừa có {newCount} thông báo mới!";
+                            ShowToastNotification(msg);
+                        }
+
+                        _lastLatestNotificationId = Math.Max(_lastLatestNotificationId, maxIdInList);
+                    }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) { Debug.WriteLine($"Lỗi load thông báo: {ex.Message}"); }
+        }
+
+        private async void ShowToastNotification(string message)
+        {
+            _toastCts?.Cancel();
+            _toastCts = new CancellationTokenSource();
+            var token = _toastCts.Token;
+
+            txtToastMessage.Text = message;
+
+            var showStoryboard = new System.Windows.Media.Animation.Storyboard();
+
+            var slideUp = new System.Windows.Media.Animation.ThicknessAnimation
             {
-                Debug.WriteLine($"Lỗi load thông báo QL: {ex.Message}");
+                From = new Thickness(0, 0, -300, 140),
+                To = new Thickness(0, 0, 10, 140),
+                Duration = TimeSpan.FromSeconds(0.5),
+                EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+            };
+            System.Windows.Media.Animation.Storyboard.SetTarget(slideUp, ToastNotification);
+            System.Windows.Media.Animation.Storyboard.SetTargetProperty(slideUp, new PropertyPath("Margin"));
+
+            var fadeIn = new System.Windows.Media.Animation.DoubleAnimation
+            {
+                To = 1,
+                Duration = TimeSpan.FromSeconds(0.4)
+            };
+            System.Windows.Media.Animation.Storyboard.SetTarget(fadeIn, ToastNotification);
+            System.Windows.Media.Animation.Storyboard.SetTargetProperty(fadeIn, new PropertyPath("Opacity"));
+
+            showStoryboard.Children.Add(slideUp);
+            showStoryboard.Children.Add(fadeIn);
+            showStoryboard.Begin();
+
+            try
+            {
+                await Task.Delay(3500, token);
+
+                var hideStoryboard = new System.Windows.Media.Animation.Storyboard();
+                var fadeOut = new System.Windows.Media.Animation.DoubleAnimation
+                {
+                    To = 0,
+                    Duration = TimeSpan.FromSeconds(0.4)
+                };
+                System.Windows.Media.Animation.Storyboard.SetTarget(fadeOut, ToastNotification);
+                System.Windows.Media.Animation.Storyboard.SetTargetProperty(fadeOut, new PropertyPath("Opacity"));
+
+                hideStoryboard.Children.Add(fadeOut);
+                hideStoryboard.Begin();
+            }
+            catch (TaskCanceledException)
+            {
+                // Có thông báo mới xen vào, tiến trình ẩn bị hủy -> Không làm gì cả, để Toast tiếp tục hiện
             }
         }
 
@@ -373,7 +415,6 @@ namespace AppCafebookApi.View.quanly
                 lblDetailTime.Text = $"Gửi lúc: {tb.ThoiGianTao:dd/MM/yyyy HH:mm}";
                 txtDetailContent.Text = tb.NoiDung;
 
-                // XÁC ĐỊNH TRANG ĐIỀU HƯỚNG DÀNH CHO QUẢN LÝ
                 _targetPageForNotification = tb.LoaiThongBao switch
                 {
                     "SuCoBan" => new QuanLySuCoBanView(),
@@ -385,7 +426,6 @@ namespace AppCafebookApi.View.quanly
                     _ => null
                 };
 
-                // Ẩn/Hiện nút "Đi tới trang"
                 btnDetailGoTo.Visibility = _targetPageForNotification != null ? Visibility.Visible : Visibility.Collapsed;
                 DetailThongBaoOverlay.Visibility = Visibility.Visible;
             }
@@ -396,7 +436,6 @@ namespace AppCafebookApi.View.quanly
             DetailThongBaoOverlay.Visibility = Visibility.Collapsed;
             if (_targetPageForNotification != null)
             {
-                // Cập nhật trạng thái của nút Sidebar cho Quản lý
                 if (_targetPageForNotification is QuanLyBanView) UpdateSelectedButton(btnBan);
                 else if (_targetPageForNotification is QuanLyTonKhoView) UpdateSelectedButton(btnKho);
                 else if (_targetPageForNotification is QuanLyDonHangView) UpdateSelectedButton(btnDonHang);
@@ -412,7 +451,6 @@ namespace AppCafebookApi.View.quanly
         }
         private void BtnMoQuanLyThongBao_Click(object sender, RoutedEventArgs e)
         {
-            // Bảo vệ lớp 2: Chặn ngay nếu không có quyền
             if (!AuthService.CoQuyen("FULL_QL", "QL_THONG_BAO"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập chức năng Quản lý Thông báo!", "Từ chối truy cập", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -423,9 +461,6 @@ namespace AppCafebookApi.View.quanly
             MainFrame.Navigate(new QuanLyThongBaoView());
         }
 
-        // =================================================================================
-        // ĐĂNG XUẤT
-        // =================================================================================
         private void BtnDangXuat_Click(object sender, RoutedEventArgs e)
         {
             var result = MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất", MessageBoxButton.YesNo, MessageBoxImage.Question);

@@ -378,6 +378,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             if (_selectedBan == null) return;
 
+            // Nếu bàn đã có khách, chuyển thẳng sang màn hình gọi món
             if (_selectedBan.TrangThai == "Có khách")
             {
                 int? idHoaDon = _selectedBan.IdHoaDonHienTai;
@@ -394,6 +395,8 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
+            // Vô hiệu hóa nút trong lúc chờ API để tránh user click double tạo ra 2 hóa đơn
+            btnGoiMon.IsEnabled = false;
             int idNhanVien = AuthService.CurrentUser.IdNhanVien;
             int? idHoaDonMoi = null;
 
@@ -417,19 +420,25 @@ namespace AppCafebookApi.View.nhanvien.pages
                     {
                         idHoaDonMoi = result.idHoaDon;
                     }
-                    if (_selectedBan.IdBan > 0)
-                    {
-                        await ReloadDataAsync();
-                    }
+
+                    // XÓA: await ReloadDataAsync(); <--- Nguyên nhân gây giật lag
+                    // Không cần tải lại sơ đồ vì chúng ta sắp chuyển trang ngay lập tức
                 }
                 else
                 {
                     MessageBox.Show(await response.Content.ReadAsStringAsync(), "Lỗi tạo hóa đơn");
+                    btnGoiMon.IsEnabled = true;
                     return;
                 }
             }
-            catch (Exception ex) { MessageBox.Show($"Lỗi API: {ex.Message}", "Lỗi"); return; }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi API: {ex.Message}", "Lỗi");
+                btnGoiMon.IsEnabled = true;
+                return;
+            }
 
+            // Chuyển trang ngay sau khi có ID hóa đơn
             if (idHoaDonMoi.HasValue)
             {
                 this.NavigationService?.Navigate(new GoiMonView(idHoaDonMoi.Value));
@@ -438,6 +447,10 @@ namespace AppCafebookApi.View.nhanvien.pages
                 {
                     ResetForm();
                 }
+            }
+            else
+            {
+                btnGoiMon.IsEnabled = true; // Phục hồi nút nếu có lỗi logic
             }
         }
 

@@ -23,13 +23,18 @@ namespace WebCafebookApi.Pages.Employee
         public SoDoBanViewModel(IHttpClientFactory httpClientFactory, IDataProtectionProvider provider)
         {
             _httpClientFactory = httpClientFactory;
-            _protector = provider.CreateProtector("Cafebook.HoaDon.Security"); 
+            _protector = provider.CreateProtector("Cafebook.HoaDon.Security");
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
             JwtToken = HttpContext.Session.GetString("JwtToken");
-            if (string.IsNullOrEmpty(JwtToken)) return RedirectToPage("/Employee/DangNhapEmployee");
+
+            if (string.IsNullOrEmpty(JwtToken))
+            {
+                string currentUrl = Request.Path + Request.QueryString;
+                return RedirectToPage("/Employee/DangNhapEmployee", new { ReturnUrl = currentUrl });
+            }
 
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
             ApiBaseUrl = $"{httpClient.BaseAddress}api/web/nhanvien/sodobanweb";
@@ -43,7 +48,9 @@ namespace WebCafebookApi.Pages.Employee
             {
                 HttpContext.Session.Remove("JwtToken");
                 TempData["ErrorMessage"] = "Phiên đăng nhập hết hạn.";
-                return RedirectToPage("/Employee/DangNhapEmployee");
+
+                string currentUrl = Request.Path + Request.QueryString;
+                return RedirectToPage("/Employee/DangNhapEmployee", new { ReturnUrl = currentUrl });
             }
             catch (Exception ex)
             {

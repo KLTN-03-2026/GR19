@@ -25,6 +25,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public string? TenNguoiGiaoHang { get; set; }
         public string? GhiChu { get; set; }
         public int? IdNhanVien { get; set; }
+        public string? AnhGiaoHang { get; set; }
     }
 
     public class NguoiGiaoHangDto

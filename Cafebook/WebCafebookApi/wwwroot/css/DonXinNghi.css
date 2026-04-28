@@ -1,69 +1,173 @@
-﻿.dxn-container {
+﻿/* MODULE: ĐƠN XIN NGHỈ (Material Coffee Theme) */
+:root {
+    --dxn-primary: #5D4037;
+    --dxn-accent: #D84315;
+    --dxn-bg: #FDFBF9;
+    --dxn-border: #EFEBE9;
+    --dxn-pending-bg: #FFF3E0;
+    --dxn-pending-text: #E65100;
+    --dxn-approved-bg: #E8F5E9;
+    --dxn-approved-text: #2E7D32;
+    --dxn-rejected-bg: #FFEBEE;
+    --dxn-rejected-text: #C62828;
+}
+
+.dxn-container {
     padding: 10px 0;
 }
 
-.dxn-card {
-    border: 1px solid #E0E0E0;
-    border-radius: 12px;
+.text-primary-coffee {
+    color: var(--dxn-primary);
+}
+
+.bg-primary-coffee {
+    background-color: var(--dxn-primary);
+}
+
+.dxn-card-main {
+    border-radius: 24px;
     overflow: hidden;
+    background: white;
 }
 
-.dxn-input {
-    border-radius: 8px;
-    border: 1px solid #BDBDBD;
-    padding: 10px 15px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+.dxn-icon-box {
+    width: 42px;
+    height: 42px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-    .dxn-input:focus {
-        border-color: #6F4E37;
-        box-shadow: 0 0 0 3px rgba(111, 78, 55, 0.15);
-        outline: none;
+/* Form Styles */
+.dxn-input-material {
+    border-radius: 12px;
+    border: 2px solid var(--dxn-border);
+    padding: 12px 16px;
+    transition: all 0.2s ease;
+}
+
+    .dxn-input-material:focus {
+        border-color: var(--dxn-primary);
+        box-shadow: 0 0 0 4px rgba(93, 64, 55, 0.1);
     }
 
-.dxn-btn-submit {
-    background-color: #6F4E37;
+.btn-primary-coffee {
+    background-color: var(--dxn-primary);
     color: white;
-    border-radius: 8px;
-    padding: 12px;
-    transition: all 0.3s ease;
+    border: none;
+    transition: all 0.3s;
 }
 
-    .dxn-btn-submit:hover {
-        background-color: #4E342E;
+    .btn-primary-coffee:hover {
+        background-color: #3E2723;
         color: white;
         transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(78, 52, 46, 0.2);
     }
 
-    .dxn-btn-submit:disabled {
-        background-color: #9E9E9E;
-        transform: none;
-        box-shadow: none;
+/* History List Styles */
+.dxn-history-scroll {
+    max-height: 650px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+    .dxn-history-scroll::-webkit-scrollbar {
+        width: 6px;
     }
 
-/* Kiểu dáng cho danh sách Lịch sử */
+    .dxn-history-scroll::-webkit-scrollbar-thumb {
+        background: #D7CCC8;
+        border-radius: 10px;
+    }
+
 .dxn-history-item {
-    background-color: #F9F9F9;
-    border-left: 4px solid #BDBDBD;
-    border-radius: 8px;
-    padding: 15px;
-    transition: background-color 0.2s ease;
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    transition: transform 0.2s ease;
 }
 
     .dxn-history-item:hover {
-        background-color: #F5F5F5;
+        transform: scale(1.01);
     }
 
-    /* Đổi màu viền dựa theo trạng thái (kết hợp logic JS) */
-    .dxn-history-item:has(.bg-warning) {
-        border-left-color: #FFC107;
+/* Status Styles */
+.status-pending {
+    background-color: var(--dxn-pending-bg);
+    color: var(--dxn-pending-text);
+}
+
+.status-approved {
+    background-color: var(--dxn-approved-bg);
+    color: var(--dxn-approved-text);
+}
+
+.status-rejected {
+    background-color: var(--dxn-rejected-bg);
+    color: var(--dxn-rejected-text);
+}
+
+.dxn-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.5);
+}
+
+.dxn-reason-text {
+    background: rgba(255,255,255,0.4);
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.dxn-reply-box {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(0,0,0,0.1);
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+/* Empty State */
+.dxn-empty-state {
+    text-align: center;
+    padding: 60px;
+    color: #BDBDBD;
+}
+
+    .dxn-empty-state .material-symbols-outlined {
+        font-size: 4rem;
+        margin-bottom: 10px;
     }
 
-    .dxn-history-item:has(.bg-success) {
-        border-left-color: #4CAF50;
+/* Animations */
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
 
-    .dxn-history-item:has(.bg-danger) {
-        border-left-color: #F44336;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
+}
+
+@media (max-width: 768px) {
+    .dxn-card-main {
+        border-radius: 0;
+        margin: -15px;
+    }
+}

@@ -238,12 +238,62 @@ namespace CafebookApi.Controllers.Web.NhanVien
             GhiChu = c.GhiChu
         };
 
+        // 1. Cập nhật hàm tính tổng để chính xác 100%
         private async Task UpdateHoaDonTotals(HoaDon hoaDon)
         {
             if (hoaDon != null)
             {
-                var tongGocMoi = await _context.ChiTietHoaDons.Where(c => c.IdHoaDon == hoaDon.IdHoaDon).SumAsync(c => c.ThanhTien);
-                hoaDon.TongTienGoc = tongGocMoi;
+                // Tính tổng tiền gốc trực tiếp từ (Số lượng * Đơn giá) của tất cả món trong giỏ
+                // Tránh việc sum cột ThanhTien trong DB vì có thể nó bị stale (cũ)
+                var chiTiets = await _context.ChiTietHoaDons
+                    .Where(c => c.IdHoaDon == hoaDon.IdHoaDon)
+                    .ToListAsync();
+
+                hoaDon.TongTienGoc = chiTiets.Sum(c => c.SoLuong * c.DonGia);
+
+                // Sau khi có tổng gốc mới, phải tính lại tiền giảm giá (nếu đang áp mã %)
+                await RecalculatePromotion(hoaDon);
+
+                // Cuối cùng mới tính Thành Tiền
+                hoaDon.ThanhTien = hoaDon.TongTienGoc - hoaDon.GiamGia;
+                if (hoaDon.ThanhTien < 0) hoaDon.ThanhTien = 0;
+
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // 2. Bổ sung hàm tính lại giảm giá khi tổng tiền thay đổi
+        private async Task RecalculatePromotion(HoaDon hoaDon)
+        {
+            var linkKM = await _context.HoaDonKhuyenMais.FirstOrDefaultAsync(hk => hk.IdHoaDon == hoaDon.IdHoaDon);
+            if (linkKM == null)
+            {
+                hoaDon.GiamGia = 0;
+                return;
+            }
+
+            var km = await _context.KhuyenMais.FindAsync(linkKM.IdKhuyenMai);
+            if (km == null) return;
+
+            // Tính lại số tiền được giảm dựa trên tổng tiền gốc mới
+            if (string.Equals(km.LoaiGiamGia, "PhanTram", StringComparison.OrdinalIgnoreCase))
+            {
+                decimal baseAmount = hoaDon.TongTienGoc;
+                // Nếu mã chỉ áp dụng cho 1 sản phẩm cụ thể
+                if (km.IdSanPhamApDung.HasValue)
+                {
+                    baseAmount = await _context.ChiTietHoaDons
+                        .Where(c => c.IdHoaDon == hoaDon.IdHoaDon && c.IdSanPham == km.IdSanPhamApDung)
+                        .SumAsync(c => c.SoLuong * c.DonGia);
+                }
+
+                decimal giam = baseAmount * (km.GiaTriGiam / 100);
+                if (km.GiamToiDa.HasValue && giam > km.GiamToiDa.Value) giam = km.GiamToiDa.Value;
+                hoaDon.GiamGia = giam;
+            }
+            else
+            {
+                hoaDon.GiamGia = km.GiaTriGiam;
             }
         }
 
@@ -370,6 +420,73 @@ namespace CafebookApi.Controllers.Web.NhanVien
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
+        // 1. THÊM API HỦY ĐƠN
+        [HttpPut("cancel-order/{idHoaDon}")]
+        public async Task<IActionResult> CancelOrder(int idHoaDon)
+        {
+            try
+            {
+                var hoaDon = await _context.HoaDons.Include(h => h.Ban).FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon);
+                if (hoaDon == null) return NotFound(new { message = "Không tìm thấy hóa đơn." });
+
+                hoaDon.TrangThai = "Đã hủy";
+                if (hoaDon.Ban != null) hoaDon.Ban.TrangThai = "Trống";
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Đã hủy hóa đơn thành công." });
+            }
+            catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
+        }
+
+        // 2. THÊM API IN PHIẾU VÀ BÁO BẾP (Cập nhật bếp thông minh giống WPF)
+        [HttpPost("print-and-notify-kitchen/{idHoaDon}")]
+        public async Task<IActionResult> PrintAndNotifyKitchen(int idHoaDon)
+        {
+            int idNhanVien = GetCurrentUserId();
+            if (idNhanVien == 0) return Unauthorized();
+
+            var hoaDon = await _context.HoaDons.Include(h => h.Ban).FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon);
+            if (hoaDon == null) return NotFound(new { message = "Không tìm thấy hóa đơn" });
+
+            var chiTietItems = await _context.ChiTietHoaDons.Include(c => c.SanPham).Where(c => c.IdHoaDon == idHoaDon).ToListAsync();
+            string soBan = hoaDon.Ban?.SoBan ?? hoaDon.LoaiHoaDon ?? "Tại quán";
+            int itemsUpdated = 0;
+
+            foreach (var item in chiTietItems)
+            {
+                var existingCB = await _context.TrangThaiCheBiens.FirstOrDefaultAsync(cb => cb.IdChiTietHoaDon == item.IdChiTietHoaDon);
+                if (existingCB == null)
+                {
+                    _context.TrangThaiCheBiens.Add(new TrangThaiCheBien
+                    {
+                        IdChiTietHoaDon = item.IdChiTietHoaDon,
+                        IdHoaDon = item.IdHoaDon,
+                        IdSanPham = item.IdSanPham,
+                        TenMon = item.SanPham.TenSanPham ?? "Chưa có tên",
+                        SoBan = soBan,
+                        SoLuong = item.SoLuong,
+                        GhiChu = item.GhiChu,
+                        NhomIn = item.SanPham.NhomIn,
+                        TrangThai = "Chờ làm",
+                        ThoiGianGoi = DateTime.Now
+                    });
+                    itemsUpdated++;
+                }
+                else if (existingCB.SoLuong != item.SoLuong || existingCB.GhiChu != item.GhiChu)
+                {
+                    existingCB.SoLuong = item.SoLuong; existingCB.GhiChu = item.GhiChu; itemsUpdated++;
+                }
+            }
+
+            if (itemsUpdated > 0)
+            {
+                _context.ThongBaos.Add(new ThongBao { IdNhanVienTao = idNhanVien, NoiDung = $"Phiếu gọi món cho [{soBan}].", ThoiGianTao = DateTime.Now, LoaiThongBao = "PhieuGoiMon", IdLienQuan = idHoaDon, DaXem = false });
+                await _context.SaveChangesAsync();
+            }
+            return Ok(new { message = "Đã lưu và gửi thông tin in phiếu." });
+        }
+
         private (bool IsEligible, string? Reason, decimal CalculatedDiscount) CheckEligibility(KhuyenMai km, HoaDon hoaDon, DateTime now)
         {
             decimal calculatedDiscount = 0m;

@@ -1,141 +1,243 @@
-﻿.dkl-container {
-    padding: 1rem;
-    animation: fadeIn 0.3s ease-out;
+﻿/* === ĐĂNG KÝ LỊCH LÀM VIỆC - CAFEBOOK MATERIAL THEME === */
+:root {
+    --dkl-primary: #5D4037; /* Nâu cà phê đậm */
+    --dkl-primary-light: #8D6E63;
+    --dkl-accent: #D84315; /* Cam đất */
+    --dkl-bg-light: #FDFBF9; /* Kem sáng */
+    --dkl-bg-surface: #FFF3E0; /* Be nhạt */
+    --dkl-border: #EFEBE9;
+    --dkl-text-dark: #3E2723;
+    --dkl-text-muted: #795548;
 }
 
-.dkl-nav-tabs {
-    border-bottom: 2px solid #EEEEEE;
-    gap: 15px;
+body {
+    background-color: var(--dkl-bg-light);
 }
 
-    .dkl-nav-tabs .nav-link {
-        border: none;
-        color: #9E9E9E;
-        padding: 12px 20px;
-        background: transparent;
-        transition: all 0.3s;
-        border-bottom: 3px solid transparent;
+.dkl-container {
+    padding-bottom: 2rem;
+}
+
+/* Animations */
+@keyframes fadeScaleUp {
+    0% {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
     }
 
-        .dkl-nav-tabs .nav-link:hover {
-            color: #6F4E37;
-            background: #FFF8E1;
-            border-radius: 8px 8px 0 0;
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.anim-item {
+    animation: fadeScaleUp 0.3s ease-out backwards;
+}
+
+/* Dashboard Header & Tabs */
+.dkl-header-panel {
+    background: white;
+    padding: 24px;
+    border-radius: 20px;
+    border: 1px solid var(--dkl-border);
+    box-shadow: 0 4px 15px rgba(93, 64, 55, 0.05);
+    margin-bottom: 24px;
+}
+
+.dkl-icon-circle {
+    width: 56px;
+    height: 56px;
+    background: var(--dkl-bg-surface);
+    color: var(--dkl-accent);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Nav Tabs Material */
+.dkl-nav-pills {
+    background: #F5F5F5;
+    padding: 6px;
+    border-radius: 16px;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+    .dkl-nav-pills .nav-link {
+        border-radius: 12px;
+        color: var(--dkl-text-muted);
+        font-weight: 600;
+        padding: 10px 24px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .dkl-nav-pills .nav-link:hover {
+            color: var(--dkl-primary);
         }
 
-        .dkl-nav-tabs .nav-link.active {
-            color: #6F4E37;
-            border-bottom: 3px solid #6F4E37;
-            background: transparent;
+        .dkl-nav-pills .nav-link.active {
+            background-color: white;
+            color: var(--dkl-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
-/* KANBAN CSS */
+/* Thanh Công Cụ (Toolbar) */
+.dkl-toolbar {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid var(--dkl-border);
+    margin-bottom: 20px;
+}
+
+/* Segmented Control (Toggle List/Kanban) */
+.btn-group-toggle .btn {
+    border: 1px solid var(--dkl-border);
+    color: var(--dkl-text-muted);
+    background: white;
+    font-weight: 600;
+}
+
+.btn-group-toggle .btn-check:checked + .btn {
+    background-color: var(--dkl-primary);
+    color: white;
+    border-color: var(--dkl-primary);
+}
+
+/* Bảng Dữ Liệu (List View) */
+.dkl-table-wrapper {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--dkl-border);
+    overflow: hidden;
+}
+
+.dkl-table-head {
+    background-color: #FAFAFA;
+}
+
+    .dkl-table-head th {
+        font-weight: 700;
+        color: var(--dkl-primary-light);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 16px;
+        border-bottom: 2px solid var(--dkl-border);
+    }
+
+.dkl-table-body td {
+    padding: 16px;
+    vertical-align: middle;
+}
+
+/* Kanban Board View */
 .dkl-weekly-board {
-    display: flex; /* Dùng flex để tự dàn cột tùy cấu hình ThuMoCua */
-    gap: 15px;
-    min-height: 400px;
+    display: flex;
+    gap: 16px;
     overflow-x: auto;
-    padding-bottom: 10px;
+    padding: 10px 0 20px 0;
+    scrollbar-width: thin;
 }
 
 .dkl-column {
-    background: #FFFFFF;
-    border-radius: 12px;
-    border: 1px solid #E0E0E0;
+    background: #FAFAFA;
+    border-radius: 16px;
+    border: 1px solid var(--dkl-border);
+    min-width: 260px;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    min-width: 180px;
-    flex: 1; /* Trải đều chiều rộng theo số cột cấu hình */
 }
 
 .today-col {
-    border-color: #6F4E37;
-    box-shadow: 0 0 0 2px rgba(111, 78, 55, 0.2);
+    border: 2px solid var(--dkl-accent);
+    background: var(--dkl-bg-surface);
+    box-shadow: 0 8px 24px rgba(216, 67, 21, 0.1);
 }
-
-    .today-col .dkl-col-header {
-        background: #FFF8E1;
-        color: #6F4E37;
-    }
 
 .dkl-col-header {
-    padding: 12px;
+    background: white;
+    padding: 16px;
     text-align: center;
-    border-bottom: 1px solid #EEEEEE;
-    background: #FAFAFA;
-    border-radius: 12px 12px 0 0;
+    border-radius: 14px 14px 0 0;
+    border-bottom: 1px solid var(--dkl-border);
 }
 
+.today-col .dkl-col-header {
+    background: var(--dkl-accent);
+    color: white !important;
+    border-bottom: none;
+}
+
+    .today-col .dkl-col-header div {
+        color: white !important;
+    }
+
 .dkl-col-body {
-    padding: 12px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
     flex: 1;
 }
 
+/* Cards (Kanban) */
 .dkl-card {
-    padding: 12px;
-    border-radius: 10px;
-    border-left: 4px solid transparent;
-    background: #FFFFFF;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
-    transition: transform 0.2s;
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--dkl-border);
+    border-left: 4px solid var(--dkl-border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
     .dkl-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(93, 64, 55, 0.1);
     }
 
 .card-available {
-    border-left-color: #2196F3;
+    border-left-color: #2E7D32;
 }
 
 .card-full {
-    border-left-color: #F44336;
-    opacity: 0.8;
+    border-left-color: #D32F2F;
+    opacity: 0.7;
 }
 
 .card-expired {
     border-left-color: #9E9E9E;
-    opacity: 0.6;
+    opacity: 0.5;
     filter: grayscale(100%);
     pointer-events: none;
 }
 
-.dkl-container .table thead th {
-    border-top: none;
-    font-size: 0.8rem;
-    padding: 1rem 0.75rem;
-    color: #616161;
-}
-
-.dkl-container .table tbody td {
-    padding: 1.25rem 0.75rem;
-    border-bottom: 1px solid #F5F5F5;
-    vertical-align: middle;
-}
-
-.btn-primary {
-    background-color: #6F4E37;
+/* Buttons */
+.btn-primary-coffee {
+    background: var(--dkl-primary);
+    color: white;
     border: none;
 }
 
-    .btn-primary:hover {
-        background-color: #4E342E;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(111, 78, 55, 0.3) !important;
+    .btn-primary-coffee:hover {
+        background: #3E2723;
+        color: white;
+        transform: scale(1.05);
     }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.dkl-input-date {
+    border-radius: 50px;
+    border: 1px solid var(--dkl-border);
+    padding: 8px 16px;
+    color: var(--dkl-primary);
+    font-weight: 600;
 }
+ 

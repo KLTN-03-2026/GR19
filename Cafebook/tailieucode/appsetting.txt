@@ -7,7 +7,7 @@
   },
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "CafeBookConnectionString": "Server=localhost\\SQLEXPRESS;Database=CAFEBOOKDB;Integrated Security=True;Encrypt=False;"
+    "CafeBookConnectionString": "Server=db49191.public.databaseasp.net; Database=db49191; User Id=db49191; Password=xR=49%pFi5P?; Encrypt=True; TrustServerCertificate=True; MultipleActiveResultSets=True; "
   },
   "Jwt": {
     "Key": "b3a9f8c1d7e0a5b2f6c8d1e3a9b7f2d5e8c1a0b3f6d8e2a4c7b1f9d0e5a2c6b8",

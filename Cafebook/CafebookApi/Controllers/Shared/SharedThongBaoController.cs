@@ -27,44 +27,47 @@ namespace CafebookApi.Controllers.Shared
         public async Task<IActionResult> GetMyNotifications([FromQuery] int userId, [FromQuery] string? userRoles, [FromQuery] string? roleName)
         {
             var roles = string.IsNullOrEmpty(userRoles) ? new List<string>() : userRoles.Split(',').ToList();
-
-            // 1. KIỂM TRA QUYỀN TOÀN QUYỀN
-            bool showAll = roles.Contains("FULL_QL") || roles.Contains("FULL_NV");
-
             var query = _context.Set<ThongBao>().Include(t => t.NhanVienTao).AsNoTracking().AsQueryable();
+            var allowedTypes = new List<string> { "ThongBaoToanNhanVien" };
+            if (roleName == "Nhân viên") allowedTypes.Add("ThongBaoNhanVien");
+            if (roleName == "Quản lý") allowedTypes.Add("ThongBaoQuanLy");
 
-            if (!showAll)
-            {
-                var allowedTypes = new List<string> { "ThongBaoToanNhanVien" };
+            // =======================================================
+            // 2. NHÓM NGHIỆP VỤ CỦA NHÂN VIÊN
+            // =======================================================
+            if (roles.Contains("FULL_NV") || roles.Contains("NV_DAT_BAN"))
+                allowedTypes.AddRange(new[] { "DatBan", "HuyDatBan" });
 
-                if (roleName == "Nhân viên") allowedTypes.Add("ThongBaoNhanVien");
-                if (roleName == "Quản lý") allowedTypes.Add("ThongBaoQuanLy");
+            if (roles.Contains("FULL_NV") || roles.Contains("NV_CHE_BIEN") || roles.Contains("NV_GOI_MON"))
+                allowedTypes.Add("PhieuGoiMon");
 
-                if (roles.Contains("QL_BAN") || roles.Contains("NV_DAT_BAN") || roles.Contains("QL_SU_CO_BAN"))
-                    allowedTypes.AddRange(new[] { "DatBan", "SuCoBan" });
+            if (roles.Contains("FULL_NV") || roles.Contains("NV_GIAO_HANG"))
+                allowedTypes.Add("DonHangMoi");
 
-                if (roles.Contains("NV_CHE_BIEN") || roles.Contains("NV_GOI_MON"))
-                    allowedTypes.Add("PhieuGoiMon");
+            if (roles.Contains("FULL_NV") || roles.Contains("NV_HO_TRO_KH"))
+                allowedTypes.Add("HoTroKhachHang");
 
-                if (roles.Contains("QL_DON_HANG") || roles.Contains("NV_GIAO_HANG"))
-                    allowedTypes.Add("DonHangMoi");
+            if (roles.Contains("FULL_NV") || roles.Contains("NV_PHAN_HOI"))
+                allowedTypes.Add("GopY");
 
-                if (roles.Contains("QL_TON_KHO"))
-                    allowedTypes.AddRange(new[] { "HetHang", "CanhBaoKho", "Kho" });
+            // =======================================================
+            // 3. NHÓM NGHIỆP VỤ CỦA QUẢN LÝ
+            // =======================================================
+            if (roles.Contains("FULL_QL") || roles.Contains("QL_SU_CO_BAN") || roles.Contains("QL_BAN"))
+                allowedTypes.Add("SuCoBan");
 
-                if (roles.Contains("QL_DON_XIN_NGHI"))
-                    allowedTypes.Add("DonXinNghi");
+            if (roles.Contains("FULL_QL") || roles.Contains("QL_TON_KHO") || roles.Contains("QL_NGUYEN_LIEU"))
+                allowedTypes.AddRange(new[] { "HetHang", "CanhBaoKho", "Kho" });
 
-                if (roles.Contains("QL_LICH_LAM_VIEC"))
-                    allowedTypes.Add("DangKyLichMoi");
+            if (roles.Contains("FULL_QL") || roles.Contains("QL_DON_XIN_NGHI") || roles.Contains("QL_NHAN_VIEN"))
+                allowedTypes.Add("DonXinNghi");
 
-                query = query.Where(t => t.LoaiThongBao != null && allowedTypes.Contains(t.LoaiThongBao));
-            }
+            if (roles.Contains("FULL_QL") || roles.Contains("QL_LICH_LAM_VIEC") || roles.Contains("QL_NHAN_VIEN"))
+                allowedTypes.Add("DangKyLichMoi");
 
+            query = query.Where(t => t.LoaiThongBao != null && allowedTypes.Contains(t.LoaiThongBao));
             var notifications = await query
-                // Ghim các thông báo hệ thống lên đầu
                 .OrderByDescending(t => t.LoaiThongBao == "ThongBaoNhanVien" || t.LoaiThongBao == "ThongBaoToanNhanVien" || t.LoaiThongBao == "ThongBaoQuanLy")
-                // Sau đó mới sắp xếp theo thời gian mới nhất
                 .ThenByDescending(t => t.ThoiGianTao)
                 .Take(20)
                 .Select(t => new SharedThongBaoItemDto

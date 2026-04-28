@@ -14,6 +14,7 @@ namespace CafebookModel.Model.ModelWeb.KhachHang
         public decimal ThanhTien { get; set; }
         public string TrangThaiGiaoHang { get; set; } = string.Empty;
         public string TrangThaiThanhToan { get; set; } = string.Empty;
+        public string PhuongThucThanhToan { get; set; } = string.Empty;
         public bool IsStoreOpen { get; set; } = true; 
     }
 

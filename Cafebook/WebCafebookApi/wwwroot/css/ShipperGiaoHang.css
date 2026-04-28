@@ -1,68 +1,190 @@
-﻿/* ==================================================
-   GIAO DIỆN SHIPPER GIAO HÀNG (Prefix: .sgh-)
-   ================================================== */
+﻿/* GIAO DIỆN SHIPPER CAFÉBOOK */
+:root {
+    --sgh-primary: #5D4037; /* Espresso Dark */
+    --sgh-secondary: #D7CCC8; /* Latte Light */
+    --sgh-accent: #E64A19; /* Deep Orange accent */
+    --sgh-bg: #FDFBF9; /* Creamy background */
+    --sgh-card-bg: #FFFFFF;
+    --sgh-text: #3E2723;
+}
+
 .sgh-container {
-    padding: 1rem;
-    animation: fadeIn 0.4s ease-out;
+    padding-bottom: 80px;
 }
 
-/* Tab Navigation */
-.sgh-nav-tabs {
-    border-bottom: 2px solid #EEEEEE;
-    gap: 15px;
+.text-primary-header {
+    color: var(--sgh-primary);
 }
 
-    .sgh-nav-tabs .nav-link {
-        border: none;
-        color: #9E9E9E;
-        padding: 12px 20px;
-        background: transparent;
-        transition: all 0.3s;
-        border-bottom: 3px solid transparent;
+.text-accent {
+    color: var(--sgh-accent);
+}
+
+.bg-primary-coffee {
+    background-color: var(--sgh-primary);
+}
+
+.btn-primary-coffee {
+    background-color: var(--sgh-primary);
+    color: white;
+    border: none;
+}
+
+/* Header & Tabs Style */
+.sgh-header {
+    background: var(--sgh-card-bg);
+    padding: 20px;
+    border-radius: 0 0 24px 24px;
+    margin: -25px -25px 25px -25px; /* Tràn lề để khớp với layout main */
+}
+
+.sgh-logo-box {
+    width: 40px;
+    height: 40px;
+    background: var(--sgh-secondary);
+    color: var(--sgh-primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sgh-nav-pills {
+    gap: 8px;
+    justify-content: space-between;
+}
+
+    .sgh-nav-pills .nav-link {
+        border-radius: 14px;
+        padding: 10px 15px;
+        color: var(--sgh-text);
+        background: var(--sgh-bg);
+        border: 1px solid var(--sgh-secondary);
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        flex: 1;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-        .sgh-nav-tabs .nav-link:hover {
-            color: #6F4E37;
-            background: #FFF8E1;
-            border-radius: 8px 8px 0 0;
+        .sgh-nav-pills .nav-link.active {
+            background-color: var(--sgh-primary);
+            color: white;
+            border-color: var(--sgh-primary);
+            box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3);
         }
 
-        .sgh-nav-tabs .nav-link.active {
-            color: #6F4E37;
-            border-bottom: 3px solid #6F4E37;
-            background: transparent;
-        }
-
-/* Card Đơn hàng */
+/* Card Đơn hàng: Tối ưu cho Mobile */
 .sgh-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid #E0E0E0 !important;
-    background-color: #FFFFFF;
+    border-radius: 20px;
+    border: none !important;
+    background: white;
+    transition: all 0.3s ease;
+    overflow: hidden;
 }
 
     .sgh-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
-        border-color: #D27D2D !important;
+        box-shadow: 0 10px 25px rgba(93, 64, 55, 0.1) !important;
     }
 
-    .sgh-card .btn {
-        transition: all 0.2s ease;
-    }
+.badge-cod {
+    background: #FFF3E0;
+    color: #E65100;
+    border: 1px solid #FFE0B2;
+}
 
-        .sgh-card .btn:active {
-            transform: scale(0.95);
-        }
+.badge-paid {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border: 1px solid #C8E6C9;
+}
 
-/* Animation mượt mà khi load trang */
-@keyframes fadeIn {
+/* Đối soát Card */
+.sgh-cod-summary-card {
+    border-radius: 24px;
+    background: linear-gradient(135deg, #FFF8E1 0%, #FFFFFF 100%);
+    border-left: 6px solid var(--sgh-accent);
+}
+
+.badge-custom {
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bg-success-light {
+    background: #E8F5E9;
+}
+
+.bg-danger-light {
+    background: #FFEBEE;
+}
+
+/* Modals */
+.sgh-modal, .sgh-modal-cod {
+    border-radius: 28px;
+    border: none;
+    overflow: hidden;
+}
+
+.cod-input-section {
+    background: #FBE9E7;
+    padding: 20px;
+    border-radius: 20px;
+}
+
+.change-box {
+    background: #F5F5F5;
+}
+
+/* Hiệu ứng trượt nhẹ khi chuyển tab */
+.tab-pane {
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateX(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
 
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Responsive tweaks */
+@media (max-width: 576px) {
+    .tab-label {
+        font-size: 0.75rem;
+    }
+
+    .sgh-nav-pills .nav-link {
+        padding: 8px 5px;
     }
 }

@@ -10,46 +10,80 @@
     <link rel="stylesheet" href="~/css/PhanHoiKhachHang.css" asp-append-version="true" />
 }
 
-<div class="phkh-container">
-    <div class="card shadow-sm border-0 rounded-4">
-        <div class="card-header bg-white p-4 border-0 pb-0">
-            <h3 class="fw-bold mb-3 text-dark">Trung Tâm Phản Hồi</h3>
-            <ul class="nav nav-tabs phkh-nav-tabs" id="phkhTabs" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active fw-bold" id="review-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
-                        <span class="material-symbols-outlined align-middle me-1">star</span> Đánh Giá Sản Phẩm
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link fw-bold" id="feedback-tab" data-bs-toggle="tab" data-bs-target="#feedbacks" type="button">
-                        <span class="material-symbols-outlined align-middle me-1">chat</span> Góp Ý Hệ Thống
-                    </button>
-                </li>
-            </ul>
-        </div>
-        
-        <div class="card-body p-4 bg-light">
-            <div class="tab-content">
-                <div class="tab-pane fade show active" id="reviews">
-                    <div id="review-list" class="row g-4">
+<div class="phkh-container fade-in-up">
+    <div class="row mb-4 g-3">
+        <div class="col-lg-8">
+            <div class="phkh-header-panel h-100 d-flex flex-column justify-content-center">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="phkh-icon-circle"><span class="material-symbols-outlined">forum</span></div>
+                    <div>
+                        <h3 class="fw-bold m-0 text-primary-coffee">Trung Tâm Phản Hồi</h3>
+                        <p class="text-muted small m-0">Quản lý tương tác, đánh giá và góp ý từ khách hàng</p>
                     </div>
                 </div>
+                <ul class="nav nav-pills phkh-nav-pills gap-2" id="phkhTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="review-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
+                            <span class="material-symbols-outlined align-middle fs-5">reviews</span> <span>Đánh Giá</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="feedback-tab" data-bs-toggle="tab" data-bs-target="#feedbacks" type="button">
+                            <span class="material-symbols-outlined align-middle fs-5">chat_bubble</span> <span>Góp Ý</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="phkh-stat-card h-100">
+                <div class="phkh-stat-score" id="lblAvgRating">0.0</div>
+                <div>
+                    <div class="d-flex text-warning mb-1" id="starsAvgContainer">
+                    </div>
+                    <div class="small opacity-75" id="lblTotalReviews">0 đánh giá từ khách hàng</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="tab-pane fade" id="feedbacks">
-                    <ul class="nav nav-pills mb-3" id="pills-feedback" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#pills-pending">Chờ xử lý</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link rounded-pill px-4 fw-bold text-muted" data-bs-toggle="pill" data-bs-target="#pills-history">Lịch sử Góp ý</button>
-                        </li>
-                    </ul>
+    <div class="tab-content" id="phkh-content">
+        <div class="tab-pane fade show active" id="reviews">
+            <div class="phkh-filter-bar mb-4 d-flex flex-column flex-md-row gap-3 align-items-md-center justify-content-between">
+                <input type="text" id="searchReview" class="form-control phkh-search-input w-100" style="max-width: 400px;" placeholder="Tìm theo tên khách, sản phẩm, nội dung..." autocomplete="off">
+                
+                <div class="form-check form-switch fs-6 text-primary-coffee fw-medium">
+                    <input class="form-check-input" type="checkbox" role="switch" id="chkUnrepliedReview" checked>
+                    <label class="form-check-label ms-2" for="chkUnrepliedReview" style="cursor: pointer;">Chỉ hiện chưa phản hồi</label>
+                </div>
+            </div>
 
+            <div id="review-list" class="row g-4">
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="feedbacks">
+            <div class="phkh-filter-bar mb-4 d-flex flex-column flex-md-row gap-3 align-items-md-center justify-content-between">
+                <input type="text" id="searchFeedback" class="form-control phkh-search-input w-100" style="max-width: 400px;" placeholder="Tìm theo tên, email, nội dung..." autocomplete="off">
+                
+                <ul class="nav nav-pills" id="pills-feedback" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active rounded-pill px-4" data-bs-toggle="pill" data-bs-target="#pills-pending" id="tabPendingFeedback">Đang chờ</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link rounded-pill px-4 text-muted" data-bs-toggle="pill" data-bs-target="#pills-history" id="tabHistoryFeedback">Lịch sử</button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-0">
                     <div class="tab-content">
                         <div class="tab-pane fade show active" id="pills-pending">
-                            <div class="table-responsive bg-white rounded-3 shadow-sm border border-light">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="bg-light text-dark">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 text-nowrap">
+                                    <thead class="phkh-table-head">
                                         <tr>
                                             <th class="ps-4">Khách Hàng</th>
                                             <th>Nội Dung Góp Ý</th>
@@ -57,15 +91,15 @@
                                             <th class="text-center pe-4">Thao Tác</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="feedback-pending-body"></tbody>
+                                    <tbody id="feedback-pending-body" class="border-top-0"></tbody>
                                 </table>
                             </div>
                         </div>
 
                         <div class="tab-pane fade" id="pills-history">
-                            <div class="table-responsive bg-white rounded-3 shadow-sm border border-light opacity-75">
-                                <table class="table align-middle mb-0">
-                                    <thead class="bg-light text-dark">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 text-nowrap">
+                                    <thead class="phkh-table-head">
                                         <tr>
                                             <th class="ps-4">Khách Hàng</th>
                                             <th>Nội Dung Góp Ý</th>
@@ -73,35 +107,8 @@
                                             <th class="text-center pe-4">Trạng Thái</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="feedback-history-body"></tbody>
+                                    <tbody id="feedback-history-body" class="border-top-0"></tbody>
                                 </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal fade" id="feedbackEmailModal" tabindex="-1">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                        <div class="modal-content rounded-4 border-0 shadow">
-                            <div class="modal-header bg-light border-0 pb-3 rounded-top-4">
-                                <div>
-                                    <h5 class="fw-bold mb-1"><span class="material-symbols-outlined align-middle text-primary me-1">forward_to_inbox</span> Gửi Email Phản Hồi</h5>
-                                    <div class="small text-muted" id="fb-customer-info">Gửi tới: ...</div>
-                                </div>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body p-4">
-                                <div class="alert alert-secondary border-0 small fst-italic mb-3" id="fb-original-content">
-                                    "Nội dung khách góp ý..."
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="fw-bold small">Nội dung Email trả lời:</label>
-                                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-0" id="btnAutoTemplate">Dùng mẫu cảm ơn</button>
-                                </div>
-                                <textarea id="feedbackEmailText" class="form-control phkh-textarea" rows="6" placeholder="Nhập nội dung email sẽ gửi cho khách hàng..."></textarea>
-                                <button id="btnSendFeedbackEmail" class="btn btn-primary w-100 mt-4 fw-bold rounded-pill py-3 shadow-sm d-flex justify-content-center align-items-center gap-2">
-                                    <span class="material-symbols-outlined">send</span> XÁC NHẬN GỬI & ĐÓNG GÓP Ý
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -110,16 +117,50 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="replyModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
+
+<div class="modal fade" id="feedbackEmailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content phkh-modal">
             <div class="modal-header border-0 pb-0">
-                <h5 class="fw-bold">Phản hồi khách hàng</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="phkh-icon-circle" style="width: 40px; height: 40px;"><span class="material-symbols-outlined fs-5 text-accent">mail</span></div>
+                    <h5 class="fw-bold m-0 text-primary-coffee">Phản hồi Góp ý qua Email</h5>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <textarea id="replyText" class="form-control phkh-textarea" rows="4" placeholder="Nhập nội dung phản hồi..."></textarea>
-                <button id="btnConfirmReply" class="btn btn-primary w-100 mt-3 fw-bold rounded-pill py-2">GỬI PHẢN HỒI</button>
+                <div class="phkh-customer-box mb-3 border">
+                    <div id="fb-customer-info" class="fw-bold text-primary-coffee mb-1"></div>
+                    <div id="fb-original-content" class="small fst-italic text-muted"></div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="fw-bold small text-muted">Nội dung Email trả lời:</label>
+                    <button type="button" class="btn btn-sm btn-outline-coffee rounded-pill d-flex align-items-center gap-1" id="btnAutoTemplate">
+                        <span class="material-symbols-outlined fs-6">magic_button</span> Mẫu cảm ơn
+                    </button>
+                </div>
+                
+                <textarea id="feedbackEmailText" class="form-control phkh-textarea-material" rows="6" placeholder="Nhập nội dung email..."></textarea>
+                
+                <button id="btnSendFeedbackEmail" class="btn btn-primary-coffee w-100 mt-4 fw-bold rounded-pill py-3 shadow-sm">
+                    <span class="material-symbols-outlined align-middle me-2">send</span> GỬI PHẢN HỒI
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="replyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content phkh-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold text-primary-coffee">Phản hồi Đánh giá sản phẩm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <textarea id="replyText" class="form-control phkh-textarea-material mb-3" rows="4" placeholder="Cảm ơn khách hàng, giải thích vấn đề..."></textarea>
+                <button id="btnConfirmReply" class="btn btn-primary-coffee w-100 fw-bold rounded-pill py-3 shadow-sm">GỬI PHẢN HỒI LÊN APP</button>
             </div>
         </div>
     </div>
@@ -129,108 +170,197 @@
     <script>
         const _apiBaseUrl = "@Model.ApiBaseUrl";
         const _jwtToken = "@Model.JwtToken";
+        
+        let _allReviews = [];
+        let _allFeedbacks = [];
+        
         let _currentReviewId = null;
         let _currentFeedbackId = null;
 
+        // ================= ĐÁNH GIÁ SẢN PHẨM =================
         async function loadReviews() {
-            const res = await fetch(`${_apiBaseUrl}/reviews`, { headers: { 'Authorization': `Bearer ${_jwtToken}` } });
-            const data = await res.json();
+            try {
+                const res = await fetch(`${_apiBaseUrl}/reviews`, { headers: { 'Authorization': `Bearer ${_jwtToken}` } });
+                _allReviews = await res.json();
+                
+                calculateAverageRating();
+                renderReviews();
+            } catch (err) {
+                console.error("Lỗi tải đánh giá:", err);
+            }
+        }
+
+        function calculateAverageRating() {
+            if (_allReviews.length === 0) {
+                $("#lblAvgRating").text("0.0");
+                $("#lblTotalReviews").text("Chưa có đánh giá nào");
+                $("#starsAvgContainer").html('<span class="material-symbols-outlined">star_outline</span>'.repeat(5));
+                return;
+            }
+
+            const totalStars = _allReviews.reduce((sum, r) => sum + r.soSao, 0);
+            const avg = (totalStars / _allReviews.length).toFixed(1);
+            
+            $("#lblAvgRating").text(avg);
+            $("#lblTotalReviews").text(`${_allReviews.length} đánh giá từ khách hàng`);
+
+            let starsHtml = '';
+            for(let i=1; i<=5; i++) {
+                if (i <= Math.floor(avg)) starsHtml += '<span class="material-symbols-outlined">star</span>';
+                else if (i - 0.5 <= avg) starsHtml += '<span class="material-symbols-outlined">star_half</span>';
+                else starsHtml += '<span class="material-symbols-outlined">star_outline</span>';
+            }
+            $("#starsAvgContainer").html(starsHtml);
+        }
+
+        function renderReviews() {
+            const searchTerm = $("#searchReview").val().toLowerCase();
+            const hideReplied = $("#chkUnrepliedReview").is(':checked');
+            
+            let filtered = _allReviews;
+
+            // 1. Lọc theo trạng thái phản hồi
+            if (hideReplied) {
+                filtered = filtered.filter(r => !r.danhSachPhanHoi || r.danhSachPhanHoi.length === 0);
+            }
+
+            // 2. Lọc theo text search
+            if (searchTerm) {
+                filtered = filtered.filter(r =>
+                    (r.tenKhachHang && r.tenKhachHang.toLowerCase().includes(searchTerm)) ||
+                    (r.tenSanPham && r.tenSanPham.toLowerCase().includes(searchTerm)) ||
+                    (r.binhLuan && r.binhLuan.toLowerCase().includes(searchTerm))
+                );
+            }
+
             const $list = $("#review-list").empty();
 
-            data.forEach(d => {
+            if(filtered.length === 0) {
+                $list.html(`<div class="col-12 text-center py-5 text-muted"><span class="material-symbols-outlined fs-1 mb-3">inbox</span><br/>Không tìm thấy đánh giá nào phù hợp.</div>`);
+                return;
+            }
+
+            filtered.forEach((d, index) => {
+                const delay = (index % 10) * 0.05; // Tạo hiệu ứng xuất hiện lần lượt
                 let stars = '';
                 for(let i=1; i<=5; i++) stars += `<span class="material-symbols-outlined fs-5 ${i <= d.soSao ? 'text-warning' : 'text-light'}">star</span>`;
                 
                 let repliesHtml = d.danhSachPhanHoi.map(p => `
-                   <div class="phkh-reply-item mt-2 p-2 rounded bg-light border-start border-primary border-4">
-                        <div class="fw-bold small text-primary">${p.tenNhanVien} <span class="text-muted fw-normal float-end">${new Date(p.ngayTao).toLocaleString()}</span></div>
-                             <div class="small">${p.noiDung}</div>
-                            </div>
-                        `).join('');
-                        let imageHtml = d.hinhAnhUrl ? `
-                            <div class="mb-3">
-                                <div class="small fw-bold text-muted mb-1">
-                                    <span class="material-symbols-outlined fs-6 align-middle">image</span> Ảnh đính kèm:
-                                </div>
-                                <a href="${d.hinhAnhUrl}" target="_blank" title="Nhấn để xem ảnh gốc">
-                                    <img src="${d.hinhAnhUrl}" class="phkh-review-img rounded-3 border shadow-sm" alt="[LỖI ĐƯỜNG DẪN: Không tải được ảnh]">
-                                </a>
-                                <div class="form-text text-muted" style="font-size: 0.75rem;">* Nhấn vào ảnh để xem kích thước đầy đủ</div>
-                            </div>
-                        ` : '';
+                    <div class="phkh-reply-item mt-3">
+                        <div class="fw-bold small text-primary-coffee mb-1"><span class="material-symbols-outlined fs-6 align-middle">support_agent</span> ${p.tenNhanVien} <span class="text-muted fw-normal float-end">${new Date(p.ngayTao).toLocaleString()}</span></div>
+                        <div class="small">${p.noiDung}</div>
+                    </div>
+                `).join('');
+                
+                let imageHtml = d.hinhAnhUrl ? `
+                    <div class="mb-3">
+                        <a href="${d.hinhAnhUrl}" target="_blank" title="Nhấn để xem ảnh gốc">
+                            <img src="${d.hinhAnhUrl}" class="phkh-review-img border shadow-sm" alt="Ảnh đánh giá">
+                        </a>
+                    </div>
+                ` : '';
+
+                const hasReplied = d.danhSachPhanHoi && d.danhSachPhanHoi.length > 0;
 
                 $list.append(`
-                            <div class="col-md-6 col-xl-4">
-                                <div class="card phkh-review-card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <h6 class="fw-bold text-dark m-0">${d.tenKhachHang}</h6>
-                                            <div class="phkh-stars">${stars}</div>
-                                        </div>
-                                        <div class="badge bg-info-subtle text-info mb-2">${d.tenSanPham}</div>
-                                        <p class="text-muted small mb-3">${d.binhLuan || '<i>Không có bình luận</i>'}</p>
+                    <div class="col-md-6 col-xl-4 anim-item" style="animation-delay: ${delay}s">
+                        <div class="card phkh-review-card h-100 bg-white">
+                            <div class="card-body p-4 d-flex flex-column">
+                                <div class="d-flex justify-content-between mb-2 align-items-center">
+                                    <h6 class="fw-bold text-dark m-0 text-truncate" title="${d.tenKhachHang}">${d.tenKhachHang}</h6>
+                                    <div class="phkh-stars d-flex">${stars}</div>
+                                </div>
+                                <div class="badge bg-primary-coffee align-self-start mb-3 px-3 py-2 rounded-pill">${d.tenSanPham}</div>
                                 
-                                        ${imageHtml}
-
-                                        <div class="phkh-replies-area mb-3">${repliesHtml}</div>
-                                        <div class="d-flex gap-2">
-                                            <button class="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill" onclick="openReplyModal(${d.idDanhGia})">Phản hồi</button>
-                                            <button class="btn ${d.trangThai === 'Hiển thị' ? 'btn-outline-danger' : 'btn-outline-success'} btn-sm rounded-pill" onclick="toggleReview(${d.idDanhGia})">
-                                                ${d.trangThai === 'Hiển thị' ? 'Ẩn đánh giá' : 'Hiện đánh giá'}
-                                            </button>
-                                        </div>
-                                    </div>
+                                ${imageHtml}
+                                
+                                <p class="text-muted small mb-3 flex-grow-1">${d.binhLuan || '<i>Không có bình luận</i>'}</p>
+                                
+                                <div class="phkh-replies-area mb-3">${repliesHtml}</div>
+                                
+                                <div class="d-flex gap-2 mt-auto">
+                                    <button class="btn ${hasReplied ? 'btn-outline-secondary' : 'btn-outline-coffee'} btn-sm flex-grow-1 rounded-pill fw-medium" onclick="openReplyModal(${d.idDanhGia})">
+                                        ${hasReplied ? 'Phản hồi thêm' : 'Phản hồi ngay'}
+                                    </button>
+                                    <button class="btn ${d.trangThai === 'Hiển thị' ? 'btn-outline-danger' : 'btn-outline-success'} btn-sm rounded-pill" onclick="toggleReview(${d.idDanhGia})" title="${d.trangThai === 'Hiển thị' ? 'Ẩn đánh giá này trên App' : 'Hiện lại đánh giá này'}">
+                                        <span class="material-symbols-outlined align-middle fs-5">${d.trangThai === 'Hiển thị' ? 'visibility_off' : 'visibility'}</span>
+                                    </button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
                 `);
             });
         }
 
+        // ================= GÓP Ý HỆ THỐNG =================
         async function loadFeedbacks() {
-            const res = await fetch(`${_apiBaseUrl}/feedbacks`, { headers: { 'Authorization': `Bearer ${_jwtToken}` } });
-            const data = await res.json();
+            try {
+                const res = await fetch(`${_apiBaseUrl}/feedbacks`, { headers: { 'Authorization': `Bearer ${_jwtToken}` } });
+                _allFeedbacks = await res.json();
+                renderFeedbacks();
+            } catch(err) {
+                console.error("Lỗi tải góp ý:", err);
+            }
+        }
+
+        function renderFeedbacks() {
+            const searchTerm = $("#searchFeedback").val().toLowerCase();
             
+            let filtered = _allFeedbacks;
+            if (searchTerm) {
+                filtered = filtered.filter(g =>
+                    (g.hoTen && g.hoTen.toLowerCase().includes(searchTerm)) ||
+                    (g.email && g.email.toLowerCase().includes(searchTerm)) ||
+                    (g.noiDung && g.noiDung.toLowerCase().includes(searchTerm))
+                );
+            }
+
             const $pendingBody = $("#feedback-pending-body").empty();
             const $historyBody = $("#feedback-history-body").empty();
 
             let pendingCount = 0;
             let historyCount = 0;
 
-            data.forEach(g => {
+            filtered.forEach(g => {
                 const dateStr = new Date(g.ngayTao).toLocaleString('vi-VN', {hour: '2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric'});
                 
                 if (g.trangThai === 'Chờ xử lý') {
                     pendingCount++;
-                    // Mã hóa object để quăng vào button
                     const safeGopY = encodeURIComponent(JSON.stringify(g));
                     $pendingBody.append(`
-                        <tr>
+                        <tr class="anim-item">
                             <td class="ps-4"><div class="fw-bold text-dark">${g.hoTen}</div><div class="small text-muted">${g.email}</div></td>
-                            <td><div class="text-truncate fw-medium" style="max-width: 350px;">${g.noiDung}</div></td>
+                            <td><div class="text-wrap fw-medium" style="min-width: 250px; max-width: 400px;">${g.noiDung}</div></td>
                             <td><div class="small text-muted"><span class="material-symbols-outlined fs-6 align-middle">schedule</span> ${dateStr}</div></td>
                             <td class="text-center pe-4">
-                                <button class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm" onclick="openFeedbackEmailModal('${safeGopY}')">Xử lý ngay</button>
+                                <button class="btn btn-primary-coffee btn-sm rounded-pill px-3 fw-bold shadow-sm" onclick="openFeedbackEmailModal('${safeGopY}')">Xử lý Email</button>
                             </td>
                         </tr>
                     `);
                 } else {
                     historyCount++;
                     $historyBody.append(`
-                        <tr>
+                        <tr class="anim-item">
                             <td class="ps-4"><div class="fw-bold text-dark">${g.hoTen}</div><div class="small text-muted">${g.email}</div></td>
-                            <td><div class="text-truncate text-muted" style="max-width: 350px;">${g.noiDung}</div></td>
+                            <td><div class="text-wrap text-muted" style="min-width: 250px; max-width: 400px;">${g.noiDung}</div></td>
                             <td><div class="small text-muted">${dateStr}</div></td>
-                            <td class="text-center pe-4"><span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill"><span class="material-symbols-outlined fs-6 align-middle">done_all</span> ${g.trangThai}</span></td>
+                            <td class="text-center pe-4"><span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill"><span class="material-symbols-outlined fs-6 align-middle">done_all</span> ${g.trangThai}</span></td>
                         </tr>
                     `);
                 }
             });
 
-            if(pendingCount === 0) $pendingBody.html('<tr><td colspan="4" class="text-center p-5 text-muted fst-italic">Tuyệt vời! Không có góp ý nào đang chờ xử lý.</td></tr>');
-            if(historyCount === 0) $historyBody.html('<tr><td colspan="4" class="text-center p-5 text-muted fst-italic">Chưa có lịch sử xử lý.</td></tr>');
+            if(pendingCount === 0) $pendingBody.html('<tr><td colspan="4" class="text-center py-5 text-muted fst-italic"><span class="material-symbols-outlined fs-1 mb-2">task_alt</span><br/>Tuyệt vời! Không có góp ý nào đang chờ xử lý.</td></tr>');
+            if(historyCount === 0) $historyBody.html('<tr><td colspan="4" class="text-center py-5 text-muted fst-italic">Chưa có lịch sử xử lý.</td></tr>');
         }
 
-        // Functions for Modals & Actions
+        // ================= EVENTS LỌC TÌM KIẾM =================
+        $("#searchReview").on("input", renderReviews);
+        $("#chkUnrepliedReview").on("change", renderReviews);
+        $("#searchFeedback").on("input", renderFeedbacks);
+
+        // ================= ACTIONS & MODALS =================
         function openReplyModal(id) {
             _currentReviewId = id;
             $("#replyText").val('');
@@ -240,12 +370,24 @@
         $("#btnConfirmReply").click(async () => {
             const content = $("#replyText").val().trim();
             if(!content) return;
-            const res = await fetch(`${_apiBaseUrl}/reply-review/${_currentReviewId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_jwtToken}` },
-                body: JSON.stringify({ noiDung: content })
-            });
-            if(res.ok) { $("#replyModal").modal('hide'); Swal.fire('Thành công', 'Đã gửi phản hồi', 'success'); loadReviews(); }
+            
+            const btn = $("#btnConfirmReply");
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Đang gửi...');
+
+            try {
+                const res = await fetch(`${_apiBaseUrl}/reply-review/${_currentReviewId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_jwtToken}` },
+                    body: JSON.stringify({ noiDung: content })
+                });
+                if(res.ok) {
+                    $("#replyModal").modal('hide');
+                    Swal.fire('Thành công', 'Đã phản hồi khách hàng', 'success');
+                    await loadReviews();
+                }
+            } finally {
+                btn.prop('disabled', false).text('GỬI PHẢN HỒI LÊN APP');
+            }
         });
 
         async function toggleReview(id) {
@@ -257,13 +399,13 @@
             const g = JSON.parse(decodeURIComponent(encodedData));
             _currentFeedbackId = g.idGopY;
             $("#fb-customer-info").html(`Gửi tới: <strong class="text-dark">${g.hoTen}</strong> (${g.email})`);
-            $("#fb-original-content").text(`"${g.noiDung}"`);
+            $("#fb-original-content").text(`Nội dung khách gửi: "${g.noiDung}"`);
             $("#feedbackEmailText").val('');
             $("#feedbackEmailModal").modal('show');
         };
 
         $("#btnAutoTemplate").click(function() {
-            const template = "Cảm ơn bạn đã đóng góp ý kiến để giúp quán ngày một hoàn thiện hơn. Chúng tôi đã ghi nhận phản hồi của bạn và sẽ khắc phục/cải thiện trong thời gian sớm nhất.\n\nChúc bạn một ngày làm việc tràn đầy năng lượng!";
+            const template = "Cảm ơn bạn đã đóng góp ý kiến để giúp hệ thống ngày một hoàn thiện hơn. Chúng tôi đã ghi nhận phản hồi của bạn và sẽ tiến hành khắc phục/cải thiện trong thời gian sớm nhất.\n\nChúc bạn một ngày làm việc tràn đầy năng lượng cùng Cafebook!";
             $("#feedbackEmailText").val(template);
         });
 
@@ -288,7 +430,7 @@
 
                 if(res.ok) {
                     Swal.fire('Thành công', 'Đã gửi email phản hồi và đóng góp ý!', 'success');
-                    loadFeedbacks();
+                    await loadFeedbacks();
                 } else {
                     const err = await res.json();
                     Swal.fire('Lỗi gửi mail', err.message, 'error');
@@ -298,8 +440,9 @@
             }
         });
 
-        // Initialize
         $(document).ready(() => {
+            $("#feedbackEmailModal, #replyModal").appendTo("body");
+
             loadReviews();
             loadFeedbacks();
         });

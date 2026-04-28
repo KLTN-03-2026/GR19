@@ -1,22 +1,33 @@
-﻿/* Tệp CSS tuân thủ Quy tắc 4: UI Isolation cho Employee Layout */
+﻿/* Tệp CSS: Tối ưu theo Material Design & Chủ đề Cà phê */
 
 :root {
-    --emp-primary: #4E342E; /* Nâu sậm đặc trưng của quản trị */
-    --emp-secondary: #6F4E37;
-    --emp-bg: #F5F6FA; /* Nền xám xanh nhạt sáng sủa để làm việc lâu */
-    --emp-sidebar-bg: #FFFFFF;
-    --emp-text: #2C3E50;
-    --emp-text-muted: #7F8C8D;
-    --emp-hover: #FFF3E0; /* Cam nhạt khi hover menu */
-    --emp-active: #E65100; /* Cam đậm làm điểm nhấn */
+    /* Bảng màu Material Coffee Theme */
+    --emp-primary: #5D4037; /* Nâu đậm (Brown 700) */
+    --emp-primary-dark: #3E2723; /* Nâu đen (Brown 900) */
+    --emp-secondary: #D7CCC8; /* Be/Kem (Brown 100) */
+    --emp-bg: #F5F5F6; /* Nền xám nhạt trung tính */
+    --emp-sidebar-bg: #FFFFFF; /* Trắng tinh khiết cho Sidebar */
+
+    --emp-text: #3E2723; /* Chữ chính */
+    --emp-text-muted: #8D6E63; /* Chữ phụ (Brown 400) */
+
+    --emp-hover: #EFEBE9; /* Nâu cực nhạt khi hover (Brown 50) */
+    --emp-active: #D84315; /* Cam đất làm điểm nhấn (Deep Orange 800) */
+    --emp-active-bg: #FBE9E7; /* Nền cam nhạt cho mục active (Deep Orange 50) */
+
+    --emp-shadow-sm: 0 2px 4px rgba(93, 64, 55, 0.08);
+    --emp-shadow-md: 0 4px 6px rgba(93, 64, 55, 0.12);
+    --emp-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+    --emp-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .emplayout-body {
     margin: 0;
     padding: 0;
     background-color: var(--emp-bg);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif; /* Cập nhật font Roboto */
     color: var(--emp-text);
+    -webkit-font-smoothing: antialiased;
 }
 
 .emplayout-wrapper {
@@ -29,58 +40,86 @@
    SIDEBAR (MENU TRÁI)
 ========================================================== */
 .emplayout-sidebar {
-    width: 260px;
+    width: 280px; /* Mở rộng nhẹ để thoáng hơn */
     background-color: var(--emp-sidebar-bg);
-    border-right: 1px solid #E0E0E0;
+    border-right: 1px solid rgba(0,0,0,0.05);
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s ease;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1040;
+    box-shadow: var(--emp-shadow-sm);
 }
 
 .emplayout-sidebar-header {
-    height: 70px;
+    height: 72px; /* Kích thước chuẩn Material */
     display: flex;
     align-items: center;
-    padding: 0 20px;
+    padding: 0 24px;
     background-color: var(--emp-primary);
     color: #fff;
 }
 
 .emplayout-brand-logo {
-    width: 35px;
-    height: 35px;
-    border-radius: 5px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     background: #fff;
-    margin-right: 12px;
+    margin-right: 16px;
+    padding: 2px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .emplayout-brand-text {
-    font-size: 1.2rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
+    font-size: 1.15rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 .emplayout-close-sidebar {
     background: none;
     border: none;
-    color: #fff;
+    color: rgba(255,255,255,0.8);
     margin-left: auto;
+    border-radius: 50%;
+    padding: 8px;
+    display: flex;
+    transition: var(--emp-transition);
 }
 
-/* Các Mục Nav (Navigation Items) */
+    .emplayout-close-sidebar:hover {
+        color: #fff;
+        background-color: rgba(255,255,255,0.1);
+    }
+
+/* ==========================================================
+   NAVIGATION ITEMS
+========================================================== */
 .emplayout-nav {
-    padding: 15px 10px;
+    padding: 16px 12px;
     overflow-y: auto;
 }
+
+    /* Tùy chỉnh thanh cuộn cho đẹp */
+    .emplayout-nav::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .emplayout-nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .emplayout-nav::-webkit-scrollbar-thumb {
+        background: var(--emp-secondary);
+        border-radius: 4px;
+    }
 
 .emplayout-nav-divider {
     font-size: 0.75rem;
     font-weight: 700;
-    color: #BDBDBD;
+    color: var(--emp-text-muted);
     text-transform: uppercase;
-    margin: 15px 0 5px 15px;
-    letter-spacing: 1px;
+    margin: 24px 0 8px 16px;
+    letter-spacing: 1.2px;
 }
 
 .emplayout-nav-item {
@@ -90,40 +129,60 @@
 .emplayout-nav-link {
     display: flex;
     align-items: center;
-    padding: 10px 15px;
+    padding: 12px 16px;
     color: var(--emp-text);
     text-decoration: none;
     border-radius: 8px;
     font-weight: 500;
-    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    transition: var(--emp-transition);
+    position: relative;
+    overflow: hidden;
 }
 
     .emplayout-nav-link .material-symbols-outlined {
-        margin-right: 12px;
-        font-size: 1.3rem;
+        margin-right: 16px;
+        font-size: 1.35rem;
         color: var(--emp-text-muted);
-        transition: color 0.2s ease;
+        transition: var(--emp-transition);
     }
 
+    /* Hiệu ứng Hover - Đẩy text nhẹ sang phải */
     .emplayout-nav-link:hover {
         background-color: var(--emp-hover);
-        color: var(--emp-active);
+        color: var(--emp-primary-dark);
     }
 
-        .emplayout-nav-link:hover .material-symbols-outlined {
-            color: var(--emp-active);
+        .emplayout-nav-link:hover .nav-text {
+            transform: translateX(4px);
+            transition: transform 0.2s ease;
         }
 
-    /* Trạng thái Active */
+        .emplayout-nav-link:hover .material-symbols-outlined {
+            color: var(--emp-primary-dark);
+        }
+
+    /* Trạng thái Active - Bo góc tròn kiểu Material 3 */
     .emplayout-nav-link.active {
-        background-color: var(--emp-hover);
+        background-color: var(--emp-active-bg);
         color: var(--emp-active);
-        font-weight: 700;
-        border-left: 4px solid var(--emp-active);
+        font-weight: 600;
     }
+
+        .emplayout-nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10%;
+            height: 80%;
+            width: 4px;
+            background-color: var(--emp-active);
+            border-radius: 0 4px 4px 0;
+        }
 
         .emplayout-nav-link.active .material-symbols-outlined {
             color: var(--emp-active);
+            font-variation-settings: 'FILL' 1; /* Icon dạng điền đầy khi active */
         }
 
 /* ==========================================================
@@ -137,103 +196,201 @@
 }
 
 .emplayout-header {
-    height: 70px;
+    height: 72px;
     background-color: #ffffff;
     display: flex;
     align-items: center;
-    padding: 0 25px;
+    padding: 0 24px;
     z-index: 1000;
+    box-shadow: var(--emp-shadow-sm) !important; /* Ghi đè shadow của Bootstrap */
 }
 
 .emplayout-toggle-btn {
     background: none;
     border: none;
     color: var(--emp-text);
-    font-size: 1.5rem;
-    padding: 5px;
+    padding: 8px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
+    transition: var(--emp-transition);
 }
 
+    .emplayout-toggle-btn:hover {
+        background-color: var(--emp-hover);
+    }
+
 .emplayout-avatar {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid var(--emp-secondary);
-    margin-right: 10px;
+    border: 2px solid #fff;
+    margin-right: 12px;
+    transition: var(--emp-transition);
 }
 
 .emplayout-user-profile {
     display: flex;
     align-items: center;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: var(--emp-transition);
+}
+
+    .emplayout-user-profile:hover {
+        background-color: var(--emp-bg);
+    }
+
+        .emplayout-user-profile:hover .emplayout-avatar {
+            border-color: var(--emp-secondary);
+            transform: scale(1.05);
+        }
+
+.user-name {
+    color: var(--emp-primary-dark);
+    font-size: 0.95rem;
+}
+
+.user-role {
+    font-size: 0.8rem;
+    color: var(--emp-text-muted);
 }
 
 .emplayout-header-divider {
     width: 1px;
-    height: 30px;
-    background-color: #E0E0E0;
+    height: 32px;
+    background-color: rgba(0,0,0,0.08);
 }
 
 .emplayout-logout-btn {
-    background: #FFF0F2;
-    color: #D32F2F;
-    border: 1px solid #FFCDD2;
-    padding: 6px 15px;
-    border-radius: 6px;
-    font-weight: 600;
+    background: #fff;
+    color: var(--emp-text-muted);
+    border: 1px solid rgba(0,0,0,0.1);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
     display: flex;
     align-items: center;
-    transition: all 0.2s;
+    transition: var(--emp-transition);
+    font-size: 0.95rem;
 }
 
     .emplayout-logout-btn:hover {
-        background: #D32F2F;
-        color: #fff;
+        background: #FFEBEE;
+        color: #D32F2F;
+        border-color: #FFCDD2;
+        box-shadow: 0 2px 4px rgba(211, 47, 47, 0.1);
     }
 
 .emplayout-main-body {
     flex: 1;
-    padding: 25px;
+    padding: 24px;
     overflow-y: auto;
+}
+
+/* ==========================================================
+   ANIMATIONS & EFFECTS
+========================================================== */
+/* Hiệu ứng load trang */
+.fade-in-page {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hiệu ứng Ripple click cho nút bấm */
+.material-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+    .material-ripple:active::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100px;
+        height: 100px;
+        background: rgba(0, 0, 0, 0.1);
+        opacity: 1;
+        border-radius: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        animation: ripple 0.4s ease-out;
+    }
+
+@keyframes ripple {
+    to {
+        transform: translate(-50%, -50%) scale(3);
+        opacity: 0;
+    }
 }
 
 /* ==========================================================
    RESPONSIVE (PC - TABLET - MOBILE)
 ========================================================== */
-/* Tablet & Mobile (Dưới 992px) */
+.emplayout-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.4);
+    z-index: 1030;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(2px);
+}
+
+    .emplayout-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
 @media (max-width: 991px) {
-    /* Ẩn sidebar theo mặc định, biến thành dạng Offcanvas trượt ra */
     .emplayout-sidebar {
         position: fixed;
         top: 0;
         left: 0;
         height: 100vh;
-        transform: translateX(-100%); /* Giấu sang trái */
-        box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+        transform: translateX(-100%);
+        box-shadow: var(--emp-shadow-lg);
     }
 
-        /* Lớp Show được add qua JS */
         .emplayout-sidebar.show {
             transform: translateX(0);
         }
 
     .emplayout-header {
-        padding: 0 15px;
+        padding: 0 16px;
     }
 
     .emplayout-main-body {
-        padding: 15px;
+        padding: 16px;
     }
 }
 
-/* Mobile Nhỏ (Dưới 576px) */
 @media (max-width: 575px) {
     .emplayout-avatar {
-        margin-right: 0; /* Ẩn tên nên không cần margin */
+        margin-right: 0;
     }
 
     .emplayout-logout-btn {
-        padding: 6px 10px;
+        padding: 8px;
+    }
+
+    .emplayout-brand-text {
+        font-size: 1.05rem;
     }
 }

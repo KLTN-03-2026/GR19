@@ -1,169 +1,293 @@
-﻿.gmw-layout-container {
+﻿/* GIAO DIỆN GỌI MÓN - CAFEBOOK MATERIAL THEME */
+:root {
+    --gmw-primary: #5D4037; /* Nâu cà phê đậm */
+    --gmw-primary-light: #8D6E63;
+    --gmw-accent: #D84315; /* Cam đất */
+    --gmw-bg-light: #FDFBF9; /* Kem sáng */
+    --gmw-bg-surface: #FFF3E0; /* Be nhạt */
+    --gmw-border: #EFEBE9;
+    --gmw-text-dark: #3E2723;
+    --gmw-text-muted: #795548;
+}
+
+body {
+    background-color: var(--gmw-bg-light);
+}
+
+/* === BỐ CỤC RESPONSIVE === */
+.gmw-layout-container {
     display: flex;
+    flex-direction: column; /* Mặc định dọc cho Mobile */
     gap: 1.5rem;
-    height: calc(100vh - 100px);
+    height: auto;
+    padding-bottom: 2rem;
 }
 
+@media (min-width: 992px) {
+    .gmw-layout-container {
+        flex-direction: row; /* Chuyển thành ngang cho PC/Tablet lớn */
+        height: calc(100vh - 90px);
+        overflow: hidden;
+        padding-bottom: 0;
+    }
+}
+
+/* === 1. DANH MỤC (CATEGORIES) === */
 .gmw-danhmuc-list {
-    flex: 0 0 220px;
-    border-radius: 12px;
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--gmw-border);
 }
 
-    .gmw-danhmuc-list .nav-link {
-        color: #4E342E;
-        font-weight: 600;
-        padding: 10px 16px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.3s;
+    .gmw-danhmuc-list .card-body {
+        padding: 12px;
     }
 
-        .gmw-danhmuc-list .nav-link:hover {
-            background-color: #FFF8E1;
-        }
+    /* Mobile: Trượt ngang */
+    .gmw-danhmuc-list ul {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 4px;
+        scrollbar-width: thin;
+    }
 
-        .gmw-danhmuc-list .nav-link.active {
-            background-color: #6F4E37;
-            color: white;
-            box-shadow: 0 4px 10px rgba(111,78,55,0.3);
-        }
+/* PC: Trượt dọc */
+@media (min-width: 992px) {
+    .gmw-danhmuc-list {
+        flex: 0 0 240px;
+        overflow-y: auto;
+    }
 
+        .gmw-danhmuc-list ul {
+            flex-direction: column;
+        }
+}
+
+.gmw-danhmuc-list .nav-link {
+    color: var(--gmw-text-muted);
+    font-weight: 600;
+    padding: 12px 16px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+    .gmw-danhmuc-list .nav-link:hover {
+        background-color: var(--gmw-bg-surface);
+        color: var(--gmw-accent);
+    }
+
+    .gmw-danhmuc-list .nav-link.active {
+        background-color: var(--gmw-primary);
+        color: white;
+        box-shadow: 0 6px 12px rgba(93, 64, 55, 0.2);
+    }
+
+/* === 2. LƯỚI SẢN PHẨM (PRODUCTS) === */
 .gmw-sanpham-grid {
     flex: 1;
-    background: #F9F9F9;
-    border-radius: 12px;
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--gmw-border);
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
+/* Thanh tìm kiếm */
+.gmw-search-box {
+    border-radius: 50px;
+    padding: 12px 20px 12px 45px;
+    border: 2px solid var(--gmw-border);
+    background: var(--gmw-bg-light) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="%238D6E63"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>') no-repeat 15px center;
+    transition: all 0.3s;
+}
+
+    .gmw-search-box:focus {
+        border-color: var(--gmw-primary);
+        box-shadow: 0 0 0 4px rgba(93, 64, 55, 0.1);
+        outline: none;
+    }
+
 .gmw-sanpham-list {
-    padding: 1rem;
+    padding: 1.5rem;
     overflow-y: auto;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 20px;
     align-content: flex-start;
 }
 
+/* Product Card */
 .gmw-product-card {
     background: white;
-    border-radius: 10px;
-    border: 1px solid #EEE;
+    border-radius: 16px;
+    border: 1px solid var(--gmw-border);
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
+    position: relative;
 }
 
     .gmw-product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        border-color: #D27D2D;
+        transform: translateY(-6px);
+        box-shadow: 0 12px 24px rgba(93, 64, 55, 0.12);
+        border-color: var(--gmw-accent);
     }
 
     .gmw-product-card img {
         width: 100%;
-        height: 120px;
+        height: 140px;
         object-fit: cover;
-        background: #EEE;
+        background: #FAFAFA;
+        transition: transform 0.3s;
     }
 
+    .gmw-product-card:hover img {
+        transform: scale(1.05);
+    }
+
+.gmw-product-name {
+    color: var(--gmw-text-dark);
+    font-size: 0.95rem;
+}
+
+.gmw-product-price {
+    color: var(--gmw-accent);
+    font-size: 1.1rem;
+}
+
+/* === 3. BẢNG HÓA ĐƠN (BILL PANEL) === */
 .gmw-hoadon-panel {
-    flex: 0 0 450px;
-    border-radius: 12px;
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--gmw-border);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+}
+
+@media (min-width: 992px) {
+    .gmw-hoadon-panel {
+        flex: 0 0 420px;
+    }
+}
+
+.gmw-hoadon-header {
+    background-color: var(--gmw-primary);
+    color: white;
+    padding: 16px;
 }
 
 .gmw-hoadon-body {
     flex-grow: 1;
     overflow-y: auto;
+    background-color: #FAFAFA;
+}
+
+/* Bảng chi tiết hóa đơn */
+.table-cart td {
+    vertical-align: middle;
+    padding: 12px 8px;
+    border-bottom: 1px dashed var(--gmw-border);
+}
+
+.qty-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid var(--gmw-border);
+    border-radius: 50px;
+    overflow: hidden;
+}
+
+    .qty-control button {
+        border: none;
+        background: transparent;
+        color: var(--gmw-text-dark);
+        padding: 4px 10px;
+        font-weight: bold;
+        transition: 0.2s;
+    }
+
+        .qty-control button:hover {
+            background: var(--gmw-bg-surface);
+            color: var(--gmw-accent);
+        }
+
+    .qty-control input {
+        border: none;
+        width: 35px;
+        text-align: center;
+        font-weight: bold;
+        padding: 0;
+        color: var(--gmw-text-dark);
+    }
+
+        .qty-control input:focus {
+            outline: none;
+        }
+
+/* Tổng tiền & Actions */
+.gmw-bill-summary {
+    background: var(--gmw-bg-surface);
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 16px;
 }
 
 .gmw-bill-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
 }
 
 .gmw-bill-total {
-    font-size: 1.3rem;
-    font-weight: 800;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--gmw-accent);
+    border-top: 2px dashed #D7CCC8;
+    padding-top: 12px;
+    margin-top: 12px;
+    margin-bottom: 0;
 }
 
-.gmw-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-/* CSS CHO POPUP KHUYẾN MÃI */
-.gmw-promo-card {
-    border: 2px solid #EEEEEE;
+.btn-action-pos {
     border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    background-color: #FFFFFF;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
+    padding: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.3s;
 }
 
-    .gmw-promo-card:hover {
-        border-color: #D27D2D;
-        background-color: #FFFDF8;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(210, 125, 45, 0.15);
+    .btn-action-pos:active {
+        transform: scale(0.95);
     }
 
-    .gmw-promo-card.disabled {
-        opacity: 0.65;
-        cursor: not-allowed;
-        background-color: #F9F9F9;
+/* === CÁC HIỆU ỨNG === */
+@keyframes popIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
     }
 
-        .gmw-promo-card.disabled:hover {
-            border-color: #EEEEEE;
-            transform: none;
-            box-shadow: none;
-        }
-
-.gmw-promo-title {
-    font-weight: 800;
-    color: #4E342E;
-    font-size: 1.1rem;
-    margin-bottom: 4px;
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
-.gmw-promo-desc {
-    font-size: 0.9rem;
-    color: #616161;
-}
-
-.gmw-promo-discount {
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: #2E7D32; /* Xanh lá */
-}
-
-.gmw-promo-reason {
-    font-size: 0.85rem;
-    color: #D32F2F; /* Đỏ báo lỗi */
-    font-style: italic;
-    margin-top: 8px;
-}
-
-.gmw-promo-active-badge {
-    position: absolute;
-    top: 12px;
-    right: -30px;
-    background: #66BB6A;
-    color: white;
-    font-size: 0.75rem;
-    font-weight: bold;
-    padding: 4px 30px;
-    transform: rotate(45deg);
+.anim-item {
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
 }

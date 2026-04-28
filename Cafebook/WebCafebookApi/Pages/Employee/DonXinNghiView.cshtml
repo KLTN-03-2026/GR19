@@ -9,66 +9,69 @@
     <link rel="stylesheet" href="~/css/DonXinNghi.css" asp-append-version="true" />
 }
 
-<div class="dxn-container">
+<div class="dxn-container fade-in-up">
     <div class="row g-4">
-        <div class="col-lg-5">
-            <div class="card dxn-card shadow-sm">
-                <div class="card-header bg-white border-bottom p-3">
-                    <h5 class="mb-0 fw-bold text-dark d-flex align-items-center">
-                        <span class="material-symbols-outlined me-2 text-primary">edit_document</span>
-                        Tạo Đơn Xin Nghỉ Mới
-                    </h5>
+        <div class="col-lg-5 col-xl-4">
+            <div class="card dxn-card-main shadow-sm border-0">
+                <div class="card-header bg-primary-coffee text-white p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="dxn-icon-box"><span class="material-symbols-outlined">edit_note</span></div>
+                        <h5 class="mb-0 fw-bold">Tạo Đơn Xin Nghỉ</h5>
+                    </div>
                 </div>
                 <div class="card-body p-4">
                     <form id="formTaoDon">
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <label class="form-label fw-bold text-muted small">Loại Đơn <span class="text-danger">*</span></label>
-                            <select id="cboLoaiDon" class="form-select dxn-input" required>
-                                <option value="">-- Chọn loại đơn --</option>
-                                <option value="Nghỉ phép">Nghỉ phép</option>
-                                <option value="Nghỉ ốm">Nghỉ ốm</option>
-                                <option value="Việc bận cá nhân">Việc bận cá nhân</option>
-                                <option value="Khác">Khác</option>
-                            </select>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><span class="material-symbols-outlined fs-5">category</span></span>
+                                <select id="cboLoaiDon" class="form-select dxn-input-material border-start-0" required>
+                                    <option value="">-- Chọn loại đơn --</option>
+                                    <option value="Nghỉ phép">Nghỉ phép</option>
+                                    <option value="Nghỉ ốm">Nghỉ ốm</option>
+                                    <option value="Việc bận cá nhân">Việc bận cá nhân</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
                                 <label class="form-label fw-bold text-muted small">Từ ngày <span class="text-danger">*</span></label>
-                                <input type="date" id="txtTuNgay" class="form-control dxn-input" required />
+                                <input type="date" id="txtTuNgay" class="form-control dxn-input-material" required />
                             </div>
-                            <div class="col-md-6 mt-3 mt-md-0">
+                            <div class="col-6">
                                 <label class="form-label fw-bold text-muted small">Đến ngày <span class="text-danger">*</span></label>
-                                <input type="date" id="txtDenNgay" class="form-control dxn-input" required />
+                                <input type="date" id="txtDenNgay" class="form-control dxn-input-material" required />
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label fw-bold text-muted small">Lý do chi tiết <span class="text-danger">*</span></label>
-                            <textarea id="txtLyDo" class="form-control dxn-input" rows="4" placeholder="Vui lòng nêu rõ lý do xin nghỉ..." required></textarea>
+                            <textarea id="txtLyDo" class="form-control dxn-input-material" rows="4" placeholder="Vui lòng nêu rõ lý do..." required></textarea>
                         </div>
 
-                        <button type="submit" id="btnSubmitDon" class="btn dxn-btn-submit w-100 fw-bold d-flex justify-content-center align-items-center">
-                            <span class="material-symbols-outlined me-2">send</span> Gửi Đơn Xin Nghỉ
+                        <button type="submit" id="btnSubmitDon" class="btn btn-primary-coffee w-100 fw-bold py-3 rounded-pill material-ripple shadow-sm d-flex justify-content-center align-items-center gap-2">
+                            <span class="material-symbols-outlined">send</span> Gửi Đơn Xét Duyệt
                         </button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-7">
-            <div class="card dxn-card shadow-sm h-100">
-                <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold text-dark d-flex align-items-center">
-                        <span class="material-symbols-outlined me-2 text-success">history</span>
-                        Lịch Sử Đơn Của Bạn
-                    </h5>
-                    <button class="btn btn-sm btn-outline-secondary" id="btnRefresh" title="Làm mới">
-                        <span class="material-symbols-outlined" style="font-size: 18px;">refresh</span>
+        <div class="col-lg-7 col-xl-8">
+            <div class="card dxn-card-main shadow-sm border-0 h-100">
+                <div class="card-header bg-white p-4 border-0 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-success">history_edu</span>
+                        <h5 class="mb-0 fw-bold text-dark">Lịch Sử Đơn Của Bạn</h5>
+                    </div>
+                    <button class="btn btn-icon material-ripple" id="btnRefresh" title="Làm mới">
+                        <span class="material-symbols-outlined">refresh</span>
                     </button>
                 </div>
-                <div class="card-body p-0 overflow-auto" style="max-height: 600px;">
-                    <div id="history-container" class="p-3">
+                <div class="card-body p-4 pt-0">
+                    <div id="history-container" class="dxn-history-scroll">
                     </div>
                 </div>
             </div>

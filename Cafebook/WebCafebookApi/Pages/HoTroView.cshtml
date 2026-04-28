@@ -1,7 +1,7 @@
 ﻿@page "/ho-tro"
 @model WebCafebookApi.Pages.HoTroViewModel
 @{
-    ViewData["Title"] = "Hỗ trợ (Khách Vãng Lai)";
+    ViewData["Title"] = "Hỗ trợ";
     Layout = "_Layout";
 }
 @section Styles {
@@ -31,17 +31,34 @@
 
             function drawMessage(msg, isUser) {
                 const type = isUser ? 'user' : 'bot';
-                const icon = isUser ? 'person' : 'smart_toy';
-                let text = (msg.noiDung || '').replace(/\[BUTTON:\s*(.*?)\s*\|\s*(.*?)\]/g, "").replace(/\n/g, '<br />');
+                const icon = isUser ? 'person' : 'local_cafe';
+                
+                let rawText = msg.noiDung || '';
+                let actionButtonsHtml = '';
+                
+                const buttonRegex = /\[BUTTON:\s*(.*?)\s*\|\s*(.*?)\]/g;
+                let match;
+                while ((match = buttonRegex.exec(rawText)) !== null) {
+                    let label = match[1].trim();
+                    let link = match[2].trim();
+                    actionButtonsHtml += `<a href="${link}" class="htvl-btn-action">${label} <span class="material-symbols-outlined" style="font-size: 14px; margin-left: 4px;">arrow_forward</span></a>`;
+                }
+
+                let textContent = rawText.replace(buttonRegex, "").trim().replace(/\n/g, '<br />');
                 
                 let msgTime = msg.thoiGian ? new Date(msg.thoiGian) : new Date();
                 const time = msgTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                        
+                
+                let actionContainer = actionButtonsHtml !== ''
+                    ? `<div class="htvl-action-buttons">${actionButtonsHtml}</div>`
+                    : '';
+
                 $('#chat-history').append(`
                     <div class="htvl-row ${type}">
                         <div class="htvl-avatar ${type}"><span class="material-symbols-outlined">${icon}</span></div>
                         <div class="htvl-content">
-                            <div class="htvl-bubble">${text}</div>
+                            <div class="htvl-bubble">${textContent}</div>
+                            ${actionContainer}
                             <div class="htvl-time ${isUser ? 'text-end' : 'text-start'}">${time}</div>
                         </div>
                     </div>
@@ -52,7 +69,7 @@
             function showTypingIndicator() {
                 $('#chat-history').append(`
                     <div class="htvl-row bot" id="typing-indicator-row">
-                        <div class="htvl-avatar bot"><span class="material-symbols-outlined">smart_toy</span></div>
+                        <div class="htvl-avatar bot"><span class="material-symbols-outlined">local_cafe</span></div>
                         <div class="htvl-content">
                             <div class="htvl-bubble">
                                 <div class="typing-indicator">
@@ -70,7 +87,11 @@
             }
 
             function scrollToBottom() {
-                $('#chat-history').scrollTop($('#chat-history')[0].scrollHeight);
+                const chatHistory = document.getElementById('chat-history');
+                chatHistory.scrollTo({
+                    top: chatHistory.scrollHeight,
+                    behavior: 'smooth'
+                });
             }
 
             async function loadHistory() {
@@ -96,11 +117,9 @@
                 const text = $('#chatMessageInput').val().trim();
                 if (!text) return;
 
-                // Disable input
                 $('#chatMessageInput').val('').prop('disabled', true);
                 $('#sendButton').prop('disabled', true);
                 
-                // Hiển thị tin nhắn người dùng và loading indicator
                 drawMessage({ noiDung: text, thoiGian: new Date() }, true);
                 showTypingIndicator();
 
@@ -121,13 +140,11 @@
                     removeTypingIndicator();
                     drawMessage({ noiDung: "Đã có lỗi xảy ra khi kết nối đến AI. Vui lòng thử lại sau.", thoiGian: new Date() }, false);
                 } finally {
-                    // Trả lại input cho người dùng
                     $('#chatMessageInput').prop('disabled', false).focus();
                     $('#sendButton').prop('disabled', false);
                 }
             });
 
-            // Init
             loadHistory();
         });
     </script>

@@ -24,6 +24,13 @@ namespace WebCafebookApi.Pages.Employee
 
         public async Task<IActionResult> OnGetAsync()
         {
+            var jwtToken = HttpContext.Session.GetString("JwtToken");
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                string currentUrl = Request.Path + Request.QueryString;
+                return RedirectToPage("/Employee/DangNhapEmployee", new { ReturnUrl = currentUrl });
+            }
+
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
 
             try
@@ -45,7 +52,9 @@ namespace WebCafebookApi.Pages.Employee
                     await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                     HttpContext.Session.Remove("JwtToken");
                     TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
-                    return RedirectToPage("/Employee/Login");
+
+                    string currentUrl = Request.Path + Request.QueryString;
+                    return RedirectToPage("/Employee/DangNhapEmployee", new { ReturnUrl = currentUrl });
                 }
 
                 ErrorMessage = "Không thể tải dữ liệu tổng quan.";
