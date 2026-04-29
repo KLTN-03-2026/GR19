@@ -1,5 +1,7 @@
 ﻿@using System.Security.Claims
 @using Microsoft.AspNetCore.Http
+@using CafebookModel.Utils
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 <ul class="navbar-nav align-items-center flex-column flex-lg-row w-100 gap-2 justify-content-lg-end">
     @if (User.Identity?.IsAuthenticated == true && User.IsInRole("KhachHang"))
@@ -11,8 +13,11 @@
         }
 
         var avatarUrl = Context.Session.GetString("AvatarUrl");
+        
+        string apiBaseUrl = Configuration.GetSection("ApiSettings")["BaseUrl"] ?? Configuration["ApiBaseUrl"] ?? "http://localhost:5202";
+        apiBaseUrl = apiBaseUrl.TrimEnd('/');
         var avatarSrc = string.IsNullOrEmpty(avatarUrl)
-            ? "/images/default-avatar.png"
+            ? $"{apiBaseUrl}{HinhAnhPaths.WebDefaultAvatar}"
             : avatarUrl;
 
         <li class="nav-item dropdown w-100 w-lg-auto text-center text-lg-start mt-2 mt-lg-0">
@@ -21,7 +26,7 @@
                 <span class="fw-bold" style="color: var(--cf-dark-brown);">Chào, @displayName</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2" aria-labelledby="navbarDropdown" style="border-radius: 12px; min-width: 240px;">
-                
+
                 <li>
                     <a class="dropdown-item py-2" asp-page="/Account/TaiKhoanTongQuanView">
                         <span class="material-symbols-outlined align-middle me-2" style="font-size: 1.3rem;">person</span>

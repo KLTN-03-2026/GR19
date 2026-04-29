@@ -11,8 +11,6 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <partial name="_ValidationScriptsPartial" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     
     <script>
         $(document).ready(function () {
@@ -62,35 +60,57 @@
                 </li>
             </ul>
 
-            <h5 class="fw-bold mt-5 mb-3" style="color: var(--cf-dark-brown);">Kết nối với chúng tôi</h5>
-            <div class="d-flex flex-wrap gap-3">
-                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkWebsite))
-                {
-                    <a href="@Model.Info.LinkWebsite" class="social-icon" target="_blank" rel="noopener noreferrer" title="Website"><i class="fa-solid fa-globe"></i></a>
-                }
-                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkFacebook))
-                {
-                    <a href="@Model.Info.LinkFacebook" class="social-icon" target="_blank" rel="noopener noreferrer" title="Facebook"><i class="fab fa-facebook"></i></a>
-                }
-                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkInstagram))
-                {
-                    <a href="@Model.Info.LinkInstagram" class="social-icon" target="_blank" rel="noopener noreferrer" title="Instagram"><i class="fab fa-instagram"></i></a>
-                }
-                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkZalo))
-                {
-                    <a href="@Model.Info.LinkZalo" class="social-icon" target="_blank" rel="noopener noreferrer" title="Zalo">
-                        <i class="fa-solid fa-comment-dots"></i>
-                    </a>
-                }
-                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkYoutube))
-                {
-                    <a href="@Model.Info.LinkYoutube" class="social-icon text-danger" target="_blank" rel="noopener noreferrer" title="Youtube"><i class="fab fa-youtube"></i></a>
-                }
-                @if (!string.IsNullOrWhiteSpace(Model.Info.LinkX))
-                {
-                    <a href="@Model.Info.LinkX" class="social-icon text-dark" target="_blank" rel="noopener noreferrer" title="X (Twitter)"><i class="fa-brands fa-x-twitter"></i></a>
-                }
-            </div>
+            @{
+                bool hasSocialLinks = !string.IsNullOrWhiteSpace(Model.Info.LinkWebsite) ||
+                                      !string.IsNullOrWhiteSpace(Model.Info.LinkFacebook) ||
+                                      !string.IsNullOrWhiteSpace(Model.Info.LinkInstagram) ||
+                                      !string.IsNullOrWhiteSpace(Model.Info.LinkZalo) ||
+                                      !string.IsNullOrWhiteSpace(Model.Info.LinkYoutube) ||
+                                      !string.IsNullOrWhiteSpace(Model.Info.LinkX);
+            }
+
+            @if (hasSocialLinks)
+            {
+                <h5 class="fw-bold mt-5 mb-3" style="color: var(--cf-dark-brown);">Kết nối với chúng tôi</h5>
+                <div class="d-flex flex-wrap gap-3">
+                    @if (!string.IsNullOrWhiteSpace(Model.Info.LinkWebsite))
+                    {
+                        <a href="@Model.Info.LinkWebsite" class="social-icon" target="_blank" rel="noopener noreferrer" title="Website">
+                            <i class="fa-solid fa-globe"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Info.LinkFacebook))
+                    {
+                        <a href="@Model.Info.LinkFacebook" class="social-icon" target="_blank" rel="noopener noreferrer" title="Facebook">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Info.LinkInstagram))
+                    {
+                        <a href="@Model.Info.LinkInstagram" class="social-icon" target="_blank" rel="noopener noreferrer" title="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Info.LinkZalo))
+                    {
+                        <a href="@Model.Info.LinkZalo" class="social-icon" target="_blank" rel="noopener noreferrer" title="Zalo">
+                            <i class="fa-solid fa-comment-dots"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Info.LinkYoutube))
+                    {
+                        <a href="@Model.Info.LinkYoutube" class="social-icon text-danger" target="_blank" rel="noopener noreferrer" title="Youtube">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Info.LinkX))
+                    {
+                        <a href="@Model.Info.LinkX" class="social-icon text-dark" target="_blank" rel="noopener noreferrer" title="Twitter">
+                            <i class="fa-brands fa-twitter"></i>
+                        </a>
+                    }
+                </div>
+            }
         </div>
 
         <div class="col-lg-7">

@@ -37,13 +37,42 @@ namespace AppCafebookApi.Controllers.app.NhanVien
 
         #region GET Endpoints
         [HttpGet("list")]
-        public async Task<ActionResult<IEnumerable<PhieuDatBanDto>>> GetDatBanList()
+        public async Task<ActionResult<IEnumerable<PhieuDatBanDto>>> GetDatBanList(
+            [FromQuery] string? tuNgay = null,
+            [FromQuery] string? denNgay = null,
+            [FromQuery] bool isHistory = false)
         {
-
-            var list = await _context.PhieuDatBans
+            var query = _context.PhieuDatBans
                 .AsNoTracking()
                 .Include(p => p.KhachHang)
                 .Include(p => p.Ban).ThenInclude(b => b.KhuVuc)
+                .AsQueryable();
+
+            DateTime startDate = DateTime.Today;
+            DateTime endDate = DateTime.Today;
+
+            if (!string.IsNullOrEmpty(tuNgay) && DateTime.TryParse(tuNgay, out DateTime parsedTuNgay))
+                startDate = parsedTuNgay.Date;
+            else
+                startDate = isHistory ? DateTime.Today : DateTime.Today.AddDays(-7); 
+
+            if (!string.IsNullOrEmpty(denNgay) && DateTime.TryParse(denNgay, out DateTime parsedDenNgay))
+                endDate = parsedDenNgay.Date.AddDays(1).AddTicks(-1);
+            else
+                endDate = isHistory ? DateTime.Today.AddDays(1).AddTicks(-1) : DateTime.Today.AddDays(30); 
+
+            query = query.Where(p => p.ThoiGianDat >= startDate && p.ThoiGianDat <= endDate);
+
+            if (isHistory)
+            {
+                query = query.Where(p => p.TrangThai == "Đã hủy" || p.TrangThai == "Khách đã đến");
+            }
+            else
+            {
+                query = query.Where(p => p.TrangThai == "Chờ xác nhận" || p.TrangThai == "Đã xác nhận");
+            }
+
+            var list = await query
                 .OrderByDescending(p => p.ThoiGianDat)
                 .Select(p => new PhieuDatBanDto
                 {
@@ -61,6 +90,7 @@ namespace AppCafebookApi.Controllers.app.NhanVien
                     GhiChu = p.GhiChu,
                     IdKhachHang = p.IdKhachHang
                 }).ToListAsync();
+
             return Ok(list);
         }
 

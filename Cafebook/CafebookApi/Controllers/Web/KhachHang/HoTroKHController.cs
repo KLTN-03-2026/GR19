@@ -259,6 +259,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 };
                 _context.ThongBaoHoTros.Add(thongBaoHoTro);
                 await _context.SaveChangesAsync();
+                responseDto.IdThongBaoHoTro = thongBaoHoTro.IdThongBao;
                 await _chatHubContext.Clients.All.SendAsync("ReloadTicketList");
             }
             else

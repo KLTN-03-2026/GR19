@@ -93,38 +93,154 @@
         const $chatInput = $('#chatMessageInput');
         const $sendButton = $('#sendButton');
         const $resolveButton = $('#resolveButton');
-                
+        const $chatForm = $('#chatForm');
+                        
         const jwtToken = $('#JwtToken').val() || null;
-        const headers = { 'Content-Type': 'application/json' };
+        const antiForgeryToken = $('input[name="__RequestVerificationToken"]').val();
+
+        const headers = { 'Content-Type': 'application/json', 'RequestVerificationToken': antiForgeryToken };
         if (jwtToken) headers['Authorization'] = 'Bearer ' + jwtToken;
 
+        // Biến quản lý trạng thái Chat hiện tại
         let currentTicketId = null;
+        let currentGroupName = null;
         let currentTicketData = null;
-        let _allChatMessages = []; // Lưu toàn bộ tin nhắn để phân trang client-side
-        let _displayedIndex = 0;   // Vị trí tin nhắn hiện tại đang hiển thị (từ cuối lên)
+                
+        // Biến dùng cho tính năng cuộn tải tin nhắn cũ
+        let _allChatMessages = [];
+        let _displayedIndex = 0;
         const PAGE_SIZE = 8;
 
-        // 1. Tải danh sách phiếu (Có lọc)
-        async function loadTicketList() {
-        try {
-        const response = await fetch(`${apiBaseUrl}/api/web/nhanvien/hotro/tickets`, { method: 'GET', headers: headers });
-        let tickets = await response.json();
+        // Biến dùng cho tính năng Lazy Load danh sách phiếu
+        let currentSkip = 0;
+        const TAKE_COUNT = 5;
+        let isFetchingTickets = false;
+        let hasMoreTickets = true;
+        let searchTimeout = null;
+
+        /* =========================================================
+        1. CẤU HÌNH SIGNALR
+        ========================================================= */
+        const hubOptions = jwtToken ? { accessTokenFactory: () => jwtToken } : {};
+        const hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl(apiBaseUrl + "/chatHub", hubOptions)
+        .build();
+                        
+        hubConnection.on("ReceiveMessage", function (message) {
+        const idTicket = message.idThongBaoHoTro || message.IdThongBaoHoTro;
+        // Nếu tin nhắn thuộc về người đang chat, hiển thị luôn
+        if (currentTicketId && idTicket == currentTicketId) {
+        _allChatMessages.push(message);
+        _displayedIndex++;
+        appendSingleMessage(message, true);
+        } else {
+        // Cập nhật lại danh sách bên trái để báo hiệu có tin mới (Load lại từ đầu)
+        loadTicketList(false);
+        }
+        });
                     
-        // Lọc tin nhắn chưa xử lý nếu nút đang bật
-        if ($('#chkOnlyPending').is(':checked')) {
-        tickets = tickets.filter(t => t.trangThai === 'Chờ xử lý');
+        // Khi có thay đổi trạng thái (tạo phiếu mới, đóng phiếu), tải lại danh sách
+        hubConnection.on("ReloadTicketList", () => loadTicketList(false));
+                    
+        async function startConnection() {
+        try { await hubConnection.start(); } catch (err) { console.error("SignalR Error", err); }
         }
 
+        /* =========================================================
+        2. HÀM VẼ GIAO DIỆN TIN NHẮN
+        ========================================================= */
+        function generateMessageHtml(msg) {
+        const isUser = msg.loaiTinNhan === 'KhachHang';
+        const isStaff = msg.loaiTinNhan === 'NhanVien';
+        const rowClass = isUser ? 'htnv-user-row' : (isStaff ? 'htnv-staff-row' : 'htnv-bot-row');
+        const avatarIcon = isUser ? 'person' : (isStaff ? 'support_agent' : 'smart_toy');
+                        
+        // Tiền xử lý text (xuống dòng, in đậm, xóa button)
+        let cleanText = (msg.noiDung || '').replace(/\[BUTTON:\s*(.*?)\s*\|\s*(.*?)\]/g, "");
+        cleanText = cleanText.replace(/\n/g, '<br />').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        const time = new Date(msg.thoiGian).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                        
+        return `
+        <div class="htnv-message-row ${rowClass}">
+        <div class="htnv-avatar ${isUser ? 'htnv-avatar-user' : (isStaff ? 'htnv-avatar-staff' : 'htnv-avatar-bot')} shadow-sm">
+        <span class="material-symbols-outlined fs-5">${avatarIcon}</span>
+        </div>
+        <div class="htnv-msg-content">
+        <div class="htnv-bubble ${isUser ? 'htnv-bubble-user' : (isStaff ? 'htnv-bubble-staff' : 'htnv-bubble-bot')}">${cleanText}</div>
+        <div class="htnv-bubble-time ${isUser ? 'text-end' : 'text-start'}">${time}</div>
+        </div>
+        </div>`;
+        }
+
+        function prependSingleMessage(msg) {
+        $chatHistory.prepend(generateMessageHtml(msg));
+        }
+
+        function appendSingleMessage(msg, scroll = true) {
+        $chatHistory.append(generateMessageHtml(msg));
+        if(scroll) $chatHistory.scrollTop($chatHistory[0].scrollHeight);
+        }
+
+        function loadMoreMessages() {
+        if (_displayedIndex >= _allChatMessages.length) return;
+        const prevHeight = $chatHistory[0].scrollHeight;
+                        
+        const nextBatch = _allChatMessages.slice(
+        Math.max(0, _allChatMessages.length - _displayedIndex - PAGE_SIZE),
+        _allChatMessages.length - _displayedIndex
+        );
+                        
+        nextBatch.reverse().forEach(msg => prependSingleMessage(msg));
+        _displayedIndex += nextBatch.length;
+        $chatHistory.scrollTop($chatHistory[0].scrollHeight - prevHeight);
+        }
+
+        /* =========================================================
+        3. LOAD DỮ LIỆU TICKET (LAZY LOAD & SEARCH SERVER-SIDE)
+        ========================================================= */
+        async function loadTicketList(isAppend = false) {
+        // Chặn gọi API nếu đang tải hoặc nếu kéo xuống mà đã hết dữ liệu
+        if (isFetchingTickets || (!hasMoreTickets && isAppend)) return;
+        isFetchingTickets = true;
+
+        try {
+        const isOnlyPending = $('#chkOnlyPending').is(':checked');
+        const searchTerm = $('#ticketSearchInput').val().trim();
+                    
+        if (!isAppend) {
+        // Reset lại trạng thái phân trang nếu tải mới từ đầu
+        currentSkip = 0;
+        hasMoreTickets = true;
         $ticketListContainer.empty();
+        $ticketListContainer.html('<div class="p-5 text-center text-muted"><div class="spinner-border text-primary-coffee mb-3"></div><p>Đang tải...</p></div>');
+        } else {
+        // Thêm UI loading xoay vòng ở cuối danh sách khi cuộn
+        $ticketListContainer.append('<div id="ticket-loading-more" class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary-coffee"></div></div>');
+        }
+
+        // Gọi API với phân trang
+        const url = `${apiBaseUrl}/api/web/nhanvien/hotro/tickets?skip=${currentSkip}&take=${TAKE_COUNT}&onlyPending=${isOnlyPending}&search=${encodeURIComponent(searchTerm)}`;
+        const response = await fetch(url, { method: 'GET', headers: headers });
+        const tickets = await response.json();
+                    
+        if (!isAppend) $ticketListContainer.empty();
+        $('#ticket-loading-more').remove();
+
         if (tickets.length === 0) {
+        hasMoreTickets = false;
+        if (!isAppend) {
         $ticketListContainer.html('<div class="p-5 text-center text-muted opacity-75">Không có yêu cầu nào.</div>');
+        }
         return;
         }
-                    
+
+        // Nếu số lượng trả về ít hơn TAKE_COUNT nghĩa là đã chạm đáy DB
+        if (tickets.length < TAKE_COUNT) hasMoreTickets = false;
+
         tickets.forEach(ticket => {
         const isPending = ticket.trangThai === 'Chờ xử lý';
         $ticketListContainer.append(`
-        <div class="htnv-ticket-item ${isPending ? 'htnv-status-pending' : ''}" data-id="${ticket.idThongBao}">
+        <div class="htnv-ticket-item ${isPending ? 'htnv-status-pending' : ''} ${ticket.idThongBao == currentTicketId ? 'active' : ''}" data-id="${ticket.idThongBao}">
         <div class="d-flex justify-content-between align-items-center mb-1">
         <strong class="text-truncate">${ticket.tenKhachHang}</strong>
         <span class="htnv-ticket-time fw-medium ${isPending ? 'text-accent' : 'text-success'}">${ticket.trangThai}</span>
@@ -133,103 +249,179 @@
         ${isPending ? '<span class="htnv-status-indicator"></span>' : ''}
         </div>`);
         });
-        } catch (e) { console.error("Lỗi tải danh sách", e); }
+
+        currentSkip += tickets.length;
+        } catch (e) {
+        console.error("Lỗi tải danh sách", e);
+        $('#ticket-loading-more').remove();
+        } finally {
+        isFetchingTickets = false;
+        }
         }
 
-        // 2. Phân trang tin nhắn: Vẽ thêm tin nhắn cũ
-        function loadMoreMessages() {
-        if (_displayedIndex >= _allChatMessages.length) return;
-
-        const prevHeight = $chatHistory[0].scrollHeight;
-                
-        // Lấy 8 tin tiếp theo (ngược dòng thời gian)
-        const nextBatch = _allChatMessages.slice(
-        Math.max(0, _allChatMessages.length - _displayedIndex - PAGE_SIZE),
-        _allChatMessages.length - _displayedIndex
-        );
-
-        // Vẽ tin nhắn lên đầu khung chat (Prepend)
-        nextBatch.reverse().forEach(msg => prependSingleMessage(msg));
-
-        _displayedIndex += nextBatch.length;
-
-        // Giữ vị trí cuộn để không bị nhảy màn hình
-        $chatHistory.scrollTop($chatHistory[0].scrollHeight - prevHeight);
-        }
-
-        function prependSingleMessage(msg) {
-        const html = generateMessageHtml(msg);
-        $chatHistory.prepend(html);
-        }
-
-        function appendSingleMessage(msg, scroll = true) {
-        const html = generateMessageHtml(msg);
-        $chatHistory.append(html);
-        if(scroll) $chatHistory.scrollTop($chatHistory[0].scrollHeight);
-        }
-
-        function generateMessageHtml(msg) {
-        const isUser = msg.loaiTinNhan === 'KhachHang';
-        const isStaff = msg.loaiTinNhan === 'NhanVien';
-        const rowClass = isUser ? 'htnv-user-row' : (isStaff ? 'htnv-staff-row' : 'htnv-bot-row');
-        const avatarIcon = isUser ? 'person' : (isStaff ? 'support_agent' : 'smart_toy');
-        const time = new Date(msg.thoiGian).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                
-        return `
-        <div class="htnv-message-row ${rowClass}">
-        <div class="htnv-avatar ${isUser ? 'htnv-avatar-user' : (isStaff ? 'htnv-avatar-staff' : 'htnv-avatar-bot')} shadow-sm">
-        <span class="material-symbols-outlined fs-5">${avatarIcon}</span>
-        </div>
-        <div class="htnv-msg-content">
-        <div class="htnv-bubble ${isUser ? 'htnv-bubble-user' : (isStaff ? 'htnv-bubble-staff' : 'htnv-bubble-bot')}">${msg.noiDung}</div>
-        <div class="htnv-bubble-time">${time}</div>
-        </div>
-        </div>`;
-        }
-
-        // 3. Load chi tiết phiếu & Khởi tạo phân trang
         async function loadTicketDetail(id) {
         currentTicketId = id;
         $('#mainDashboard').addClass('show-chat');
-        $chatHistory.empty();
-                
+        $('.htnv-ticket-item').removeClass('active');
+        $(`.htnv-ticket-item[data-id="${id}"]`).addClass('active');
+
+        $chatInput.prop('disabled', true);
+        $sendButton.prop('disabled', true);
+        $chatHistory.html('<div class="h-100 d-flex justify-content-center align-items-center"><div class="spinner-border text-primary-coffee"></div></div>');
+                                
         try {
         const response = await fetch(`${apiBaseUrl}/api/web/nhanvien/hotro/ticket/${id}`, { method: 'GET', headers: headers });
         const ticketData = await response.json();
         currentTicketData = ticketData;
-                    
+                        
+        $chatHistory.empty();
         _allChatMessages = ticketData.lichSuChat || [];
         _displayedIndex = 0;
 
         if (_allChatMessages.length > 0) {
-        // Load 8 tin đầu tiên
         loadMoreMessages();
-        // Tự động cuộn xuống cuối ở lần đầu mở
         $chatHistory.scrollTop($chatHistory[0].scrollHeight);
         } else {
         $chatHistory.html('<div class="h-100 d-flex align-items-center justify-content-center text-muted">Chưa có tin nhắn</div>');
         }
 
+        // Cập nhật Cột thông tin bên phải (Summary)
+        $('#summary-card-content').html(`
+        <div class="htnv-request-content mb-3 shadow-sm">
+        <span class="badge bg-light text-dark border mb-2">#${ticketData.idThongBao}</span>
+        <div class="fw-bold mb-1">Yêu cầu ban đầu:</div>
+        <div class="text-muted small">${ticketData.noiDungYeuCau || 'Không có mô tả'}</div>
+        </div>
+        ${ticketData.ghiChuTuAI ? `
+        <div class="htnv-request-content shadow-sm" style="border-left: 4px solid var(--cf-accent);">
+        <div class="fw-bold mb-1 text-accent">Ghi chú hệ thống:</div>
+        <div class="text-muted small">${ticketData.ghiChuTuAI}</div>
+        </div>` : ''}
+        `);
+
         $('#chat-header').css('visibility', 'visible');
         $('#chatHeaderName').text(ticketData.tenKhachHang);
-        $chatInput.prop('disabled', ticketData.trangThai === 'Đã xử lý');
+        $('#chatHeaderStatus').text(ticketData.trangThai);
+
+        // THIẾT LẬP JOIN PHÒNG SIGNALR
+        const newGroupName = (ticketData.idKhachHang && ticketData.idKhachHang > 0)
+        ? `khach_${ticketData.idKhachHang}`
+        : `guest_${ticketData.guestSessionId}`;
+                                                
+        if (currentGroupName !== newGroupName) {
+        currentGroupName = newGroupName;
+        if (hubConnection.state === signalR.HubConnectionState.Connected) {
+        await hubConnection.invoke("JoinGroup", currentGroupName);
+        }
+        }
+
+        // Mở khóa input
+        if (ticketData.trangThai !== 'Đã xử lý') {
+        $chatInput.prop('disabled', false);
+        $sendButton.prop('disabled', false);
+        $resolveButton.prop('disabled', false);
+        } else {
+        $resolveButton.prop('disabled', true);
+        }
         } catch (e) { console.error(e); }
         }
 
-        // 4. Sự kiện cuộn để tải thêm (Lazy Load)
+        /* =========================================================
+        4. CÁC SỰ KIỆN TƯƠNG TÁC
+        ========================================================= */
+        // Tải thêm tin nhắn cũ khi cuộn đoạn Chat lên trên cùng
         $chatHistory.on('scroll', function() {
-        // Nếu kéo lên kịch trần (scrollTop === 0)
         if ($(this).scrollTop() === 0 && _displayedIndex < _allChatMessages.length) {
         loadMoreMessages();
         }
         });
 
-        // 5. Sự kiện nút lọc
-        $('#chkOnlyPending').on('change', loadTicketList);
+        // Tải thêm phiếu khi cuộn Danh sách phiếu xuống dưới cùng
+        $ticketListContainer.on('scroll', function() {
+        // Cộng thêm sai số khoảng 10px để bắt event nhạy hơn
+        if ($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight - 10) {
+        loadTicketList(true);
+        }
+        });
 
-        // Giữ các xử lý SignalR và Gửi tin nhắn cũ của bạn...
-        $ticketListContainer.on('click', '.htnv-ticket-item', function () { loadTicketDetail($(this).data('id')); });
-        loadTicketList();
+        // Thay đổi bộ lọc Trạng thái -> Load lại từ đầu
+        $('#chkOnlyPending').on('change', () => loadTicketList(false));
+                
+        // Gõ vào thanh tìm kiếm -> Đợi 500ms mới gọi API (Debounce)
+        $('#ticketSearchInput').on('keyup', function () {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => loadTicketList(false), 500);
+        });
+
+        $ticketListContainer.on('click', '.htnv-ticket-item', function () {
+        loadTicketDetail($(this).data('id'));
+        });
+
+        // GỬI TIN NHẮN (SIGNALR)
+        $chatForm.on('submit', async function (e) {
+        e.preventDefault();
+        if (!currentTicketId || !currentGroupName || !currentTicketData) return;
+                                
+        const text = $chatInput.val().trim();
+        if (!text) return;
+                                
+        $chatInput.val('').prop('disabled', true);
+        $sendButton.prop('disabled', true);
+                 
+        try {
+        const tId = parseInt(currentTicketId, 10);
+        const kId = currentTicketData.idKhachHang ? parseInt(currentTicketData.idKhachHang, 10) : null;
+        const gId = currentTicketData.guestSessionId || null;
+                                        
+        await hubConnection.invoke("SendMessageFromStaff", currentGroupName, text, tId, kId, gId);
+        $('#chatHeaderStatus').text('Đã trả lời');
+        } catch (err) {
+        Swal.fire('Lỗi', 'Không thể gửi tin nhắn: ' + err.message, 'error');
+        } finally {
+        $chatInput.prop('disabled', false).focus();
+        $sendButton.prop('disabled', false);
+        }
+        });
+
+        // ĐÓNG PHIẾU
+        $resolveButton.on('click', async function () {
+        if (!currentTicketId) return;
+                        
+        const confirmRes = await Swal.fire({
+        title: 'Xác nhận xử lý?',
+        text: "Bạn có chắc chắn phiếu hỗ trợ này đã được giải quyết?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#2E7D32'
+        });
+
+        if (confirmRes.isConfirmed) {
+        try {
+        const res = await fetch(`${apiBaseUrl}/api/web/nhanvien/hotro/resolve/${currentTicketId}`, { method: 'POST', headers: headers });
+        if (res.ok) {
+        Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Đã đóng phiếu!', showConfirmButton: false, timer: 1500});
+                            
+        loadTicketList(false); // Cập nhật lại danh sách phiếu
+                            
+        $('#chat-header').css('visibility', 'hidden');
+        $chatHistory.html('<div class="h-100 d-flex align-items-center justify-content-center text-muted"><p>Phiếu đã đóng.</p></div>');
+        $chatInput.prop('disabled', true);
+        $sendButton.prop('disabled', true);
+        $resolveButton.prop('disabled', true);
+        currentTicketId = null;
+        }
+        } catch (err) { Swal.fire("Lỗi", "Lỗi xử lý.", "error"); }
+        }
+        });
+
+        // Mobile view buttons
+        $('#btnBackToList').click(() => $('#mainDashboard').removeClass('show-chat'));
+        $('#btnShowSummary').click(() => $('#mainDashboard').addClass('show-summary'));
+        $('#btnBackToChat').click(() => $('#mainDashboard').removeClass('show-summary'));
+
+        // Khởi động
+        startConnection();
+        loadTicketList(false);
         });
     </script>
 }

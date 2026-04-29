@@ -28,17 +28,37 @@ namespace CafebookApi.Controllers.Web.NhanVien
         }
 
         [HttpGet("tickets")]
-        public async Task<IActionResult> GetTickets()
+        public async Task<IActionResult> GetTickets([FromQuery] int skip = 0, [FromQuery] int take = 5, [FromQuery] bool onlyPending = true, [FromQuery] string? search = null)
         {
-            var rawTickets = await _context.ThongBaoHoTros
-                .Include(t => t.KhachHang)
-                .OrderByDescending(t => t.ThoiGianTao)
+            var query = _context.ThongBaoHoTros.Include(t => t.KhachHang).AsQueryable();
+            if (onlyPending)
+            {
+                query = query.Where(t => t.TrangThai == "Chờ xử lý" || t.TrangThai == "Đã trả lời");
+            }
+            else
+            {
+                query = query.Where(t => t.TrangThai == "Đã xử lý");
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(t =>
+                    (t.NoiDungYeuCau != null && t.NoiDungYeuCau.Contains(search)) ||
+                    (t.KhachHang != null && t.KhachHang.HoTen != null && t.KhachHang.HoTen.Contains(search)));
+            }
+
+            var rawTickets = await query
+                .OrderByDescending(t => t.ThoiGianTao) 
+                .Skip(skip)
+                .Take(take)
                 .ToListAsync();
 
             var tickets = rawTickets.Select(t => new HoTroKhachHangListDto
             {
                 IdThongBao = t.IdThongBao,
-                TenKhachHang = t.KhachHang != null ? t.KhachHang.HoTen : "Khách vãng lai (" + t.GuestSessionId + ")",
+                TenKhachHang = (t.KhachHang != null && !string.IsNullOrEmpty(t.KhachHang.HoTen))
+                               ? t.KhachHang.HoTen
+                               : $"Khách vãng lai ({t.GuestSessionId})",
                 NoiDungYeuCau = t.NoiDungYeuCau,
                 ThoiGianTao = t.ThoiGianTao,
                 TrangThai = t.TrangThai,
@@ -62,7 +82,7 @@ namespace CafebookApi.Controllers.Web.NhanVien
                 .OrderBy(c => c.ThoiGian)
                 .ToListAsync();
 
-            var chatHistory = new List<ChatMessageNVDto>(); // SỬ DỤNG DTO RIÊNG
+            var chatHistory = new List<ChatMessageNVDto>();
 
             foreach (var c in rawChats)
             {

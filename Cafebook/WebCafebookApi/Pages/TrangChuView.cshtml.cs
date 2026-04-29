@@ -27,10 +27,10 @@ namespace WebCafebookApi.Pages
         {
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
 
-            await Task.Delay(1500);
+            await Task.Delay(1000);
 
             int maxRetries = 3;
-            int delayMs = 2000;
+            int delayMs = 1000;
 
             for (int i = 0; i < maxRetries; i++)
             {

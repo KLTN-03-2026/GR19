@@ -11,6 +11,8 @@
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         WindowState="Maximized"
+        WindowStyle="None" 
+        ResizeMode="NoResize"
         Loaded="Window_Loaded">
 
     <Window.Resources>

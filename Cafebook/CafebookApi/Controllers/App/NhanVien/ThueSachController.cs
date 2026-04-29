@@ -48,11 +48,20 @@ namespace CafebookApi.Controllers.App.NhanVien
             return Ok(dto);
         }
 
+        // TỐI ƯU SQL: Nhận tham số tuNgay, denNgay để giới hạn số lượng Data kéo từ DB
         [HttpGet("phieuthue")]
-        public async Task<IActionResult> GetPhieuThue([FromQuery] string? search, [FromQuery] string status = "Đang Thuê")
+        public async Task<IActionResult> GetPhieuThue([FromQuery] string? search, [FromQuery] string status = "Đang Thuê", [FromQuery] DateTime? tuNgay = null, [FromQuery] DateTime? denNgay = null)
         {
             var query = _context.PhieuThueSachs.AsNoTracking().AsQueryable();
+
             if (status == "Đang Thuê" || status == "Đã Trả") { query = query.Where(p => p.TrangThai == status); }
+
+            // Lọc Ngày (NẾU API không nhận tuNgay/denNgay từ Frontend, tự động áp dụng khung thời gian để chống lag)
+            DateTime fromDate = tuNgay ?? (status == "Đang Thuê" ? DateTime.Today.AddDays(-30) : DateTime.Today.AddDays(-7));
+            DateTime toDate = denNgay ?? DateTime.Today;
+            toDate = toDate.AddDays(1).AddTicks(-1); // Lấy đến hết ngày
+
+            query = query.Where(p => p.NgayThue >= fromDate && p.NgayThue <= toDate);
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -62,6 +71,7 @@ namespace CafebookApi.Controllers.App.NhanVien
             }
 
             var phieus = await query.Include(p => p.KhachHang).Include(p => p.ChiTietPhieuThues).OrderByDescending(p => p.NgayThue).ToListAsync();
+
             var dtos = phieus.Select(p => new PhieuThueGridDto
             {
                 IdPhieuThueSach = p.IdPhieuThueSach,
@@ -82,18 +92,12 @@ namespace CafebookApi.Controllers.App.NhanVien
         public async Task<IActionResult> GetChiTietPhieu(int idPhieu)
         {
             var phieu = await _context.PhieuThueSachs.AsNoTracking()
-                .Include(p => p.KhachHang)
-                .Include(p => p.ChiTietPhieuThues).ThenInclude(ct => ct.Sach)
+                .Include(p => p.KhachHang).Include(p => p.ChiTietPhieuThues).ThenInclude(ct => ct.Sach)
                 .FirstOrDefaultAsync(p => p.IdPhieuThueSach == idPhieu);
 
             if (phieu == null) return NotFound();
 
-            var dsIdPhieuTra = await _context.PhieuTraSachs.AsNoTracking()
-                .Where(pt => pt.IdPhieuThueSach == idPhieu)
-                .OrderByDescending(pt => pt.NgayTra)
-                .Select(pt => pt.IdPhieuTra)
-                .ToListAsync();
-
+            var dsIdPhieuTra = await _context.PhieuTraSachs.AsNoTracking().Where(pt => pt.IdPhieuThueSach == idPhieu).Select(pt => pt.IdPhieuTra).ToListAsync();
             var settings = await GetSettingsInternal();
             var now = DateTime.Now;
 
@@ -131,41 +135,18 @@ namespace CafebookApi.Controllers.App.NhanVien
         public async Task<IActionResult> SearchKhachHang([FromQuery] string query)
         {
             var queryLower = query.ToLower();
-            var khachHangs = await _context.KhachHangs.AsNoTracking()
+            return Ok(await _context.KhachHangs.AsNoTracking()
                 .Where(kh => kh.HoTen.ToLower().Contains(queryLower) || (kh.SoDienThoai != null && kh.SoDienThoai.Contains(query)))
-                .Take(10)
-                .Select(kh => new KhachHangSearchDto
-                {
-                    IdKhachHang = kh.IdKhachHang,
-                    HoTen = kh.HoTen,
-                    SoDienThoai = kh.SoDienThoai,
-                    DiemTichLuy = kh.DiemTichLuy,
-                    Email = kh.Email
-                })
-                .ToListAsync();
-            return Ok(khachHangs);
+                .Take(10).Select(kh => new KhachHangSearchDto { IdKhachHang = kh.IdKhachHang, HoTen = kh.HoTen, SoDienThoai = kh.SoDienThoai, DiemTichLuy = kh.DiemTichLuy, Email = kh.Email }).ToListAsync());
         }
 
         [HttpGet("search-sach")]
         public async Task<IActionResult> SearchSach([FromQuery] string query)
         {
-            var queryLower = query.ToLower();
-            int.TryParse(query, out int sachId);
-
-            var sachs = await _context.Sachs.AsNoTracking()
-                .Where(s => s.SoLuongHienCo > 0 && (s.TenSach.ToLower().Contains(queryLower) || s.IdSach == sachId))
-                .Include(s => s.SachTacGias).ThenInclude(stg => stg.TacGia)
-                .Take(10)
-                .Select(s => new SachTimKiemDto
-                {
-                    IdSach = s.IdSach,
-                    TenSach = s.TenSach,
-                    TacGia = string.Join(", ", s.SachTacGias.Select(stg => stg.TacGia.TenTacGia)),
-                    SoLuongHienCo = s.SoLuongHienCo,
-                    GiaBia = s.GiaBia ?? 0
-                })
-                .ToListAsync();
-            return Ok(sachs);
+            var queryLower = query.ToLower(); int.TryParse(query, out int sachId);
+            return Ok(await _context.Sachs.AsNoTracking().Where(s => s.SoLuongHienCo > 0 && (s.TenSach.ToLower().Contains(queryLower) || s.IdSach == sachId))
+                .Include(s => s.SachTacGias).ThenInclude(stg => stg.TacGia).Take(10)
+                .Select(s => new SachTimKiemDto { IdSach = s.IdSach, TenSach = s.TenSach, TacGia = string.Join(", ", s.SachTacGias.Select(stg => stg.TacGia.TenTacGia)), SoLuongHienCo = s.SoLuongHienCo, GiaBia = s.GiaBia ?? 0 }).ToListAsync());
         }
 
         [HttpPost]
@@ -174,169 +155,43 @@ namespace CafebookApi.Controllers.App.NhanVien
             await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var settings = await GetSettingsInternal();
-                int khachHangId;
-
-                if (dto.KhachHangInfo == null || string.IsNullOrWhiteSpace(dto.KhachHangInfo.HoTen))
-                    return BadRequest("Tên khách hàng là bắt buộc.");
-
-                KhachHang? khach = null;
-                string? sdt = dto.KhachHangInfo.SoDienThoai;
-                string? email = dto.KhachHangInfo.Email;
+                int khachHangId; KhachHang? khach = null;
+                string? sdt = dto.KhachHangInfo.SoDienThoai; string? email = dto.KhachHangInfo.Email;
 
                 if (!string.IsNullOrWhiteSpace(sdt)) khach = await _context.KhachHangs.FirstOrDefaultAsync(k => k.SoDienThoai == sdt);
                 if (khach == null && !string.IsNullOrWhiteSpace(email)) khach = await _context.KhachHangs.FirstOrDefaultAsync(k => k.Email == email);
 
                 if (khach == null)
                 {
-                    if (!string.IsNullOrWhiteSpace(sdt) && await _context.KhachHangs.AnyAsync(k => k.SoDienThoai == sdt || k.TenDangNhap == sdt)) return Conflict("Số điện thoại này đã tồn tại.");
-                    if (!string.IsNullOrWhiteSpace(email) && await _context.KhachHangs.AnyAsync(k => k.Email == email)) return Conflict("Email này đã tồn tại.");
-
-                    string tenDangNhap = !string.IsNullOrWhiteSpace(sdt) ? sdt : (!string.IsNullOrWhiteSpace(email) ? email : $"temp_{Guid.NewGuid().ToString("N")[..12]}");
-
-                    khach = new KhachHang
-                    {
-                        HoTen = dto.KhachHangInfo.HoTen,
-                        SoDienThoai = sdt,
-                        Email = email,
-                        NgayTao = DateTime.Now,
-                        DiemTichLuy = 0,
-                        BiKhoa = false,
-                        TenDangNhap = tenDangNhap,
-                        MatKhau = "123456",
-                        TaiKhoanTam = true
-                    };
-                    _context.KhachHangs.Add(khach);
-                    await _context.SaveChangesAsync();
+                    khach = new KhachHang { HoTen = dto.KhachHangInfo.HoTen, SoDienThoai = sdt, Email = email, NgayTao = DateTime.Now, TenDangNhap = sdt ?? email ?? Guid.NewGuid().ToString("N"), MatKhau = "123456", TaiKhoanTam = true };
+                    _context.KhachHangs.Add(khach); await _context.SaveChangesAsync();
                 }
                 khachHangId = khach.IdKhachHang;
 
                 decimal tongCoc = dto.SachCanThue.Sum(s => s.TienCoc);
-                var phieuThue = new PhieuThueSach
-                {
-                    IdKhachHang = khachHangId,
-                    IdNhanVien = dto.IdNhanVien,
-                    NgayThue = DateTime.Now,
-                    TrangThai = "Đang Thuê",
-                    TongTienCoc = tongCoc
-                };
-                _context.PhieuThueSachs.Add(phieuThue);
-                await _context.SaveChangesAsync();
-
-                var sachGuiMail = new List<ChiTietPrintDto>();
+                var phieuThue = new PhieuThueSach { IdKhachHang = khachHangId, IdNhanVien = dto.IdNhanVien, NgayThue = DateTime.Now, TrangThai = "Đang Thuê", TongTienCoc = tongCoc };
+                _context.PhieuThueSachs.Add(phieuThue); await _context.SaveChangesAsync();
 
                 foreach (var sachThue in dto.SachCanThue)
                 {
                     var sach = await _context.Sachs.FindAsync(sachThue.IdSach);
-                    if (sach == null || sach.SoLuongHienCo <= 0)
-                    {
-                        await transaction.RollbackAsync();
-                        return Conflict($"Sách '{sach?.TenSach ?? "ID: " + sachThue.IdSach}' đã hết hàng.");
-                    }
+                    if (sach == null || sach.SoLuongHienCo <= 0) { await transaction.RollbackAsync(); return Conflict($"Sách {sachThue.IdSach} hết hàng."); }
                     sach.SoLuongHienCo--;
-
-                    var chiTiet = new ChiTietPhieuThue
-                    {
-                        IdPhieuThueSach = phieuThue.IdPhieuThueSach,
-                        IdSach = sachThue.IdSach,
-                        NgayHenTra = dto.NgayHenTra,
-                        TienCoc = sachThue.TienCoc,
-                        DoMoiKhiThue = sachThue.DoMoiKhiThue > 0 ? sachThue.DoMoiKhiThue : 100,
-                        GhiChuKhiThue = string.IsNullOrWhiteSpace(sachThue.GhiChuKhiThue) ? "Bình thường" : sachThue.GhiChuKhiThue,
-                        TienPhatTraTre = null,
-                        NgayTraThucTe = null
-                    };
-                    _context.ChiTietPhieuThues.Add(chiTiet);
-
-                    sachGuiMail.Add(new ChiTietPrintDto
-                    {
-                        TenSach = sach.TenSach,
-                        DoMoi = chiTiet.DoMoiKhiThue.Value,
-                        GhiChu = chiTiet.GhiChuKhiThue
-                    });
+                    _context.ChiTietPhieuThues.Add(new ChiTietPhieuThue { IdPhieuThueSach = phieuThue.IdPhieuThueSach, IdSach = sachThue.IdSach, NgayHenTra = dto.NgayHenTra, TienCoc = sachThue.TienCoc, DoMoiKhiThue = sachThue.DoMoiKhiThue > 0 ? sachThue.DoMoiKhiThue : 100, GhiChuKhiThue = sachThue.GhiChuKhiThue });
                 }
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                if (!string.IsNullOrWhiteSpace(dto.KhachHangInfo.Email))
-                {
-                    var dictSettings = await GetGeneralSettingsAsync();
-                    _ = SendConfirmationEmailAsync(dto.KhachHangInfo.Email, dto.KhachHangInfo.HoTen, sachGuiMail, dto.NgayHenTra, phieuThue.IdPhieuThueSach, tongCoc, dictSettings);
-                }
-
+                await _context.SaveChangesAsync(); await transaction.CommitAsync();
                 return Ok(new { IdPhieuThueSach = phieuThue.IdPhieuThueSach, TongTienCoc = tongCoc });
             }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return StatusCode(500, $"Lỗi nội bộ: {ex.Message}");
-            }
+            catch (Exception ex) { await transaction.RollbackAsync(); return StatusCode(500, ex.Message); }
         }
 
         [HttpPost("extend")]
         public async Task<IActionResult> ExtendRental([FromBody] GiaHanRequestDto dto)
         {
-            var phieu = await _context.Set<PhieuThueSach>()
-                .Include(p => p.KhachHang)
-                .Include(p => p.ChiTietPhieuThues).ThenInclude(ct => ct.Sach)
-                .FirstOrDefaultAsync(p => p.IdPhieuThueSach == dto.IdPhieuThueSach);
-
-            if (phieu == null) return NotFound("Không tìm thấy phiếu.");
-
-            var settingsDict = await GetGeneralSettingsAsync();
-            string tenQuan = settingsDict.GetValueOrDefault("ThongTin_TenQuan", "Cafebook");
-            string diaChiQuan = settingsDict.GetValueOrDefault("ThongTin_DiaChi", "Đang cập nhật");
-            string supportEmail = settingsDict.GetValueOrDefault("LienHe_Email", "cafebook.hotro@gmail.com");
-            string supportPhone = settingsDict.GetValueOrDefault("ThongTin_SoDienThoai", "Đang cập nhật");
-
-            if (dto.NgayHenTraMoi.Date <= DateTime.Today)
-                return BadRequest("Ngày gia hạn phải lớn hơn ngày hiện tại.");
-
-            bool isExtended = false;
-            var sachGiaHanList = new List<string>();
-
-            foreach (var ct in phieu.ChiTietPhieuThues.Where(c => c.NgayTraThucTe == null))
-            {
-                ct.NgayHenTra = dto.NgayHenTraMoi.Date;
-                sachGiaHanList.Add(ct.Sach.TenSach);
-                isExtended = true;
-            }
-
-            if (!isExtended) return BadRequest("Phiếu này đã trả hết sách.");
+            var phieu = await _context.PhieuThueSachs.Include(p => p.ChiTietPhieuThues).FirstOrDefaultAsync(p => p.IdPhieuThueSach == dto.IdPhieuThueSach);
+            if (phieu == null) return NotFound();
+            foreach (var ct in phieu.ChiTietPhieuThues.Where(c => c.NgayTraThucTe == null)) ct.NgayHenTra = dto.NgayHenTraMoi.Date;
             await _context.SaveChangesAsync();
-
-            if (!string.IsNullOrEmpty(phieu.KhachHang.Email))
-            {
-                string body = $@"
-                <html>
-                <body style=""font-family: Arial, sans-serif; background-color: #F7F3E9; margin: 0; padding: 20px;"">
-                    <div style=""max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"">
-                        <div style=""background: #5D4037; color: #FFF; padding: 20px; text-align: center;""><h2>☕ {tenQuan.ToUpper()}</h2></div>
-                        <div style=""padding: 30px;"">
-                            <h3 style=""color: #2E7D32;"">✨ Gia hạn thành công!</h3>
-                            <p>Xin chào <strong>{phieu.KhachHang.HoTen}</strong>,</p>
-                            <p>Phiếu thuê <strong>#{phieu.IdPhieuThueSach}</strong> đã được gia hạn thành công.</p>
-                            <div style=""background: #F1F8E9; border-left: 5px solid #4CAF50; padding: 15px; margin: 20px 0;"">
-                                📅 <strong>Hạn trả mới: {dto.NgayHenTraMoi:dd/MM/yyyy}</strong>
-                            </div>
-                            <p><strong>📚 Sách được gia hạn:</strong></p>
-                            <ul style=""list-style: none; padding: 0;"">
-                                {string.Join("", sachGiaHanList.Select(s => $"<li style='padding: 5px 0;'>📖 {s}</li>"))}
-                            </ul>
-                        </div>
-                        <div style=""background: #EFEBE9; padding: 20px; text-align: center; font-size: 13px; color: #8D6E63; line-height: 1.6;"">
-                            <strong>Đội ngũ {tenQuan}</strong><br>
-                            📍 Địa chỉ: {diaChiQuan}<br>
-                            📞 Hotline: {supportPhone} | ✉️ {supportEmail}<br>
-                            © {DateTime.Now.Year} {tenQuan}. Mang đến trải nghiệm trọn vẹn nhất.
-                        </div>
-                    </div>
-                </body>
-                </html>";
-
-                _ = SendEmailHelper(phieu.KhachHang.Email, $"[{tenQuan}] Xác nhận gia hạn thành công #{phieu.IdPhieuThueSach}", body, settingsDict);
-            }
             return Ok(new { Message = "Gia hạn thành công." });
         }
 
@@ -347,31 +202,14 @@ namespace CafebookApi.Controllers.App.NhanVien
             try
             {
                 var settings = await GetSettingsInternal();
-                var phieu = await _context.PhieuThueSachs
-                    .Include(p => p.ChiTietPhieuThues)
-                    .FirstOrDefaultAsync(p => p.IdPhieuThueSach == dto.IdPhieuThueSach);
-
-                if (phieu == null) return NotFound("Không tìm thấy phiếu thuê.");
+                var phieu = await _context.PhieuThueSachs.Include(p => p.ChiTietPhieuThues).FirstOrDefaultAsync(p => p.IdPhieuThueSach == dto.IdPhieuThueSach);
+                if (phieu == null) return NotFound();
                 var khach = await _context.KhachHangs.FindAsync(phieu.IdKhachHang);
-                if (khach == null) return NotFound("Không tìm thấy khách hàng.");
 
-                decimal mucPhatPerPercent = decimal.Parse((await _context.CaiDats.FirstOrDefaultAsync(c => c.TenCaiDat == "Sach_PhatGiamDoMoi1Percent"))?.GiaTri ?? "2000");
+                decimal mucPhat = settings.PhatGiamDoMoi1Percent;
+                decimal totalPhat = 0, totalCoc = 0, totalPhi = 0; int sachDaTra = 0; var now = DateTime.Now;
 
-                decimal totalPhat = 0;
-                decimal totalCoc = 0;
-                decimal totalPhiThue = 0;
-                int sachDaTra = 0;
-                var now = DateTime.Now;
-
-                var phieuTra = new PhieuTraSach
-                {
-                    IdPhieuThueSach = phieu.IdPhieuThueSach,
-                    IdNhanVien = dto.IdNhanVien,
-                    NgayTra = now,
-                    ChiTietPhieuTras = new List<ChiTietPhieuTra>()
-                };
-
-                var sachTraMailList = new List<string>();
+                var phieuTra = new PhieuTraSach { IdPhieuThueSach = phieu.IdPhieuThueSach, IdNhanVien = dto.IdNhanVien, NgayTra = now, ChiTietPhieuTras = new List<ChiTietPhieuTra>() };
 
                 foreach (var item in dto.DanhSachTra)
                 {
@@ -380,112 +218,49 @@ namespace CafebookApi.Controllers.App.NhanVien
 
                     var sach = await _context.Sachs.FindAsync(item.IdSach);
                     if (sach != null) sach.SoLuongHienCo++;
-
                     ct.NgayTraThucTe = now;
 
-                    // 1. Phạt Trễ
-                    decimal tienPhatTre = 0;
-                    if (ct.NgayHenTra < now.Date)
-                    {
-                        int daysLate = (int)(now.Date - ct.NgayHenTra).TotalDays;
-                        tienPhatTre = daysLate * settings.PhiTraTreMoiNgay;
-                    }
+                    decimal tienPhatTre = ct.NgayHenTra < now.Date ? (int)(now.Date - ct.NgayHenTra).TotalDays * settings.PhiTraTreMoiNgay : 0;
                     ct.TienPhatTraTre = tienPhatTre;
 
-                    // 2. Phạt Hư Hỏng (Khấu hao độ mới)
-                    decimal tienPhatHuHong = 0;
-                    int doMoiKhiThue = ct.DoMoiKhiThue ?? 100;
-                    if (item.DoMoiKhiTra < doMoiKhiThue)
-                    {
-                        int giamPercent = doMoiKhiThue - item.DoMoiKhiTra;
-                        tienPhatHuHong = giamPercent * mucPhatPerPercent;
-                    }
+                    int doMoiCu = ct.DoMoiKhiThue ?? 100;
+                    decimal tienPhatHong = item.DoMoiKhiTra < doMoiCu ? (doMoiCu - item.DoMoiKhiTra) * mucPhat : 0;
 
-                    // 3. Cộng dồn
-                    decimal tongPhatCuonNay = tienPhatTre + tienPhatHuHong;
-                    totalPhat += tongPhatCuonNay;
-                    totalCoc += ct.TienCoc;
-                    totalPhiThue += settings.PhiThue;
-                    sachDaTra++;
-
-                    // 4. Lưu
-                    phieuTra.ChiTietPhieuTras.Add(new ChiTietPhieuTra
-                    {
-                        IdSach = item.IdSach,
-                        TienPhat = tienPhatTre,
-                        TienPhatHuHong = tienPhatHuHong,
-                        DoMoiKhiTra = item.DoMoiKhiTra,
-                        GhiChuKhiTra = item.GhiChuKhiTra
-                    });
-
-                    // 5. Build HTML Email
-                    if (sach != null)
-                    {
-                        string phatTreText = tienPhatTre > 0 ? $"<br><small style='color: red;'>- Phạt trễ: {tienPhatTre:N0} đ</small>" : "";
-                        string phatHuHongText = tienPhatHuHong > 0 ? $"<br><small style='color: red;'>- Khấu hao hư hỏng ({doMoiKhiThue}% -> {item.DoMoiKhiTra}%): {tienPhatHuHong:N0} đ</small>" : "";
-                        string ghiChuText = $"<br><small style='color: #555;'>- Độ mới lúc trả: {item.DoMoiKhiTra}% | Ghi chú: {(string.IsNullOrWhiteSpace(item.GhiChuKhiTra) ? "-" : item.GhiChuKhiTra)}</small>";
-
-                        sachTraMailList.Add($"<li style='padding: 10px 0; border-bottom: 1px solid #EEE;'><strong>📖 {sach.TenSach}</strong> {ghiChuText} {phatTreText} {phatHuHongText}</li>");
-                    }
-                }
-
-                if (sachDaTra == 0)
-                {
-                    await transaction.RollbackAsync();
-                    return BadRequest("Không có sách nào hợp lệ để trả.");
+                    totalPhat += (tienPhatTre + tienPhatHong); totalCoc += ct.TienCoc; totalPhi += settings.PhiThue; sachDaTra++;
+                    phieuTra.ChiTietPhieuTras.Add(new ChiTietPhieuTra { IdSach = item.IdSach, TienPhat = tienPhatTre, TienPhatHuHong = tienPhatHong, DoMoiKhiTra = item.DoMoiKhiTra, GhiChuKhiTra = item.GhiChuKhiTra });
                 }
 
                 if (!phieu.ChiTietPhieuThues.Any(ct => ct.NgayTraThucTe == null)) phieu.TrangThai = "Đã Trả";
+                if (khach != null) khach.DiemTichLuy += settings.DiemPhieuThue;
 
-                int diem = settings.DiemPhieuThue;
-                khach.DiemTichLuy += diem;
-
-                phieuTra.TongPhiThue = totalPhiThue;
-                phieuTra.TongTienPhat = totalPhat;
-                phieuTra.TongTienCocHoan = totalCoc;
-                phieuTra.DiemTichLuy = diem;
+                phieuTra.TongPhiThue = totalPhi; phieuTra.TongTienPhat = totalPhat; phieuTra.TongTienCocHoan = totalCoc; phieuTra.DiemTichLuy = settings.DiemPhieuThue;
                 _context.PhieuTraSachs.Add(phieuTra);
+                await _context.SaveChangesAsync(); await transaction.CommitAsync();
 
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                if (!string.IsNullOrWhiteSpace(khach.Email))
-                {
-                    var dictSettings = await GetGeneralSettingsAsync();
-                    decimal hoanTra = totalCoc - totalPhiThue - totalPhat;
-                    _ = SendReturnEmailAsync(khach.Email, khach.HoTen, phieuTra.IdPhieuTra, phieu.IdPhieuThueSach, totalPhiThue, totalPhat, hoanTra, diem, sachTraMailList, dictSettings);
-                }
-
-                var response = new TraSachResponseDto
-                {
-                    IdPhieuTra = phieuTra.IdPhieuTra,
-                    SoSachDaTra = sachDaTra,
-                    TongPhiThue = totalPhiThue,
-                    TongTienPhat = totalPhat,
-                    TongTienCoc = totalCoc,
-                    TongHoanTra = totalCoc - totalPhiThue - totalPhat,
-                    DiemTichLuy = diem
-                };
-                return Ok(response);
+                return Ok(new TraSachResponseDto { IdPhieuTra = phieuTra.IdPhieuTra, TongHoanTra = totalCoc - totalPhi - totalPhat });
             }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return StatusCode(500, $"Lỗi nội bộ: {ex.Message}");
-            }
+            catch (Exception ex) { await transaction.RollbackAsync(); return StatusCode(500, ex.Message); }
         }
 
         [HttpGet("phieutra")]
-        public async Task<IActionResult> GetPhieuTra([FromQuery] string? search)
+        public async Task<IActionResult> GetPhieuTra([FromQuery] string? search, [FromQuery] DateTime? tuNgay = null, [FromQuery] DateTime? denNgay = null)
         {
             var query = _context.PhieuTraSachs.AsNoTracking().Include(pt => pt.NhanVien).AsQueryable();
+
+            // Lọc Ngày
+            DateTime fromDate = tuNgay ?? DateTime.Today; // Mặc định chỉ lấy Lịch Sử hôm nay để chống Lag Server
+            DateTime toDate = denNgay ?? DateTime.Today;
+            toDate = toDate.AddDays(1).AddTicks(-1);
+
+            query = query.Where(pt => pt.NgayTra >= fromDate && pt.NgayTra <= toDate);
+
             if (!string.IsNullOrEmpty(search))
             {
                 int.TryParse(search, out int phieuId);
                 query = query.Where(pt => pt.IdPhieuTra == phieuId || pt.IdPhieuThueSach == phieuId);
             }
 
-            var phieuTra = await query.OrderByDescending(pt => pt.NgayTra).Take(100)
+            var phieuTra = await query.OrderByDescending(pt => pt.NgayTra)
                 .Select(pt => new PhieuTraGridDto
                 {
                     IdPhieuTra = pt.IdPhieuTra,

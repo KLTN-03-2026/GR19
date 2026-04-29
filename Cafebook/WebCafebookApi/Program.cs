@@ -24,13 +24,13 @@ if (!File.Exists(configFilePath))
     {
         ApiSettings = new
         {
-            BaseUrl = "http://localhost:5202"
+            BaseUrl = ""
         }
     };
     File.WriteAllText(configFilePath, JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true }));
 }
 builder.Configuration.AddJsonFile(configFilePath, optional: false, reloadOnChange: true);
-string apiServerUrl = builder.Configuration.GetValue<string>("ApiSettings:BaseUrl") ?? "http://localhost:5202";
+string apiServerUrl = builder.Configuration.GetValue<string>("ApiSettings:BaseUrl") ?? "";
 
 builder.Services.AddHttpContextAccessor();
 // ==========================================

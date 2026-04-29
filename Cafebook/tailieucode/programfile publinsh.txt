@@ -5,17 +5,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// ==========================================================
-// 0. ÉP CHUẨN ĐỊNH DẠNG VÀ VĂN HÓA VIỆT NAM
-// ==========================================================
-
-var cultureInfo = new CultureInfo("vi-VN");
-CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<CafebookApi.Services.DatabaseBackupService>();
@@ -31,17 +22,17 @@ builder.Services.AddDbContext<CafebookDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // ==========================================================
-// 2. CẤU HÌNH CORS (ĐÃ SỬA LỖI SIGNALR)
+// 2. CẤU HÌNH CORS (CHUẨN CHO SIGNALR KHI PUBLISH)
 // ==========================================================
 builder.Services.AddCors(options =>
 {
-    // Gộp chung thành 1 Policy mạnh nhất, bẻ khóa mọi chặn chéo Port
+    // Cấu hình linh hoạt nhất, tránh lỗi chặn chéo khi Deploy
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.SetIsOriginAllowed(_ => true) // <--- CHÌA KHÓA: Chấp nhận mọi web client (cổng 5175, 5166, v.v.)
+        policy.SetIsOriginAllowed(_ => true) // <--- Chấp nhận mọi domain
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials();           // <--- BẮT BUỘC: Để SignalR WebSockets hoạt động
+              .AllowCredentials();           // <--- BẮT BUỘC để SignalR kết nối WebSockets thành công
     });
 });
 
@@ -51,8 +42,6 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
-
-// Tối ưu Swagger cho Publish
 builder.Services.AddSwaggerGen(options =>
 {
     options.CustomSchemaIds(type => type.FullName);
@@ -85,7 +74,7 @@ builder.Services.AddAuthentication(options =>
     };
 
     // ======================================================
-    // FIX: BẮT TOKEN CHO SIGNALR (ĐỌC TỪ QUERY STRING)
+    // BẮT TOKEN CHO SIGNALR (ĐỌC TỪ QUERY STRING)
     // ======================================================
     options.Events = new JwtBearerEvents
     {
@@ -93,11 +82,9 @@ builder.Services.AddAuthentication(options =>
         {
             var accessToken = context.Request.Query["access_token"];
 
-            // Nếu request là gửi tới Hub (đường dẫn bắt đầu bằng /chatHub)
             var path = context.HttpContext.Request.Path;
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
             {
-                // Lấy token từ Query String gán vào Context
                 context.Token = accessToken;
             }
             return Task.CompletedTask;
@@ -113,20 +100,23 @@ var app = builder.Build();
 // 5. CẤU HÌNH PIPELINE (MIDDLEWARE)
 // ==========================================================
 
-// HIỂN THỊ SWAGGER TRÊN MỌI MÔI TRƯỜNG (Bao gồm cả khi Publish lên mạng)
+// BỎ khối lệnh "if (app.Environment.IsDevelopment())"
+// ĐỂ HIỂN THỊ SWAGGER TRÊN MỌI MÔI TRƯỜNG (Bao gồm cả Production)
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "Cafebook API v1");
-    options.RoutePrefix = string.Empty; 
+    // Cài đặt RoutePrefix = string.Empty để hiển thị Swagger ngay khi truy cập domain (vd: https://cafebookapi.shushushu.id.vn/)
+    options.RoutePrefix = string.Empty;
 });
+
+// Mở dòng này nếu bạn muốn ép API tự động chuyển từ http sang https (Rất tốt khi Publish)
+// app.UseHttpsRedirection(); 
 
 app.UseStaticFiles();
 app.UseRouting();
 
-
-
-// CỰC KỲ QUAN TRỌNG: Kích hoạt CORS ngay giữa Routing và Auth
+// CỰC KỲ QUAN TRỌNG: Gọi CORS trước Authentication và Authorization
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
@@ -134,7 +124,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Gắn Hub SignalR (Viết hoa chữ cái theo đúng chuẩn /chatHub ở phía Client)
+// Gắn Hub SignalR
 app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

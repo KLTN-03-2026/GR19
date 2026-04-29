@@ -204,7 +204,24 @@
         drawMessage({ noiDung: text, thoiGian: new Date() }, true, false);
 
         if (isRealtimeMode && hubConnection) {
-        await hubConnection.invoke("SendMessageFromClient", `khach_${idKhachHang}`, text, parseInt(idKhachHang), currentSessionId, parseInt(currentIdThongBao));
+        try {
+        // Phân loại lại Group Name và xử lý các biến số nguyên (int) an toàn
+        const groupName = (idKhachHang && parseInt(idKhachHang) > 0) ? `khach_${idKhachHang}` : `guest_${currentSessionId}`;
+        const pIdKhachHang = (idKhachHang && parseInt(idKhachHang) > 0) ? parseInt(idKhachHang) : null;
+        const pIdThongBao = currentIdThongBao ? parseInt(currentIdThongBao) : null;
+                
+        await hubConnection.invoke(
+        "SendMessageFromClient",
+        groupName,
+        text,
+        pIdKhachHang,
+        currentSessionId,
+        pIdThongBao
+        );
+        } catch (err) {
+        console.error("SignalR Send Error:", err);
+        drawMessage({ noiDung: "Lỗi kết nối máy chủ. Vui lòng tải lại trang.", thoiGian: new Date() }, false, false);
+        }
         } else {
         showTypingIndicator();
         try {
@@ -221,7 +238,7 @@
         }
                                                 
         if (data.daChuyenNhanVien) {
-        currentIdThongBao = data.idThongBaoHoTro;
+        currentIdThongBao = data.idThongBaoHoTro || (data.tinNhanPhanHoi ? data.tinNhanPhanHoi.idThongBaoHoTro : null);
         isRealtimeMode = true;
         startSignalR();
         }
@@ -238,16 +255,24 @@
 
         async function startSignalR() {
         if (hubConnection) return;
-        hubConnection = new signalR.HubConnectionBuilder().withUrl(apiBaseUrl + "/chatHub").build();
-                                
+    
+        // 1. Truyền JWT Token (nếu có) để vượt qua xác thực
+        const hubOptions = jwtToken ? { accessTokenFactory: () => jwtToken } : {};
+        hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl(apiBaseUrl + "/chatHub", hubOptions)
+        .build();
+                        
         hubConnection.on("ReceiveMessage", msg => {
         if (msg.loaiTinNhan !== 'KhachHang') {
         drawMessage(msg, false, msg.loaiTinNhan === 'NhanVien');
         }
         });
-                                
+    
         await hubConnection.start();
-        await hubConnection.invoke("JoinGroup", `khach_${idKhachHang}`);
+    
+        // 2. Logic tạo tên phòng linh hoạt: Đã đăng nhập dùng khach_id, Vãng lai dùng guest_session
+        const groupName = (idKhachHang && parseInt(idKhachHang) > 0) ? `khach_${idKhachHang}` : `guest_${currentSessionId}`;
+        await hubConnection.invoke("JoinGroup", groupName);
         }
                     
         // Khởi tạo
