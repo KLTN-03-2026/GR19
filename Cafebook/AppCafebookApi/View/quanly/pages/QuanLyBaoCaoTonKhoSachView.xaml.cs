@@ -1,5 +1,4 @@
-﻿// File: AppCafebookApi/View/quanly/pages/QuanLyBaoCaoTonKhoSachView.xaml.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
@@ -22,18 +21,10 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyBaoCaoTonKhoSachView : Page
     {
-        //private static readonly HttpClient httpClient;
         private QuanLyBaoCaoSachTongHopDto? currentReportData;
-        /*
-        static QuanLyBaoCaoTonKhoSachView()
-        {
-            httpClient = new HttpClient
-            {
-                BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost"),
-                Timeout = TimeSpan.FromMinutes(5)
-            };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyBaoCaoTonKhoSachView()
         {
             InitializeComponent();
@@ -41,7 +32,8 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            // Bảo mật Lớp 2
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
@@ -52,8 +44,21 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            ApplyPermissions();
-            await LoadFiltersAsync();
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions();
+                await LoadFiltersAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải báo cáo kho sách: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()

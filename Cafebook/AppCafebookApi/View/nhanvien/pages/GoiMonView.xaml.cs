@@ -21,6 +21,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class GoiMonView : Page
     {
+        private bool _isDataLoaded = false;
         private class AddItemResponseDto
         {
             [JsonPropertyName("updatedHoaDonInfo")]
@@ -30,8 +31,6 @@ namespace AppCafebookApi.View.nhanvien.pages
         }
 
         private readonly int _idHoaDon;
-        //private static readonly HttpClient _httpClient;
-
         private List<SanPhamDto> _allSanPhams = new List<SanPhamDto>();
         private ObservableCollection<ChiTietDto> _chiTietItems = new ObservableCollection<ChiTietDto>();
         private List<KhuyenMaiDto> _availableKms = new List<KhuyenMaiDto>();
@@ -40,20 +39,6 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private DanhMucDto _currentDanhMuc = new DanhMucDto { IdDanhMuc = 0, TenLoaiSP = "Tất cả" };
 
-        // ======================================================
-        // NÂNG CẤP 1: DYNAMIC URL (Tuyệt đối không hardcode)
-        // ======================================================
-        /*
-        static GoiMonView()
-        {
-            _httpClient = new HttpClient();
-            string? apiUrl = AppConfigManager.GetApiServerUrl();
-            if (!string.IsNullOrWhiteSpace(apiUrl))
-            {
-                _httpClient.BaseAddress = new Uri(apiUrl);
-            }
-        }
-        */
         public GoiMonView(int idHoaDon)
         {
             InitializeComponent();
@@ -61,12 +46,11 @@ namespace AppCafebookApi.View.nhanvien.pages
             dgChiTietHoaDon.ItemsSource = _chiTietItems;
         }
 
-        // ======================================================
-        // NÂNG CẤP 2: BẢO MẬT 2 LỚP & TOKEN
-        // ======================================================
+
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            // LỚP 2: Chặn truy cập Page nếu không có quyền
+            if (_isDataLoaded) return;
+
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_GOI_MON"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập trang Gọi Món!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -74,26 +58,30 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
-            // Gắn Token
             if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
             {
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
-            // Chặn gọi API nếu chưa có URL (Chống crash)
             if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Hệ thống chưa được cấu hình URL Server. Vui lòng kiểm tra file AppConfig.json!", "Thiếu cấu hình", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            // LỚP 1: Ẩn hiện Control theo quyền
+            await Task.Delay(350);
+            if (!this.IsLoaded) return;
             ApplyPermissions();
 
-            // Mặc định khóa nút Thanh toán
             if (FindName("btnThanhToan") is Button btnT) btnT.IsEnabled = false;
 
             await LoadDataAsync();
+            _isDataLoaded = true;
+        }
+
+        private void ScrollViewer_ManipulationBoundaryFeedback(object sender, System.Windows.Input.ManipulationBoundaryFeedbackEventArgs e)
+        {
+            e.Handled = true;
         }
 
         // ======================================================

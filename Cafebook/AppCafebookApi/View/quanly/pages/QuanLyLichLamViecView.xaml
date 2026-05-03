@@ -49,6 +49,7 @@
             <TextBlock Text="BẢNG NHU CẦU NHÂN SỰ &amp; XẾP CA" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" VerticalAlignment="Center"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="✅ Duyệt Đăng Ký" Style="{StaticResource ActionBtn}" Background="#0288D1" Margin="0,0,10,0" Click="BtnMoPopupDuyet_Click"/>
+                <Button Content="📋 Copy Sang Tuần Khác" Style="{StaticResource ActionBtn}" Background="#F57C00" Margin="0,0,10,0" Click="BtnMoPopupCopyTuan_Click"/>
                 <Button Content="⚙️ Quản lý Ca Làm Mẫu" Style="{StaticResource ActionBtn}" Background="#388E3C" Margin="0,0,10,0" Click="BtnQuanLyCa_Click"/>
                 <Button Content="🡄 Quay lại" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
             </StackPanel>
@@ -346,5 +347,22 @@
             </Border>
         </Border>
 
+        <Border x:Name="popupCopyTuan" Grid.RowSpan="3" Background="#AA000000" Visibility="Collapsed" Panel.ZIndex="10">
+            <Border Background="White" Width="400" Height="250" CornerRadius="8" Padding="20">
+                <StackPanel>
+                    <TextBlock Text="SAO CHÉP LỊCH SANG TUẦN KHÁC" FontSize="18" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" Margin="0,0,0,15"/>
+                    <TextBlock Text="Lịch của tuần hiện tại sẽ được chép sang tuần bạn chọn bên dưới. Toàn bộ dữ liệu của tuần đích sẽ bị xóa và ghi đè!" TextWrapping="Wrap" Foreground="#D32F2F" Margin="0,0,0,15"/>
+
+                    <TextBlock Text="Chọn một ngày bất kỳ thuộc Tuần đích:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <DatePicker x:Name="dpTargetWeek" Margin="0,0,0,20" Width="220" HorizontalAlignment="Left" Padding="5"/>
+
+                    <Grid>
+                        <Button Content="XÁC NHẬN CHÉP" Style="{StaticResource ActionBtn}" Background="#F57C00" Width="140" HorizontalAlignment="Right" Margin="0,0,95,0" Click="BtnThucHienCopyTuan_Click"/>
+                        <Button Content="HỦY" Style="{StaticResource ActionBtn}" Background="Gray" Width="80" HorizontalAlignment="Right" Click="BtnCloseCopyTuan_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
+        
     </Grid>
 </Page>

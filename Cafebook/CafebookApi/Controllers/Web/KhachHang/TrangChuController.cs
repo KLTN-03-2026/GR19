@@ -76,7 +76,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 
             var monNoiBat_Raw = await _context.SanPhams
                 .Where(sp => sp.TrangThaiKinhDoanh == true)
-                .OrderByDescending(sp => sp.IdSanPham).Take(5)
+                .OrderByDescending(sp => sp.IdSanPham).Take(4)
                 .AsNoTracking()
                 .Select(sp => new { sp.IdSanPham, sp.TenSanPham, sp.GiaBan, sp.HinhAnh })
                 .ToListAsync();

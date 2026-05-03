@@ -22,22 +22,25 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLySanPhamView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLySanPhamGridDto> _dataList = new();
         private List<LookupDanhMucDto> _danhMucList = new();
         private QuanLySanPhamDetailDto? _selectedItem;
         private string? _currentImgPath = null;
         private bool _deleteImgRequest = false;
 
-        //static QuanLySanPhamView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private ICollectionView? _spView;
+        private string _currentSearchKey = "";
+        private string _currentDanhMuc = "Tất cả";
+        private bool _showHidden = false;
+        private bool _isDataLoaded = false;
         public QuanLySanPhamView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            // 1. CHÌA KHÓA CỔNG
             bool hasAccess = AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM", "QL_DANH_MUC", "QL_DINH_LUONG");
             if (!hasAccess)
             {
@@ -48,7 +51,16 @@ namespace AppCafebookApi.View.quanly.pages
 
             ApplyPermissions();
 
-            // 2. CHÌA KHÓA PHÒNG
+            await Task.Delay(350);
+            if (!this.IsLoaded) return;
+            try
+            {
+                await LoadDataAsync();
+                _isDataLoaded = true;
+            }
+            catch (Exception)
+            {
+            }
             if (AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM"))
             {
                 if (FindName("GridDuLieuSanPham") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
@@ -85,7 +97,6 @@ namespace AppCafebookApi.View.quanly.pages
                 if (dms != null)
                 {
                     _danhMucList = dms;
-                    // Nạp danh mục cho Form Nhập liệu + Thiết lập filter tìm kiếm
                     if (FindName("cmbDanhMuc") is ComboBox cb1)
                     {
                         cb1.ItemsSource = _danhMucList;
@@ -93,27 +104,48 @@ namespace AppCafebookApi.View.quanly.pages
                         view1.Filter = item => string.IsNullOrEmpty(cb1.Text) || ((LookupDanhMucDto)item).Ten.IndexOf(cb1.Text, StringComparison.OrdinalIgnoreCase) >= 0;
                     }
 
-                    // Nạp danh mục cho Cột Lọc bên ngoài + Thiết lập filter tìm kiếm
                     if (FindName("cmbFilterDanhMuc") is ComboBox cb2)
                     {
                         var flt = new List<LookupDanhMucDto> { new LookupDanhMucDto { Id = 0, Ten = "Tất cả" } };
                         flt.AddRange(dms);
                         cb2.ItemsSource = flt;
                         cb2.SelectedIndex = 0;
-                        ICollectionView view2 = CollectionViewSource.GetDefaultView(cb2.ItemsSource);
-                        view2.Filter = item => string.IsNullOrEmpty(cb2.Text) || ((LookupDanhMucDto)item).Ten.IndexOf(cb2.Text, StringComparison.OrdinalIgnoreCase) >= 0;
                     }
                 }
+
                 var sps = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySanPhamGridDto>>("api/app/quanly-sanpham");
-                if (sps != null) { _dataList = sps; FilterData(); }
+                if (sps != null)
+                {
+                    _dataList = sps;
+                    foreach (var sp in _dataList) sp.SearchKeyword = RemoveVietnameseSigns(sp.TenSanPham);
+
+                    _spView = CollectionViewSource.GetDefaultView(_dataList);
+                    _spView.Filter = SanPhamFilter;
+                    if (FindName("dgSanPham") is DataGrid dg) dg.ItemsSource = _spView;
+
+                    FilterData();
+                }
             }
             catch { }
             finally { if (FindName("LoadingOverlay") is System.Windows.Controls.Border l2) l2.Visibility = Visibility.Collapsed; }
         }
 
-        // ===============================================
-        // TÍNH NĂNG TÌM KIẾM ĐỀ XUẤT CHO COMBOBOX
-        // ===============================================
+        private string RemoveVietnameseSigns(string str)
+        {
+            if (string.IsNullOrWhiteSpace(str)) return "";
+            str = str.ToLower().Trim();
+            string[] vietnameseSigns = new string[] {
+                "aAeEoOuUiIdDyY", "áàạảãâấầậẩẫăắằặẳẵ", "ÁÀẠẢÃÂẤẦẬẨẪĂẮẰẶẲẴ", "éèẹẻẽêếềệểễ", "ÉÈẸẺẼÊẾỀỆỂỄ",
+                "óòọỏõôốồộổỗơớờợởỡ", "ÓÒỌỎÕÔỐỒỘỔỖƠỚỜỢỞỠ", "úùụủũưứừựửữ", "ÚÙỤỦŨƯỨỪỰỬỮ", "íìịỉĩ", "ÍÌỊỈĨ", "đ", "Đ", "ýỳỵỷỹ", "ÝỲỴỶỸ"
+            };
+            for (int i = 1; i < vietnameseSigns.Length; i++)
+            {
+                for (int j = 0; j < vietnameseSigns[i].Length; j++)
+                    str = str.Replace(vietnameseSigns[i][j], vietnameseSigns[0][i - 1]);
+            }
+            return str;
+        }
+
         private void CmbDanhMuc_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (sender is ComboBox cmb)
@@ -132,21 +164,43 @@ namespace AppCafebookApi.View.quanly.pages
             }
         }
 
-        private void Filter_Changed(object sender, RoutedEventArgs e) => FilterData();
+        private void Filter_Changed(object sender, RoutedEventArgs e)
+        {
+            FilterData();
+        }
 
         private void FilterData()
         {
-            if (!(FindName("dgSanPham") is DataGrid dg)) return;
-            var q = _dataList.AsEnumerable();
+            if (_spView == null) return;
 
-            // Fix lấy Text thay vì SelectedValue nếu người dùng gõ
-            if (FindName("cmbFilterDanhMuc") is ComboBox cb && !string.IsNullOrEmpty(cb.Text) && cb.Text != "Tất cả")
-                q = q.Where(x => x.TenDanhMuc.IndexOf(cb.Text, StringComparison.OrdinalIgnoreCase) >= 0);
+            if (FindName("cmbFilterDanhMuc") is ComboBox cb && cb.SelectedItem is LookupDanhMucDto selectedDm)
+                _currentDanhMuc = selectedDm.Ten;
+            else
+                _currentDanhMuc = "Tất cả";
 
-            if (FindName("txtSearchSanPham") is TextBox t && !string.IsNullOrEmpty(t.Text))
-                q = q.Where(x => x.TenSanPham.ToLower().Contains(t.Text.ToLower()));
+            if (FindName("txtSearchSanPham") is TextBox txt)
+                _currentSearchKey = string.IsNullOrEmpty(txt.Text) ? "" : RemoveVietnameseSigns(txt.Text);
 
-            dg.ItemsSource = q.ToList();
+            if (FindName("chkHienThiDaXoa") is CheckBox chk)
+                _showHidden = chk.IsChecked == true;
+
+            _spView.Refresh();
+        }
+
+        private bool SanPhamFilter(object obj)
+        {
+            if (obj is not QuanLySanPhamGridDto sp) return false;
+
+            if (!_showHidden && !sp.TrangThaiKinhDoanh)
+                return false;
+
+            if (_currentDanhMuc != "Tất cả" && sp.TenDanhMuc.IndexOf(_currentDanhMuc, StringComparison.OrdinalIgnoreCase) < 0)
+                return false;
+
+            if (!string.IsNullOrEmpty(_currentSearchKey) && !sp.SearchKeyword.Contains(_currentSearchKey))
+                return false;
+
+            return true;
         }
 
         private async void DgSanPham_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -217,10 +271,26 @@ namespace AppCafebookApi.View.quanly.pages
         private async void BtnXoa_Click(object sender, RoutedEventArgs e)
         {
             if (!AuthService.CoQuyen("QL_SAN_PHAM") || _selectedItem == null || _selectedItem.IdSanPham == 0) return;
-            if (MessageBox.Show("Xóa SP này?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"Bạn chắc chắn muốn xử lý sản phẩm '{_selectedItem.TenSanPham}'?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
-                var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-sanpham/{_selectedItem.IdSanPham}");
-                if (res.IsSuccessStatusCode) { MessageBox.Show("Đã xóa"); BtnLamMoiForm_Click(this, new RoutedEventArgs()); await LoadDataAsync(); }
+                if (FindName("LoadingOverlay") is System.Windows.Controls.Border l1) l1.Visibility = Visibility.Visible;
+                try
+                {
+                    var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-sanpham/{_selectedItem.IdSanPham}");
+                    string responseMsg = await res.Content.ReadAsStringAsync();
+
+                    if (res.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show(responseMsg, "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                        BtnLamMoiForm_Click(this, new RoutedEventArgs());
+                        await LoadDataAsync();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Lỗi: {responseMsg}");
+                    }
+                }
+                finally { if (FindName("LoadingOverlay") is System.Windows.Controls.Border l2) l2.Visibility = Visibility.Collapsed; }
             }
         }
 

@@ -49,21 +49,17 @@ namespace CafebookApi.Controllers.App.QuanLy
 
             var thuongPhats = await _context.Set<PhieuThuongPhat>().Where(t => t.IdPhieuLuong == id).AsNoTracking().ToListAsync();
 
-            // SỬA: Truy vấn cấu hình quán từ bảng CaiDat
+            // TỐI ƯU: Đưa cấu hình vào Dictionary để lookup nhanh thay vì dùng FirstOrDefault nhiều lần
             var configs = await _context.Set<CaiDat>()
                 .Where(c => c.TenCaiDat.StartsWith("ThongTin_"))
                 .AsNoTracking()
-                .ToListAsync();
-
-            string tenQuan = configs.FirstOrDefault(c => c.TenCaiDat == "ThongTin_TenQuan")?.GiaTri ?? "CAFEBOOK SYSTEM";
-            string diaChi = configs.FirstOrDefault(c => c.TenCaiDat == "ThongTin_DiaChi")?.GiaTri ?? "";
-            string sdt = configs.FirstOrDefault(c => c.TenCaiDat == "ThongTin_SoDienThoai")?.GiaTri ?? "";
+                .ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
 
             var chiTiet = new PhatLuongDetailDto
             {
                 IdPhieuLuong = p.IdPhieuLuong,
                 TenNhanVien = p.NhanVien.HoTen,
-                KyLuong = $"Lương Tuần (Của Tháng {p.Thang}/{p.Nam})",
+                KyLuong = $"Lương Tháng {p.Thang}/{p.Nam}",
                 NgayChot = p.NgayTao,
                 LuongCoBan = p.LuongCoBan,
                 TongGioLam = p.TongGioLam,
@@ -71,9 +67,9 @@ namespace CafebookApi.Controllers.App.QuanLy
                 KhauTru = p.KhauTru ?? 0m,
                 ThucLanh = p.ThucLanh,
                 TrangThai = p.TrangThai,
-                TenQuan = tenQuan,
-                DiaChiQuan = diaChi,
-                SoDienThoaiQuan = sdt,
+                TenQuan = configs.GetValueOrDefault("ThongTin_TenQuan", "CAFEBOOK SYSTEM"),
+                DiaChiQuan = configs.GetValueOrDefault("ThongTin_DiaChi", ""),
+                SoDienThoaiQuan = configs.GetValueOrDefault("ThongTin_SoDienThoai", ""),
                 DanhSachThuongPhat = thuongPhats.Select(t => new ChiTietThuongPhatPhatLuongDto
                 {
                     Loai = t.SoTien >= 0 ? "Thưởng" : "Phạt",
@@ -86,7 +82,7 @@ namespace CafebookApi.Controllers.App.QuanLy
         }
 
         [HttpPut("xacnhan/{id}")]
-        public async Task<IActionResult> XacNhanPhat(int id)
+        public async Task<IActionResult> XacNhanPhat(int id, [FromBody] XacNhanPhatDto req)
         {
             var p = await _context.Set<PhieuLuong>().FindAsync(id);
             if (p == null) return NotFound("Không tìm thấy phiếu lương.");
@@ -94,6 +90,9 @@ namespace CafebookApi.Controllers.App.QuanLy
             if (p.TrangThai == "Đã phát") return BadRequest("Phiếu lương này đã được phát trước đó.");
 
             p.TrangThai = "Đã phát";
+            p.NgayPhatLuong = DateTime.Now;
+            p.IdNguoiPhat = req != null && req.IdNguoiPhat > 0 ? req.IdNguoiPhat : 1;
+
             await _context.SaveChangesAsync();
             return Ok();
         }

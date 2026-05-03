@@ -1,12 +1,11 @@
-﻿// File: AppCafebookApi/View/quanly/pages/QuanLyBaoCaoDoanhThuView.xaml.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Windows;
-using System.Windows.Controls; // System.Windows.Controls.Border nằm ở đây
+using System.Windows.Controls;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,31 +14,25 @@ using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using OfficeOpenXml.Table;
 using CafebookModel.Model.ModelApp.QuanLy;
-using AppCafebookApi.Services; // Thêm để dùng AuthService
+using AppCafebookApi.Services;
 
 namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyBaoCaoDoanhThuView : Page
     {
-       // private static readonly HttpClient httpClient;
         private QuanLyBaoCaoTongHopDto? currentReportData;
-        /*
-        static QuanLyBaoCaoDoanhThuView()
-        {
-            ApiClient.Instance = new ApiClient.Instance
-            {
-                BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost"),
-                Timeout = TimeSpan.FromMinutes(5)
-            };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyBaoCaoDoanhThuView()
         {
             InitializeComponent();
         }
 
-        private void Page_Loaded(object sender, RoutedEventArgs e)
+        private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
@@ -50,11 +43,22 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            ApplyPermissions();
+            await Task.Delay(350);
+            if (!this.IsLoaded) return;
+            try
+            {
+                ApplyPermissions();
 
-            var now = DateTime.Now;
-            if (FindName("dpStartDate") is DatePicker dpStart) dpStart.SelectedDate = new DateTime(now.Year, now.Month, 1);
-            if (FindName("dpEndDate") is DatePicker dpEnd) dpEnd.SelectedDate = now;
+                var now = DateTime.Now;
+                if (FindName("dpStartDate") is DatePicker dpStart) dpStart.SelectedDate = new DateTime(now.Year, now.Month, 1);
+                if (FindName("dpEndDate") is DatePicker dpEnd) dpEnd.SelectedDate = now;
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi giao diện báo cáo: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()

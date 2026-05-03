@@ -1,10 +1,11 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelWeb.KhachHang;
+using CafebookModel.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.Web.KhachHang
 {
@@ -31,7 +32,12 @@ namespace CafebookApi.Controllers.Web.KhachHang
         }
 
         [HttpGet]
-        public async Task<IActionResult> Search([FromQuery] int? idTacGia, [FromQuery] int? idTheLoai, [FromQuery] int? idNXB)
+        public async Task<IActionResult> Search(
+            [FromQuery] int? idTacGia,
+            [FromQuery] int? idTheLoai,
+            [FromQuery] int? idNXB,
+            [FromQuery] int pageNum = 1,
+            [FromQuery] int pageSize = 10)
         {
             var query = _context.Sachs.AsQueryable();
             var resultDto = new TimKiemSachResultDto();
@@ -71,24 +77,29 @@ namespace CafebookApi.Controllers.Web.KhachHang
             {
                 return BadRequest("Cần cung cấp một tiêu chí tìm kiếm.");
             }
-
-            // Tách làm 2 bước để chống lỗi Constant của Entity Framework
+            var totalItems = await query.CountAsync();
+            var totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
             var rawList = await query
-                .Select(s => new {
-                    s.IdSach,
-                    s.TenSach,
-                    s.AnhBia,
-                    s.GiaBia
-                })
-                .ToListAsync();
+                    .Skip((pageNum - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(s => new {
+                        s.IdSach,
+                        s.TenSach,
+                        s.AnhBia,
+                        s.GiaBia
+                    })
+                    .ToListAsync();
 
             resultDto.SachList = rawList.Select(s => new TimKiemSachCardDto
             {
                 IdSach = s.IdSach,
                 TieuDe = s.TenSach,
-                AnhBiaUrl = GetFullImageUrl(s.AnhBia),
+                AnhBiaUrl = GetFullImageUrl(string.IsNullOrEmpty(s.AnhBia) ? HinhAnhPaths.WebDefaultBookCover : s.AnhBia),
                 GiaBia = s.GiaBia ?? 0
             }).ToList();
+
+            resultDto.TotalPages = totalPages;
+            resultDto.CurrentPage = pageNum;
 
             return Ok(resultDto);
         }

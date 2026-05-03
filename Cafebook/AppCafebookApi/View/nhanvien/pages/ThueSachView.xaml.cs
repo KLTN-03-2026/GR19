@@ -33,7 +33,6 @@ namespace AppCafebookApi.View.nhanvien.pages
 
     public partial class ThueSachView : Page
     {
-        private static readonly HttpClient httpClient;
         private CaiDatThueSachDto _settings = new();
         private PhieuThueChiTietDto? _selectedPhieuChiTiet;
         private int? _idPhieuTraCanIn = null;
@@ -46,18 +45,10 @@ namespace AppCafebookApi.View.nhanvien.pages
         private DispatcherTimer _autoRefreshTimer;
 
         private bool _isUpdatingKhachText = false;
-
-        // Biến tạm cho Popup
+        private bool _isDataLoaded = false;
         private SachTimKiemDto? _tempSachTimKiem;
         private ChiTietSachTraUI_Dto? _tempSachTraPopup;
 
-        static ThueSachView()
-        {
-            httpClient = new HttpClient();
-            string? apiUrl = AppConfigManager.GetApiServerUrl();
-            if (!string.IsNullOrWhiteSpace(apiUrl)) httpClient.BaseAddress = new Uri(apiUrl);
-            else httpClient.BaseAddress = new Uri("http://127.0.0.1:5166");
-        }
 
         public ThueSachView()
         {
@@ -70,7 +61,8 @@ namespace AppCafebookApi.View.nhanvien.pages
             _searchSachTimer.Tick += async (s, e) => { _searchSachTimer.Stop(); await SearchSachAsync(); };
 
             _autoRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(300) };
-            _autoRefreshTimer.Tick += async (s, e) => { await LoadPhieuThueAsync(true); await LoadPhieuTraAsync(true); };
+
+            _autoRefreshTimer.Tick += async (s, e) => { await SafeAutoRefreshAsync(); };
 
             dpLocNgayThue.SelectedDate = null;
             dpLocNgayTra.SelectedDate = DateTime.Today;
@@ -78,24 +70,44 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
+            ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THUE_SACH"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập chức năng này.", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (this.NavigationService?.CanGoBack == true) this.NavigationService.GoBack();
                 return;
             }
 
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            await Task.Delay(350);
 
-            // Đảm bảo Panel phải bị thu gọn hoàn toàn lúc load
-            ClearRightPanel();
+            if (!this.IsLoaded) return;
 
-            LoadingOverlay.Visibility = Visibility.Visible;
-            await LoadSettingsAsync();
-            await LoadPhieuThueAsync(false);
-            await LoadPhieuTraAsync(false);
-            LoadingOverlay.Visibility = Visibility.Collapsed;
+            try
+            {
+                ClearRightPanel();
 
-            _autoRefreshTimer.Start();
+                if (FindName("LoadingOverlay") is FrameworkElement overlay) overlay.Visibility = Visibility.Visible;
+
+                await Task.WhenAll(
+                    LoadSettingsAsync(),
+                    LoadPhieuThueAsync(false),
+                    LoadPhieuTraAsync(false)
+                );
+
+                if (FindName("LoadingOverlay") is FrameworkElement overlayHidden) overlayHidden.Visibility = Visibility.Collapsed;
+
+                _autoRefreshTimer.Start();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                if (FindName("LoadingOverlay") is FrameworkElement overlayError) overlayError.Visibility = Visibility.Collapsed;
+                Console.WriteLine($"Lỗi tại module Thuê sách: {ex.Message}");
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)
@@ -108,12 +120,39 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             try
             {
-                _settings = await httpClient.GetFromJsonAsync<CaiDatThueSachDto>("api/app/nhanvien/thuesach/settings") ?? new();
+                _settings = await ApiClient.Instance.GetFromJsonAsync<CaiDatThueSachDto>("api/app/nhanvien/thuesach/settings") ?? new();
                 dpNgayHenTra.DisplayDateStart = DateTime.Today;
                 dpNgayHenTra.DisplayDateEnd = DateTime.Today.AddDays(_settings.SoNgayMuonToiDa);
                 dpNgayHenTra.SelectedDate = DateTime.Today.AddDays(_settings.SoNgayMuonToiDa);
             }
             catch { }
+        }
+
+        private async Task SafeAutoRefreshAsync()
+        {
+            if (AuthService.CurrentUser == null || string.IsNullOrEmpty(AuthService.AuthToken))
+            {
+                _autoRefreshTimer.Stop();
+                MessageBox.Show("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để làm mới dữ liệu.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
+                await LoadPhieuThueAsync(true);
+                await LoadPhieuTraAsync(true);
+            }
+            catch (HttpRequestException httpEx) when (httpEx.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                _autoRefreshTimer.Stop();
+                Console.WriteLine("Phiên đăng nhập hết hạn trong lúc làm mới ngầm.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi làm mới tự động: {ex.Message}");
+            }
         }
 
         #region Logic Đóng Mở Bảng Bên Phải
@@ -151,10 +190,23 @@ namespace AppCafebookApi.View.nhanvien.pages
                 string dateParam = dpLocNgayThue.SelectedDate.HasValue ? $"&tuNgay={dpLocNgayThue.SelectedDate.Value:yyyy-MM-dd}&denNgay={dpLocNgayThue.SelectedDate.Value:yyyy-MM-dd}" : "";
 
                 var url = $"api/app/nhanvien/thuesach/phieuthue?search={Uri.EscapeDataString(search)}&status={Uri.EscapeDataString(status)}{dateParam}";
-                var phieuList = await httpClient.GetFromJsonAsync<List<PhieuThueGridDto>>(url);
-                dgPhieuThue.ItemsSource = phieuList;
+
+                var response = await ApiClient.Instance.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var phieuList = await response.Content.ReadFromJsonAsync<List<PhieuThueGridDto>>();
+                    dgPhieuThue.ItemsSource = phieuList;
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    if (!isBackground) MessageBox.Show("Hết phiên đăng nhập. Vui lòng đăng nhập lại.");
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi LoadPhieuThueAsync: {ex.Message}");
+            }
         }
 
         private async Task LoadPhieuTraAsync(bool isBackground)
@@ -165,7 +217,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 string dateParam = dpLocNgayTra.SelectedDate.HasValue ? $"&tuNgay={dpLocNgayTra.SelectedDate.Value:yyyy-MM-dd}&denNgay={dpLocNgayTra.SelectedDate.Value:yyyy-MM-dd}" : "";
 
                 var url = $"api/app/nhanvien/thuesach/phieutra?search={Uri.EscapeDataString(search)}{dateParam}";
-                var phieuTraList = await httpClient.GetFromJsonAsync<List<PhieuTraGridDto>>(url);
+                var phieuTraList = await ApiClient.Instance.GetFromJsonAsync<List<PhieuTraGridDto>>(url);
                 dgPhieuTra.ItemsSource = phieuTraList;
             }
             catch { }
@@ -198,7 +250,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             }
             try
             {
-                var results = await httpClient.GetFromJsonAsync<List<KhachHangSearchDto>>($"api/app/nhanvien/thuesach/search-khachhang?query={query}");
+                var results = await ApiClient.Instance.GetFromJsonAsync<List<KhachHangSearchDto>>($"api/app/nhanvien/thuesach/search-khachhang?query={query}");
                 if (results != null && results.Any()) { lbKhachHangResults.ItemsSource = results; lbKhachHangResults.Visibility = Visibility.Visible; }
                 else { lbKhachHangResults.Visibility = Visibility.Collapsed; }
             }
@@ -226,7 +278,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (string.IsNullOrEmpty(q)) { lbSachResults.ItemsSource = null; lbSachResults.Visibility = Visibility.Collapsed; return; }
             try
             {
-                var results = await httpClient.GetFromJsonAsync<List<SachTimKiemDto>>($"api/app/nhanvien/thuesach/search-sach?query={q}");
+                var results = await ApiClient.Instance.GetFromJsonAsync<List<SachTimKiemDto>>($"api/app/nhanvien/thuesach/search-sach?query={q}");
                 lbSachResults.ItemsSource = results;
                 lbSachResults.Visibility = Visibility.Visible;
             }
@@ -329,7 +381,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             LoadingOverlay.Visibility = Visibility.Visible;
             try
             {
-                var response = await httpClient.PostAsJsonAsync("api/app/nhanvien/thuesach", request);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/nhanvien/thuesach", request);
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -388,7 +440,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             LoadingOverlay.Visibility = Visibility.Visible;
             try
             {
-                _selectedPhieuChiTiet = await httpClient.GetFromJsonAsync<PhieuThueChiTietDto>($"api/app/nhanvien/thuesach/chitiet/{idPhieuThue}");
+                _selectedPhieuChiTiet = await ApiClient.Instance.GetFromJsonAsync<PhieuThueChiTietDto>($"api/app/nhanvien/thuesach/chitiet/{idPhieuThue}");
                 if (_selectedPhieuChiTiet != null)
                 {
                     ExpandRightPanel();
@@ -524,7 +576,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             LoadingOverlay.Visibility = Visibility.Visible;
             try
             {
-                var response = await httpClient.PostAsJsonAsync("api/app/nhanvien/thuesach/return", request);
+                var response = await ApiClient.Instance.PostAsJsonAsync("api/app/nhanvien/thuesach/return", request);
                 if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<TraSachResponseDto>();
@@ -573,7 +625,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 try
                 {
                     var req = new GiaHanRequestDto { IdPhieuThueSach = _idPhieuGiaHan, NgayHenTraMoi = dpGiaHan.SelectedDate.Value };
-                    var res = await httpClient.PostAsJsonAsync("api/app/nhanvien/thuesach/extend", req);
+                    var res = await ApiClient.Instance.PostAsJsonAsync("api/app/nhanvien/thuesach/extend", req);
                     if (res.IsSuccessStatusCode) { await LoadPhieuThueAsync(false); }
                 }
                 catch { }
@@ -585,7 +637,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             if (_selectedPhieuChiTiet == null) return;
             LoadingOverlay.Visibility = Visibility.Visible;
-            await httpClient.PostAsync($"api/app/nhanvien/thuesach/send-reminder/{_selectedPhieuChiTiet.IdPhieuThueSach}", null);
+            await ApiClient.Instance.PostAsync($"api/app/nhanvien/thuesach/send-reminder/{_selectedPhieuChiTiet.IdPhieuThueSach}", null);
             LoadingOverlay.Visibility = Visibility.Collapsed;
             MessageBox.Show("Gửi mail nhắc hẹn thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
         }

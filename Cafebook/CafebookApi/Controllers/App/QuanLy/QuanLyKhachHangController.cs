@@ -25,25 +25,10 @@ namespace CafebookApi.Controllers.App.QuanLy
             _context = context;
         }
 
-        private async Task AutoUnlockCheckAsync()
-        {
-            var expired = await _context.Set<KhachHang>()
-                .Where(k => k.BiKhoa && k.ThoiGianMoKhoa.HasValue && k.ThoiGianMoKhoa.Value <= DateTime.Now && !k.DaXoa)
-                .ToListAsync();
-            if (expired.Any())
-            {
-                foreach (var kh in expired) { kh.BiKhoa = false; kh.LyDoKhoa = null; kh.ThoiGianMoKhoa = null; }
-                await _context.SaveChangesAsync();
-            }
-        }
-
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            await AutoUnlockCheckAsync();
-
             var data = await _context.Set<KhachHang>().AsNoTracking()
-                .Where(k => !k.DaXoa)
                 .OrderByDescending(k => k.IdKhachHang)
                 .Select(k => new QuanLyKhachHangGridDto
                 {
@@ -55,8 +40,9 @@ namespace CafebookApi.Controllers.App.QuanLy
                     DiemTichLuy = k.DiemTichLuy,
                     BiKhoa = k.BiKhoa,
                     TaiKhoanTam = k.TaiKhoanTam,
+                    DaXoa = k.DaXoa,
                     LoaiTaiKhoan = k.TaiKhoanTam ? "Khách vãng lai" : "Thành viên",
-                    TrangThai = k.BiKhoa ? "Đã khóa" : "Hoạt động"
+                    TrangThai = k.DaXoa ? "Đã xóa" : (k.BiKhoa ? "Đã khóa" : "Hoạt động")
                 }).ToListAsync();
             return Ok(data);
         }
@@ -64,34 +50,31 @@ namespace CafebookApi.Controllers.App.QuanLy
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            await AutoUnlockCheckAsync();
-            var kh = await _context.Set<KhachHang>().AsNoTracking().FirstOrDefaultAsync(k => k.IdKhachHang == id && !k.DaXoa);
+            var kh = await _context.Set<KhachHang>().AsNoTracking().FirstOrDefaultAsync(k => k.IdKhachHang == id);
             if (kh == null) return NotFound();
 
-            // 1. Lấy lịch sử mua hàng (Sử dụng ThoiGianTao và ThanhTien từ class HoaDon)
             var lichSuMua = await _context.Set<HoaDon>()
                 .Where(h => h.IdKhachHang == id)
                 .OrderByDescending(h => h.ThoiGianTao)
+                .Take(10)
                 .Select(h => new KhachHangLichSuMuaDto
                 {
                     IdHoaDon = h.IdHoaDon,
                     ThoiGian = h.ThoiGianTao,
                     TongTien = h.ThanhTien,
-                    SanPhamMua = "Nhiều sản phẩm", // Gán tạm do HoaDon chứa nhiều ChiTietHoaDon
+                    SanPhamMua = "Nhiều sản phẩm",
                     TrangThai = h.TrangThai
                 })
                 .ToListAsync();
 
-            // 2. Lấy lịch sử thuê sách (Sử dụng Entity PhieuThueSach)
             var lichSuThue = await _context.Set<PhieuThueSach>()
                 .Where(p => p.IdKhachHang == id)
                 .OrderByDescending(p => p.NgayThue)
+                .Take(10)
                 .Select(p => new KhachHangLichSuThueDto
                 {
                     IdPhieuThue = p.IdPhieuThueSach,
-
                     TieuDeSach = p.ChiTietPhieuThues.Select(c => c.Sach.TenSach).FirstOrDefault() ?? "Không có thông tin",
-
                     NgayThue = p.NgayThue,
                     TrangThai = p.TrangThai
                 })
@@ -112,8 +95,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                 TaiKhoanTam = kh.TaiKhoanTam,
                 AnhDaiDien = kh.AnhDaiDien,
                 NgayTao = kh.NgayTao,
-
-                // Gán 2 danh sách vừa query vào Dto trả về UI
+                DaXoa = kh.DaXoa,
                 LichSuMuaHang = lichSuMua,
                 LichSuThueSach = lichSuThue
             });
@@ -158,16 +140,13 @@ namespace CafebookApi.Controllers.App.QuanLy
             {
                 string thoiGianStr = kh.ThoiGianMoKhoa.HasValue ? kh.ThoiGianMoKhoa.Value.ToString("dd/MM/yyyy HH:mm") : "Vĩnh viễn";
 
-                // Đồng bộ: Lấy toàn bộ thông tin từ bảng Cài Đặt (sử dụng TryGetValue để tránh lỗi Dictionary)
                 string tenQuan = settings.TryGetValue("ThongTin_TenQuan", out var tq) ? tq : "Cafebook";
                 string diaChiQuan = settings.TryGetValue("ThongTin_DiaChi", out var dc) ? dc : "Đang cập nhật";
                 string supportEmail = settings.TryGetValue("LienHe_Email", out var se) ? se : "cafebook.hotro@gmail.com";
                 string supportPhone = settings.TryGetValue("ThongTin_SoDienThoai", out var sp) ? sp : "Đang cập nhật";
 
-                // Đồng bộ Subject mail chứa Tên Quán
                 string subject = $"[{tenQuan}] Thông báo khóa tài khoản";
 
-                // Giao diện email đồng bộ Material Design
                 string body = $@"
                 <!DOCTYPE html>
                 <html lang=""vi"">

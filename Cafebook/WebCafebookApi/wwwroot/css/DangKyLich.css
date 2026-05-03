@@ -240,4 +240,114 @@ body {
     color: var(--dkl-primary);
     font-weight: 600;
 }
- 
+/* ==========================================
+   TỐI ƯU RESPONSIVE (PC - TABLET - MOBILE)
+   ========================================== */
+
+/* 1. TABLET & PC ( >= 992px ): Hiển thị full Kanban board, không kéo ngang */
+@media (min-width: 992px) {
+    .dkl-weekly-board {
+        flex-wrap: nowrap !important;
+        overflow-x: hidden !important; /* Tắt hoàn toàn thanh cuộn ngang */
+    }
+
+    .dkl-column {
+        min-width: 0 !important; /* Cho phép cột co lại cho vừa màn hình thay vì fix 260px */
+        flex: 1 1 0; /* Chia đều không gian cho 7 ngày */
+    }
+    /* Thu gọn padding bên trong thẻ card để vừa nội dung khi co lại */
+    .dkl-card {
+        padding: 12px;
+    }
+}
+
+/* 2. TABLET DỌC & MOBILE ( < 992px ) */
+@media (max-width: 991.98px) {
+    /* Chế độ Theo Tuần: Vuốt ngang từng thẻ to cho dễ nhìn */
+    .dkl-weekly-board {
+        scroll-snap-type: x mandatory;
+        padding-bottom: 15px;
+    }
+
+    .dkl-column {
+        min-width: 85vw !important; /* Mỗi ngày chiếm 85% chiều rộng màn hình */
+        scroll-snap-align: center;
+        margin-right: 10px;
+    }
+
+    /* Bỏ ép không xuống dòng ở các table */
+    .table.text-nowrap {
+        white-space: normal !important;
+    }
+}
+
+/* 3. MOBILE NHỎ ( < 768px ) - CHUYỂN BẢNG THÀNH DẠNG CARD */
+@media (max-width: 767.98px) {
+    /* Ẩn Header của bảng */
+    .dkl-table-head {
+        display: none !important;
+    }
+
+    /* Ép Table hiển thị dưới dạng Khối (Block) */
+    .dkl-table-wrapper table,
+    .dkl-table-wrapper tbody,
+    .dkl-table-wrapper tr,
+    .dkl-table-wrapper td {
+        display: block;
+        width: 100%;
+    }
+
+    /* Styling từng hàng (Row) biến thành Card */
+    .dkl-table-wrapper tr {
+        background: #fff;
+        border: 1px solid var(--dkl-border);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        padding: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        position: relative;
+    }
+
+    /* Tối ưu các ô dữ liệu (Cell) */
+    .dkl-table-wrapper td {
+        padding: 8px 0 !important;
+        border-bottom: 1px dashed var(--dkl-border) !important;
+        text-align: left !important;
+    }
+
+        /* Bỏ border ở ô cuối cùng (Thao tác) */
+        .dkl-table-wrapper td:last-child {
+            border-bottom: none !important;
+            padding-bottom: 0 !important;
+        }
+
+        /* Style cho Nút Thao tác trên Mobile: Rộng Full màn */
+        .dkl-table-wrapper td.text-center {
+            text-align: left !important;
+        }
+
+        .dkl-table-wrapper td .btn {
+            width: 100%;
+            margin-top: 8px;
+            padding: 10px;
+        }
+
+        /* Thêm Label giả để dễ đọc thông tin trên Mobile */
+        .dkl-table-wrapper td:nth-child(3)::before {
+            content: "Nhu cầu / Ghi chú:";
+            display: block;
+            font-size: 0.8rem;
+            color: var(--dkl-text-muted);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .dkl-table-wrapper td:nth-child(4)::before {
+            content: "Trạng thái:";
+            display: block;
+            font-size: 0.8rem;
+            color: var(--dkl-text-muted);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+}

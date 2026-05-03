@@ -17,25 +17,49 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyKiemKhoView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyKiemKhoGridDto> _phieuKiemList = new();
         private ObservableCollection<QuanLyKiemKhoNguyenLieuDto> _nlKiemKhoList = new();
         private bool _isViewing = true;
 
-        //static QuanLyKiemKhoView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLyKiemKhoView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            // BẢO MẬT LỚP 2
-            if (!AuthService.CoQuyen("QL_KIEM_KHO")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            ApplyPermissions();
-            if (FindName("dgKiemKhoMoi") is DataGrid dgMoi) dgMoi.ItemsSource = _nlKiemKhoList;
-            await LoadPhieuKiemAsync();
+            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_KIEM_KHO")) 
+            { 
+                MessageBox.Show("Từ chối truy cập module Kiểm kho!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning); 
+                this.NavigationService?.GoBack(); 
+                return; 
+            }
+
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions();
+
+                if (FindName("dgKiemKhoMoi") is DataGrid dgMoi) 
+                {
+                    dgMoi.ItemsSource = _nlKiemKhoList;
+                }
+
+                await LoadPhieuKiemAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Kiểm kho: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()

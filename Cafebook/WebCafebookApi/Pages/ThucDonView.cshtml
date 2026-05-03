@@ -97,10 +97,10 @@
                             <a asp-page="/ChiTietSanPhamView" asp-route-token="@Model.EncryptId(item.IdSanPham)" class="text-decoration-none">
                                 <div class="menu-product-card shadow-sm">
                                     <div class="menu-product-img-wrap">
-                                        <img src="@(string.IsNullOrEmpty(item.AnhSanPhamUrl) ? HinhAnhPaths.WebDefaultFoodIcon : item.AnhSanPhamUrl)"
+                                        <img src="@item.AnhSanPhamUrl"
                                              class="menu-product-img" alt="@item.TenSanPham"
-                                             onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultFoodIcon'">
-                                        
+                                             onerror="this.onerror=null; this.src='@item.AnhSanPhamUrl'">
+    
                                         <div class="menu-price-tag">@item.DonGia.ToString("N0") đ</div>
                                     </div>
                                     <div class="menu-product-body">

@@ -10,34 +10,40 @@ using System.Windows.Controls;
 using AppCafebookApi.Services;
 using CafebookModel.Utils;
 using CafebookModel.Model.ModelApp.QuanLy;
-using AppCafebookApi.View.Common; // Gọi thư mục chứa Window Preview
+using AppCafebookApi.View.Common;
 
 namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyPhatLuongView : Page
     {
-        /*private static readonly HttpClient httpClient;
+        private bool _isDataLoaded = false;
 
-        static QuanLyPhatLuongView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
-        */
         public QuanLyPhatLuongView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            if (!AuthService.CoQuyen("FULL_QL", "QL_LUONG"))
-            {
-                MessageBox.Show("Từ chối truy cập module Phát lương!");
-                this.NavigationService?.GoBack(); return;
-            }
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_LUONG");
-            if (FindName("GridDuLieu") is Border g) g.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;
-
-            if (hasQuyen)
+            if (!hasQuyen)
             {
+                MessageBox.Show("Bạn không có quyền truy cập module Phát lương!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack(); 
+                return;
+            }
+
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                if (FindName("GridDuLieu") is Border g) g.Visibility = Visibility.Visible;
+                if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = Visibility.Collapsed;
+
                 if (FindName("cmbNam") is ComboBox cNam && FindName("cmbThang") is ComboBox cThang)
                 {
                     int currentYear = DateTime.Now.Year;
@@ -47,10 +53,16 @@ namespace AppCafebookApi.View.quanly.pages
                     cNam.SelectedItem = currentYear;
                     cThang.SelectedItem = DateTime.Now.Month;
                 }
+
                 await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                 Console.WriteLine($"Lỗi tại module Phát lương: {ex.Message}");
             }
         }
-
         private async Task LoadDataAsync()
         {
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;

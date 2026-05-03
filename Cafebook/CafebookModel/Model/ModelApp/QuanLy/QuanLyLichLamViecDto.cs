@@ -77,4 +77,10 @@ namespace CafebookModel.Model.ModelApp.QuanLy
         public int IdVaiTro { get; set; }
         public string TenVaiTro { get; set; } = string.Empty;
     }
+
+    public class CopyTuanSangTuanDto
+    {
+        public DateTime SourceDate { get; set; }
+        public DateTime TargetDate { get; set; }
+    }
 }

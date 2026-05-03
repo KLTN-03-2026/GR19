@@ -3,6 +3,13 @@
 @using CafebookModel.Utils
 @{
     ViewData["Title"] = Model.PageTitle;
+    
+    var routeData = new Dictionary<string, string?>
+    {
+        { "TokenTacGia", Model.TokenTacGia },
+        { "TokenTheLoai", Model.TokenTheLoai },
+        { "TokenNXB", Model.TokenNXB }
+    };
 }
 
 @section Styles {
@@ -50,9 +57,9 @@
                     <a asp-page="/ChiTietSachView" asp-route-token="@Model.EncryptId(item.IdSach)" class="text-decoration-none">
                         <div class="book-product-card shadow-sm">
                             <div class="book-product-img-wrap">
-                                <img src="@(string.IsNullOrEmpty(item.AnhBiaUrl) ? HinhAnhPaths.WebDefaultBookCover : item.AnhBiaUrl)"
+                                <img src="@item.AnhBiaUrl"
                                      class="book-product-img" alt="@item.TieuDe"
-                                     onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultBookCover'">
+                                     onerror="this.onerror=null; this.src='@item.AnhBiaUrl'">
                             </div>
                             <div class="card-body text-center p-3 d-flex flex-column">
                                 <h6 class="text-dark fw-bold mb-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4em; line-height: 1.2;">@item.TieuDe</h6>
@@ -63,6 +70,56 @@
                 </div>
             }
         </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            var currentPage = Model.CurrentPage;
+            var totalPages = Model.TotalPages;
+            var startPage = Math.Max(1, currentPage - 2);
+            var endPage = Math.Min(totalPages, currentPage + 2);
+
+            <nav class="mt-5 d-flex justify-content-center">
+                <ul class="pagination pagination-lg shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="@(currentPage - 1)">
+                            <span class="material-symbols-outlined align-middle">chevron_left</span>
+                        </a>
+                    </li>
+
+                    @if (startPage > 1)
+                    {
+                        <li class="page-item"><a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="1">1</a></li>
+                        if (startPage > 2)
+                        {
+                            <li class="page-item disabled"><span class="page-link text-muted bg-light border-0">...</span></li>
+                        }
+                    }
+
+                    @for (int i = startPage; i <= endPage; i++)
+                    {
+                        <li class="page-item @(currentPage == i ? "active" : "")">
+                            <a class="page-link @(currentPage == i ? "bg-primary border-primary text-white" : "text-dark")"
+                               asp-all-route-data="routeData" asp-route-PageNum="@i">@i</a>
+                        </li>
+                    }
+
+                    @if (endPage < totalPages)
+                    {
+                        if (endPage < totalPages - 1)
+                        {
+                            <li class="page-item disabled"><span class="page-link text-muted bg-light border-0">...</span></li>
+                        }
+                        <li class="page-item"><a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="@totalPages">@totalPages</a></li>
+                    }
+
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="@(currentPage + 1)">
+                            <span class="material-symbols-outlined align-middle">chevron_right</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
     }
     else if (string.IsNullOrEmpty(Model.ErrorMessage))
     {

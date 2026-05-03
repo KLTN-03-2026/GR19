@@ -40,17 +40,26 @@ namespace CafebookApi.Controllers.App.QuanLy
                 .ToListAsync();
 
             var sachIds = sachs.Select(s => s.IdSach).ToList();
+
+            var tacGias = await _context.Set<TacGia>().AsNoTracking().ToDictionaryAsync(t => t.IdTacGia, t => t.TenTacGia);
+            var theLoais = await _context.Set<TheLoai>().AsNoTracking().ToDictionaryAsync(t => t.IdTheLoai, t => t.TenTheLoai);
+
             var sachTacGias = await _context.Set<SachTacGia>().Where(st => sachIds.Contains(st.IdSach)).AsNoTracking().ToListAsync();
-            var tacGias = await _context.Set<TacGia>().AsNoTracking().ToListAsync();
+            var tgLookup = sachTacGias.ToLookup(
+                st => st.IdSach,
+                st => tacGias.ContainsKey(st.IdTacGia) ? tacGias[st.IdTacGia] : "");
+
             var sachTheLoais = await _context.Set<SachTheLoai>().Where(st => sachIds.Contains(st.IdSach)).AsNoTracking().ToListAsync();
-            var theLoais = await _context.Set<TheLoai>().AsNoTracking().ToListAsync();
+            var tlLookup = sachTheLoais.ToLookup(
+                st => st.IdSach,
+                st => theLoais.ContainsKey(st.IdTheLoai) ? theLoais[st.IdTheLoai] : "");
 
             var data = sachs.Select(s => new QuanLySachGridDto
             {
                 IdSach = s.IdSach,
                 TenSach = s.TenSach,
-                TenTacGia = string.Join(", ", sachTacGias.Where(st => st.IdSach == s.IdSach).Select(st => tacGias.FirstOrDefault(t => t.IdTacGia == st.IdTacGia)?.TenTacGia).Where(name => !string.IsNullOrEmpty(name))),
-                TenTheLoai = string.Join(", ", sachTheLoais.Where(st => st.IdSach == s.IdSach).Select(st => theLoais.FirstOrDefault(t => t.IdTheLoai == st.IdTheLoai)?.TenTheLoai).Where(name => !string.IsNullOrEmpty(name))),
+                TenTacGia = string.Join(", ", tgLookup[s.IdSach].Where(name => !string.IsNullOrEmpty(name))),
+                TenTheLoai = string.Join(", ", tlLookup[s.IdSach].Where(name => !string.IsNullOrEmpty(name))),
                 ViTri = s.ViTri,
                 SoLuongTong = s.SoLuongTong,
                 SoLuongHienCo = s.SoLuongHienCo,
@@ -211,17 +220,31 @@ namespace CafebookApi.Controllers.App.QuanLy
 
             try
             {
-                _context.Set<SachTacGia>().RemoveRange(_context.Set<SachTacGia>().Where(x => x.IdSach == id));
-                _context.Set<SachTheLoai>().RemoveRange(_context.Set<SachTheLoai>().Where(x => x.IdSach == id));
-                _context.Set<SachNhaXuatBan>().RemoveRange(_context.Set<SachNhaXuatBan>().Where(x => x.IdSach == id));
+                bool daTungChoThue = await _context.Set<ChiTietPhieuThue>().AnyAsync(x => x.IdSach == id);
 
-                _context.Set<Sach>().Remove(book);
-                await _context.SaveChangesAsync();
-                return Ok();
+                if (daTungChoThue)
+                {
+                    book.SoLuongTong = 0;
+                    book.SoLuongHienCo = 0;
+                    book.ViTri = "Đã hủy/Mất";
+
+                    await _context.SaveChangesAsync();
+                    return Ok("Sách này đã có lịch sử thuê nên không thể xóa vĩnh viễn. Hệ thống đã tự động Đóng danh mục (đưa số lượng về 0 và đổi Vị trí thành 'Đã hủy/Mất').");
+                }
+                else
+                {
+                    _context.Set<SachTacGia>().RemoveRange(_context.Set<SachTacGia>().Where(x => x.IdSach == id));
+                    _context.Set<SachTheLoai>().RemoveRange(_context.Set<SachTheLoai>().Where(x => x.IdSach == id));
+                    _context.Set<SachNhaXuatBan>().RemoveRange(_context.Set<SachNhaXuatBan>().Where(x => x.IdSach == id));
+
+                    _context.Set<Sach>().Remove(book);
+                    await _context.SaveChangesAsync();
+                    return Ok("Đã xóa vĩnh viễn sách thành công!");
+                }
             }
-            catch (DbUpdateException)
+            catch (Exception ex)
             {
-                return Conflict("Không thể xóa sách này do đã từng được liên kết trong lịch sử cho thuê.");
+                return StatusCode(500, "Lỗi hệ thống: " + ex.Message);
             }
         }
 
@@ -236,7 +259,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                 foreach (var name in names)
                 {
                     var tg = await _context.Set<TacGia>().FirstOrDefaultAsync(t => t.TenTacGia == name) ?? new TacGia { TenTacGia = name };
-                    if (tg.IdTacGia == 0) _context.Set<TacGia>().Add(tg); // Tự động Add nếu chưa có
+                    if (tg.IdTacGia == 0) _context.Set<TacGia>().Add(tg); 
                     await _context.SaveChangesAsync();
                     _context.Set<SachTacGia>().Add(new SachTacGia { IdSach = idSach, IdTacGia = tg.IdTacGia });
                 }
@@ -250,7 +273,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                 foreach (var name in names)
                 {
                     var tl = await _context.Set<TheLoai>().FirstOrDefaultAsync(t => t.TenTheLoai == name) ?? new TheLoai { TenTheLoai = name };
-                    if (tl.IdTheLoai == 0) _context.Set<TheLoai>().Add(tl); // Tự động Add nếu chưa có
+                    if (tl.IdTheLoai == 0) _context.Set<TheLoai>().Add(tl); 
                     await _context.SaveChangesAsync();
                     _context.Set<SachTheLoai>().Add(new SachTheLoai { IdSach = idSach, IdTheLoai = tl.IdTheLoai });
                 }
@@ -264,7 +287,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                 foreach (var name in names)
                 {
                     var nxb = await _context.Set<NhaXuatBan>().FirstOrDefaultAsync(t => t.TenNhaXuatBan == name) ?? new NhaXuatBan { TenNhaXuatBan = name };
-                    if (nxb.IdNhaXuatBan == 0) _context.Set<NhaXuatBan>().Add(nxb); // Tự động Add nếu chưa có
+                    if (nxb.IdNhaXuatBan == 0) _context.Set<NhaXuatBan>().Add(nxb);
                     await _context.SaveChangesAsync();
                     _context.Set<SachNhaXuatBan>().Add(new SachNhaXuatBan { IdSach = idSach, IdNhaXuatBan = nxb.IdNhaXuatBan });
                 }
@@ -280,5 +303,13 @@ namespace CafebookApi.Controllers.App.QuanLy
 
         [HttpGet("lookup/nxb")]
         public async Task<IActionResult> GetNXBs() => Ok(await _context.Set<NhaXuatBan>().Select(t => new QuanLySachFilterLookupDto { Id = t.IdNhaXuatBan, Ten = t.TenNhaXuatBan }).ToListAsync());
+
+        [HttpGet("/api/app/caidat/{tenCaiDat}")]
+        public async Task<IActionResult> GetCaiDat(string tenCaiDat)
+        {
+            var setting = await _context.Set<CaiDat>().AsNoTracking().FirstOrDefaultAsync(c => c.TenCaiDat == tenCaiDat);
+            if (setting == null) return NotFound();
+            return Ok(setting.GiaTri);
+        }
     }
 }

@@ -14,44 +14,66 @@ using System.Windows.Media.Imaging;
 using AppCafebookApi.Services;
 using CafebookModel.Utils;
 using CafebookModel.Model.ModelApp.QuanLy;
+using System.ComponentModel;
+using System.Windows.Data;
+using System.Windows.Media;
 
 namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLySachView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLySachGridDto> _allSachList = new();
         private QuanLySachDetailDto? _selectedSach = null;
         private string? _currentAnhBiaFilePath = null;
         private bool _deleteImageRequest = false;
 
-        // Lưu trữ danh mục để phục vụ Auto-suggest
+        private ICollectionView? _sachView;
+        private string _currentSearchKey = "";
+        private string _currentTheLoai = "Tất cả";
+        private string _currentTacGia = "Tất cả";
+
         private List<QuanLySachFilterLookupDto> _lookupTacGia = new();
         private List<QuanLySachFilterLookupDto> _lookupTheLoai = new();
         private List<QuanLySachFilterLookupDto> _lookupNXB = new();
 
-        //static QuanLySachView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLySachView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
+
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             bool hasAnyQuyen = AuthService.CoQuyen("FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH");
             if (!hasAnyQuyen)
             {
-                MessageBox.Show("Bạn không có quyền truy cập module này!", "Từ chối");
+                MessageBox.Show("Bạn không có quyền truy cập module này!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack();
                 return;
             }
 
-            ApplyPermissions();
+            await Task.Delay(350);
 
-            if (AuthService.CoQuyen("FULL_QL", "QL_SACH"))
+            if (!this.IsLoaded) return;
+
+            try
             {
-                await LoadLookupsAsync();
-                await LoadSachAsync();
+                ApplyPermissions();
+
+                if (AuthService.CoQuyen("FULL_QL", "QL_SACH"))
+                {
+                    await LoadLookupsAsync();
+                    await LoadSachAsync();
+                }
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Quản lý Sách: {ex.Message}");
             }
         }
 
@@ -92,13 +114,47 @@ namespace AppCafebookApi.View.quanly.pages
             catch { }
         }
 
+        private string RemoveVietnameseSigns(string str)
+        {
+            if (string.IsNullOrWhiteSpace(str)) return "";
+            str = str.ToLower().Trim();
+            string[] vietnameseSigns = new string[] {
+                "aAeEoOuUiIdDyY", "áàạảãâấầậẩẫăắằặẳẵ", "ÁÀẠẢÃÂẤẦẬẨẪĂẮẰẶẲẴ", "éèẹẻẽêếềệểễ", "ÉÈẸẺẼÊẾỀỆỂỄ",
+                "óòọỏõôốồộổỗơớờợởỡ", "ÓÒỌỎÕÔỐỒỘỔỖƠỚỜỢỞỠ", "úùụủũưứừựửữ", "ÚÙỤỦŨƯỨỪỰỬỮ", "íìịỉĩ", "ÍÌỊỈĨ", "đ", "Đ", "ýỳỵỷỹ", "ÝỲỴỶỸ"
+            };
+            for (int i = 1; i < vietnameseSigns.Length; i++)
+            {
+                for (int j = 0; j < vietnameseSigns[i].Length; j++)
+                    str = str.Replace(vietnameseSigns[i][j], vietnameseSigns[0][i - 1]);
+            }
+            return str;
+        }
+
         private async Task LoadSachAsync()
         {
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
                 var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySachGridDto>>("api/app/quanly-sach");
-                if (res != null) { _allSachList = res; FilterData(); }
+                if (res != null)
+                {
+                    _allSachList = res;
+
+                    // Sinh từ khóa tìm kiếm 1 lần
+                    foreach (var s in _allSachList)
+                    {
+                        s.SearchKeyword = $"{RemoveVietnameseSigns(s.TenSach)} {RemoveVietnameseSigns(s.TenTacGia)}".ToLower();
+                    }
+
+                    // Gắn vào ICollectionView
+                    _sachView = CollectionViewSource.GetDefaultView(_allSachList);
+                    _sachView.Filter = SachFilter;
+
+                    if (FindName("dgSach") is DataGrid dg)
+                        dg.ItemsSource = _sachView;
+
+                    FilterData();
+                }
             }
             finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
         }
@@ -109,19 +165,31 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void FilterData()
         {
-            if (!(FindName("dgSach") is DataGrid dg)) return;
-            var query = _allSachList.AsEnumerable();
+            if (_sachView == null) return;
 
-            string k = (FindName("txtSearch") as TextBox)?.Text.ToLower() ?? "";
-            if (!string.IsNullOrEmpty(k)) query = query.Where(x => x.TenSach.ToLower().Contains(k) || x.TenTacGia.ToLower().Contains(k));
+            if (FindName("txtSearch") is TextBox txt)
+                _currentSearchKey = string.IsNullOrWhiteSpace(txt.Text) ? "" : RemoveVietnameseSigns(txt.Text);
 
-            string tl = (FindName("cmbFilterTheLoai") as ComboBox)?.SelectedValue?.ToString() ?? "Tất cả";
-            if (tl != "Tất cả") query = query.Where(x => x.TenTheLoai.Contains(tl));
+            _currentTheLoai = (FindName("cmbFilterTheLoai") as ComboBox)?.SelectedValue?.ToString() ?? "Tất cả";
+            _currentTacGia = (FindName("cmbFilterTacGia") as ComboBox)?.SelectedValue?.ToString() ?? "Tất cả";
 
-            string tg = (FindName("cmbFilterTacGia") as ComboBox)?.SelectedValue?.ToString() ?? "Tất cả";
-            if (tg != "Tất cả") query = query.Where(x => x.TenTacGia.Contains(tg));
+            _sachView.Refresh();
+        }
 
-            dg.ItemsSource = query.ToList();
+        private bool SachFilter(object obj)
+        {
+            if (obj is not QuanLySachGridDto s) return false;
+
+            if (!string.IsNullOrEmpty(_currentSearchKey) && !s.SearchKeyword.Contains(_currentSearchKey))
+                return false;
+
+            if (_currentTheLoai != "Tất cả" && !s.TenTheLoai.Contains(_currentTheLoai))
+                return false;
+
+            if (_currentTacGia != "Tất cả" && !s.TenTacGia.Contains(_currentTacGia))
+                return false;
+
+            return true;
         }
 
         private async void DgSach_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -217,17 +285,101 @@ namespace AppCafebookApi.View.quanly.pages
             finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
         }
 
+        private async void BtnInNhan_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedSach == null)
+            {
+                MessageBox.Show("Vui lòng chọn một cuốn sách từ danh sách để in nhãn!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string tenQuan = "CAFE SÁCH";
+
+            if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
+            try
+            {
+                var response = await ApiClient.Instance.GetAsync("api/app/caidat/ThongTin_TenQuan");
+                if (response.IsSuccessStatusCode)
+                {
+                    string tenTuDb = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrWhiteSpace(tenTuDb))
+                    {
+                        tenQuan = tenTuDb.Trim('"').ToUpper();
+                    }
+                }
+            }
+            catch { /* Lỗi mạng thì dùng tên mặc định, không làm gián đoạn việc in */ }
+            finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+
+
+            PrintDialog printDlg = new PrintDialog();
+            if (printDlg.ShowDialog() == true)
+            {
+                Border labelBorder = new Border
+                {
+                    Width = 150,
+                    Height = 100,
+                    BorderBrush = Brushes.Black,
+                    BorderThickness = new Thickness(1),
+                    Background = Brushes.White,
+                    Padding = new Thickness(5)
+                };
+
+                StackPanel panel = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+
+                panel.Children.Add(new TextBlock
+                {
+                    Text = tenQuan,
+                    FontWeight = FontWeights.Bold,
+                    FontSize = 13,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    TextWrapping = TextWrapping.Wrap, 
+                    TextAlignment = TextAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 5)
+                });
+
+                panel.Children.Add(new TextBlock
+                {
+                    Text = $"{_selectedSach.ViTri ?? "Chưa xếp kệ"}",
+                    FontSize = 18,
+                    FontWeight = FontWeights.Bold,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Foreground = Brushes.DarkRed
+                });
+
+                panel.Children.Add(new TextBlock
+                {
+                    Text = $"Mã sách: #{_selectedSach.IdSach}",
+                    FontSize = 12,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 5, 0, 0)
+                });
+
+                labelBorder.Child = panel;
+
+                labelBorder.Measure(new Size(printDlg.PrintableAreaWidth, printDlg.PrintableAreaHeight));
+                labelBorder.Arrange(new Rect(new Point(0, 0), labelBorder.DesiredSize));
+                printDlg.PrintVisual(labelBorder, $"In nhan sach {_selectedSach.IdSach}");
+            }
+        }
+
         private async void BtnXoa_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedSach == null) return;
-            if (MessageBox.Show($"Bạn chắc chắn xóa sách '{_selectedSach.TenSach}'?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"Bạn chắc chắn muốn xử lý sách '{_selectedSach.TenSach}'?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                 try
                 {
                     var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-sach/{_selectedSach.IdSach}");
-                    if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa sách thành công!"); BtnLamMoiForm_Click(this, new RoutedEventArgs()); await LoadSachAsync(); }
-                    else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
+                    string responseMessage = await res.Content.ReadAsStringAsync();
+                    if (res.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show(responseMessage, "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                        BtnLamMoiForm_Click(this, new RoutedEventArgs());
+                        await LoadSachAsync();
+                    }
+                    else MessageBox.Show($"Lỗi: {responseMessage}");
                 }
                 finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
             }
@@ -240,7 +392,6 @@ namespace AppCafebookApi.View.quanly.pages
             string tag = txt.Tag?.ToString() ?? "";
             string text = txt.Text;
 
-            // Tìm chuỗi gõ hiện tại (Sau dấu phẩy cuối cùng)
             int lastCommaIndex = text.LastIndexOf(',');
             string currentWord = (lastCommaIndex == -1) ? text : text.Substring(lastCommaIndex + 1);
             currentWord = currentWord.Trim().ToLower();

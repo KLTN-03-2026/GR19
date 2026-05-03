@@ -11,7 +11,7 @@ using Microsoft.Win32;
 using System.IO;
 using OfficeOpenXml;
 using OfficeOpenXml.Table;
-using OfficeOpenXml.Style; // Thêm thư viện Style của EPPlus
+using OfficeOpenXml.Style; 
 using AppCafebookApi.Services;
 using CafebookModel.Utils;
 using CafebookModel.Model.ModelApp.QuanLy;
@@ -20,51 +20,61 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDonHangView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyDonHangGridDto> _orderList = new();
         private QuanLyDonHangGridDto? _selectedOrder;
 
-        //static QuanLyDonHangView() { ApiClient.Instance = new ApiClient.Instance { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLyDonHangView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            // 1. CHÌA KHÓA CỔNG (Cho phép vào nếu có ít nhất 1 quyền trong nhóm Đơn hàng)
             bool hasAccess = AuthService.CoQuyen("FULL_QL", "QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG");
             if (!hasAccess)
             {
-                MessageBox.Show("Từ chối truy cập phân hệ Đơn hàng!");
+                MessageBox.Show("Từ chối truy cập phân hệ Đơn hàng!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack();
                 return;
             }
 
-            ApplyPermissions();
+            await Task.Delay(350);
 
-            // 2. CHÌA KHÓA PHÒNG (Xem dữ liệu đơn hàng)
-            if (AuthService.CoQuyen("FULL_QL", "QL_DON_HANG"))
+            if (!this.IsLoaded) return;
+
+            try
             {
-                // Hiện dữ liệu, ẩn thông báo
-                if (FindName("GridDuLieuDonHang") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
-                if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Collapsed;
+                ApplyPermissions();
 
-                // Gán ngày mặc định (Tự động trigger Filter_Changed để load dữ liệu)
-                if (FindName("dpTuNgay") is DatePicker tuNgay) tuNgay.SelectedDate = DateTime.Today.AddDays(-7);
-                if (FindName("dpDenNgay") is DatePicker denNgay) denNgay.SelectedDate = DateTime.Today;
+                if (AuthService.CoQuyen("FULL_QL", "QL_DON_HANG"))
+                {
+                    if (FindName("GridDuLieuDonHang") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
+                    if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Collapsed;
 
-                // FIX LỖI: Sửa LoadDataAsync thành LoadOrdersAsync
-                await LoadOrdersAsync();
+                    if (FindName("dpTuNgay") is DatePicker tuNgay) tuNgay.SelectedDate = DateTime.Today.AddDays(-7);
+                    if (FindName("dpDenNgay") is DatePicker denNgay) denNgay.SelectedDate = DateTime.Today;
+
+                    await LoadOrdersAsync();
+                }
+                else
+                {
+                    if (FindName("GridDuLieuDonHang") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Collapsed;
+                    if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Visible;
+                }
+
+                _isDataLoaded = true;
             }
-            else
+            catch (Exception ex)
             {
-                // Ẩn dữ liệu, hiện khiên bảo mật
-                if (FindName("GridDuLieuDonHang") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Collapsed;
-                if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Visible;
+                Console.WriteLine($"Lỗi tại module Đơn hàng: {ex.Message}");
             }
         }
+
+
 
         private void ApplyPermissions()
         {

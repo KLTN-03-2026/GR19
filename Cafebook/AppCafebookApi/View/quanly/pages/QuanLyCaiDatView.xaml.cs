@@ -19,16 +19,12 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyCaiDatView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyCaiDatDto> _allSettings = new();
         private ObservableCollection<QuanLyCaiDatDto> _viewSettings = new();
         private DispatcherTimer _notificationTimer;
-        /*
-        static QuanLyCaiDatView()
-        {
-            httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyCaiDatView()
         {
             InitializeComponent();
@@ -38,10 +34,31 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            await LoadDataAsync();
+            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_CAI_DAT"))
+            {
+                MessageBox.Show("Bạn không có quyền truy cập trang Cài đặt!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack();
+                return;
+            }
+
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+            try
+            {
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải cài đặt: {ex.Message}");
+            }
         }
 
         private async Task LoadDataAsync()

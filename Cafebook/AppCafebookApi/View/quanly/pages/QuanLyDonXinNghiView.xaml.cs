@@ -15,20 +15,17 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDonXinNghiView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyDonXinNghiGridDto> _allDonNghiList = new List<QuanLyDonXinNghiGridDto>();
         private QuanLyDonXinNghiGridDto? _selectedDon = null;
-        /*
-        static QuanLyDonXinNghiView()
-        {
-            string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
-            httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyDonXinNghiView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
@@ -39,8 +36,23 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            await LoadDataFromServerAsync();
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                await LoadDataFromServerAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Đơn xin nghỉ: {ex.Message}");
+            }
         }
+
+
 
         private async Task LoadDataFromServerAsync()
         {

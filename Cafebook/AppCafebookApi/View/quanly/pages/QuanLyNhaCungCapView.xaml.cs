@@ -16,28 +16,48 @@ using CafebookModel.Utils;
 using CafebookModel.Model.ModelApp.QuanLy;
 using OfficeOpenXml.Style;
 
-
 namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyNhaCungCapView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyNhaCungCapGridDto> _dataList = new();
         private QuanLyNhaCungCapGridDto? _selectedItem;
         private bool _isAdding = false;
 
-        //static QuanLyNhaCungCapView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLyNhaCungCapView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            if (!AuthService.CoQuyen("QL_NHA_CUNG_CAP")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            ApplyPermissions();
-            await LoadDataAsync();
+            if (!AuthService.CoQuyen("FULL_QL", "QL_NHA_CUNG_CAP")) 
+            { 
+                MessageBox.Show("Bạn không có quyền truy cập module Nhà cung cấp!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); 
+                this.NavigationService?.GoBack(); 
+                return; 
+            }
+
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions(); 
+                
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Nhà cung cấp: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()

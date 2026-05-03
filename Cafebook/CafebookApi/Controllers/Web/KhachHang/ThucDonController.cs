@@ -1,7 +1,7 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelWeb.KhachHang;
 using CafebookModel.Model.ModelApp;
-using CafebookModel.Utils; // BẮT BUỘC THÊM ĐỂ GỌI HinhAnhPaths
+using CafebookModel.Utils; 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
@@ -97,8 +97,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
                     TenSanPham = s.TenSanPham,
                     TenLoaiSP = s.TenLoaiSP,
                     DonGia = s.GiaBan,
-
-                    AnhSanPhamUrl = GetFullImageUrl(s.HinhAnh)
+                    AnhSanPhamUrl = GetFullImageUrl(string.IsNullOrEmpty(s.HinhAnh) ? HinhAnhPaths.WebDefaultFoodIcon : s.HinhAnh)
                 }).ToList(),
                 TotalPages = totalPages,
                 CurrentPage = pageNum

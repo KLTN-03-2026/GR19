@@ -1,5 +1,4 @@
-﻿// File: AppCafebookApi/View/quanly/pages/QuanLyDeXuatView.xaml.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -15,15 +14,11 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDeXuatView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyDeXuatGridDto> _allDeXuatList = new();
         private QuanLyDeXuatGridDto? _selectedItem = null;
-        /*
-        static QuanLyDeXuatView()
-        {
-            httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyDeXuatView()
         {
             InitializeComponent();
@@ -31,12 +26,13 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
             {
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
-            // Lớp bảo mật 2 (Chặn truy cập Page)
             bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_DE_XUAT");
             if (!hasQuyen)
             {
@@ -45,10 +41,24 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            ApplyPermissions(hasQuyen);
-            await LoadLookupsAsync();
-            await LoadDataAsync();
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions(hasQuyen);
+                await LoadLookupsAsync();
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Đề xuất: {ex.Message}");
+            }
         }
+        
 
         // Lớp bảo mật 1 (Ẩn/Hiện UI theo quyền)
         private void ApplyPermissions(bool hasQuyen)

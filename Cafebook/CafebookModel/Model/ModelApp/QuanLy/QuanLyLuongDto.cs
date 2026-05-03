@@ -50,8 +50,8 @@ namespace CafebookModel.Model.ModelApp.QuanLy
         public string Loai { get; set; } = "Thưởng";
         public string LyDo { get; set; } = string.Empty;
         public decimal SoTien { get; set; }
-        // Thêm IdNguoiTao để tránh lỗi khóa ngoại nếu truyền từ UI
         public int IdNguoiTao { get; set; } = 1;
+        public DateTime? NgayTao { get; set; }
     }
 
     public class QuanLyLuongChotRequestDto
@@ -67,4 +67,5 @@ namespace CafebookModel.Model.ModelApp.QuanLy
         public string Loai { get; set; } = string.Empty;
         public decimal SoTien { get; set; }
     }
+
 }

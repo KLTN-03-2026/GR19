@@ -116,7 +116,7 @@ namespace AppCafebookApi.View.quanly
             btnSach.Visibility = AuthService.CoQuyen("FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH") ? Visibility.Visible : Visibility.Collapsed;
             btnLuong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT") ? Visibility.Visible : Visibility.Collapsed;
             btnNhanSu.Visibility = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
-            btnKhachHang.Visibility = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI") ? Visibility.Visible : Visibility.Collapsed;
+            btnKhachHang.Visibility = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI", "QL_DE_XUAT") ? Visibility.Visible : Visibility.Collapsed;
 
             btnThongTinCaNhan.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THONG_TIN") ? Visibility.Visible : Visibility.Collapsed;
             btnChamCong.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG") ? Visibility.Visible : Visibility.Collapsed;
@@ -228,7 +228,7 @@ namespace AppCafebookApi.View.quanly
             }
             else if (clickedButton == btnKhachHang)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI");
+                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI", "QL_DE_XUAT");
                 pageToNavigate = new QuanLyKhachHangView();
             }
             else if (clickedButton == btnThongTinCaNhan)

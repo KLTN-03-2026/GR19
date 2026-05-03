@@ -21,6 +21,8 @@ namespace AppCafebookApi.View.nhanvien.pages
         private DispatcherTimer _searchTimer;
         private DispatcherTimer _autoRefreshTimer;
 
+        private bool _isDataLoaded = false;
+
         public GiaoHangView()
         {
             InitializeComponent();
@@ -35,18 +37,36 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_GIAO_HANG"))
             {
-                MessageBox.Show("Bạn không có quyền truy cập.", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Bạn không có quyền truy cập module Giao hàng.", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService?.CanGoBack == true) this.NavigationService.GoBack();
                 return;
             }
 
-            ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-            ApplyPermissions();
+            await Task.Delay(350);
 
-            await LoadDataAsync(false);
-            _autoRefreshTimer.Start();
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions();
+
+                await LoadDataAsync(false);
+
+                _autoRefreshTimer.Start();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Giao hàng: {ex.Message}");
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) { _autoRefreshTimer.Stop(); }

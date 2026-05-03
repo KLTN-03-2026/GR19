@@ -13,17 +13,19 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyBanView : Page
     {
-
         private List<QuanLyBanGridDto> _dataList = new();
         private List<LookupKhuVucDto> _lookupKv = new();
         private QuanLyBanGridDto? _selectedItem;
         private bool _isAdding = false;
 
+        private bool _isDataLoaded = false;
 
         public QuanLyBanView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             bool hasAnyPermission = AuthService.CoQuyen("FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC");
             if (!hasAnyPermission)
             {
@@ -32,16 +34,29 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
             ApplyPermissions();
 
-            if (AuthService.CoQuyen("FULL_QL", "QL_BAN"))
+            try
             {
-                await LoadDataAsync();
+                if (AuthService.CoQuyen("FULL_QL", "QL_BAN"))
+                {
+                    await LoadDataAsync();
+                }
+                else
+                {
+                    if (FindName("GridDuLieuBan") is Grid gridData) gridData.Visibility = Visibility.Collapsed;
+                    if (FindName("txtThongBaoKhongCoQuyen") is Border txtThongBao) txtThongBao.Visibility = Visibility.Visible;
+                }
+
+                _isDataLoaded = true;
             }
-            else
+            catch (Exception ex)
             {
-                if (FindName("GridDuLieuBan") is Grid gridData) gridData.Visibility = Visibility.Collapsed;
-                if (FindName("txtThongBaoKhongCoQuyen") is Border txtThongBao) txtThongBao.Visibility = Visibility.Visible;
+                MessageBox.Show($"Có lỗi xảy ra khi tải dữ liệu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

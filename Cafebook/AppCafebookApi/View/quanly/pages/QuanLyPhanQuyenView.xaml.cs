@@ -17,9 +17,6 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyPhanQuyenView : Page
     {
-       //private static readonly HttpClient httpClient;
-
-        // Class Wrapper dùng để Binding Checkbox lên giao diện (Thêm INotifyPropertyChanged)
         public class QuyenWrapper : INotifyPropertyChanged
         {
             public string IdQuyen { get; set; } = string.Empty;
@@ -69,13 +66,9 @@ namespace AppCafebookApi.View.quanly.pages
         private List<NhomQuyenWrapper> _danhSachNhomQuyen = new List<NhomQuyenWrapper>();
         private PhanQuyen_NhanVienDto? _selectedNhanVien = null;
         private string _currentRoleScope = string.Empty;
-        /*
-        static QuanLyPhanQuyenView()
-        {
-            string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
-            httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyPhanQuyenView()
         {
             InitializeComponent();
@@ -83,6 +76,8 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
             {
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
@@ -95,7 +90,20 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            await LoadDataAsync();
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Phân quyền: {ex.Message}");
+            }
         }
 
         private async Task LoadDataAsync()

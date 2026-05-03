@@ -15,32 +15,50 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyThuongPhatView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyThuongPhatGridDto> _allDataList = new();
         private QuanLyThuongPhatGridDto? _selectedItem = null;
 
-        //static QuanLyThuongPhatView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLyThuongPhatView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            if (!AuthService.CoQuyen("FULL_QL", "QL_LUONG")) // Dùng chung quyền Lương
-            {
-                MessageBox.Show("Từ chối truy cập module Thưởng phạt!");
-                this.NavigationService?.GoBack(); return;
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
+            if (!AuthService.CoQuyen("FULL_QL", "QL_LUONG")) 
+            { 
+                MessageBox.Show("Bạn không có quyền truy cập module Thưởng phạt!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning); 
+                this.NavigationService?.GoBack(); 
+                return; 
             }
 
-            ApplyPermissions();
+            await Task.Delay(350);
 
-            // Mặc định load tháng hiện tại
-            if (FindName("dpFilterTuNgay") is DatePicker tu) tu.SelectedDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-            if (FindName("dpFilterDenNgay") is DatePicker den) den.SelectedDate = DateTime.Now;
+            if (!this.IsLoaded) return;
 
-            await LoadLookupsAsync();
-            await LoadDataAsync();
+            try
+            {
+                ApplyPermissions();
+
+                if (FindName("dpFilterTuNgay") is DatePicker tu) 
+                    tu.SelectedDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                
+                if (FindName("dpFilterDenNgay") is DatePicker den) 
+                    den.SelectedDate = DateTime.Now;
+
+                await LoadLookupsAsync();
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Thưởng phạt: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()

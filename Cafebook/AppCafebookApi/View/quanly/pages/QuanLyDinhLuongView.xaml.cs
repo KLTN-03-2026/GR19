@@ -15,20 +15,45 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDinhLuongView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyDinhLuongSPDto> _spList = new();
         private QuanLyDinhLuongSPDto? _selectedSP;
         private QuanLyDinhLuongNLDto? _selectedNL;
 
-        //static QuanLyDinhLuongView() { ApiClient.Instance = new ApiClient.Instance { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
+
         public QuanLyDinhLuongView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-            if (!AuthService.CoQuyen("QL_DINH_LUONG")) { MessageBox.Show("Từ chối!"); this.NavigationService?.GoBack(); return; }
-            ApplyPermissions(); await LoadMasterDataAsync();
+            if (_isDataLoaded) return;
+
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
+            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_DINH_LUONG")) 
+            { 
+                MessageBox.Show("Bạn không có quyền truy cập module Định lượng!", "Từ chối"); 
+                this.NavigationService?.GoBack(); 
+                return; 
+            }
+
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions(); 
+                
+                await LoadMasterDataAsync();
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Định lượng: {ex.Message}");
+            }
         }
+
 
         private void ApplyPermissions()
         {

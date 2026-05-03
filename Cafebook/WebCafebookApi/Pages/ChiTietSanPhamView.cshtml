@@ -24,9 +24,9 @@
         <div class="product-detail-wrapper mb-5">
             <div class="row g-5">
                 <div class="col-lg-5 text-center">
-                    <img src="@(string.IsNullOrEmpty(Model.SanPham.HinhAnhUrl) ? HinhAnhPaths.WebDefaultFoodIcon : Model.SanPham.HinhAnhUrl)"
+                    <img src="@Model.SanPham.HinhAnhUrl"
                          class="product-detail-img"
-                         onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultFoodIcon'" />
+                         onerror="this.onerror=null; this.src='@Model.SanPham.HinhAnhUrl'" />
                 </div>
 
                 <div class="col-lg-7 d-flex flex-column">
@@ -195,7 +195,7 @@
                     <div class="col-6 col-md-3">
                         <div class="card h-100 shadow-sm border-0" style="border-radius: 12px; overflow: hidden; transition: transform 0.3s;">
                             <a asp-page="/ChiTietSanPhamView" asp-route-token="@Model.EncryptId(item.IdSanPham)" class="text-decoration-none">
-                                <img src="@(string.IsNullOrEmpty(item.AnhSanPhamUrl) ? HinhAnhPaths.WebDefaultFoodIcon : item.AnhSanPhamUrl)" class="card-img-top" style="aspect-ratio: 1/1; object-fit: cover;" />
+                                <img src="@item.AnhSanPhamUrl" class="card-img-top" style="aspect-ratio: 1/1; object-fit: cover;" />
                                 <div class="card-body text-center">
                                     <h6 class="text-dark fw-bold text-truncate">@item.TenSanPham</h6>
                                     <span class="text-danger fw-bold">@item.DonGia.ToString("N0") đ</span>

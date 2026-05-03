@@ -122,7 +122,14 @@
                         <Button x:Name="btnLamMoiForm" Content="➕ Thêm Sách Mới" Style="{StaticResource ActionBtn}" Background="#4CAF50" HorizontalAlignment="Right" Click="BtnLamMoiForm_Click"/>
                     </Grid>
 
-                    <DataGrid x:Name="dgSach" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0" Background="Transparent" SelectionChanged="DgSach_SelectionChanged">
+                    <DataGrid x:Name="dgSach" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" 
+                              BorderThickness="0" Background="Transparent" 
+                              SelectionChanged="DgSach_SelectionChanged"
+                              EnableRowVirtualization="True" EnableColumnVirtualization="True"
+                              VirtualizingPanel.IsVirtualizing="True" 
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              ScrollViewer.IsDeferredScrollingEnabled="True"
+                              ScrollViewer.CanContentScroll="True">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Mã" Binding="{Binding IdSach}" Width="40"/>
                             <DataGridTextColumn Header="Tên Sách" Binding="{Binding TenSach}" Width="*"/>
@@ -241,6 +248,7 @@
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="btnLuu" Content="💾 Lưu Sách" Style="{StaticResource ActionBtn}" Background="#2196F3" Margin="0,0,10,0" Click="BtnLuu_Click"/>
+                        <Button x:Name="btnInNhan" Content="🖨️ In Nhãn" Style="{StaticResource ActionBtn}" Background="#607D8B" Margin="0,0,10,0" Click="BtnInNhan_Click"/>
                         <Button x:Name="btnXoa" Content="🗑 Xóa" Style="{StaticResource DeleteBtn}" Click="BtnXoa_Click"/>
                     </StackPanel>
                 </Grid>

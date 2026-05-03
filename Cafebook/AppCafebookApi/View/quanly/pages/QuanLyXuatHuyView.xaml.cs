@@ -16,28 +16,51 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyXuatHuyView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyXuatHuyGridDto> _phieuHuyList = new();
         private List<LookupXuatHuyDto> _nlList = new();
         private ObservableCollection<QuanLyChiTietXuatHuyDto> _chiTietList = new();
 
         private bool _isViewing = false;
 
-        //static QuanLyXuatHuyView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLyXuatHuyView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            if (!AuthService.CoQuyen("QL_XUAT_HUY")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            ApplyPermissions();
-            if (FindName("dgChiTiet") is DataGrid dg) dg.ItemsSource = _chiTietList;
-            await LoadMasterDataAsync();
+            if (!AuthService.CoQuyen("FULL_QL", "QL_XUAT_HUY"))
+            {
+                MessageBox.Show("Bạn không có quyền truy cập module Xuất hủy!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack();
+                return;
+            }
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions();
+
+                if (FindName("dgChiTiet") is DataGrid dg)
+                {
+                    dg.ItemsSource = _chiTietList;
+                }
+
+                await LoadMasterDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Xuất hủy: {ex.Message}");
+            }
         }
-
         private void ApplyPermissions()
         {
             bool canEdit = AuthService.CoQuyen("QL_XUAT_HUY");

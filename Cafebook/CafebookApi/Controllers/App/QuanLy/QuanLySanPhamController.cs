@@ -67,7 +67,6 @@ namespace CafebookApi.Controllers.App.QuanLy
             return Ok(new QuanLySanPhamDetailDto { IdSanPham = s.IdSanPham, TenSanPham = s.TenSanPham, GiaBan = s.GiaBan, IdDanhMuc = s.IdDanhMuc, NhomIn = s.NhomIn ?? "Khác", TrangThaiKinhDoanh = s.TrangThaiKinhDoanh, MoTa = s.MoTa, HinhAnh = s.HinhAnh });
         }
 
-        // ĐÃ SỬA: Gom tham số vào QuanLySanPhamSaveRequest
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] QuanLySanPhamSaveRequest request)
         {
@@ -89,7 +88,6 @@ namespace CafebookApi.Controllers.App.QuanLy
             return Ok();
         }
 
-        // ĐÃ SỬA: Gom tham số vào QuanLySanPhamSaveRequest
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromForm] QuanLySanPhamSaveRequest request)
         {
@@ -117,9 +115,29 @@ namespace CafebookApi.Controllers.App.QuanLy
         {
             var entity = await _context.SanPhams.FindAsync(id);
             if (entity == null) return NotFound();
-            _context.SanPhams.Remove(entity);
-            await _context.SaveChangesAsync();
-            return Ok();
+
+            try
+            {
+                _context.SanPhams.Remove(entity);
+                await _context.SaveChangesAsync();
+                return Ok("Đã xóa vĩnh viễn sản phẩm khỏi hệ thống!");
+            }
+            catch (Exception) 
+            {
+                _context.ChangeTracker.Clear();
+
+                var spChuyenXoaMem = await _context.SanPhams.FindAsync(id);
+                if (spChuyenXoaMem != null)
+                {
+                    spChuyenXoaMem.TrangThaiKinhDoanh = false;
+
+                    await _context.SaveChangesAsync();
+
+                    return Ok("Sản phẩm này đã có dữ liệu pha chế hoặc hóa đơn.\nHệ thống đã tự động ĐÓNG trạng thái kinh doanh (Xóa mềm) để bảo toàn doanh thu.");
+                }
+
+                return StatusCode(500, "Lỗi không xác định khi xử lý xóa.");
+            }
         }
 
         private async Task<string> ProcessImage(IFormFile file, string tenSanPham)

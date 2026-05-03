@@ -1,25 +1,27 @@
-﻿using System;
+﻿using AppCafebookApi.Services;
+using AppCafebookApi.View.common;
+using CafebookModel.Model.ModelApp;
+using CafebookModel.Model.ModelApp.NhanVien;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using AppCafebookApi.Services;
-using AppCafebookApi.View.common;
-using System.Linq;
 using System.Windows.Controls.Primitives;
-using CafebookModel.Model.ModelApp.NhanVien;
-using CafebookModel.Model.ModelApp;
-using System.Text.Json;
+using System.Windows.Media;
 
 namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class SoDoBanView : Page
     {
         private int? _idBanToHighlight = null;
+        private bool _isDataLoaded = false;
 
         private class CreateOrderResponseDto
         {
@@ -28,29 +30,17 @@ namespace AppCafebookApi.View.nhanvien.pages
         }
         private enum SelectionMode { None, ChuyenBan, GopBan }
 
-        //private static readonly HttpClient httpClient;
         private BanSoDoDto? _selectedBan = null;
+        public ObservableCollection<BanSoDoDto> DisplayedTables { get; set; } = new ObservableCollection<BanSoDoDto>();
         private List<BanSoDoDto> _allTablesCache = new List<BanSoDoDto>();
         private List<KhuVucDto> _khuVucCache = new List<KhuVucDto>();
         private SelectionMode _currentMode = SelectionMode.None;
 
-        // ======================================================
-        // NÂNG CẤP 1: DYNAMIC URL (Tuyệt đối không hardcode)
-        /* ======================================================
-        static SoDoBanView()
-        {
-            httpClient = new HttpClient();
-            string? apiUrl = AppConfigManager.GetApiServerUrl();
-            if (!string.IsNullOrWhiteSpace(apiUrl))
-            {
-                httpClient.BaseAddress = new Uri(apiUrl);
-            }
-        }
-        */
         public SoDoBanView()
         {
             InitializeComponent();
             this.DataContext = this;
+            icBan.ItemsSource = DisplayedTables; 
         }
 
         public SoDoBanView(int idBan)
@@ -60,13 +50,10 @@ namespace AppCafebookApi.View.nhanvien.pages
         }
 
         #region Tải Dữ Liệu và Lọc Khu Vực
-
-        // ======================================================
-        // NÂNG CẤP 2: BẢO MẬT 2 LỚP & TOKEN
-        // ======================================================
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            // BẢO MẬT LỚP 2: Chặn truy cập Page nếu không có mã quyền
+            if (_isDataLoaded) return;
+
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_SO_DO_BAN"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập Sơ Đồ Bàn!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -75,34 +62,47 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
-            // Gắn Bearer Token
+            await Task.Delay(450);
+
+            if (!this.IsLoaded) return;
+
             if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
             {
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
-            // BẢO MẬT LỚP 1: Ẩn hiện các nút chức năng
             ApplyPermissions();
 
-            // Chặn gọi API nếu chưa có URL (Chống crash)
             if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Hệ thống chưa được cấu hình URL Server. Vui lòng kiểm tra file AppConfig.json!", "Thiếu cấu hình", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            MainPanel.Opacity = 0.5;
-            await ReloadDataAsync();
-            MainPanel.Opacity = 1.0;
+            try
+            {
+                MainPanel.Opacity = 0.5; 
+                await ReloadDataAsync();
+                MainPanel.Opacity = 1.0;
 
-            // === GIỮ NGUYÊN LOGIC HIGHLIGHT CỦA BẠN ===
+                HandleHighlightBan();
+
+                _isDataLoaded = true; 
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi nạp sơ đồ: {ex.Message}", "Lỗi hệ thống");
+            }
+        }
+
+        private void HandleHighlightBan()
+        {
             if (_idBanToHighlight.HasValue)
             {
                 var banToSelect = _allTablesCache.FirstOrDefault(b => b.IdBan == _idBanToHighlight.Value);
                 if (banToSelect != null)
                 {
-                    var currentItemsSource = icBan.ItemsSource as IEnumerable<BanSoDoDto>;
-                    if (currentItemsSource == null || !currentItemsSource.Any(b => b.IdBan == banToSelect.IdBan))
+                    if (!DisplayedTables.Any(b => b.IdBan == banToSelect.IdBan))
                     {
                         btnKhuVucAll.IsChecked = true;
                         UncheckOtherKhuVucButtons(btnKhuVucAll);
@@ -121,9 +121,6 @@ namespace AppCafebookApi.View.nhanvien.pages
             }
         }
 
-        // ======================================================
-        // NÂNG CẤP 3: BẢO VỆ GIAO DIỆN (FindName) CHO QUYỀN
-        // ======================================================
         private void ApplyPermissions()
         {
             if (FindName("btnGoiMon") is Button btnGoiMon)
@@ -133,7 +130,6 @@ namespace AppCafebookApi.View.nhanvien.pages
             }
         }
 
-        // TỪ ĐÂY TRỞ XUỐNG: CODE DO BẠN VIẾT ĐƯỢC GIỮ NGUYÊN 100%
         private async Task ReloadDataAsync()
         {
             var selectedKhuVucBtn = FindCheckedKhuVucButton();
@@ -159,7 +155,6 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             try
             {
-                // Tự cấp tự túc: Gọi trực tiếp API mới tạo trong SoDoBanController
                 string apiRoute = "api/app/sodoban/khuvuc-list";
 
                 _khuVucCache = (await ApiClient.Instance.GetFromJsonAsync<List<KhuVucDto>>(apiRoute))
@@ -178,13 +173,25 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             try
             {
-                _allTablesCache = (await ApiClient.Instance.GetFromJsonAsync<List<BanSoDoDto>>("api/app/sodoban/tables"))
-                                      ?? new List<BanSoDoDto>();
+                var tables = await ApiClient.Instance.GetFromJsonAsync<List<BanSoDoDto>>("api/app/sodoban/tables");
+                if (tables != null)
+                {
+                    _allTablesCache = tables;
+                    UpdateDisplay(null);
+                }
             }
-            catch (Exception ex)
+            catch (Exception ex) 
             {
-                MessageBox.Show($"Không thể tải sơ đồ bàn: {ex.Message}", "Lỗi API");
+                MessageBox.Show($"Lỗi tải khu vực: {ex.Message}", "Lỗi API");
+
             }
+        }
+
+        private void UpdateDisplay(int? khuVucId)
+        {
+            var filtered = khuVucId == null ? _allTablesCache : _allTablesCache.Where(b => b.IdKhuVuc == khuVucId).ToList();
+            DisplayedTables.Clear();
+            foreach (var table in filtered) DisplayedTables.Add(table); // Cập nhật mượt mà[cite: 5]
         }
 
         private void BtnKhuVuc_Click(object sender, RoutedEventArgs e)

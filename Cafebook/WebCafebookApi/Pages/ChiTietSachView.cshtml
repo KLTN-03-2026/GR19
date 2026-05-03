@@ -15,9 +15,9 @@
         <div class="row book-detail-card p-4 gy-4">
             <div class="col-lg-4">
                 <div class="book-cover-container text-center">
-                    <img src="@(string.IsNullOrEmpty(Model.Sach.AnhBiaUrl) ? HinhAnhPaths.WebDefaultBookCover : Model.Sach.AnhBiaUrl)"
+                    <img src="@Model.Sach.AnhBiaUrl"
                          class="book-cover-img" alt="@Model.Sach.TieuDe"
-                         onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultBookCover'">
+                         onerror="this.onerror=null; this.src='@Model.Sach.AnhBiaUrl'">
                 </div>
             </div>
 
@@ -147,9 +147,9 @@
                         <div class="card h-100 shadow-sm border-0" style="border-radius: 12px; overflow: hidden; transition: transform 0.3s;">
                             <a asp-page="/ChiTietSachView" asp-route-token="@Model.EncryptId(item.IdSach)" class="text-decoration-none">
                                 <div style="padding: 10px; background: var(--cf-cream);">
-                                    <img src="@(string.IsNullOrEmpty(item.AnhBiaUrl) ? HinhAnhPaths.WebDefaultBookCover : item.AnhBiaUrl)"
+                                    <img src="@item.AnhBiaUrl"
                                          class="card-img-top shadow-sm" style="aspect-ratio: 2/3; object-fit: cover; border-radius: 4px;"
-                                         onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultBookCover'" />
+                                         onerror="this.onerror=null; this.src='@item.AnhBiaUrl'" />
                                 </div>
                                 <div class="card-body text-center p-3">
                                     <h6 class="text-dark fw-bold mb-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4em;">@item.TieuDe</h6>

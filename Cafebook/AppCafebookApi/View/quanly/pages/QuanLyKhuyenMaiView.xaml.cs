@@ -16,42 +16,54 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-
-// KHẮC PHỤC LỖI AMBIGUOUS BORDER VỚI EPPLUS
 using Border = System.Windows.Controls.Border;
 
 namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyKhuyenMaiView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyKhuyenMaiGridDto> _allKhuyenMaiList = new();
         private QuanLyKhuyenMaiSaveDto? _selectedKhuyenMai = null;
         private List<QuanLyKhuyenMaiLookupDto> _sanPhamList = new();
-        /*
-        static QuanLyKhuyenMaiView()
-        {
-            httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyKhuyenMaiView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI"))
             {
-                ApplyPermissions();
+                MessageBox.Show("Bạn không có quyền truy cập module Khuyến mãi!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack();
                 return;
             }
 
-            ApplyPermissions();
-            if (FindName("cmbFilterTrangThai") is ComboBox cmbTT) cmbTT.SelectedIndex = 0;
+            await Task.Delay(350);
 
-            await LoadFiltersAsync();
-            await LoadDataAsync();
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions();
+
+                if (FindName("cmbFilterTrangThai") is ComboBox cmbTT) 
+                    cmbTT.SelectedIndex = 0;
+
+                await LoadFiltersAsync();
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Khuyến mãi: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()

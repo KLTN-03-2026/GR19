@@ -16,30 +16,46 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyNhatKyView : Page
     {
-        //private static readonly HttpClient httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
         private List<QuanLyNhatKyGridDto> _allData = new();
+
+        private bool _isDataLoaded = false;
 
         public QuanLyNhatKyView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            // BẢO MẬT: Chỉ cho Admin (FULL_QL) truy cập
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
             if (!AuthService.CoQuyen("FULL_QL", "CM_NHAT_KY_HE_THONG"))
             {
                 if (FindName("GridDuLieu") is Grid g) g.Visibility = Visibility.Collapsed;
                 if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = Visibility.Visible;
+                this.NavigationService?.GoBack();
                 return;
             }
 
-            if (FindName("dpTuNgay") is DatePicker tu) tu.SelectedDate = DateTime.Today;
-            if (FindName("dpDenNgay") is DatePicker den) den.SelectedDate = DateTime.Today;
+            await Task.Delay(350);
 
-            await LoadLookupsAsync();
-            await LoadDataAsync();
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                if (FindName("dpTuNgay") is DatePicker tu) tu.SelectedDate = DateTime.Today;
+                if (FindName("dpDenNgay") is DatePicker den) den.SelectedDate = DateTime.Today;
+
+                await LoadLookupsAsync();
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Nhật ký hệ thống: {ex.Message}");
+            }
         }
-
         private async Task LoadLookupsAsync()
         {
             try

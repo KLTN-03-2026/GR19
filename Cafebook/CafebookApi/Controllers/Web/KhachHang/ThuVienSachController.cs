@@ -1,5 +1,6 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelWeb.KhachHang;
+using CafebookModel.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -105,7 +106,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 TacGia = string.IsNullOrEmpty(s.TacGia) ? "Không rõ" : s.TacGia,
                 GiaBia = s.GiaBia ?? 0,
                 SoLuongCoSan = s.SoLuongHienCo,
-                AnhBiaUrl = GetFullImageUrl(s.AnhBia)
+                AnhBiaUrl = GetFullImageUrl(string.IsNullOrEmpty(s.AnhBia) ? HinhAnhPaths.WebDefaultBookCover : s.AnhBia)
             }).ToList();
 
             return Ok(new SachPhanTrangDto

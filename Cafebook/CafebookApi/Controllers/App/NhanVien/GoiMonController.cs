@@ -343,43 +343,48 @@ namespace CafebookApi.Controllers.App.NhanVien
             };
         }
 
-        // SỬA LỖI: Khi thay đổi số lượng món, TrangThaiCheBien giờ đây sẽ nhận biết và được cập nhật số lượng theo.
         private async Task<int> CreateOrUpdateCheBienItems(int idHoaDon)
         {
             var hoaDon = await _context.HoaDons.Include(h => h.Ban).FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon);
             if (hoaDon == null) return 0;
-            var chiTietItems = await _context.ChiTietHoaDons.Include(c => c.SanPham).Where(c => c.IdHoaDon == idHoaDon).ToListAsync();
-            string soBan = hoaDon.Ban?.SoBan ?? hoaDon.LoaiHoaDon;
+
+            var chiTietItems = await _context.ChiTietHoaDons.Include(c => c.SanPham)
+                                .Where(c => c.IdHoaDon == idHoaDon).ToListAsync();
+
+            var existingCheBiens = await _context.TrangThaiCheBiens
+                                    .Where(cb => cb.IdHoaDon == idHoaDon).ToListAsync();
+
             int itemsUpdated = 0;
             var now = DateTime.Now;
 
             foreach (var item in chiTietItems)
             {
-                var existingCB = await _context.TrangThaiCheBiens.FirstOrDefaultAsync(cb => cb.IdChiTietHoaDon == item.IdChiTietHoaDon);
-                if (existingCB == null)
+                var cb = existingCheBiens.FirstOrDefault(x => x.IdChiTietHoaDon == item.IdChiTietHoaDon);
+
+                if (cb == null) 
                 {
                     _context.TrangThaiCheBiens.Add(new TrangThaiCheBien
                     {
                         IdChiTietHoaDon = item.IdChiTietHoaDon,
-                        IdHoaDon = item.IdHoaDon,
+                        IdHoaDon = idHoaDon,
                         IdSanPham = item.IdSanPham,
                         TenMon = item.SanPham.TenSanPham,
-                        SoBan = soBan,
+                        SoBan = hoaDon.Ban?.SoBan ?? hoaDon.LoaiHoaDon,
                         SoLuong = item.SoLuong,
                         GhiChu = item.GhiChu,
-                        NhomIn = item.SanPham.NhomIn,
                         TrangThai = "Chờ làm",
                         ThoiGianGoi = now
                     });
                     itemsUpdated++;
                 }
-                else if (existingCB.SoLuong != item.SoLuong || existingCB.GhiChu != item.GhiChu)
+                else if (cb.SoLuong != item.SoLuong || cb.GhiChu != item.GhiChu) 
                 {
-                    existingCB.SoLuong = item.SoLuong;
-                    existingCB.GhiChu = item.GhiChu;
+                    cb.SoLuong = item.SoLuong;
+                    cb.GhiChu = item.GhiChu;
                     itemsUpdated++;
                 }
             }
+
             if (itemsUpdated > 0) await _context.SaveChangesAsync();
             return itemsUpdated;
         }

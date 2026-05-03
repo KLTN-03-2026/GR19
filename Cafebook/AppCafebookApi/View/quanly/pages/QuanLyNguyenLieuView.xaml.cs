@@ -15,21 +15,21 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyNguyenLieuView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyNguyenLieuGridDto> _dataList = new();
         private QuanLyNguyenLieuGridDto? _selectedItem;
         private bool _isAdding = false;
 
-        //static QuanLyNguyenLieuView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLyNguyenLieuView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            // 1. KIỂM TRA CHÌA KHÓA CỔNG (Cho phép vào nếu có 1 trong các quyền liên quan)
             bool hasAccess = AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU", "QL_DON_VI_CHUYEN_DOI");
             if (!hasAccess)
             {
@@ -38,21 +38,35 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            ApplyPermissions(); // Xử lý ẩn hiện nút "Đơn vị quy đổi"
+            await Task.Delay(350);
 
-            // 2. KIỂM TRA QUYỀN QUẢN LÝ NGUYÊN LIỆU (Ẩn hiện dữ liệu chính)
-            if (AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU"))
+            if (!this.IsLoaded) return;
+
+            try
             {
-                // Có quyền -> Hiện dữ liệu và Load
-                if (FindName("GridDuLieuNL") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
-                if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Collapsed;
-                await LoadDataAsync();
+                ApplyPermissions(); 
+
+                if (AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU"))
+                {
+                    if (FindName("GridDuLieuNL") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
+                    if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Collapsed;
+                    
+                    await LoadDataAsync();
+                }
+                else
+                {
+                    // Không có quyền NL -> Ẩn dữ liệu, hiện khiên bảo mật
+                    if (FindName("GridDuLieuNL") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Collapsed;
+                    if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Visible;
+                }
+
+                // 6. ĐÁNH DẤU HOÀN TẤT ĐỂ GIỮ TRẠNG THÁI TRANG
+                _isDataLoaded = true;
             }
-            else
+            catch (Exception ex)
             {
-                // Không có quyền NL -> Ẩn dữ liệu, hiện khiên bảo mật (nhưng vẫn để Header để bấm Đơn vị quy đổi)
-                if (FindName("GridDuLieuNL") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Collapsed;
-                if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Visible;
+                // Bắt lỗi âm thầm hoặc ghi log để bảo vệ trải nghiệm người dùng
+                Console.WriteLine($"Lỗi tại module Nguyên liệu: {ex.Message}");
             }
         }
 

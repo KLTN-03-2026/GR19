@@ -31,7 +31,22 @@ namespace CafebookApi.Controllers.App.QuanLy
                 .OrderBy(t => t.Ten)
                 .ToListAsync();
 
-            return Ok(new { vaiTros });
+            return Ok(new QuanLyBaoCaoHieuSuat_FiltersDto { VaiTros = vaiTros });
+        }
+
+        [HttpGet("search-nhan-vien")]
+        public async Task<IActionResult> SearchNhanVien([FromQuery] string keyword)
+        {
+            if (string.IsNullOrWhiteSpace(keyword)) return Ok(new List<QuanLyFilterLookupDto>());
+
+            var nvs = await _context.NhanViens
+                .AsNoTracking()
+                .Where(x => x.HoTen.Contains(keyword) || x.SoDienThoai.Contains(keyword))
+                .Select(x => new QuanLyFilterLookupDto { Id = x.IdNhanVien, Ten = x.HoTen + " (" + x.SoDienThoai + ")" })
+                .Take(10)
+                .ToListAsync();
+
+            return Ok(nvs);
         }
 
         [HttpPost("report")]
@@ -39,7 +54,10 @@ namespace CafebookApi.Controllers.App.QuanLy
         {
             var startDate = request.StartDate.Date;
             var endDate = request.EndDate.Date.AddDays(1);
-            var searchTxt = string.IsNullOrEmpty(request.SearchText) ? null : $"%{request.SearchText}%";
+            var nvId = request.NhanVienId ?? -1;
+            var roleId = request.VaiTroId ?? -1;
+            // Xử lý parameter an toàn cho EF Core SqlQuery
+            var searchStr = string.IsNullOrWhiteSpace(request.SearchText) ? "" : request.SearchText.Trim();
 
             // 1. DỮ LIỆU BÁN HÀNG (SALES)
             var salesData = await _context.Database.SqlQuery<QuanLyBaoCaoSalesDto>($@"
@@ -47,18 +65,19 @@ namespace CafebookApi.Controllers.App.QuanLy
                     nv.hoTen AS HoTen,
                     vt.tenVaiTro AS TenVaiTro,
                     CAST(ISNULL(SUM(hd.thanhTien), 0) AS DECIMAL(18,2)) AS TongDoanhThu,
-                    ISNULL(COUNT(hd.idHoaDon), 0) AS SoHoaDon,
-                    CAST(CASE WHEN COUNT(hd.idHoaDon) > 0 THEN SUM(hd.thanhTien) / COUNT(hd.idHoaDon) ELSE 0 END AS DECIMAL(18,2)) AS DoanhThuTrungBinh,
+                    ISNULL(COUNT(DISTINCT hd.idHoaDon), 0) AS SoHoaDon,
+                    -- Dùng NULLIF để chống lỗi chia cho 0 (Divide by Zero)
+                    CAST(ISNULL(SUM(hd.thanhTien) / NULLIF(COUNT(DISTINCT hd.idHoaDon), 0), 0) AS DECIMAL(18,2)) AS DoanhThuTrungBinh,
                     (SELECT COUNT(idNhatKy) FROM dbo.NhatKyHuyMon WHERE idNhanVienHuy = nv.idNhanVien AND ThoiGianHuy >= {startDate} AND ThoiGianHuy < {endDate}) AS SoLanHuyMon
                 FROM dbo.NhanVien nv
                 JOIN dbo.VaiTro vt ON nv.idVaiTro = vt.idVaiTro
                 LEFT JOIN dbo.HoaDon hd ON nv.idNhanVien = hd.idNhanVien 
                     AND hd.thoiGianThanhToan >= {startDate} AND hd.thoiGianThanhToan < {endDate} 
                     AND hd.trangThai = N'Đã thanh toán'
-                WHERE (nv.hoTen LIKE {searchTxt} OR {searchTxt} IS NULL)
-                  AND (nv.idVaiTro = {request.VaiTroId} OR {request.VaiTroId} IS NULL)
+                WHERE ({roleId} = -1 OR nv.idVaiTro = {roleId})
+                  AND ({searchStr} = '' OR nv.hoTen LIKE N'%' + {searchStr} + N'%')
                 GROUP BY nv.idNhanVien, nv.hoTen, vt.tenVaiTro
-            ").ToListAsync();
+            ").AsNoTracking().ToListAsync();
 
             // 2. DỮ LIỆU VẬN HÀNH (OPERATIONS)
             var opsData = await _context.Database.SqlQuery<QuanLyBaoCaoOperationsDto>($@"
@@ -71,31 +90,33 @@ namespace CafebookApi.Controllers.App.QuanLy
                     (SELECT COUNT(idDonXinNghi) FROM dbo.DonXinNghi WHERE idNguoiDuyet = nv.idNhanVien AND NgayDuyet >= {startDate} AND NgayDuyet < {endDate}) AS DonDuyet
                 FROM dbo.NhanVien nv
                 JOIN dbo.VaiTro vt ON nv.idVaiTro = vt.idVaiTro
-                WHERE (nv.hoTen LIKE {searchTxt} OR {searchTxt} IS NULL)
-                  AND (nv.idVaiTro = {request.VaiTroId} OR {request.VaiTroId} IS NULL)
-            ").ToListAsync();
+                WHERE ({roleId} = -1 OR nv.idVaiTro = {roleId})
+                  AND ({searchStr} = '' OR nv.hoTen LIKE N'%' + {searchStr} + N'%')
+            ").AsNoTracking().ToListAsync();
 
             // 3. DỮ LIỆU CHẤM CÔNG & NGHỈ PHÉP (ATTENDANCE)
             var attData = await _context.Database.SqlQuery<QuanLyBaoCaoAttendanceDto>($@"
                 SELECT 
                     nv.hoTen AS HoTen,
                     vt.tenVaiTro AS TenVaiTro,
-                    ISNULL(COUNT(llv.idLichLamViec), 0) AS SoCaLam,
+                    ISNULL(COUNT(DISTINCT llv.idLichLamViec), 0) AS SoCaLam,
                     CAST(ISNULL(SUM(bc.soGioLam), 0) AS DECIMAL(18,2)) AS TongGioLam,
-                    (SELECT COUNT(idDonXinNghi) FROM dbo.DonXinNghi WHERE idNhanVien = nv.idNhanVien AND NgayBatDau >= {startDate} AND NgayBatDau < {endDate}) AS SoDonXinNghi,
-                    (SELECT COUNT(idDonXinNghi) FROM dbo.DonXinNghi WHERE idNhanVien = nv.idNhanVien AND TrangThai = N'Đã duyệt' AND NgayBatDau >= {startDate} AND NgayBatDau < {endDate}) AS SoDonDaDuyet,
-                    (SELECT COUNT(idDonXinNghi) FROM dbo.DonXinNghi WHERE idNhanVien = nv.idNhanVien AND TrangThai = N'Chờ duyệt' AND NgayBatDau >= {startDate} AND NgayBatDau < {endDate}) AS SoDonChoDuyet
+                    -- FIX overlap date: NgayBatDau < endDate AND NgayKetThuc >= startDate
+                    (SELECT COUNT(idDonXinNghi) FROM dbo.DonXinNghi WHERE idNhanVien = nv.idNhanVien AND NgayBatDau < {endDate} AND NgayKetThuc >= {startDate}) AS SoDonXinNghi,
+                    (SELECT COUNT(idDonXinNghi) FROM dbo.DonXinNghi WHERE idNhanVien = nv.idNhanVien AND TrangThai = N'Đã duyệt' AND NgayBatDau < {endDate} AND NgayKetThuc >= {startDate}) AS SoDonDaDuyet,
+                    (SELECT COUNT(idDonXinNghi) FROM dbo.DonXinNghi WHERE idNhanVien = nv.idNhanVien AND TrangThai = N'Chờ duyệt' AND NgayBatDau < {endDate} AND NgayKetThuc >= {startDate}) AS SoDonChoDuyet
                 FROM dbo.NhanVien nv
                 JOIN dbo.VaiTro vt ON nv.idVaiTro = vt.idVaiTro
                 LEFT JOIN dbo.LichLamViec llv ON nv.idNhanVien = llv.idNhanVien
                     AND llv.ngayLam >= {startDate} AND llv.ngayLam < {endDate}
                     AND llv.trangThai = N'Đã chấm công'
                 LEFT JOIN dbo.BangChamCong bc ON llv.idLichLamViec = bc.idLichLamViec
-                WHERE (nv.hoTen LIKE {searchTxt} OR {searchTxt} IS NULL)
-                  AND (nv.idVaiTro = {request.VaiTroId} OR {request.VaiTroId} IS NULL)
+                WHERE ({roleId} = -1 OR nv.idVaiTro = {roleId})
+                  AND ({searchStr} = '' OR nv.hoTen LIKE N'%' + {searchStr} + N'%')
                 GROUP BY nv.idNhanVien, nv.hoTen, vt.tenVaiTro
-            ").ToListAsync();
+            ").AsNoTracking().ToListAsync();
 
+            // 4. TRẢ KẾT QUẢ VÀ TÍNH TỔNG KPI
             var dto = new QuanLyBaoCaoHieuSuatTongHopDto
             {
                 SalesPerformance = salesData,

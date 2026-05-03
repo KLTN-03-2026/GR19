@@ -9,6 +9,7 @@ namespace CafebookModel.Model.ModelApp.QuanLy
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public int? VaiTroId { get; set; }
+        public int? NhanVienId { get; set; } 
         public string? SearchText { get; set; }
     }
 
@@ -63,5 +64,10 @@ namespace CafebookModel.Model.ModelApp.QuanLy
     {
         public int Id { get; set; }
         public string Ten { get; set; } = string.Empty;
+    }
+
+    public class QuanLyBaoCaoHieuSuat_FiltersDto
+    {
+        public List<QuanLyFilterLookupDto> VaiTros { get; set; } = new();
     }
 }

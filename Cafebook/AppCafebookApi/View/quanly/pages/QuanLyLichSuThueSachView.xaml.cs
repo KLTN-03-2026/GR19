@@ -14,13 +14,8 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyLichSuThueSachView : Page
     {
-        /*private static readonly HttpClient httpClient;
+        private bool _isDataLoaded = false;
 
-        static QuanLyLichSuThueSachView()
-        {
-            httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
-        }
-        */
         public QuanLyLichSuThueSachView()
         {
             InitializeComponent();
@@ -28,25 +23,39 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            // BẢO MẬT LỚP 2: Chặn truy cập Page
             if (!AuthService.CoQuyen("FULL_QL", "QL_LICH_SU_THUE_SACH"))
             {
-                MessageBox.Show("Từ chối truy cập module Lịch sử thuê sách!");
+                MessageBox.Show("Từ chối truy cập module Lịch sử thuê sách!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack();
                 return;
             }
 
-            ApplyPermissions();
+            await Task.Delay(350);
 
-            // Nếu có quyền thì tự động load dữ liệu 30 ngày gần nhất
-            if (AuthService.CoQuyen("FULL_QL", "QL_LICH_SU_THUE_SACH"))
+            if (!this.IsLoaded) return;
+
+            try
             {
-                if (FindName("dpTuNgay") is DatePicker tu) tu.SelectedDate = DateTime.Today.AddDays(-30);
-                if (FindName("dpDenNgay") is DatePicker den) den.SelectedDate = DateTime.Today;
-                await LoadDataAsync(DateTime.Today.AddDays(-30), DateTime.Today);
+                ApplyPermissions();
+
+                var tuNgay = DateTime.Today.AddDays(-30);
+                var denNgay = DateTime.Today;
+
+                if (FindName("dpTuNgay") is DatePicker tu) tu.SelectedDate = tuNgay;
+                if (FindName("dpDenNgay") is DatePicker den) den.SelectedDate = denNgay;
+
+                await LoadDataAsync(tuNgay, denNgay);
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tải lịch sử thuê sách: {ex.Message}");
             }
         }
 

@@ -47,7 +47,6 @@ namespace CafebookApi.Controllers.App.QuanLy
         [HttpGet("preview")]
         public async Task<IActionResult> PreviewLuong([FromQuery] DateTime tuNgay, [FromQuery] DateTime denNgay)
         {
-            // 1. Lấy toàn bộ tham số cài đặt và ép kiểu an toàn
             var configs = await _context.Set<CaiDat>().Where(c => c.TenCaiDat.StartsWith("HR_")).AsNoTracking().ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
 
             int phutTreChoPhep = int.TryParse(configs.GetValueOrDefault("HR_PhatDiTre_Phut"), out var p1) ? p1 : 10;
@@ -81,12 +80,11 @@ namespace CafebookApi.Controllers.App.QuanLy
                 {
                     if (!item.GioVao.HasValue) continue;
 
-                    // Tự động chốt ca qua đêm nếu quên bấm giờ ra
                     DateTime gioRaThucTe;
                     if (!item.GioRa.HasValue)
                     {
                         gioRaThucTe = item.NgayLam.Add(item.GioKetThuc);
-                        if (item.GioKetThuc < item.GioBatDau) gioRaThucTe = gioRaThucTe.AddDays(1); // Ca xuyên đêm
+                        if (item.GioKetThuc < item.GioBatDau) gioRaThucTe = gioRaThucTe.AddDays(1); 
                     }
                     else
                     {
@@ -99,12 +97,9 @@ namespace CafebookApi.Controllers.App.QuanLy
                     double shiftMins = (item.GioKetThuc - item.GioBatDau).TotalMinutes;
                     if (shiftMins < 0) shiftMins += 24 * 60;
 
-                    // Tính phạt trễ
                     if (item.GioVao.Value.TimeOfDay > item.GioBatDau.Add(TimeSpan.FromMinutes(phutTreChoPhep))) soLanTre++;
-                    // Tính phạt sớm
                     if (gioRaThucTe.TimeOfDay < item.GioKetThuc.Subtract(TimeSpan.FromMinutes(phutSomChoPhep))) soLanSom++;
 
-                    // Tính OT (chỉ tính nếu làm lố lớn hơn cấu hình HR_TinhTangCa_Phut)
                     if (actualMins - shiftMins >= phutTinhTangCa)
                     {
                         tongGioChuan += (shiftMins / 60.0);
@@ -128,7 +123,6 @@ namespace CafebookApi.Controllers.App.QuanLy
                 if (soLanTre > 0) chiTiet.Add(new ChiTietThuongPhatDto { Loai = "Phạt", LyDo = $"Đi trễ {soLanTre} lần (Hệ thống)", SoTien = soLanTre * phatTreMoiLan, IsAuto = true });
                 if (soLanSom > 0) chiTiet.Add(new ChiTietThuongPhatDto { Loai = "Phạt", LyDo = $"Về sớm {soLanSom} lần (Hệ thống)", SoTien = soLanSom * phatSomMoiLan, IsAuto = true });
 
-                // Tính toán và nạp các khoản Thủ Công
                 decimal thuongTC = 0, phatTC = 0;
                 foreach (var tp in thuongPhatThuCong.Where(p => p.IdNhanVien == g.Key.IdNhanVien))
                 {
@@ -159,22 +153,23 @@ namespace CafebookApi.Controllers.App.QuanLy
                     TienPhatTreSom = Math.Round(tienPhatTS, 0),
                     ThuongThuCong = thuongTC,
                     PhatThuCong = phatTC,
-                    DanhSachThuongPhat = chiTiet.OrderBy(c => c.IsAuto ? 0 : 1).ToList() // Xếp tự động lên trên, thủ công xuống dưới
+                    DanhSachThuongPhat = chiTiet.OrderBy(c => c.IsAuto ? 0 : 1).ToList() 
                 };
             }).Where(x => x.TongGioLamChuan > 0 || x.TongGioOT > 0).ToList();
 
             return Ok(result);
         }
 
-        // LƯU Ý LỖI: Lỗi thêm khoản mới bị hỏng thường do IdNguoiTao không hợp lệ với Foreign Key của DB.
         [HttpPost("thuong-phat")]
         public async Task<IActionResult> AddThuongPhat([FromBody] TaoThuongPhatDto dto)
         {
             var ptp = new PhieuThuongPhat
             {
                 IdNhanVien = dto.IdNhanVien,
-                IdNguoiTao = dto.IdNguoiTao > 0 ? dto.IdNguoiTao : 1, // Đảm bảo luôn có giá trị hợp lệ
-                NgayTao = DateTime.Now,
+                IdNguoiTao = dto.IdNguoiTao > 0 ? dto.IdNguoiTao : 1,
+
+                NgayTao = dto.NgayTao ?? DateTime.Now,
+
                 LyDo = dto.LyDo,
                 SoTien = dto.Loai == "Phạt" ? -Math.Abs(dto.SoTien) : Math.Abs(dto.SoTien)
             };
@@ -187,7 +182,6 @@ namespace CafebookApi.Controllers.App.QuanLy
             }
             catch (Exception ex)
             {
-                // Nếu dính lỗi FK từ IdNguoiTao, nó sẽ in ra đây để bạn debug
                 return BadRequest($"Lỗi tạo phiếu: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
@@ -207,8 +201,21 @@ namespace CafebookApi.Controllers.App.QuanLy
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                int countSuccess = 0;
+                var listSkipped = new List<string>();
+
                 foreach (var item in dto.DanhSachChot)
                 {
+                    // FIX: Bỏ qua những nhân viên đã chốt trong tháng này
+                    bool isDaChot = await _context.Set<PhieuLuong>()
+                        .AnyAsync(p => p.IdNhanVien == item.IdNhanVien && p.Thang == dto.TuNgay.Month && p.Nam == dto.TuNgay.Year);
+
+                    if (isDaChot)
+                    {
+                        listSkipped.Add(item.TenNhanVien);
+                        continue; // Lướt qua, không quăng lỗi
+                    }
+
                     var phieu = new PhieuLuong
                     {
                         IdNhanVien = item.IdNhanVien,
@@ -225,14 +232,49 @@ namespace CafebookApi.Controllers.App.QuanLy
                     _context.Set<PhieuLuong>().Add(phieu);
                     await _context.SaveChangesAsync();
 
-                    var manual = await _context.Set<PhieuThuongPhat>().Where(p => p.IdNhanVien == item.IdNhanVien && p.IdPhieuLuong == null).ToListAsync();
-                    foreach (var m in manual) m.IdPhieuLuong = phieu.IdPhieuLuong;
-                    await _context.SaveChangesAsync();
+                    if (item.DanhSachThuongPhat != null && item.DanhSachThuongPhat.Any())
+                    {
+                        foreach (var tp in item.DanhSachThuongPhat)
+                        {
+                            if (tp.IsAuto)
+                            {
+                                var autoPhieu = new PhieuThuongPhat
+                                {
+                                    IdNhanVien = item.IdNhanVien,
+                                    IdPhieuLuong = phieu.IdPhieuLuong,
+                                    NgayTao = DateTime.Now,
+                                    LyDo = tp.LyDo,
+                                    SoTien = tp.Loai == "Phạt" ? -Math.Abs(tp.SoTien) : Math.Abs(tp.SoTien),
+                                    IdNguoiTao = 1
+                                };
+                                _context.Set<PhieuThuongPhat>().Add(autoPhieu);
+                            }
+                            else
+                            {
+                                var existingManual = await _context.Set<PhieuThuongPhat>().FindAsync(tp.Id);
+                                if (existingManual != null)
+                                {
+                                    existingManual.IdPhieuLuong = phieu.IdPhieuLuong;
+                                }
+                            }
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+                    countSuccess++;
                 }
+
                 await transaction.CommitAsync();
-                return Ok(new { message = "Chốt lương thành công." });
+
+                string msg = $"Chốt thành công: {countSuccess} nhân viên.";
+                if (listSkipped.Any()) msg += $"\nBỏ qua (đã chốt trước đó): {string.Join(", ", listSkipped)}";
+
+                return Ok(new { message = msg });
             }
-            catch (Exception ex) { await transaction.RollbackAsync(); return StatusCode(500, ex.Message); }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+            }
         }
     }
 }

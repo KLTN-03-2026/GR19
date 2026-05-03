@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
@@ -15,19 +16,39 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLySuCoBanView : Page
     {
-        /*
-        private static readonly HttpClient httpClient;
-        static QuanLySuCoBanView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
-        */
+        private bool _isDataLoaded = false;
+
         public QuanLySuCoBanView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-            if (!AuthService.CoQuyen("QL_SU_CO_BAN")) { MessageBox.Show("Từ chối!"); this.NavigationService?.GoBack(); return; }
-            await LoadDataAsync();
-        }
+            if (_isDataLoaded) return;
 
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
+            if (!AuthService.CoQuyen("FULL_QL", "QL_SU_CO_BAN")) 
+            { 
+                MessageBox.Show("Bạn không có quyền truy cập module Quản lý sự cố!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning); 
+                this.NavigationService?.GoBack(); 
+                return; 
+            }
+
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Sự cố bán: {ex.Message}");
+            }
+        }
         private async Task LoadDataAsync()
         {
             bool isHistory = (FindName("chkHistory") as CheckBox)?.IsChecked == true;

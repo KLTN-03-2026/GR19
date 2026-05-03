@@ -104,10 +104,14 @@
                         <TextBox x:Name="txtSearch" Width="150" Style="{StaticResource SearchTextBoxStyle}" TextChanged="Filters_Changed"/>
 
                         <TextBlock Text="Loại KH:" VerticalAlignment="Center" Margin="15,0,5,0"/>
-                        <ComboBox x:Name="cmbLoaiTK" Width="100" SelectionChanged="Filters_Changed" SelectedIndex="0" Background="Transparent" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderGrayBrush}">
+                        <ComboBox x:Name="cmbLoaiTK" Width="120" SelectionChanged="Filters_Changed" 
+                                  SelectedIndex="0" Background="Transparent" 
+                                  BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderGrayBrush}">
                             <ComboBoxItem Content="Tất cả"/>
                             <ComboBoxItem Content="Khách vãng lai"/>
                             <ComboBoxItem Content="Thành viên"/>
+                            <ComboBoxItem Content="Đã khóa"/>
+                            <ComboBoxItem Content="Đã xóa"/>
                         </ComboBox>
 
                         <CheckBox x:Name="chkHideLocked" Content="Ẩn khóa" VerticalAlignment="Center" Margin="15,0,0,0" Checked="Filters_Changed" Unchecked="Filters_Changed"/>
@@ -115,7 +119,27 @@
                         <Button x:Name="btnExportExcel" Content="📊 Xuất Excel" Style="{StaticResource ActionBtn}" Background="#00724C" Margin="15,0,0,0" Padding="10,5" Click="BtnExportExcel_Click"/>
                     </StackPanel>
 
-                    <DataGrid x:Name="dgKhachHang" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0" Background="Transparent" SelectionChanged="DgKhachHang_SelectionChanged">
+                    <DataGrid x:Name="dgKhachHang" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
+                              BorderThickness="0" Background="Transparent" 
+                              SelectionChanged="DgKhachHang_SelectionChanged"
+                              EnableRowVirtualization="True" EnableColumnVirtualization="True"
+                              VirtualizingPanel.IsVirtualizing="True" 
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              ScrollViewer.IsDeferredScrollingEnabled="True"
+                              ScrollViewer.CanContentScroll="True">
+
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding BiKhoa}" Value="True">
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="Foreground" Value="#D32F2F"/>
+                                        <Setter Property="Background" Value="#FFF5F5"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Mã" Binding="{Binding IdKhachHang}" Width="40"/>
                             <DataGridTextColumn Header="Khách hàng" Binding="{Binding HoTen}" Width="*"/>

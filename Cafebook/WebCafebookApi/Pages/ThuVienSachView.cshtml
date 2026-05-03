@@ -86,9 +86,9 @@
                             <a asp-page="/ChiTietSachView" asp-route-token="@Model.EncryptId(sach.IdSach)" class="text-decoration-none">
                                 <div class="book-product-card shadow-sm">
                                     <div class="book-product-img-wrap">
-                                        <img src="@(string.IsNullOrEmpty(sach.AnhBiaUrl) ? HinhAnhPaths.WebDefaultBookCover : sach.AnhBiaUrl)"
+                                        <img src="@sach.AnhBiaUrl"
                                              class="book-product-img" alt="@sach.TieuDe"
-                                             onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultBookCover'">
+                                             onerror="this.onerror=null; this.src='@sach.AnhBiaUrl'">
                                     </div>
                                     <div class="book-product-body">
                                         <h6 class="card-title text-dark fw-bold mb-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4em; line-height: 1.2;">
@@ -133,27 +133,59 @@
 
             @if (Model.SachResult != null && Model.SachResult.TotalPages > 1)
             {
+                var currentPage = Model.SachResult.CurrentPage;
+                var totalPages = Model.SachResult.TotalPages;
+    
+                // Tính toán cửa sổ hiển thị (hiển thị 2 trang bên trái và 2 trang bên phải trang hiện tại)
+                var startPage = Math.Max(1, currentPage - 2);
+                var endPage = Math.Min(totalPages, currentPage + 2);
+
                 <nav class="mt-5 d-flex justify-content-center">
                     <ul class="pagination pagination-lg shadow-sm" style="border-radius: 12px; overflow: hidden;">
-                        <li class="page-item @(Model.SachResult.CurrentPage == 1 ? "disabled" : "")">
-                            <a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="@(Model.SachResult.CurrentPage - 1)">
+            
+                        <!-- Nút Previous -->
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="@(currentPage - 1)">
                                 <span class="material-symbols-outlined align-middle">chevron_left</span>
                             </a>
                         </li>
-                        
-                        @for (int i = 1; i <= Model.SachResult.TotalPages; i++)
+            
+                        <!-- Hiển thị trang 1 và dấu ... nếu khoảng cách > 1 -->
+                        @if (startPage > 1)
                         {
-                            <li class="page-item @(Model.SachResult.CurrentPage == i ? "active" : "")">
-                                <a class="page-link @(Model.SachResult.CurrentPage == i ? "bg-primary border-primary text-white" : "text-dark")"
+                            <li class="page-item"><a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="1">1</a></li>
+                            if (startPage > 2)
+                            {
+                                <li class="page-item disabled"><span class="page-link text-muted bg-light border-0">...</span></li>
+                            }
+                        }
+
+                        <!-- Các trang ở giữa -->
+                        @for (int i = startPage; i <= endPage; i++)
+                        {
+                            <li class="page-item @(currentPage == i ? "active" : "")">
+                                <a class="page-link @(currentPage == i ? "bg-primary border-primary text-white" : "text-dark")"
                                    asp-all-route-data="routeData" asp-route-PageNum="@i">@i</a>
                             </li>
                         }
 
-                        <li class="page-item @(Model.SachResult.CurrentPage == Model.SachResult.TotalPages ? "disabled" : "")">
-                            <a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="@(Model.SachResult.CurrentPage + 1)">
+                        <!-- Hiển thị dấu ... và trang cuối nếu khoảng cách chưa tới trang cuối -->
+                        @if (endPage < totalPages)
+                        {
+                            if (endPage < totalPages - 1)
+                            {
+                                <li class="page-item disabled"><span class="page-link text-muted bg-light border-0">...</span></li>
+                            }
+                            <li class="page-item"><a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="@totalPages">@totalPages</a></li>
+                        }
+
+                        <!-- Nút Next -->
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link text-dark" asp-all-route-data="routeData" asp-route-PageNum="@(currentPage + 1)">
                                 <span class="material-symbols-outlined align-middle">chevron_right</span>
                             </a>
                         </li>
+            
                     </ul>
                 </nav>
             }

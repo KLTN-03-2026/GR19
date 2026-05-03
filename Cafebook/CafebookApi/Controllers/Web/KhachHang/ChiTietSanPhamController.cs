@@ -1,10 +1,11 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelWeb.KhachHang;
+using CafebookModel.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 
 namespace CafebookApi.Controllers.Web.KhachHang
 {
@@ -55,14 +56,15 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 TenSanPham = sp.TenSanPham,
                 TenLoaiSP = sp.DanhMuc?.TenDanhMuc,
                 DonGia = sp.GiaBan,
-                HinhAnhUrl = GetFullImageUrl(sp.HinhAnh),
+                HinhAnhUrl = GetFullImageUrl(string.IsNullOrEmpty(sp.HinhAnh) ? HinhAnhPaths.WebDefaultFoodIcon : sp.HinhAnh),
+
                 MoTa = sp.MoTa,
                 GoiY = suggestions_raw.Select(g => new SanPhamGoiYDto
                 {
                     IdSanPham = g.IdSanPham,
                     TenSanPham = g.TenSanPham,
                     DonGia = g.GiaBan,
-                    AnhSanPhamUrl = GetFullImageUrl(g.HinhAnh)
+                    AnhSanPhamUrl = GetFullImageUrl(string.IsNullOrEmpty(g.HinhAnh) ? HinhAnhPaths.WebDefaultFoodIcon : g.HinhAnh)
                 }).ToList()
             };
 

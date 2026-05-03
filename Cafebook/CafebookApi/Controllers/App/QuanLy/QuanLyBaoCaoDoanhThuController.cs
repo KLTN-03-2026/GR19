@@ -27,7 +27,15 @@ namespace CafebookApi.Controllers.App.QuanLy
             var startDate = request.StartDate.Date;
             var endDate = request.EndDate.Date.AddDays(1);
 
+            // Trích xuất kỳ báo cáo để đồng bộ với thuật toán của Báo Cáo Nhân Sự
+            var startMonth = startDate.Month;
+            var startYear = startDate.Year;
+            var endMonth = request.EndDate.Date.Month;
+            var endYear = request.EndDate.Date.Year;
+
+            // ---------------------------------------------------------
             // 1. TÍNH DOANH THU BÁN HÀNG VÀ TỔNG HÓA ĐƠN
+            // ---------------------------------------------------------
             var chiTietDoanhThu = (await _context.Database.SqlQuery<QuanLyBaoCaoChiTietDoanhThuDto>($@"
                     SELECT
                         CAST(ISNULL(SUM(tongTienGoc), 0) AS DECIMAL(18,2)) AS TongDoanhThuBanHang,
@@ -42,7 +50,9 @@ namespace CafebookApi.Controllers.App.QuanLy
                     AND thoiGianThanhToan >= {startDate} AND thoiGianThanhToan < {endDate};
                 ").AsNoTracking().ToListAsync()).FirstOrDefault() ?? new QuanLyBaoCaoChiTietDoanhThuDto();
 
-            // 1.1 TÍNH DOANH THU THUÊ SÁCH
+            // ---------------------------------------------------------
+            // 1.1. TÍNH DOANH THU TỪ PHÍ THUÊ SÁCH & TIỀN PHẠT
+            // ---------------------------------------------------------
             var thueSachResult = await _context.Database.SqlQuery<decimal>($@"
                 SELECT CAST(ISNULL(SUM(TongPhiThue + TongTienPhat), 0) AS DECIMAL(18,2))
                 FROM dbo.PhieuTraSach
@@ -53,7 +63,9 @@ namespace CafebookApi.Controllers.App.QuanLy
             chiTietDoanhThu.TongDoanhThuThueSach = doanhThuThueSach;
             chiTietDoanhThu.DoanhThuRong += doanhThuThueSach;
 
-            // 2. TÍNH GIÁ VỐN (COGS) - FIX: Tính toán chuẩn xác theo Đơn vị quy đổi
+            // ---------------------------------------------------------
+            // 2. TÍNH TỔNG GIÁ VỐN HÀNG BÁN (COGS)
+            // ---------------------------------------------------------
             var cogsResult = await _context.Database.SqlQuery<decimal>($@"
                 WITH GiaVonNguyenLieu AS (
                     SELECT idNguyenLieu, AVG(donGiaNhap) AS GiaVonTrungBinh
@@ -68,23 +80,26 @@ namespace CafebookApi.Controllers.App.QuanLy
                     GROUP BY cthd.idSanPham
                 )
                 SELECT CAST(ISNULL(SUM(
-                    spb.TongSoLuongBan * (dl.SoLuongSuDung / dvcd.GiaTriQuyDoi) * gv.GiaVonTrungBinh
+                    spb.TongSoLuongBan * (dl.SoLuongSuDung / ISNULL(dvcd.GiaTriQuyDoi, 1)) * ISNULL(gv.GiaVonTrungBinh, 0)
                 ), 0) AS DECIMAL(18,2))
                 FROM SanPhamDaBan spb
                 JOIN dbo.DinhLuong dl ON spb.idSanPham = dl.idSanPham
-                JOIN GiaVonNguyenLieu gv ON dl.idNguyenLieu = gv.idNguyenLieu
-                JOIN dbo.DonViChuyenDoi dvcd ON dl.idDonViSuDung = dvcd.idChuyenDoi;
+                LEFT JOIN GiaVonNguyenLieu gv ON dl.idNguyenLieu = gv.idNguyenLieu
+                LEFT JOIN dbo.DonViChuyenDoi dvcd ON dl.idDonViSuDung = dvcd.idChuyenDoi;
             ").ToListAsync();
 
             decimal tongGiaVon_COGS = cogsResult.FirstOrDefault();
 
+            // ---------------------------------------------------------
             // 3. TÍNH CHI PHÍ VẬN HÀNH (OPEX)
+            // ---------------------------------------------------------
             var opexResult = (await _context.Database.SqlQuery<QuanLyOpexDto>($@"
                     SELECT 
                     CAST(ISNULL((SELECT SUM(thucLanh) 
                         FROM dbo.PhieuLuong
-                        WHERE trangThai = N'Đã thanh toán'
-                        AND ngayTao >= {startDate} AND ngayTao < {endDate}
+                        WHERE ISNULL(trangThai, '') NOT LIKE N'%Hủy%'
+                          AND ((nam > {startYear}) OR (nam = {startYear} AND thang >= {startMonth}))
+                          AND ((nam < {endYear}) OR (nam = {endYear} AND thang <= {endMonth}))
                     ), 0) AS DECIMAL(18,2)) AS TongChiPhiLuong,
                     
                     CAST(ISNULL((SELECT SUM(TongGiaTriHuy) 
@@ -93,7 +108,11 @@ namespace CafebookApi.Controllers.App.QuanLy
                     ), 0) AS DECIMAL(18,2)) AS TongChiPhiHuyHang;
                 ").AsNoTracking().ToListAsync()).FirstOrDefault() ?? new QuanLyOpexDto();
 
-            // 4. TOP SẢN PHẨM BÁN CHẠY
+            decimal totalOpex = opexResult.TongChiPhiLuong + opexResult.TongChiPhiHuyHang;
+
+            // ---------------------------------------------------------
+            // 4. TOP 10 SẢN PHẨM BÁN CHẠY NHẤT & TÍNH TỔNG SẢN PHẨM ĐÃ BÁN
+            // ---------------------------------------------------------
             var topSanPham = await _context.Database.SqlQuery<QuanLyTopSanPhamDto>($@"
                     SELECT TOP 10
                         sp.tenSanPham AS TenSanPham,
@@ -108,6 +127,23 @@ namespace CafebookApi.Controllers.App.QuanLy
                     ORDER BY TongSoLuongBan DESC;
                 ").AsNoTracking().ToListAsync();
 
+            // Tính tổng số lượng sản phẩm đã bán toàn quán để phân bổ OPEX
+            var totalItemsSoldResult = await _context.Database.SqlQuery<int>($@"
+                SELECT ISNULL(SUM(cthd.soLuong), 0)
+                FROM dbo.ChiTietHoaDon cthd
+                JOIN dbo.HoaDon hd ON cthd.idHoaDon = hd.idHoaDon
+                WHERE hd.trangThai = N'Đã thanh toán'
+                AND hd.thoiGianThanhToan >= {startDate} AND hd.thoiGianThanhToan < {endDate}
+            ").ToListAsync();
+
+            int totalItemsSold = totalItemsSoldResult.FirstOrDefault();
+
+            // Chi phí OPEX gánh trên mỗi một ly nước/sản phẩm bán ra
+            decimal opexPerItem = totalItemsSold > 0 ? (totalOpex / totalItemsSold) : 0;
+
+            // ---------------------------------------------------------
+            // 5. GỢI Ý DOANH THU & PHÂN TÍCH GIÁ BÁN (NÂNG CẤP BAO GỒM OPEX)
+            // ---------------------------------------------------------
             var goiYDoanhThu = await _context.Database.SqlQuery<QuanLyGoiYDoanhThuDto>($@"
                 WITH GiaVonNguyenLieu AS (
                     SELECT idNguyenLieu, AVG(donGiaNhap) AS GiaVonTrungBinh
@@ -116,10 +152,10 @@ namespace CafebookApi.Controllers.App.QuanLy
                 GiaVonSanPham AS (
                     SELECT 
                         dl.idSanPham, 
-                        SUM((dl.SoLuongSuDung / dvcd.GiaTriQuyDoi) * gv.GiaVonTrungBinh) AS TongGiaVon
+                        SUM((dl.SoLuongSuDung / ISNULL(dvcd.GiaTriQuyDoi, 1)) * ISNULL(gv.GiaVonTrungBinh, 0)) AS TongGiaVon
                     FROM dbo.DinhLuong dl
-                    JOIN GiaVonNguyenLieu gv ON dl.idNguyenLieu = gv.idNguyenLieu
-                    JOIN dbo.DonViChuyenDoi dvcd ON dl.idDonViSuDung = dvcd.idChuyenDoi
+                    LEFT JOIN GiaVonNguyenLieu gv ON dl.idNguyenLieu = gv.idNguyenLieu
+                    LEFT JOIN dbo.DonViChuyenDoi dvcd ON dl.idDonViSuDung = dvcd.idChuyenDoi
                     GROUP BY dl.idSanPham
                 )
                 SELECT 
@@ -128,15 +164,17 @@ namespace CafebookApi.Controllers.App.QuanLy
                     CAST(sp.giaBan AS DECIMAL(18,2)) AS GiaBanHienTai,
                     CAST(
                         CASE 
-                            -- Nếu có giá vốn thì Giá Gợi ý = Giá vốn / 30% (Làm tròn nghìn đồng)
-                            WHEN ISNULL(gvs.TongGiaVon, 0) > 0 THEN ROUND((gvs.TongGiaVon / 0.3) / 1000, 0) * 1000 
+                            -- Giá vốn thực tế = Giá vốn NVL + OPEX phân bổ trên mỗi món
+                            -- Gợi ý giá bán mới đảm bảo tỷ suất Lợi Nhuận Ròng (Net Margin) 70%
+                            WHEN (ISNULL(gvs.TongGiaVon, 0) + {opexPerItem}) > 0 
+                            THEN ROUND(((ISNULL(gvs.TongGiaVon, 0) + {opexPerItem}) / 0.3) / 1000, 0) * 1000 
                             ELSE sp.giaBan
                         END 
                     AS DECIMAL(18,2)) AS GiaGoiY,
                     CAST(
                         CASE 
-                            -- Tính biên lợi nhuận hiện tại (%)
-                            WHEN sp.giaBan > 0 THEN ((sp.giaBan - ISNULL(gvs.TongGiaVon, 0)) / sp.giaBan) * 100
+                            -- Tính Net Margin hiện tại: (Giá Bán - (Giá Vốn NVL + OPEX phân bổ)) / Giá Bán
+                            WHEN sp.giaBan > 0 THEN ((sp.giaBan - (ISNULL(gvs.TongGiaVon, 0) + {opexPerItem})) / sp.giaBan) * 100
                             ELSE 0
                         END
                     AS DECIMAL(18,2)) AS TiLeLoiNhuanCu
@@ -145,7 +183,9 @@ namespace CafebookApi.Controllers.App.QuanLy
                 WHERE sp.trangThaiKinhDoanh = 1;
             ").ToListAsync();
 
-            // 5. TỔNG HỢP KẾT QUẢ VÀ TÍNH KPI
+            // ---------------------------------------------------------
+            // 6. TỔNG HỢP VÀ ĐÓNG GÓI DỮ LIỆU ĐỂ TRẢ VỀ FRONT-END
+            // ---------------------------------------------------------
             var dto = new QuanLyBaoCaoTongHopDto
             {
                 ChiTietDoanhThu = chiTietDoanhThu,
@@ -156,10 +196,11 @@ namespace CafebookApi.Controllers.App.QuanLy
                     TongChiPhiHuyHang = opexResult.TongChiPhiHuyHang
                 },
                 TopSanPham = topSanPham,
-                GoiYDoanhThu = goiYDoanhThu, // THÊM DÒNG NÀY ĐỂ GÁN DỮ LIỆU
+                GoiYDoanhThu = goiYDoanhThu,
                 Kpi = new QuanLyBaoCaoKpiDto()
             };
 
+            // Tính toán cây phân cấp Lợi nhuận
             dto.Kpi.DoanhThuRong = dto.ChiTietDoanhThu.DoanhThuRong;
             dto.Kpi.TongGiaVon = dto.ChiTietChiPhi.TongGiaVon_COGS;
             dto.Kpi.LoiNhuanGop = dto.Kpi.DoanhThuRong - dto.Kpi.TongGiaVon;

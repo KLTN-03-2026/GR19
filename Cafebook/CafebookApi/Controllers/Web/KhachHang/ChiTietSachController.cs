@@ -1,5 +1,6 @@
 ﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelWeb.KhachHang;
+using CafebookModel.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -65,7 +66,8 @@ namespace CafebookApi.Controllers.Web.KhachHang
             {
                 IdSach = sach_raw.IdSach,
                 TieuDe = sach_raw.TenSach,
-                AnhBiaUrl = GetFullImageUrl(sach_raw.AnhBia),
+                AnhBiaUrl = GetFullImageUrl(string.IsNullOrEmpty(sach_raw.AnhBia) ? HinhAnhPaths.WebDefaultBookCover : sach_raw.AnhBia),
+
                 MoTa = sach_raw.MoTa,
                 GiaBia = sach_raw.GiaBia ?? 0,
                 ViTri = sach_raw.ViTri,
@@ -80,7 +82,9 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 {
                     IdSach = g.IdSachDeXuat,
                     TieuDe = g.TenSach,
-                    AnhBiaUrl = GetFullImageUrl(g.AnhBia),
+
+                    AnhBiaUrl = GetFullImageUrl(string.IsNullOrEmpty(g.AnhBia) ? HinhAnhPaths.WebDefaultBookCover : g.AnhBia),
+
                     GiaBia = g.GiaBia ?? 0
                 }).ToList()
             };

@@ -15,13 +15,8 @@ namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class PhieuLuongView : Page
     {
-        /*private static readonly HttpClient httpClient;
+        private bool _isDataLoaded = false;
 
-        static PhieuLuongView()
-        {
-            httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
-        }
-        */
         public PhieuLuongView()
         {
             InitializeComponent();
@@ -29,15 +24,33 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_PHIEU_LUONG"))
             {
                 MessageBox.Show("Bạn không có quyền xem Phiếu Lương!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
-                this.NavigationService?.GoBack();
+                if (this.NavigationService?.CanGoBack == true) this.NavigationService.GoBack();
+                else this.NavigationService?.GoBack(); 
                 return;
             }
 
-            ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-            await LoadDanhSachPhieuLuongAsync();
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                await LoadDanhSachPhieuLuongAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Phiếu Lương: {ex.Message}");
+            }
         }
 
         private void BtnQuayLai_Click(object sender, RoutedEventArgs e)

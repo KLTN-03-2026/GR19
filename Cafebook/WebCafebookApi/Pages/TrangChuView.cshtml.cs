@@ -1,7 +1,7 @@
 ﻿using CafebookModel.Model.ModelWeb.KhachHang;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.DataProtection;
-using System.Net.Http; // Đảm bảo có thư viện này để bắt lỗi HttpRequestException
+using System.Net.Http; 
 
 namespace WebCafebookApi.Pages
 {

@@ -23,6 +23,9 @@ namespace WebCafebookApi.Pages
         [BindProperty(SupportsGet = true)] public string? TokenTacGia { get; set; }
         [BindProperty(SupportsGet = true)] public string? TokenTheLoai { get; set; }
         [BindProperty(SupportsGet = true)] public string? TokenNXB { get; set; }
+        [BindProperty(SupportsGet = true)] public int PageNum { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int CurrentPage { get; set; } = 1;
 
         public string PageTitle { get; set; } = "Thư Viện Sách";
         public string? PageDescription { get; set; }
@@ -44,7 +47,8 @@ namespace WebCafebookApi.Pages
         public async Task<IActionResult> OnGetAsync()
         {
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
-            var sb = new StringBuilder("api/web/timkiemsach?");
+            var sb = new StringBuilder($"api/web/timkiemsach?pageNum={PageNum}");
+            //var sb = new StringBuilder("api/web/timkiemsach?");
             bool hasValidParam = false;
 
             try
@@ -53,19 +57,22 @@ namespace WebCafebookApi.Pages
                 if (!string.IsNullOrEmpty(TokenTacGia))
                 {
                     int idTacGia = int.Parse(_protectorTacGia.Unprotect(TokenTacGia));
-                    sb.Append($"idTacGia={idTacGia}");
+                    // THÊM DẤU & VÀO TRƯỚC idTacGia
+                    sb.Append($"&idTacGia={idTacGia}");
                     hasValidParam = true;
                 }
                 else if (!string.IsNullOrEmpty(TokenTheLoai))
                 {
                     int idTheLoai = int.Parse(_protectorTheLoai.Unprotect(TokenTheLoai));
-                    sb.Append($"idTheLoai={idTheLoai}");
+                    // THÊM DẤU & VÀO TRƯỚC idTheLoai
+                    sb.Append($"&idTheLoai={idTheLoai}");
                     hasValidParam = true;
                 }
                 else if (!string.IsNullOrEmpty(TokenNXB))
                 {
                     int idNXB = int.Parse(_protectorNXB.Unprotect(TokenNXB));
-                    sb.Append($"idNXB={idNXB}");
+                    // THÊM DẤU & VÀO TRƯỚC idNXB
+                    sb.Append($"&idNXB={idNXB}");
                     hasValidParam = true;
                 }
             }
@@ -88,6 +95,8 @@ namespace WebCafebookApi.Pages
                     PageTitle = result.TieuDeTrang;
                     PageDescription = result.MoTaTrang;
                     SachList = result.SachList;
+                    TotalPages = result.TotalPages;
+                    CurrentPage = result.CurrentPage;
                 }
             }
             catch (System.Exception ex)

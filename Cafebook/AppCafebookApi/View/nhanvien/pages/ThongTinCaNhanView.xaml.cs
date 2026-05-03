@@ -17,17 +17,10 @@ namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class ThongTinCaNhanView : Page
     {
-        //private static readonly HttpClient httpClient;
         private string? _newAvatarFilePath = null;
-        /*
-        static ThongTinCaNhanView()
-        {
-            ApiClient.Instance = new ApiClient.Instance();
-            string? apiUrl = AppConfigManager.GetApiServerUrl();
-            if (!string.IsNullOrWhiteSpace(apiUrl)) ApiClient.Instance.BaseAddress = new Uri(apiUrl);
-            else ApiClient.Instance.BaseAddress = new Uri("http://127.0.0.1:5166");
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public ThongTinCaNhanView()
         {
             InitializeComponent();
@@ -35,6 +28,13 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+            {
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            }
+
             if (!AuthService.CoQuyen("FULL_NV", "FULL_QL", "NV_THONG_TIN"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập Thông Tin Cá Nhân.", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -42,16 +42,27 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
-            ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            await Task.Delay(350);
 
-            if (FindName("btnLichSu") is ToggleButton btnLichSu)
+            if (!this.IsLoaded) return;
+
+            try
             {
-                btnLichSu.IsChecked = true;
-                BtnTab_Click(btnLichSu, new RoutedEventArgs());
-            }
+                if (FindName("btnLichSu") is ToggleButton btnLichSu)
+                {
+                    btnLichSu.IsChecked = true;
+                    BtnTab_Click(btnLichSu, new RoutedEventArgs());
+                }
 
-            await LoadDataAsync();
-            await LoadLeaveHistoryAsync();
+                await LoadDataAsync();
+                await LoadLeaveHistoryAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Profile: {ex.Message}");
+            }
         }
 
         private void BtnTab_Click(object sender, RoutedEventArgs e)

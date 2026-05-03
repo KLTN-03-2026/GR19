@@ -17,19 +17,15 @@ namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class LichLamViecView : Page
     {
-        //private static readonly HttpClient httpClient;
-        private const double PIXELS_PER_HOUR = 60.0; // 1 giờ = 60 pixels
+        private const double PIXELS_PER_HOUR = 60.0; 
         private LichLamViec_ConfigDto? _config;
 
         private DateTime _ngayBatDauHienThi;
-        private int _soNgayHienThi = 7; // Mặc định xem 1 tuần
+        private int _soNgayHienThi = 7; 
         private List<LichLamViec_CaNhanDto> _currentData = new();
-        /*
-        static LichLamViecView()
-        {
-            httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166") };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public LichLamViecView()
         {
             InitializeComponent();
@@ -38,17 +34,35 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_LICH_LAM_VIEC"))
             {
                 MessageBox.Show("Bạn không có quyền xem mục này!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
-                this.NavigationService?.GoBack();
+                if (this.NavigationService?.CanGoBack == true) this.NavigationService.GoBack();
+                else this.NavigationService?.GoBack(); 
                 return;
             }
 
-            ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            await Task.Delay(350);
 
-            await LoadConfigAsync();
-            await RefreshScheduleAsync();
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                await LoadConfigAsync();
+
+                await RefreshScheduleAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Lịch làm việc: {ex.Message}");
+            }
         }
 
         private async Task LoadConfigAsync()

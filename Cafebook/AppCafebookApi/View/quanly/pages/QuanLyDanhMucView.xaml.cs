@@ -15,19 +15,44 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDanhMucView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyDanhMucGridDto> _dataList = new();
         private QuanLyDanhMucGridDto? _selectedItem;
         private bool _isAdding = false;
 
-       // static QuanLyDanhMucView() { ApiClient.Instance = new ApiClient.Instance { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
+
         public QuanLyDanhMucView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-            if (!AuthService.CoQuyen("QL_DANH_MUC")) { MessageBox.Show("Từ chối!"); this.NavigationService?.GoBack(); return; }
-            ApplyPermissions(); await LoadDataAsync();
+            if (_isDataLoaded) return;
+
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
+            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_DANH_MUC"))
+            {
+                MessageBox.Show("Từ chối truy cập module Danh mục!");
+                this.NavigationService?.GoBack();
+                return;
+            }
+
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions();
+
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tải danh mục: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()

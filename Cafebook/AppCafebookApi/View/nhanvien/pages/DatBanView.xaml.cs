@@ -1,5 +1,4 @@
-﻿// [DatBanView.xaml.cs]
-using AppCafebookApi.Services;
+﻿using AppCafebookApi.Services;
 using CafebookModel.Model.ModelApp;
 using CafebookModel.Model.ModelApp.NhanVien;
 using CafebookModel.Model.ModelApp.NhanVien.DatBan;
@@ -41,6 +40,8 @@ namespace AppCafebookApi.View.nhanvien.pages
         private List<string> _validHours = new List<string>();
         private List<string> _validMinutes = Enumerable.Range(0, 60).Select(m => m.ToString("00")).ToList();
 
+        private bool _isDataLoaded = false;
+
         public DatBanView()
         {
             InitializeComponent();
@@ -66,16 +67,18 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
+            if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
+            {
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            }
+
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_DAT_BAN"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập trang Đặt Bàn!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService != null && this.NavigationService.CanGoBack) this.NavigationService.GoBack();
                 return;
-            }
-
-            if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
-            {
-                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
             if (ApiClient.Instance.BaseAddress == null)
@@ -84,8 +87,22 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
-            await LoadAllDataAsync();
-            _autoRefreshTimer.Start();
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                await LoadAllDataAsync();
+
+                _autoRefreshTimer.Start();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Đặt Bàn: {ex.Message}");
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)

@@ -84,14 +84,23 @@ namespace AppCafebookApi.View.Common
                 if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                 try
                 {
-                    HttpResponseMessage res = await ApiClient.Instance.PutAsJsonAsync($"api/app/phatluong/xacnhan/{_idPhieuLuong}", new { });
+                    var payload = new XacNhanPhatDto
+                    {
+                        IdNguoiPhat = AuthService.CurrentUser?.IdNhanVien ?? 1
+                    };
+
+                    HttpResponseMessage res = await ApiClient.Instance.PutAsJsonAsync($"api/app/phatluong/xacnhan/{_idPhieuLuong}", payload);
+
                     if (res.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Xác nhận thành công!");
-                        this.DialogResult = true; // Báo hiệu cho màn hình danh sách load lại
+                        MessageBox.Show("Phát lương thành công!", "Hoàn tất");
+                        this.DialogResult = true;
                         this.Close();
                     }
-                    else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
+                    else
+                    {
+                        MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
+                    }
                 }
                 finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace CafebookModel.Model.ModelApp.QuanLy
 {
@@ -15,6 +16,9 @@ namespace CafebookModel.Model.ModelApp.QuanLy
         public string LoaiTaiKhoan { get; set; } = string.Empty;
         public string TrangThai { get; set; } = string.Empty;
         public bool TaiKhoanTam { get; set; }
+        public bool DaXoa { get; set; }
+        [JsonIgnore]
+        public string SearchKeyword { get; set; } = string.Empty;
     }
 
     public class QuanLyKhachHangDetailDto
@@ -32,6 +36,7 @@ namespace CafebookModel.Model.ModelApp.QuanLy
         public string? AnhDaiDien { get; set; }
         public bool TaiKhoanTam { get; set; }
         public DateTime NgayTao { get; set; }
+        public bool DaXoa { get; set; }
 
         public List<KhachHangLichSuMuaDto> LichSuMuaHang { get; set; } = new();
         public List<KhachHangLichSuThueDto> LichSuThueSach { get; set; } = new();

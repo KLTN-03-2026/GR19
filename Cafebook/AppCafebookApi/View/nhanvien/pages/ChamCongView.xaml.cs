@@ -20,21 +20,18 @@ namespace AppCafebookApi.View.nhanvien.pages
         private DateTime? _gioVaoHienTai;
         private decimal _tongGioDaLamCache = 0;
 
-        // Bảng màu cho Trạng thái chuẩn Material
         private readonly Brush _colorSuccess = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2E7D32"));
         private readonly Brush _colorSuccessBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E8F5E9"));
-
         private readonly Brush _colorDanger = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#C62828"));
         private readonly Brush _colorDangerBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFEBEE"));
-
         private readonly Brush _colorWarning = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F57F17"));
         private readonly Brush _colorWarningBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFDE7"));
-
         private readonly Brush _colorInfo = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D27D2D"));
         private readonly Brush _colorInfoBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF8E1"));
-
         private readonly Brush _colorGray = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#757575"));
         private readonly Brush _colorGrayBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F5F5F5"));
+
+        private bool _isDataLoaded = false;
 
         public ChamCongView()
         {
@@ -49,7 +46,11 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            // BẢO MẬT LỚP 2: KIỂM TRA QUYỀN
+            if (_isDataLoaded) return;
+
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập chức năng Chấm công.", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -57,10 +58,25 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
-            _timerClock.Start();
-            await LoadStatusAsync();
+            await Task.Delay(350);
 
-            if (FindName("dpChonThang") is DatePicker dp) dp.SelectedDate = DateTime.Now;
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                _timerClock.Start();
+
+                await LoadStatusAsync();
+
+                if (FindName("dpChonThang") is DatePicker dp) 
+                    dp.SelectedDate = DateTime.Now;
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Chấm công: {ex.Message}");
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)

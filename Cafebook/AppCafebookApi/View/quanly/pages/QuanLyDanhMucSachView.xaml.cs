@@ -15,20 +15,21 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDanhMucSachView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyDanhMucSachItemDto> _currentDataList = new();
         private QuanLyDanhMucSachItemDto? _selectedItem = null;
-        private string _currentEndpoint = "tacgia"; // Mặc định là Tác giả
+        private string _currentEndpoint = "tacgia";
 
-//        static QuanLyDanhMucSachView() { ApiClient.Instance = new ApiClient.Instance { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLyDanhMucSachView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            // BẢO MẬT LỚP 2
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
             if (!AuthService.CoQuyen("FULL_QL", "QL_DANH_MUC_SACH"))
             {
                 MessageBox.Show("Từ chối truy cập module Danh mục sách!");
@@ -36,13 +37,25 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            ApplyPermissions();
-            await LoadDataAsync();
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions();
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại Danh mục sách: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()
         {
-            // BẢO MẬT LỚP 1 VÀ FINDNAME
             bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_DANH_MUC_SACH");
             if (FindName("GridDuLieu") is Grid g) g.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;

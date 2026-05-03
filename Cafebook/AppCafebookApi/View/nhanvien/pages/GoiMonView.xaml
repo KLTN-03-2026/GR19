@@ -136,6 +136,7 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
         <Style x:Key="ProductCard" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource LightCreamBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
@@ -147,7 +148,10 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}" 
+                            CornerRadius="8" ClipToBounds="True">
                             <Border.Effect>
                                 <DropShadowEffect x:Name="shadow" ShadowDepth="1" Color="#000" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
@@ -172,14 +176,12 @@
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>
                             </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5"/>
-                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
         <Style x:Key="ActionButton" TargetType="Button">
             <Setter Property="Padding" Value="15"/>
             <Setter Property="FontSize" Value="15"/>
@@ -261,8 +263,9 @@
                          Tag="Tìm kiếm món..."/>
             </Border>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl x:Name="icSanPham">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="Both">
+                <ItemsControl x:Name="icSanPham" VirtualizingStackPanel.IsVirtualizing="True" 
+                  VirtualizingStackPanel.VirtualizationMode="Recycling">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel Margin="5"/>
@@ -270,18 +273,16 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button Style="{StaticResource ProductCard}" Click="ProductButton_Click" DataContext="{Binding}">
+                            <Button Style="{StaticResource ProductCard}" Click="ProductButton_Click">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="*"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
-                                    <Border Grid.Row="0" 
-                                            Background="{StaticResource BorderGrayBrush}" 
-                                            CornerRadius="6,6,0,0"
-                                            ClipToBounds="True">
-                                        <Image Source="{Binding HinhAnh}" 
-                                               Stretch="UniformToFill" />
+                                    <Border Grid.Row="0" CornerRadius="8,8,0,0">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{Binding HinhAnh}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Border.Background>
                                     </Border>
                                     <StackPanel Grid.Row="1" Margin="8">
                                         <TextBlock Text="{Binding TenSanPham}" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center" Height="38" FontSize="14" Foreground="{StaticResource DarkBrownBrush}"/>

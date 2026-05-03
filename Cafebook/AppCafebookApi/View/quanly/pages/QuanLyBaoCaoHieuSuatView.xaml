@@ -69,7 +69,13 @@
                 <ComboBox x:Name="cmbVaiTro" Width="150" DisplayMemberPath="Ten" SelectedValuePath="Id" VerticalAlignment="Center" Margin="0,0,15,0"/>
 
                 <TextBlock Text="Tên NV:" VerticalAlignment="Center" Margin="5"/>
-                <TextBox x:Name="txtSearch" Width="150" VerticalAlignment="Center" Padding="5" Margin="0,0,20,0"/>
+                <ComboBox x:Name="cmbSearchNhanVien" Width="180" 
+                          IsEditable="True" 
+                          StaysOpenOnEdit="True"
+                          DisplayMemberPath="Ten" 
+                          SelectedValuePath="Id"
+                          KeyUp="CmbSearchNhanVien_KeyUp"
+                          VerticalAlignment="Center" Margin="0,0,15,0"/>
 
                 <Button x:Name="btnGenerate" Content="⟳ Tạo Báo Cáo" Style="{StaticResource ActionBtn}" Margin="0,0,10,0" Click="BtnGenerate_Click"/>
                 <Button x:Name="btnExportToExcel" Content="⬇ Xuất Excel" Style="{StaticResource ActionBtn}" Background="#2E7D32" Click="BtnExportToExcel_Click"/>

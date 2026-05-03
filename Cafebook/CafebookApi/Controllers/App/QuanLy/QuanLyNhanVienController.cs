@@ -200,18 +200,28 @@ namespace CafebookApi.Controllers.App.QuanLy
         {
             var entity = await _context.NhanViens.FindAsync(id);
             if (entity == null) return NotFound();
+            bool hasDependencies = await _context.LichLamViecs.AnyAsync(l => l.IdNhanVien == id) ||
+                                   await _context.HoaDons.AnyAsync(h => h.IdNhanVien == id);
 
-            if (await _context.LichLamViecs.AnyAsync(l => l.IdNhanVien == id) ||
-                await _context.HoaDons.AnyAsync(h => h.IdNhanVien == id))
+            if (hasDependencies)
             {
-                return Conflict("Không thể xóa! Nhân viên này đã có dữ liệu Hóa đơn hoặc Lịch làm việc. Vui lòng chuyển trạng thái 'Nghỉ việc'.");
+                entity.TrangThaiLamViec = "Nghỉ việc";
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = "Nhân viên đã có dữ liệu liên quan nên hệ thống đã tự động chuyển sang trạng thái 'Nghỉ việc' (Xóa mềm)." });
             }
+            else
+            {
+                if (!string.IsNullOrEmpty(entity.AnhDaiDien))
+                {
+                    DeleteOldImage(entity.AnhDaiDien);
+                }
 
-            if (!string.IsNullOrEmpty(entity.AnhDaiDien)) DeleteOldImage(entity.AnhDaiDien);
+                _context.NhanViens.Remove(entity);
+                await _context.SaveChangesAsync();
 
-            _context.NhanViens.Remove(entity);
-            await _context.SaveChangesAsync();
-            return Ok(new { Message = "Đã xóa nhân viên" });
+                return Ok(new { Message = "Đã xóa cứng nhân viên khỏi hệ thống thành công." });
+            }
         }
 
         // ĐÃ NÂNG CẤP LƯU THEO TÊN

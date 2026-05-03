@@ -10,23 +10,24 @@ using System.Windows.Controls;
 using AppCafebookApi.Services;
 using CafebookModel.Utils;
 using CafebookModel.Model.ModelApp.QuanLy;
-// using AppCafebookApi.View.common; // Nếu cần để gọi Báo Cáo
 
 namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyTonKhoView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyTonKhoDto> _tonKhoList = new();
 
-        //static QuanLyTonKhoView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
+
         public QuanLyTonKhoView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            // BẢO MẬT LỚP 1: Chìa khóa Cổng
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
             bool hasAnyPermission = AuthService.CoQuyen("FULL_QL", "QL_TON_KHO", "QL_NGUYEN_LIEU", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP", "QL_DON_VI_CHUYEN_DOI");
             if (!hasAnyPermission)
             {
@@ -35,17 +36,32 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            ApplyPermissions();
+            await Task.Delay(350);
 
-            // BẢO MẬT LỚP 2: Chìa khóa Phòng (Xem danh sách Tồn kho)
-            if (AuthService.CoQuyen("FULL_QL", "QL_TON_KHO"))
+            if (!this.IsLoaded) return;
+
+            try
             {
-                await LoadTonKhoAsync();
+                ApplyPermissions();
+
+                if (AuthService.CoQuyen("FULL_QL", "QL_TON_KHO"))
+                {
+                    if (FindName("GridDuLieuKho") is Grid gridData) gridData.Visibility = Visibility.Visible;
+                    if (FindName("txtThongBaoKhongCoQuyen") is Border txtThongBao) txtThongBao.Visibility = Visibility.Collapsed;
+
+                    await LoadTonKhoAsync();
+
+                    _isDataLoaded = true;
+                }
+                else
+                {
+                    if (FindName("GridDuLieuKho") is Grid gridData) gridData.Visibility = Visibility.Collapsed;
+                    if (FindName("txtThongBaoKhongCoQuyen") is Border txtThongBao) txtThongBao.Visibility = Visibility.Visible;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                if (FindName("GridDuLieuKho") is Grid gridData) gridData.Visibility = Visibility.Collapsed;
-                if (FindName("txtThongBaoKhongCoQuyen") is Border txtThongBao) txtThongBao.Visibility = Visibility.Visible;
+                Console.WriteLine($"Lỗi tại module Tồn kho: {ex.Message}");
             }
         }
 

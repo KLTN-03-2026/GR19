@@ -15,39 +15,56 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyThongBaoView : Page
     {
-        //private static readonly HttpClient httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") };
         private List<QuanLyThongBaoGridDto> _allData = new();
         private QuanLyThongBaoGridDto? _selectedItem = null;
 
-        // Danh sách TẤT CẢ các loại thông báo dùng cho bộ lọc
         private readonly List<string> _allTypes = new() { "Tất cả", "SuCoBan", "HetHang", "DonXinNghi", "Kho", "DatBan", "CanhBaoKho", "PhieuGoiMon", "DonHangMoi", "PhanHoiKhachHang","DangKyLichMoi", "ThongBaoNhanVien", "ThongBaoQuanLy", "ThongBaoToanNhanVien" };
-
-        // Danh sách THỦ CÔNG chỉ dành cho Tạo Mới
         private readonly List<string> _manualTypes = new() { "ThongBaoNhanVien", "ThongBaoQuanLy", "ThongBaoToanNhanVien" };
+
+        private bool _isDataLoaded = false;
 
         public QuanLyThongBaoView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            // Cho phép Admin (FULL_QL) hoặc Quyền quản lý thông báo được xem
-            bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_THONG_BAO") || AuthService.CoQuyen("FULL_QL", "FULL_QL");
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
+            bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_THONG_BAO");
             if (!hasQuyen)
             {
-                GridDuLieu.Visibility = Visibility.Collapsed;
-                txtThongBaoKhongCoQuyen.Visibility = Visibility.Visible;
+                if (FindName("GridDuLieu") is Grid g) g.Visibility = Visibility.Collapsed;
+                if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = Visibility.Visible;
                 return;
             }
 
-            dpFilterTuNgay.SelectedDate = DateTime.Today.AddDays(-7);
-            dpFilterDenNgay.SelectedDate = DateTime.Today;
+            await Task.Delay(350);
 
-            cmbFilterLoai.ItemsSource = _allTypes;
-            cmbFilterLoai.SelectedIndex = 0;
+            if (!this.IsLoaded) return;
 
-            SetFormComboBoxManualOnly();
-            await LoadDataAsync();
+            try
+            {
+                if (FindName("GridDuLieu") is Grid g) g.Visibility = Visibility.Visible;
+                if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = Visibility.Collapsed;
+
+                dpFilterTuNgay.SelectedDate = DateTime.Today.AddDays(-7);
+                dpFilterDenNgay.SelectedDate = DateTime.Today;
+
+                cmbFilterLoai.ItemsSource = _allTypes;
+                cmbFilterLoai.SelectedIndex = 0;
+
+                SetFormComboBoxManualOnly();
+
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Thông báo: {ex.Message}");
+            }
         }
 
         private void SetFormComboBoxManualOnly()

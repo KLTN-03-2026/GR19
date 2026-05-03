@@ -1,5 +1,4 @@
-﻿// File: AppCafebookApi/View/quanly/pages/QuanLyTongQuanView.xaml.cs
-using System;
+﻿using System;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -18,8 +17,6 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyTongQuanView : Page
     {
-        //private static readonly HttpClient httpClient;
-
         public SeriesCollection LineSeriesCollection { get; set; }
         public SeriesCollection BarSeriesCollection { get; set; }
         public SeriesCollection PieSeriesCollection { get; set; }
@@ -29,13 +26,9 @@ namespace AppCafebookApi.View.quanly.pages
 
         public Func<double, string> CurrencyFormatter { get; set; }
         public Func<double, string> NumberFormatter { get; set; }
-        /*
-        static QuanLyTongQuanView()
-        {
-            string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:";
-            httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyTongQuanView()
         {
             InitializeComponent();
@@ -55,6 +48,8 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
@@ -67,17 +62,32 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            ApplyPermissions();
+            await Task.Delay(350);
 
-            if (AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN"))
+            if (!this.IsLoaded) return;
+
+            try
             {
-                await LoadDashboardData();
+                ApplyPermissions();
+
+                if (AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN"))
+                {
+                    if (FindName("GridDuLieuTongQuan") is UIElement gridData) gridData.Visibility = Visibility.Visible;
+                    if (FindName("txtThongBaoKhongCoQuyen") is Border txtThongBao) txtThongBao.Visibility = Visibility.Collapsed;
+
+                    await LoadDashboardData();
+
+                    _isDataLoaded = true;
+                }
+                else
+                {
+                    if (FindName("GridDuLieuTongQuan") is UIElement gridData) gridData.Visibility = Visibility.Collapsed;
+                    if (FindName("txtThongBaoKhongCoQuyen") is Border txtThongBao) txtThongBao.Visibility = Visibility.Visible;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // [FIX LỖI]: Ép kiểu sang UIElement vì đã xóa ScrollViewer
-                if (FindName("GridDuLieuTongQuan") is UIElement gridData) gridData.Visibility = Visibility.Collapsed;
-                if (FindName("txtThongBaoKhongCoQuyen") is Border txtThongBao) txtThongBao.Visibility = Visibility.Visible;
+                Console.WriteLine($"Lỗi tại module Tổng quan: {ex.Message}");
             }
         }
 

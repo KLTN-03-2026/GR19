@@ -188,7 +188,11 @@
                     </Button>
                 </WrapPanel>
 
-                <ItemsControl x:Name="icBan" Margin="15,0,15,15">
+                <ItemsControl x:Name="icBan" Margin="15"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling"
+                  VirtualizingPanel.CacheLengthUnit="Item"
+                  VirtualizingPanel.CacheLength="10,10">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel/>

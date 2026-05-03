@@ -15,23 +15,45 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyDonViChuyenDoiView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyDonViChuyenDoiGridDto> _dataList = new();
         private List<LookupNguyenLieuDvtDto> _nlList = new();
         private QuanLyDonViChuyenDoiGridDto? _selectedItem;
         private bool _isAdding = false;
 
-       // static QuanLyDonViChuyenDoiView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
+
         public QuanLyDonViChuyenDoiView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            // LỚP 2 BẢO MẬT
-            if (!AuthService.CoQuyen("QL_DON_VI_CHUYEN_DOI")) { MessageBox.Show("Từ chối!"); this.NavigationService?.GoBack(); return; }
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            ApplyPermissions(); await LoadDataAsync();
+            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_DON_VI_CHUYEN_DOI"))
+            {
+                MessageBox.Show("Bạn không có quyền truy cập module Đơn vị chuyển đổi!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack();
+                return;
+            }
+
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions();
+
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Đơn vị chuyển đổi: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()

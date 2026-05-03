@@ -27,47 +27,19 @@ namespace CafebookApi.Controllers.App.NhanVien
         public async Task<IActionResult> GetSoDoBan()
         {
             var now = DateTime.Now;
-            var nowPlus10Minutes = now.AddMinutes(10);
-
-            var data = await _context.Bans
-               .AsNoTracking()
-               .Select(b => new
+            var nowPlus10 = now.AddMinutes(10);
+            var data = await _context.Bans.AsNoTracking()
+               .Select(b => new BanSoDoDto
                {
-                   Ban = b,
-                   HoaDonHienTai = _context.HoaDons
-                       .Where(h => h.IdBan == b.IdBan && h.TrangThai == "Chưa thanh toán")
-                       .Select(h => new { h.IdHoaDon, h.ThanhTien })
-                       .FirstOrDefault(),
-
-                   PhieuDatSapToi = _context.PhieuDatBans
-                       .Where(p => p.IdBan == b.IdBan &&
-                                   p.ThoiGianDat > now &&
-                                   (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận"))
-                       .OrderBy(p => p.ThoiGianDat)
-                       .FirstOrDefault()
-               })
-               .Select(data => new BanSoDoDto
-               {
-                   IdBan = data.Ban.IdBan,
-                   SoBan = data.Ban.SoBan,
-
-                   TrangThai = (data.Ban.TrangThai == "Trống" &&
-                                data.PhieuDatSapToi != null &&
-                                data.PhieuDatSapToi.ThoiGianDat <= nowPlus10Minutes)
-                               ? "Đã đặt"
-                               : data.Ban.TrangThai,
-
-                   GhiChu = data.Ban.GhiChu,
-                   IdKhuVuc = data.Ban.IdKhuVuc,
-                   IdHoaDonHienTai = data.HoaDonHienTai != null ? (int?)data.HoaDonHienTai.IdHoaDon : null,
-                   TongTienHienTai = data.HoaDonHienTai != null ? data.HoaDonHienTai.ThanhTien : 0,
-                   ThongTinDatBan = (data.Ban.TrangThai == "Trống" && data.PhieuDatSapToi != null)
-                                    ? $"Đặt lúc: {data.PhieuDatSapToi.ThoiGianDat:HH:mm}"
-                                    : null
-               })
-               .OrderBy(b => b.SoBan)
-               .ToListAsync();
-
+                   IdBan = b.IdBan,
+                   SoBan = b.SoBan,
+                   IdKhuVuc = b.IdKhuVuc,
+                   GhiChu = b.GhiChu,
+                   IdHoaDonHienTai = _context.HoaDons.Where(h => h.IdBan == b.IdBan && h.TrangThai == "Chưa thanh toán").Select(h => (int?)h.IdHoaDon).FirstOrDefault(),
+                   TongTienHienTai = _context.HoaDons.Where(h => h.IdBan == b.IdBan && h.TrangThai == "Chưa thanh toán").Select(h => h.ThanhTien).FirstOrDefault(),
+                   TrangThai = (b.TrangThai == "Trống" && _context.PhieuDatBans.Any(p => p.IdBan == b.IdBan && p.ThoiGianDat > now && p.ThoiGianDat <= nowPlus10 && (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận"))) ? "Đã đặt" : b.TrangThai,
+                   ThongTinDatBan = _context.PhieuDatBans.Where(p => p.IdBan == b.IdBan && p.ThoiGianDat > now && (p.TrangThai == "Đã xác nhận" || p.TrangThai == "Chờ xác nhận")).OrderBy(p => p.ThoiGianDat).Select(p => "Đặt lúc: " + p.ThoiGianDat.ToString("HH:mm")).FirstOrDefault()
+               }).OrderBy(b => b.SoBan).ToListAsync();
             return Ok(data);
         }
 

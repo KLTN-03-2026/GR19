@@ -16,51 +16,68 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyLuongView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyLuongBangKeDto> _previewList = new();
         private List<ThuongPhatMauLookupDto> _thuongPhatMauList = new();
         private QuanLyLuongBangKeDto? _selectedNhanVien = null;
         private DateTime _tuNgay;
         private DateTime _denNgay;
 
-        //static QuanLyLuongView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLyLuongView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
+
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT"))
             {
-                MessageBox.Show("Từ chối truy cập module Quản lý Lương!");
-                this.NavigationService?.GoBack(); return;
+                MessageBox.Show("Từ chối truy cập module Quản lý Lương!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack(); 
+                return;
             }
 
-            bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_LUONG");
-            if (FindName("GridDuLieu") is Grid g) g.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;
-            if (FindName("BtnNavChamCong") is Button btnChamCong)
-                btnChamCong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("BtnNavPhatLuong") is Button btnPhatLuong)
-                btnPhatLuong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_PHAT_LUONG") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("BtnNavThuongPhat") is Button btnThuongPhat)
-                btnThuongPhat.Visibility = AuthService.CoQuyen("FULL_QL", "QL_THUONG_PHAT") ? Visibility.Visible : Visibility.Collapsed;
+            await Task.Delay(350);
 
-            if (hasQuyen)
+            if (!this.IsLoaded) return;
+
+            try
             {
-                // Thay đổi load data cho Combobox Tháng thay vì Tuần
-                if (FindName("cmbNam") is ComboBox cNam && FindName("cmbThang") is ComboBox cThang)
-                {
-                    int currentYear = DateTime.Now.Year;
-                    for (int i = currentYear - 2; i <= currentYear + 1; i++) cNam.Items.Add(i);
-                    for (int i = 1; i <= 12; i++) cThang.Items.Add(i);
+                bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_LUONG");
+                
+                if (FindName("GridDuLieu") is Grid g) g.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
+                if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;
+                
+                if (FindName("BtnNavChamCong") is Button btnChamCong)
+                    btnChamCong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG") ? Visibility.Visible : Visibility.Collapsed;
+                if (FindName("BtnNavPhatLuong") is Button btnPhatLuong)
+                    btnPhatLuong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_PHAT_LUONG") ? Visibility.Visible : Visibility.Collapsed;
+                if (FindName("BtnNavThuongPhat") is Button btnThuongPhat)
+                    btnThuongPhat.Visibility = AuthService.CoQuyen("FULL_QL", "QL_THUONG_PHAT") ? Visibility.Visible : Visibility.Collapsed;
 
-                    cNam.SelectedItem = currentYear;
-                    cThang.SelectedItem = DateTime.Now.Month;
+                if (hasQuyen)
+                {
+                    if (FindName("cmbNam") is ComboBox cNam && FindName("cmbThang") is ComboBox cThang)
+                    {
+                        int currentYear = DateTime.Now.Year;
+                        for (int i = currentYear - 2; i <= currentYear + 1; i++) cNam.Items.Add(i);
+                        for (int i = 1; i <= 12; i++) cThang.Items.Add(i);
+
+                        cNam.SelectedItem = currentYear;
+                        cThang.SelectedItem = DateTime.Now.Month;
+                    }
+
+                    await LoadThuongPhatMauAsync();
                 }
 
-                await LoadThuongPhatMauAsync();
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Lương: {ex.Message}");
             }
         }
 
@@ -117,6 +134,8 @@ namespace AppCafebookApi.View.quanly.pages
                         if (updatedEmp != null && FindName("dgChiTietThuongPhat") is DataGrid dChiTiet)
                         {
                             _selectedNhanVien = updatedEmp;
+
+                            dChiTiet.ItemsSource = null;
                             dChiTiet.ItemsSource = updatedEmp.DanhSachThuongPhat;
                         }
                     }
@@ -179,7 +198,9 @@ namespace AppCafebookApi.View.quanly.pages
                 Loai = (FindName("cmbLoaiThuongPhat") as ComboBox)?.Text ?? "Thưởng",
                 SoTien = soTien,
                 LyDo = lyDo,
-                IdNguoiTao = 1 // Ghi chú: Nếu hệ thống có UserID chuẩn, truyền AuthService.CurrentUserId vào đây
+                IdNguoiTao = 1,
+                // SỬA TẠI ĐÂY: Gắn ngày tạo là ngày đầu tiên của tháng đang xem
+                NgayTao = _tuNgay
             };
 
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
@@ -188,9 +209,10 @@ namespace AppCafebookApi.View.quanly.pages
                 var res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-luong/thuong-phat", dto);
                 if (res.IsSuccessStatusCode)
                 {
-                    await ReloadPreviewAsync(true);
+                    await ReloadPreviewAsync(true); // Tự động load lại danh sách sau khi thêm
                     ResetFormThuongPhat();
-                    MessageBox.Show("Đã thêm khoản thủ công thành công!");
+                    // Bạn có thể comment (ẩn) dòng MessageBox báo thành công dưới đây cho trải nghiệm mượt hơn
+                    // MessageBox.Show("Đã thêm khoản thủ công thành công!"); 
                 }
                 else
                 {
@@ -222,7 +244,7 @@ namespace AppCafebookApi.View.quanly.pages
         private async void BtnChotLuong_Click(object sender, RoutedEventArgs e)
         {
             if (!_previewList.Any()) return;
-            if (MessageBox.Show("Chốt lương sẽ lưu dữ liệu vào CSDL và không thể hoàn tác. Tiếp tục?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (MessageBox.Show("Chốt lương sẽ lưu dữ liệu vào CSDL. Các nhân viên đã chốt sẽ được lướt qua. Tiếp tục?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
                 try
@@ -236,11 +258,11 @@ namespace AppCafebookApi.View.quanly.pages
                     HttpResponseMessage res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-luong/chot-luong", dto);
                     if (res.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Chốt lương thành công!");
-                        _previewList.Clear();
-                        if (FindName("dgBangKe") is DataGrid dg) dg.ItemsSource = null;
-                        if (FindName("btnChotLuong") is Button btn) btn.IsEnabled = false;
-                        if (FindName("formChiTiet") is StackPanel form) form.IsEnabled = false;
+                        var resultData = await res.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                        string msg = resultData != null && resultData.ContainsKey("message") ? resultData["message"] : "Chốt lương thành công!";
+
+                        MessageBox.Show(msg, "Hoàn tất");
+                        await ReloadPreviewAsync(true); 
                     }
                     else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
                 }

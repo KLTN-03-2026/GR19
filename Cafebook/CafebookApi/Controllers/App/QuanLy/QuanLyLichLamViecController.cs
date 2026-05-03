@@ -187,6 +187,59 @@ namespace CafebookApi.Controllers.App.QuanLy
             return Ok(new { message = "Chép lịch thành công" });
         }
 
+        [HttpPost("copy-tuan-sang-tuan")]
+        public async Task<IActionResult> CopyTuanSangTuan([FromBody] CopyTuanSangTuanDto req)
+        {
+            // 1. Tính toán mốc ngày của Tuần Nguồn (Thứ 2 đến Chủ nhật)
+            int diffSource = (7 + (req.SourceDate.DayOfWeek - DayOfWeek.Monday)) % 7;
+            var startSourceWeek = req.SourceDate.AddDays(-1 * diffSource).Date;
+
+            // 2. Tính toán mốc ngày của Tuần Đích
+            int diffTarget = (7 + (req.TargetDate.DayOfWeek - DayOfWeek.Monday)) % 7;
+            var startTargetWeek = req.TargetDate.AddDays(-1 * diffTarget).Date;
+
+            if (startSourceWeek == startTargetWeek)
+                return BadRequest("Tuần đích phải khác tuần nguồn.");
+
+            var endTargetWeek = startTargetWeek.AddDays(6);
+
+            // 3. Lấy dữ liệu nhu cầu của Tuần Nguồn
+            var sourceNhuCaus = await _context.NhuCauCaLams
+                .Where(nc => nc.NgayLam >= startSourceWeek && nc.NgayLam <= startSourceWeek.AddDays(6))
+                .ToListAsync();
+
+            // 4. Dọn dẹp dữ liệu cũ của Tuần Đích (cả Nhu cầu và Lịch đã gán)
+            var existingNhuCaus = await _context.NhuCauCaLams
+                .Where(nc => nc.NgayLam >= startTargetWeek && nc.NgayLam <= endTargetWeek)
+                .ToListAsync();
+            var existingLichs = await _context.LichLamViecs
+                .Where(l => l.NgayLam >= startTargetWeek && l.NgayLam <= endTargetWeek)
+                .ToListAsync();
+
+            _context.LichLamViecs.RemoveRange(existingLichs);
+            _context.NhuCauCaLams.RemoveRange(existingNhuCaus);
+
+            // 5. Tiến hành Copy
+            foreach (var snc in sourceNhuCaus)
+            {
+                // Tính độ lệch ngày (0 đến 6) so với ngày đầu tuần
+                int dayOffset = (snc.NgayLam.Date - startSourceWeek).Days;
+                var targetDate = startTargetWeek.AddDays(dayOffset);
+
+                _context.NhuCauCaLams.Add(new NhuCauCaLam
+                {
+                    NgayLam = targetDate,
+                    IdCa = snc.IdCa,
+                    IdVaiTro = snc.IdVaiTro,
+                    SoLuongCan = snc.SoLuongCan,
+                    LoaiYeuCau = snc.LoaiYeuCau,
+                    GhiChu = snc.GhiChu
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Sao chép lịch sang tuần mới thành công." });
+        }
 
         [HttpPost("assign")]
         public async Task<IActionResult> AssignLich([FromBody] QuanLyLichLamViec_AssignDto dto)

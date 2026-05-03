@@ -16,7 +16,6 @@ using System.Windows.Input;
 
 namespace AppCafebookApi.View.quanly.pages
 {
-    // Model ảo hỗ trợ cho DataGrid hiển thị Duyệt ca
     public class PendingShiftModel
     {
         public string NgayLamStr { get; set; } = string.Empty;
@@ -28,9 +27,7 @@ namespace AppCafebookApi.View.quanly.pages
 
     public partial class QuanLyLichLamViecView : Page
     {
-        //private static readonly HttpClient httpClient;
         private const double PIXELS_PER_HOUR = 60.0;
-
         private QuanLyLichLamViec_CaiDatDto? _caiDat;
         private List<QuanLyLichLamViec_ItemDto> _lichData = new();
         private List<QuanLyLichLamViec_CaDto> _caList = new();
@@ -42,13 +39,9 @@ namespace AppCafebookApi.View.quanly.pages
         private DateTime? _clickedDate = null;
         private int _editNhuCauId = 0;
         private QuanLyNhanVienLookupDto? _pendingAssignNhanVien = null;
-        /*
-        static QuanLyLichLamViecView()
-        {
-            string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
-            httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyLichLamViecView()
         {
             InitializeComponent();
@@ -56,12 +49,35 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            dpTuNgay.SelectedDate = LayNgayDauTuan(DateTime.Now);
-            await LoadMasterData();
-            await RefreshDataAndDraw();
+            if (!AuthService.CoQuyen("FULL_QL", "QL_LICH_LAM_VIEC"))
+            {
+                MessageBox.Show("Bạn không có quyền truy cập module Lịch làm việc!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.NavigationService?.GoBack();
+                return;
+            }
+
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                dpTuNgay.SelectedDate = LayNgayDauTuan(DateTime.Now);
+
+                await LoadMasterData();
+                await RefreshDataAndDraw();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Lịch làm việc: {ex.Message}");
+            }
         }
 
         private DateTime LayNgayDauTuan(DateTime date)
@@ -648,15 +664,65 @@ namespace AppCafebookApi.View.quanly.pages
 
 
         // =======================================================
-        // TÌM KIẾM & CHUYỂN NGÀY
+        // COPY LỊCH TỪ TUẦN NÀY SANG TUẦN KHÁC
         // =======================================================
-        /*
-        private void TxtSearchNV_TextChanged(object sender, TextChangedEventArgs e)
+        private void BtnMoPopupCopyTuan_Click(object sender, RoutedEventArgs e)
         {
-            string search = txtSearchNV.Text.Trim().ToLower();
-            lbNhanVien.ItemsSource = string.IsNullOrEmpty(search) ? _allNhanVienList : _allNhanVienList.Where(n => n.HoTen.ToLower().Contains(search) || n.TenVaiTro.ToLower().Contains(search)).ToList();
+            dpTargetWeek.SelectedDate = null;
+            popupCopyTuan.Visibility = Visibility.Visible;
         }
-        */
+
+        private void BtnCloseCopyTuan_Click(object sender, RoutedEventArgs e)
+        {
+            popupCopyTuan.Visibility = Visibility.Collapsed;
+        }
+
+        private async void BtnThucHienCopyTuan_Click(object sender, RoutedEventArgs e)
+        {
+            if (!dpTargetWeek.SelectedDate.HasValue)
+            {
+                MessageBox.Show("Vui lòng chọn một ngày thuộc tuần đích muốn chép tới!", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            DateTime targetDate = dpTargetWeek.SelectedDate.Value;
+
+            // Cảnh báo người dùng trước khi ghi đè
+            var msg = $"Bạn có chắc chắn muốn chép toàn bộ slot nhu cầu của tuần hiện tại sang tuần chứa ngày {targetDate:dd/MM/yyyy} không?\n\nCảnh báo: Dữ liệu cũ của tuần đích sẽ bị xóa sạch!";
+            if (MessageBox.Show(msg, "Xác nhận sao chép", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            {
+                popupCopyTuan.Visibility = Visibility.Collapsed;
+                LoadingOverlay.Visibility = Visibility.Visible;
+
+                try
+                {
+                    var req = new
+                    {
+                        SourceDate = _currentStartDate, // Mốc ngày của tuần đang hiển thị trên giao diện
+                        TargetDate = targetDate
+                    };
+
+                    var res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-lichlamviec/copy-tuan-sang-tuan", req);
+
+                    if (res.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Sao chép lịch sang tuần mới thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        // Tự động chuyển View sang tuần mới để xem kết quả
+                        dpTuNgay.SelectedDate = targetDate;
+                        await RefreshDataAndDraw();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Lỗi: " + await res.Content.ReadAsStringAsync(), "Lỗi sao chép", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                finally
+                {
+                    LoadingOverlay.Visibility = Visibility.Collapsed;
+                }
+            }
+        }
         // =======================================================
         // TÌM KIẾM & LỌC DANH SÁCH NHÂN VIÊN (CỘT BÊN TRÁI)
         // =======================================================

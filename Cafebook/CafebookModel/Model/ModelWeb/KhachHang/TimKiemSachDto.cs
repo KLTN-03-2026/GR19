@@ -8,6 +8,8 @@ namespace CafebookModel.Model.ModelWeb.KhachHang
         public string TieuDeTrang { get; set; } = string.Empty;
         public string? MoTaTrang { get; set; }
         public List<TimKiemSachCardDto> SachList { get; set; } = new();
+        public int TotalPages { get; set; }
+        public int CurrentPage { get; set; }
     }
 
     // Thẻ sách thu gọn dành riêng cho màn hình tìm kiếm

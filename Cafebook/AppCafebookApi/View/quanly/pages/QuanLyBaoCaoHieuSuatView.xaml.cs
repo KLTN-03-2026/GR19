@@ -1,5 +1,4 @@
-﻿// File: AppCafebookApi/View/quanly/pages/QuanLyBaoCaoHieuSuatView.xaml.cs
-using AppCafebookApi.Services;
+﻿using AppCafebookApi.Services;
 using CafebookModel.Model.ModelApp.QuanLy;
 using CafebookModel.Utils;
 using Microsoft.Win32;
@@ -18,23 +17,22 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using Button = System.Windows.Controls.Button;
+using ComboBox = System.Windows.Controls.ComboBox;
+using TextBox = System.Windows.Controls.TextBox;
+using DataGrid = System.Windows.Controls.DataGrid;
+using TextBlock = System.Windows.Controls.TextBlock;
+using DatePicker = System.Windows.Controls.DatePicker;
+using Border = System.Windows.Controls.Border;
 
 namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyBaoCaoHieuSuatView : Page
     {
-        //private static readonly HttpClient httpClient;
         private QuanLyBaoCaoHieuSuatTongHopDto? currentReportData;
-        /*
-        static QuanLyBaoCaoHieuSuatView()
-        {
-            ApiClient.Instance = new ApiClient.Instance
-            {
-                BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost"),
-                Timeout = TimeSpan.FromMinutes(5)
-            };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyBaoCaoHieuSuatView()
         {
             InitializeComponent();
@@ -42,7 +40,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            // Bảo mật Lớp 2
+            if (_isDataLoaded) return;
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
@@ -53,14 +51,23 @@ namespace AppCafebookApi.View.quanly.pages
                 return;
             }
 
-            // Bảo mật Lớp 1
-            ApplyPermissions();
+            await Task.Delay(350);
+            if (!this.IsLoaded) return;
+            try
+            {
+                ApplyPermissions();
 
-            var now = DateTime.Now;
-            if (FindName("dpStartDate") is DatePicker dpS) dpS.SelectedDate = new DateTime(now.Year, now.Month, 1);
-            if (FindName("dpEndDate") is DatePicker dpE) dpE.SelectedDate = now;
+                var now = DateTime.Now;
+                if (FindName("dpStartDate") is DatePicker dpS) dpS.SelectedDate = new DateTime(now.Year, now.Month, 1);
+                if (FindName("dpEndDate") is DatePicker dpE) dpE.SelectedDate = now;
 
-            await LoadFiltersAsync();
+                await LoadFiltersAsync();
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải dữ liệu: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()
@@ -73,11 +80,11 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var response = await ApiClient.Instance.GetFromJsonAsync<JsonElement>("api/app/quanly/baocaohieusuat/filters");
-                if (response.TryGetProperty("vaiTros", out JsonElement vtElement))
+                var response = await ApiClient.Instance.GetFromJsonAsync<QuanLyBaoCaoHieuSuat_FiltersDto>("api/app/quanly/baocaohieusuat/filters");
+                if (response != null && response.VaiTros != null)
                 {
-                    var vaiTros = vtElement.Deserialize<List<QuanLyFilterLookupDto>>();
-                    if (vaiTros != null && FindName("cmbVaiTro") is ComboBox cmb)
+                    var vaiTros = response.VaiTros;
+                    if (FindName("cmbVaiTro") is ComboBox cmb)
                     {
                         vaiTros.Insert(0, new QuanLyFilterLookupDto { Id = 0, Ten = "-- Tất cả --" });
                         cmb.ItemsSource = vaiTros;
@@ -88,11 +95,49 @@ namespace AppCafebookApi.View.quanly.pages
             catch { /* Ignore silently */ }
         }
 
+        private async void CmbSearchNhanVien_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            var cmb = sender as ComboBox;
+            if (cmb == null) return;
+            if (e.Key == System.Windows.Input.Key.Up || e.Key == System.Windows.Input.Key.Down ||
+                e.Key == System.Windows.Input.Key.Enter || e.Key == System.Windows.Input.Key.Escape)
+                return;
+
+            string keyword = cmb.Text;
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                cmb.IsDropDownOpen = false;
+                return;
+            }
+
+            try
+            {
+                var response = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyFilterLookupDto>>($"api/app/quanly/baocaohieusuat/search-nhan-vien?keyword={keyword}");
+
+                if (response != null && response.Any())
+                {
+                    cmb.ItemsSource = response;
+                    cmb.Text = keyword; 
+                    cmb.IsDropDownOpen = true;
+
+                    if (cmb.Template.FindName("PART_EditableTextBox", cmb) is TextBox textBox)
+                    {
+                        textBox.SelectionStart = textBox.Text.Length;
+                    }
+                }
+                else
+                {
+                    cmb.IsDropDownOpen = false;
+                }
+            }
+            catch { /* Bỏ qua ngoại lệ mạng nếu user gõ quá nhanh */ }
+        }
+
         private async void BtnGenerate_Click(object sender, RoutedEventArgs e)
         {
             DatePicker? dpStart = FindName("dpStartDate") as DatePicker;
             DatePicker? dpEnd = FindName("dpEndDate") as DatePicker;
-            System.Windows.Controls.Border? loading = FindName("LoadingOverlay") as System.Windows.Controls.Border;
+            Border? loading = FindName("LoadingOverlay") as Border;
 
             if (dpStart?.SelectedDate == null || dpEnd?.SelectedDate == null) return;
 
@@ -101,12 +146,27 @@ namespace AppCafebookApi.View.quanly.pages
             int? selectedVaiTro = (FindName("cmbVaiTro") as ComboBox)?.SelectedValue as int?;
             if (selectedVaiTro == 0) selectedVaiTro = null;
 
+            int? selectedNhanVienId = null;
+            string? searchText = null;
+
+            if (FindName("cmbSearchNhanVien") is ComboBox cmbSearch)
+            {
+                selectedNhanVienId = cmbSearch.SelectedValue as int?;
+                searchText = cmbSearch.Text;
+
+                if (selectedNhanVienId.HasValue)
+                {
+                    searchText = null;
+                }
+            }
+
             var request = new QuanLyBaoCaoHieuSuatRequestDto
             {
                 StartDate = dpStart.SelectedDate.Value,
                 EndDate = dpEnd.SelectedDate.Value,
                 VaiTroId = selectedVaiTro,
-                SearchText = (FindName("txtSearch") as TextBox)?.Text
+                NhanVienId = selectedNhanVienId,
+                SearchText = searchText
             };
 
             try
@@ -166,18 +226,13 @@ namespace AppCafebookApi.View.quanly.pages
                     ExcelPackage.License.SetNonCommercialPersonal("Cafebook Admin");
 
                     FileInfo fileInfo = new FileInfo(sfd.FileName);
-                    
-                    // Nếu file đang mở bởi Excel, lệnh Delete này sẽ văng lỗi IOException ngay lập tức
+
                     if (fileInfo.Exists) fileInfo.Delete();
 
                     using (var package = new ExcelPackage(fileInfo))
                     {
                         var currencyFormat = "#,##0 \"đ\"";
                         var numberFormat = "#,##0";
-
-                        // ==========================================
-                        // SHEET 1: TỔNG QUAN KPI NHÂN SỰ
-                        // ==========================================
                         var wsOverview = package.Workbook.Worksheets.Add("Tổng Quan KPI");
 
                         wsOverview.Cells["A1:D1"].Merge = true;
@@ -205,24 +260,19 @@ namespace AppCafebookApi.View.quanly.pages
                         wsOverview.Cells["A7"].Value = "3. Tổng Số Ca Đã Chấm Công"; wsOverview.Cells["B7"].Value = currentReportData.Kpi.TongSoCaLam;
                         wsOverview.Cells["A8"].Value = "4. Tổng Lượt Hủy Món (Toàn quán)"; wsOverview.Cells["B8"].Value = currentReportData.Kpi.TongLanHuyMon;
 
-                        // Định dạng màu sắc nổi bật cho KPI
                         wsOverview.Cells["B5"].Style.Numberformat.Format = currencyFormat;
                         wsOverview.Cells["B5"].Style.Font.Color.SetColor(System.Drawing.Color.Green);
                         wsOverview.Cells["B5"].Style.Font.Bold = true;
-                        
+
                         wsOverview.Cells["B6"].Style.Numberformat.Format = "#,##0.00";
                         wsOverview.Cells["B7"].Style.Numberformat.Format = numberFormat;
-                        
+
                         wsOverview.Cells["B8"].Style.Numberformat.Format = numberFormat;
                         wsOverview.Cells["B8"].Style.Font.Color.SetColor(System.Drawing.Color.Red);
 
-                        // Căn lề độ rộng
                         wsOverview.Column(1).Width = 35;
                         wsOverview.Column(2).Width = 20;
 
-                        // ==========================================
-                        // SHEET 2: BÁN HÀNG (SALES)
-                        // ==========================================
                         if (currentReportData.SalesPerformance.Any())
                         {
                             var ws1 = package.Workbook.Worksheets.Add("Bán Hàng (Sales)");
@@ -234,19 +284,15 @@ namespace AppCafebookApi.View.quanly.pages
                             ws1.Row(1).Height = 25;
 
                             ws1.Cells["A3"].LoadFromCollection(currentReportData.SalesPerformance, true, TableStyles.Medium9);
-                            
-                            // Áp dụng định dạng tiền tệ và số lượng
-                            ws1.Column(3).Style.Numberformat.Format = currencyFormat; // Tổng doanh thu
-                            ws1.Column(4).Style.Numberformat.Format = numberFormat;   // Số hóa đơn
-                            ws1.Column(5).Style.Numberformat.Format = currencyFormat; // Doanh thu trung bình
-                            ws1.Column(6).Style.Numberformat.Format = numberFormat;   // Số lần hủy món
+
+                            ws1.Column(3).Style.Numberformat.Format = currencyFormat;
+                            ws1.Column(4).Style.Numberformat.Format = numberFormat;
+                            ws1.Column(5).Style.Numberformat.Format = currencyFormat;
+                            ws1.Column(6).Style.Numberformat.Format = numberFormat;
 
                             ws1.Cells[ws1.Dimension.Address].AutoFitColumns();
                         }
 
-                        // ==========================================
-                        // SHEET 3: VẬN HÀNH (OPERATIONS)
-                        // ==========================================
                         if (currentReportData.OperationalPerformance.Any())
                         {
                             var ws2 = package.Workbook.Worksheets.Add("Vận Hành");
@@ -258,7 +304,7 @@ namespace AppCafebookApi.View.quanly.pages
                             ws2.Row(1).Height = 25;
 
                             ws2.Cells["A3"].LoadFromCollection(currentReportData.OperationalPerformance, true, TableStyles.Medium10);
-                            
+
                             ws2.Column(3).Style.Numberformat.Format = numberFormat;
                             ws2.Column(4).Style.Numberformat.Format = numberFormat;
                             ws2.Column(5).Style.Numberformat.Format = numberFormat;
@@ -267,28 +313,24 @@ namespace AppCafebookApi.View.quanly.pages
                             ws2.Cells[ws2.Dimension.Address].AutoFitColumns();
                         }
 
-                        // ==========================================
-                        // SHEET 4: CHẤM CÔNG & NGHỈ PHÉP (ATTENDANCE)
-                        // ==========================================
                         if (currentReportData.Attendance.Any())
                         {
                             var ws3 = package.Workbook.Worksheets.Add("Chấm Công");
                             ws3.Cells["A1:G1"].Merge = true;
-                            ws3.Cells["A1"].Value = "BÁO CÁO CHẤM CÔNG VÀ ĐƠN XIN NGHỈ PHEP";
+                            ws3.Cells["A1"].Value = "BÁO CÁO CHẤM CÔNG VÀ ĐƠN XIN NGHỈ PHÉP";
                             ws3.Cells["A1"].Style.Font.Size = 14;
                             ws3.Cells["A1"].Style.Font.Bold = true;
                             ws3.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                             ws3.Row(1).Height = 25;
 
                             ws3.Cells["A3"].LoadFromCollection(currentReportData.Attendance, true, TableStyles.Medium11);
-                            
+
                             ws3.Column(3).Style.Numberformat.Format = numberFormat;
-                            ws3.Column(4).Style.Numberformat.Format = "#,##0.00"; // Tổng giờ làm
+                            ws3.Column(4).Style.Numberformat.Format = "#,##0.00";
                             ws3.Column(5).Style.Numberformat.Format = numberFormat;
                             ws3.Column(6).Style.Numberformat.Format = numberFormat;
-                            ws3.Column(7).Style.Numberformat.Format = numberFormat; // Cột Chờ duyệt
+                            ws3.Column(7).Style.Numberformat.Format = numberFormat;
 
-                            // [Tính năng Xịn Xò]: Tô màu vàng, chữ cam cho các dòng có Đơn Chờ Duyệt > 0
                             var tbl = ws3.Tables[0];
                             var choDuyetRange = ws3.Cells[tbl.Address.Start.Row + 1, 7, tbl.Address.End.Row, 7];
                             var condRule = choDuyetRange.ConditionalFormatting.AddGreaterThan();
@@ -301,11 +343,9 @@ namespace AppCafebookApi.View.quanly.pages
                             ws3.Cells[ws3.Dimension.Address].AutoFitColumns();
                         }
 
-                        // --- LƯU FILE ---
                         package.Save();
                     }
 
-                    // Hộp thoại xác nhận xịn xò
                     string msg = $"Đã xuất báo cáo thành công tại:\n{sfd.FileName}\n\n" +
                                  $"• Chọn [Yes] để mở trực tiếp báo cáo.\n" +
                                  $"• Chọn [No] để mở thư mục.\n" +
@@ -324,8 +364,7 @@ namespace AppCafebookApi.View.quanly.pages
                 }
                 catch (System.IO.IOException)
                 {
-                    // [BẮT RIÊNG LỖI FILE ĐANG MỞ - HIỂN THỊ TIẾNG VIỆT]
-                    MessageBox.Show("Tệp Excel này đang được mở bởi một chương trình khác (ví dụ: Microsoft Excel).\n\nVui lòng đóng tệp đó lại trước khi bấm xuất báo cáo!", 
+                    MessageBox.Show("Tệp Excel này đang được mở bởi một chương trình khác (ví dụ: Microsoft Excel).\n\nVui lòng đóng tệp đó lại trước khi bấm xuất báo cáo!",
                                     "File Đang Mở", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
                 catch (Exception ex)
@@ -333,5 +372,6 @@ namespace AppCafebookApi.View.quanly.pages
                     MessageBox.Show("Có lỗi xảy ra khi tạo file Excel:\n\n" + ex.Message, "Lỗi Hệ Thống", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-        }    }
+        }
+    }
 }

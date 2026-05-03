@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CafebookModel.Model.ModelApp.QuanLy
 {
@@ -10,6 +11,8 @@ namespace CafebookModel.Model.ModelApp.QuanLy
         public bool TrangThaiKinhDoanh { get; set; }
         public string TenDanhMuc { get; set; } = string.Empty;
         public string? HinhAnh { get; set; }
+        [JsonIgnore]
+        public string SearchKeyword { get; set; } = string.Empty;
     }
     public class QuanLySanPhamDetailDto
     {

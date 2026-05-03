@@ -22,7 +22,6 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyNhapKhoView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyNhapKhoGridDto> _phieuNhapList = new();
         private List<LookupNhapKhoDto> _nccList = new();
         private List<LookupNhapKhoDto> _nlList = new();
@@ -34,21 +33,46 @@ namespace AppCafebookApi.View.quanly.pages
 
         private bool _isViewing = false;
 
-        //static QuanLyNhapKhoView() { httpClient = new HttpClient { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLyNhapKhoView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
 
-            if (!AuthService.CoQuyen("QL_NHAP_KHO")) { MessageBox.Show("Từ chối truy cập!"); this.NavigationService?.GoBack(); return; }
+            if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            ApplyPermissions();
-            if (FindName("dgChiTiet") is DataGrid dg) dg.ItemsSource = _chiTietList;
-            await LoadMasterDataAsync();
+            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_NHAP_KHO")) 
+            { 
+                MessageBox.Show("Từ chối truy cập module Nhập kho!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning); 
+                this.NavigationService?.GoBack(); 
+                return; 
+            }
+
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                ApplyPermissions();
+
+                if (FindName("dgChiTiet") is DataGrid dg) 
+                {
+                    dg.ItemsSource = _chiTietList;
+                }
+
+                await LoadMasterDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Nhập kho: {ex.Message}");
+            }
         }
-
         private void ApplyPermissions()
         {
             bool canEdit = AuthService.CoQuyen("QL_NHAP_KHO");

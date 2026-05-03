@@ -20,24 +20,15 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyNhanVienView : Page
     {
-        //private static readonly HttpClient httpClient;
-
         private List<QuanLyNhanVienGridDto> _allNhanVienList = new List<QuanLyNhanVienGridDto>();
         private List<RoleLookupDto> _vaiTroList = new List<RoleLookupDto>();
         private QuanLyNhanVienDetailDto? _selectedNhanVien = null;
 
         private string? _currentAvatarFilePath = null;
         private bool _deleteAvatarRequest = false;
-        /*
-        static QuanLyNhanVienView()
-        {
-            string apiUrl = AppConfigManager.GetApiServerUrl() ?? "http://localhost:5166";
-            httpClient = new HttpClient
-            {
-                BaseAddress = new Uri(apiUrl)
-            };
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public QuanLyNhanVienView()
         {
             InitializeComponent();
@@ -46,6 +37,8 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
@@ -53,22 +46,38 @@ namespace AppCafebookApi.View.quanly.pages
 
             if (!hasAnyHRQuyen)
             {
-                MessageBox.Show("Từ chối truy cập!");
+                MessageBox.Show("Từ chối truy cập module Nhân sự!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack();
                 return;
             }
 
-            ApplyPermissions();
+            await Task.Delay(350);
 
-            if (AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN"))
+            if (!this.IsLoaded) return;
+
+            try
             {
-                await LoadDanhSachVaiTro();
-                await LoadDanhSachNhanVien();
+                ApplyPermissions();
+
+                if (AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN"))
+                {
+                    if (FindName("GridDuLieuNhanVien") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
+                    if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Collapsed;
+
+                    await LoadDanhSachVaiTro();
+                    await LoadDanhSachNhanVien();
+                }
+                else
+                {
+                    if (FindName("GridDuLieuNhanVien") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Collapsed;
+                    if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Visible;
+                }
+
+                _isDataLoaded = true;
             }
-            else
+            catch (Exception ex)
             {
-                if (FindName("GridDuLieuNhanVien") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Collapsed;
-                if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Visible;
+                Console.WriteLine($"Lỗi tại module Nhân viên: {ex.Message}");
             }
         }
 
@@ -229,13 +238,13 @@ namespace AppCafebookApi.View.quanly.pages
             var query = _allNhanVienList.AsEnumerable();
             string keyword = "";
 
-            if (FindName("txtSearchNhanVien") is TextBox t1) keyword = t1.Text.Trim().ToLower();
+            if (FindName("txtSearchNhanVien") is TextBox t1) keyword = t1.Text.Trim();
 
             if (!string.IsNullOrEmpty(keyword))
             {
                 query = query.Where(x =>
-                    (x.HoTen != null && x.HoTen.ToLower().Contains(keyword)) ||
-                    (x.TenDangNhap != null && x.TenDangNhap.ToLower().Contains(keyword)));
+                    (x.HoTen != null && x.HoTen.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
+                    (x.TenDangNhap != null && x.TenDangNhap.Contains(keyword, StringComparison.OrdinalIgnoreCase)));
             }
 
             if (FindName("cmbFilterVaiTro") is ComboBox cmbFilter && cmbFilter.SelectedValue != null && (int)cmbFilter.SelectedValue > 0)
@@ -244,7 +253,6 @@ namespace AppCafebookApi.View.quanly.pages
                 query = query.Where(x => x.TenVaiTro == selectedRoleName);
             }
 
-            // Sắp xếp: Ai đang đăng nhập thì đẩy lên đầu, những người còn lại xếp theo bảng chữ cái
             if (AuthService.CurrentUser != null)
             {
                 int currentId = AuthService.CurrentUser.IdNhanVien;
@@ -496,22 +504,22 @@ namespace AppCafebookApi.View.quanly.pages
 
             if (AuthService.CurrentUser != null && _selectedNhanVien.IdNhanVien == AuthService.CurrentUser.IdNhanVien)
             {
-                MessageBox.Show("Bạn không thể xóa tài khoản đang đăng nhập!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Bạn không thể thay đổi trạng thái của tài khoản đang đăng nhập!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            if (MessageBox.Show($"Xác nhận xóa nhân viên: {_selectedNhanVien.HoTen}?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"Xác nhận cho nhân viên: {_selectedNhanVien.HoTen} chuyển sang trạng thái Nghỉ việc?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 var response = await ApiClient.Instance.DeleteAsync($"api/app/quanly-nhanvien/{_selectedNhanVien.IdNhanVien}");
                 if (response.IsSuccessStatusCode)
                 {
-                    MessageBox.Show("Xóa thành công!");
+                    MessageBox.Show("Đã cập nhật trạng thái thành công!");
                     BtnLamMoiForm_Click(null, null);
-                    await LoadDanhSachNhanVien();
+                    await LoadDanhSachNhanVien(); 
                 }
                 else
                 {
-                    MessageBox.Show($"Không thể xóa: {await response.Content.ReadAsStringAsync()}", "Lỗi");
+                    MessageBox.Show($"Lỗi thao tác: {await response.Content.ReadAsStringAsync()}", "Lỗi");
                 }
             }
         }

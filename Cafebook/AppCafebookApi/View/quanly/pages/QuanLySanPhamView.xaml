@@ -84,14 +84,19 @@
                         <TextBox x:Name="txtSearchSanPham" Width="150" Style="{StaticResource InputStyle}" TextChanged="Filter_Changed"/>
                         <TextBlock Text="Danh mục:" VerticalAlignment="Center" Margin="15,0,5,0"/>
 
-                        <ComboBox x:Name="cmbFilterDanhMuc" Width="150" Style="{StaticResource InputStyle}" DisplayMemberPath="Ten" SelectedValuePath="Id" SelectionChanged="Filter_Changed" IsEditable="True" IsTextSearchEnabled="False" KeyUp="CmbFilterDanhMuc_KeyUp"/>
-
+                        <ComboBox x:Name="cmbFilterDanhMuc" Width="130" Style="{StaticResource InputStyle}" DisplayMemberPath="Ten" SelectedValuePath="Id" SelectionChanged="Filter_Changed" IsEditable="False"/>
                         <Button x:Name="btnLamMoiForm" Content="➕ Thêm mới" Style="{StaticResource ActionBtn}" Background="#4CAF50" Margin="15,0,0,0" Click="BtnLamMoiForm_Click"/>
-
+                        <CheckBox x:Name="chkHienThiDaXoa" Content="Hiển thị SP Tạm ngưng" VerticalAlignment="Center" Margin="15,0,0,0" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
                         <Button x:Name="btnXuatExcel" Content="📥 Xuất Excel" Style="{StaticResource ActionBtn}" Background="#2E7D32" Margin="10,0,0,0" Click="BtnXuatExcel_Click"/>
                     </StackPanel>
 
-                    <DataGrid x:Name="dgSanPham" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" SelectionChanged="DgSanPham_SelectionChanged" BorderThickness="0" Background="Transparent">
+                    <DataGrid x:Name="dgSanPham" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
+                              SelectionChanged="DgSanPham_SelectionChanged" BorderThickness="0" Background="Transparent"
+                              EnableRowVirtualization="True" EnableColumnVirtualization="True"
+                              VirtualizingPanel.IsVirtualizing="True" 
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              ScrollViewer.IsDeferredScrollingEnabled="True"
+                              ScrollViewer.CanContentScroll="True">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Tên Sản Phẩm" Binding="{Binding TenSanPham}" Width="*"/>
                             <DataGridTextColumn Header="Đơn Giá" Binding="{Binding GiaBan, StringFormat=N0}" Width="100"/>

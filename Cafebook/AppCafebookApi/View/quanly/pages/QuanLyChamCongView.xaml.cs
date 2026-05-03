@@ -15,18 +15,20 @@ namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLyChamCongView : Page
     {
-        //private static readonly HttpClient httpClient;
         private List<QuanLyChamCongGridDto> _allDataList = new();
         private List<ChamCongNhanVienLookupDto> _lookupNhanVien = new();
         private QuanLyChamCongGridDto? _selectedItem = null;
 
-     //   static QuanLyChamCongView() { ApiClient.Instance = new ApiClient.Instance { BaseAddress = new Uri(AppConfigManager.GetApiServerUrl() ?? "http://localhost") }; }
+        private bool _isDataLoaded = false;
 
         public QuanLyChamCongView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(AuthService.AuthToken)) ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+            if (_isDataLoaded) return;
+
+            if (!string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
             if (!AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG"))
             {
@@ -34,19 +36,31 @@ namespace AppCafebookApi.View.quanly.pages
                 this.NavigationService?.GoBack(); return;
             }
 
-            ApplyPermissions();
+            await Task.Delay(350);
 
-            // Setup Default Dates (Đầu tuần đến cuối tuần)
-            DateTime today = DateTime.Today;
-            int offset = today.DayOfWeek - DayOfWeek.Monday;
-            if (offset < 0) offset += 7;
-            DateTime startOfWeek = today.AddDays(-offset);
+            if (!this.IsLoaded) return;
 
-            if (FindName("dpFilterTuNgay") is DatePicker tu) tu.SelectedDate = startOfWeek;
-            if (FindName("dpFilterDenNgay") is DatePicker den) den.SelectedDate = startOfWeek.AddDays(6);
+            try
+            {
+                ApplyPermissions();
 
-            await LoadLookupsAsync();
-            await LoadDataAsync();
+                DateTime today = DateTime.Today;
+                int offset = today.DayOfWeek - DayOfWeek.Monday;
+                if (offset < 0) offset += 7;
+                DateTime startOfWeek = today.AddDays(-offset);
+
+                if (FindName("dpFilterTuNgay") is DatePicker tu) tu.SelectedDate = startOfWeek;
+                if (FindName("dpFilterDenNgay") is DatePicker den) den.SelectedDate = startOfWeek.AddDays(6);
+
+                await LoadLookupsAsync();
+                await LoadDataAsync();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tải trang chấm công: {ex.Message}");
+            }
         }
 
         private void ApplyPermissions()

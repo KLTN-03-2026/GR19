@@ -16,19 +16,10 @@ namespace AppCafebookApi.View.nhanvien.pages
 {
     public partial class CheBienView : Page
     {
-        //private static readonly HttpClient _httpClient;
         private DispatcherTimer _refreshTimer;
-        /*
-        static CheBienView()
-        {
-            _httpClient = new HttpClient();
-            string? apiUrl = AppConfigManager.GetApiServerUrl();
-            if (!string.IsNullOrWhiteSpace(apiUrl))
-            {
-                _httpClient.BaseAddress = new Uri(apiUrl);
-            }
-        }
-        */
+
+        private bool _isDataLoaded = false;
+
         public CheBienView()
         {
             InitializeComponent();
@@ -42,6 +33,11 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_isDataLoaded) return;
+
+            if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
+                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
+
             if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHE_BIEN"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập Màn hình chế biến!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -49,17 +45,28 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
-            if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
-                ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-
             if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Hệ thống chưa được cấu hình URL Server.", "Thiếu cấu hình", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            await LoadDataAsync();
-            _refreshTimer.Start();
+            await Task.Delay(350);
+
+            if (!this.IsLoaded) return;
+
+            try
+            {
+                await LoadDataAsync();
+
+                _refreshTimer.Start();
+
+                _isDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi tại module Chế biến: {ex.Message}");
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)
@@ -88,8 +95,8 @@ namespace AppCafebookApi.View.nhanvien.pages
                         lblUpdate.Text = $"(Cập nhật lúc {DateTime.Now:HH:mm:ss})";
                     }
 
-                    var bepItems = items.Where(i => i.NhomIn == "Bếp").ToList();
-                    var phaCheItems = items.Where(i => i.NhomIn == "Pha chế").ToList();
+                    var bepItems = items.Where(i => string.Equals(i.NhomIn, "Bếp", StringComparison.OrdinalIgnoreCase)).ToList();
+                    var phaCheItems = items.Where(i => string.Equals(i.NhomIn, "Pha chế", StringComparison.OrdinalIgnoreCase)).ToList();
 
                     if (FindName("icBep") is ItemsControl icBep)
                         icBep.ItemsSource = bepItems;
