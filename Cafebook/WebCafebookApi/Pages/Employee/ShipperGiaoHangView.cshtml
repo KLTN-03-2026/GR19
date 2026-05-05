@@ -381,6 +381,10 @@
             }
         }
 
-        $(document).ready(loadOrders);
+        $(document).ready(function() {
+            $('#orderDetailModal').appendTo("body");
+            $('#codModal').appendTo("body");
+            loadOrders();
+        });
     </script>
 }

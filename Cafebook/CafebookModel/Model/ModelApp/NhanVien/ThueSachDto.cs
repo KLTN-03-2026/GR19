@@ -40,6 +40,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public int IdPhieuThueSach { get; set; }
         public string HoTenKH { get; set; } = string.Empty;
         public string? SoDienThoaiKH { get; set; }
+        public string? EmailKH { get; set; }
         public DateTime NgayThue { get; set; }
         public DateTime NgayHenTra { get; set; }
         public int SoLuongSach { get; set; }
@@ -53,6 +54,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public int IdPhieuThueSach { get; set; }
         public int IdSach { get; set; }
         public string TenSach { get; set; } = string.Empty;
+        public decimal GiaBia { get; set; }
         public DateTime NgayHenTra { get; set; }
         public decimal TienCoc { get; set; }
         public string TinhTrang { get; set; } = string.Empty;
@@ -188,6 +190,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien
     public class ChiTietTraPrintDto
     {
         public string TenSach { get; set; } = string.Empty;
+        public int DoMoiKhiThue { get; set; } 
         public int DoMoi { get; set; }          
         public string? GhiChu { get; set; }      
         public decimal TienCoc { get; set; }
@@ -200,6 +203,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public int IdPhieuThueSach { get; set; }
         public int IdSach { get; set; }
         public string TenSach { get; set; } = string.Empty;
+        public decimal GiaBia { get; set; } 
         public decimal TienCoc { get; set; }
         public decimal TienPhat { get; set; }
         public string TinhTrang { get; set; } = string.Empty;

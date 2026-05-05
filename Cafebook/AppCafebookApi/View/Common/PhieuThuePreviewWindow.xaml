@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AppCafebookApi.View.common"
         mc:Ignorable="d"
-        Title="Xem Trước Phiếu Thuê Sách" Height="800" Width="500"
+        Title="Xem Trước Phiếu Thuê Sách" SizeToContent="Height" MaxHeight="2000" Width="450"
         WindowStartupLocation="CenterScreen"
         WindowStyle="ToolWindow"
+        Topmost="True"
         Loaded="Window_Loaded">
 
     <Window.Resources>
@@ -79,6 +80,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
         <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource PrimaryBrownBrush}"/>
@@ -115,7 +117,7 @@
         </Grid.RowDefinitions>
 
         <ScrollViewer Grid.Row="0" x:Name="scrollViewer" VerticalScrollBarVisibility="Auto">
-            <Border x:Name="printArea" Background="White" Padding="20" Margin="10" MinHeight="700">
+            <Border x:Name="printArea" Background="White" Padding="20" Margin="10" Width="400" HorizontalAlignment="Center">
                 <StackPanel>
                     <TextBlock x:Name="lblTenQuan" Style="{StaticResource Header}" Text="Cafebook"/>
                     <TextBlock x:Name="lblDiaChiQuan" Style="{StaticResource SubHeader}" Text="123 Đường ABC, Q.1, TP.HCM"/>
@@ -182,13 +184,20 @@
             </Border>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Background="{StaticResource SubtleGrayBrush}" Width="{Binding Path=ActualWidth, ElementName=scrollViewer}">
-            <Button x:Name="BtnPrint" Grid.Column="1" Style="{StaticResource SecondaryButton}" 
-                    Content="In Phiếu" Width="100" Margin="5" Click="BtnPrint_Click"/>
+        <Grid Grid.Row="1" x:Name="panelButtons">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            <Button x:Name="BtnClose" Grid.Column="2" Style="{StaticResource SecondaryButton}" 
+            <Button x:Name="BtnPrint" Grid.Column="1" Style="{StaticResource SecondaryButton}" 
+                    Content="In Phiếu" Width="200" Margin="5" Click="BtnPrint_Click"/>
+
+            <Button x:Name="btnClose" Grid.Column="2" Style="{StaticResource SecondaryButton}" 
                     Background="{StaticResource TextGrayBrush}" Foreground="White" BorderThickness="0"
-                    Content="Đóng" Width="100" Margin="5" Click="BtnClose_Click" IsCancel="True"/>
-        </StackPanel>
+                    Content="Đóng" Width="200" Margin="5" Click="BtnClose_Click" IsCancel="True"/>
+        </Grid>
     </Grid>
 </Window>

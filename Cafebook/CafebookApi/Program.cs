@@ -5,8 +5,50 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.IO;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ==========================================================
+// 0. TỰ ĐỘNG TẠO/ĐỌC FILE CẤU HÌNH KHÓA ADMIN (TOTP)
+// ==========================================================
+string currentDir = Directory.GetCurrentDirectory();
+DirectoryInfo parentDir = Directory.GetParent(currentDir)!;
+string configDirPath = Path.Combine(parentDir.FullName, "SettingCafebook");
+string adminKeyFilePath = Path.Combine(configDirPath, "ApisecretKeyAdministrator.json");
+
+if (!Directory.Exists(configDirPath))
+{
+    Directory.CreateDirectory(configDirPath);
+}
+
+bool fileExists = File.Exists(adminKeyFilePath);
+bool fileIsEmpty = fileExists && new FileInfo(adminKeyFilePath).Length == 0;
+
+if (!fileExists || fileIsEmpty)
+{
+    const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    var random = new Random();
+    string randomSecretKey = new string(Enumerable.Repeat(chars, 16)
+                               .Select(s => s[random.Next(s.Length)]).ToArray());
+
+    var defaultAdminConfig = new
+    {
+        AdminSettings = new
+        {
+            SecretKey = randomSecretKey
+        }
+    };
+    File.WriteAllText(adminKeyFilePath, System.Text.Json.JsonSerializer.Serialize(defaultAdminConfig, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+}
+
+// Nạp file cấu hình, tự động cập nhật khi file thay đổi
+builder.Configuration.AddJsonFile(adminKeyFilePath, optional: false, reloadOnChange: true);
+
+// ==========================================================
+// ĐĂNG KÝ CÁC DỊCH VỤ NỀN
+// ==========================================================
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<CafebookApi.Services.DatabaseBackupService>();
 builder.Services.AddHostedService<CafebookApi.Services.AutoCancelOrderService>();
@@ -26,13 +68,12 @@ builder.Services.AddDbContext<CafebookDbContext>(options =>
 // ==========================================================
 builder.Services.AddCors(options =>
 {
-    // Gộp chung thành 1 Policy mạnh nhất, bẻ khóa mọi chặn chéo Port
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.SetIsOriginAllowed(_ => true) // <--- CHÌA KHÓA: Chấp nhận mọi web client (cổng 5175, 5166, v.v.)
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials();           // <--- BẮT BUỘC: Để SignalR WebSockets hoạt động
+              .AllowCredentials();
     });
 });
 
@@ -47,7 +88,6 @@ builder.Services.AddSwaggerGen(options =>
     options.CustomSchemaIds(type => type.FullName);
 });
 
-// Thêm SignalR cho chức năng Chat / Thông báo realtime
 builder.Services.AddSignalR();
 builder.Services.AddScoped<AiService>();
 builder.Services.AddScoped<AiToolService>();
@@ -73,20 +113,14 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
 
-    // ======================================================
-    // FIX: BẮT TOKEN CHO SIGNALR (ĐỌC TỪ QUERY STRING)
-    // ======================================================
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
             var accessToken = context.Request.Query["access_token"];
-
-            // Nếu request là gửi tới Hub (đường dẫn bắt đầu bằng /chatHub)
             var path = context.HttpContext.Request.Path;
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
             {
-                // Lấy token từ Query String gán vào Context
                 context.Token = accessToken;
             }
             return Task.CompletedTask;
@@ -110,15 +144,10 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 
-// CỰC KỲ QUAN TRỌNG: Kích hoạt CORS ngay giữa Routing và Auth
 app.UseCors("AllowAll");
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
-// Gắn Hub SignalR (Viết hoa chữ cái theo đúng chuẩn /chatHub ở phía Client)
 app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

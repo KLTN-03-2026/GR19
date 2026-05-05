@@ -39,7 +39,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_LICH_LAM_VIEC"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_LICH_LAM_VIEC"))
             {
                 MessageBox.Show("Bạn không có quyền xem mục này!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
                 if (this.NavigationService?.CanGoBack == true) this.NavigationService.GoBack();

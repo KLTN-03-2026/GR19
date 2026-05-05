@@ -113,47 +113,42 @@ namespace AppCafebookApi.View.common
             try
             {
                 PrintDialog printDialog = new PrintDialog();
+
+                this.Topmost = false;
+
                 if (printDialog.ShowDialog() == true)
                 {
-                    // 1. Ẩn các nút
                     panelButtons.Visibility = Visibility.Collapsed;
-
-                    // 2. Lấy ScrollViewer và Border (printArea)
                     var scrollViewer = printArea.Parent as ScrollViewer;
                     if (scrollViewer == null)
                     {
                         panelButtons.Visibility = Visibility.Visible;
                         return;
                     }
-
-                    // 3. TẠM THỜI gỡ Border (printArea) ra khỏi ScrollViewer
-                    //    và cho nó tự động co giãn theo nội dung
                     var originalContent = scrollViewer.Content;
                     scrollViewer.Content = null;
-
-                    // 4. Đặt lại kích thước để nó tự co giãn theo nội dung
-                    printArea.Width = printDialog.PrintableAreaWidth; // Vừa khổ giấy
-                    printArea.Height = double.NaN; // Tự động co giãn chiều cao
-
-                    // 5. Cập nhật layout để tính toán lại kích thước thật
+                    printArea.Width = printDialog.PrintableAreaWidth;
+                    printArea.Height = double.NaN;
                     printArea.Measure(new Size(printDialog.PrintableAreaWidth, double.PositiveInfinity));
                     printArea.Arrange(new Rect(new Point(0, 0), printArea.DesiredSize));
 
-                    // 6. In
+                    // In
                     printDialog.PrintVisual(printArea, "Hóa đơn CafeBook");
 
-                    // 7. Trả lại
-                    printArea.Width = 380; // Trả lại width 380 (từ XAML)
-                    printArea.Height = double.NaN; // Reset
+                    printArea.Width = 380;
+                    printArea.Height = double.NaN;
                     scrollViewer.Content = originalContent;
                     panelButtons.Visibility = Visibility.Visible;
                 }
+
+                this.Topmost = true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Lỗi in: {ex.Message}");
-                // Đảm bảo các nút hiện lại nếu có lỗi
                 if (panelButtons != null) panelButtons.Visibility = Visibility.Visible;
+
+                this.Topmost = true;
             }
         }
 

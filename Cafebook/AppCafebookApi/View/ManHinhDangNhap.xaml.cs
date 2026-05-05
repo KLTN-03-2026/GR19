@@ -83,14 +83,16 @@ namespace AppCafebookApi.View
 
             try
             {
-                var loginResponse = await AuthService.LoginAsync(loginReq);
+                var loginResult = await AuthService.LoginAsync(loginReq);
 
-                if (loginResponse != null)
+                if (loginResult.IsSuccess && loginResult.Data != null)
                 {
+                    var loginResponse = loginResult.Data;
                     string targetWorkspace = "";
-                    bool isSuperManager = loginResponse.TenVaiTro == "Quản lý" && AuthService.CoQuyen("FULL_QL");
 
-                    if (isSuperManager)
+                    bool isFullAdmin = AuthService.CoQuyen("FULL_ADMIN");
+
+                    if (isFullAdmin)
                     {
                         var chonKhongGian = new ChonKhongGianWindow();
                         chonKhongGian.Owner = this;
@@ -100,9 +102,13 @@ namespace AppCafebookApi.View
                         if (result == true) targetWorkspace = chonKhongGian.SelectedWorkspace;
                         else return;
                     }
+                    else if (AuthService.CoQuyen("FULL_QL") || loginResponse.TenVaiTro == "Quản lý")
+                    {
+                        targetWorkspace = "QuanLy";
+                    }
                     else
                     {
-                        targetWorkspace = (loginResponse.TenVaiTro == "Quản lý") ? "QuanLy" : "NhanVien";
+                        targetWorkspace = "NhanVien";
                     }
 
                     WelcomeWindow welcome = new WelcomeWindow(loginResponse, this, targetWorkspace);
@@ -112,7 +118,7 @@ namespace AppCafebookApi.View
                 }
                 else
                 {
-                    MessageBox.Show("Tài khoản hoặc mật khẩu không chính xác!", "Đăng nhập thất bại", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(loginResult.ErrorMessage, "Đăng nhập thất bại", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)

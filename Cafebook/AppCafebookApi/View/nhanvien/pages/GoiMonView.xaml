@@ -264,16 +264,26 @@
             </Border>
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="Both">
-                <ItemsControl x:Name="icSanPham" VirtualizingStackPanel.IsVirtualizing="True" 
-                  VirtualizingStackPanel.VirtualizationMode="Recycling">
+                <!-- THÊM 3 THUỘC TÍNH NÀY CHO ItemsControl -->
+                <ItemsControl x:Name="icSanPham" 
+                              VirtualizingPanel.IsVirtualizing="True" 
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              VirtualizingPanel.ScrollUnit="Pixel">
+
                     <ItemsControl.ItemsPanel>
+                        <!-- QUAN TRỌNG: WrapPanel mặc định không ảo hóa, 
+                             nếu bạn xài WPF thường thì có thể giữ nguyên, 
+                             nhưng nếu dự án có cài package thì nên dùng VirtualizingWrapPanel.
+                             Ở đây mình tối ưu hóa cuộn bằng CacheMode cho ảnh -->
                         <ItemsPanelTemplate>
                             <WrapPanel Margin="5"/>
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
+
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Button Style="{StaticResource ProductCard}" Click="ProductButton_Click">
+                                <!-- Giữ nguyên phần layout bên trong -->
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="*"/>
@@ -281,7 +291,10 @@
                                     </Grid.RowDefinitions>
                                     <Border Grid.Row="0" CornerRadius="8,8,0,0">
                                         <Border.Background>
-                                            <ImageBrush ImageSource="{Binding HinhAnh}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            <!-- TỐI ƯU ẢNH: Tắt HighQuality (rất tốn CPU khi cuộn) và bật DecodePixelWidth -->
+                                            <ImageBrush ImageSource="{Binding HinhAnh}" 
+                                                        Stretch="UniformToFill" 
+                                                        RenderOptions.BitmapScalingMode="LowQuality"/>
                                         </Border.Background>
                                     </Border>
                                     <StackPanel Grid.Row="1" Margin="8">

@@ -42,7 +42,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            bool hasAnyHRQuyen = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU");
+            bool hasAnyHRQuyen = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI");
 
             if (!hasAnyHRQuyen)
             {
@@ -59,13 +59,13 @@ namespace AppCafebookApi.View.quanly.pages
             {
                 ApplyPermissions();
 
-                if (AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN"))
+                if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NHAN_VIEN"))
                 {
                     if (FindName("GridDuLieuNhanVien") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
                     if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Collapsed;
 
-                    await LoadDanhSachVaiTro();
-                    await LoadDanhSachNhanVien();
+                    // FIX LỖI CS0103 TẠI ĐÂY: Sử dụng cơ chế Smart Update mới
+                    await LoadDataAsync();
                 }
                 else
                 {
@@ -163,74 +163,131 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void ApplyPermissions()
         {
-            if (FindName("btnPhanQuyen") is Button b1) b1.Visibility = AuthService.CoQuyen("FULL_QL", "QL_PHAN_QUYEN") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnGoToBaoCao") is Button b2) b2.Visibility = AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnGoToHieuSuat") is Button b3) b3.Visibility = AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnGoToLichLamViec") is Button b4) b4.Visibility = AuthService.CoQuyen("FULL_QL", "QL_LICH_LAM_VIEC") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnGoToDonXinNghi") is Button b5) b5.Visibility = AuthService.CoQuyen("FULL_QL", "QL_DON_XIN_NGHI") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnGoToCaiDat") is Button b7) b7.Visibility = AuthService.CoQuyen("FULL_QL", "QL_CAI_DAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnPhanQuyen") is Button b1) b1.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_PHAN_QUYEN") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnGoToBaoCao") is Button b2) b2.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAO_CAO_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnGoToHieuSuat") is Button b3) b3.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnGoToLichLamViec") is Button b4) b4.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_LICH_LAM_VIEC") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnGoToDonXinNghi") is Button b5) b5.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DON_XIN_NGHI") ? Visibility.Visible : Visibility.Collapsed;
 
-            bool canEdit = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN");
+            bool canEdit = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NHAN_VIEN");
             if (FindName("btnLamMoiForm") is Button btnLamMoi) btnLamMoi.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private async Task LoadDanhSachVaiTro()
+        private async Task LoadDataAsync()
         {
+            var loading = FindName("LoadingOverlay") as Border;
+            if (loading != null) loading.Visibility = Visibility.Visible;
             try
             {
-                var response = await ApiClient.Instance.GetFromJsonAsync<List<RoleLookupDto>>("api/app/quanly-nhanvien/roles-lookup");
-                if (response != null)
+                // 1. KIỂM TRA RAM
+                if (GlobalDataCache.QL_NhanVienCache != null && GlobalDataCache.QL_NhanVienCache.Count > 0)
                 {
-                    _vaiTroList = response;
-                    if (FindName("cmbVaiTro") is ComboBox cmbVaiTro)
-                    {
-                        cmbVaiTro.ItemsSource = _vaiTroList;
-                        cmbVaiTro.DisplayMemberPath = "Name";
-                        cmbVaiTro.SelectedValuePath = "Id";
-                    }
+                    PopulateFromRam();
+                    if (loading != null) loading.Visibility = Visibility.Collapsed;
 
-                    if (FindName("cmbFilterVaiTro") is ComboBox cmbFilterVaiTro)
-                    {
-                        var filterList = new List<RoleLookupDto> { new RoleLookupDto { Id = 0, Name = "Tất cả" } };
-                        filterList.AddRange(_vaiTroList);
-                        cmbFilterVaiTro.ItemsSource = filterList;
-                        cmbFilterVaiTro.DisplayMemberPath = "Name";
-                        cmbFilterVaiTro.SelectedValuePath = "Id";
-                        cmbFilterVaiTro.SelectedIndex = 0;
-                    }
+                    _ = BackgroundRefreshAsync();
+                    return;
                 }
-            }
-            catch { }
-        }
 
-        private async Task LoadDanhSachNhanVien()
-        {
-            try
-            {
-                if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
-                var response = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyNhanVienGridDto>>("api/app/quanly-nhanvien");
-                if (response != null)
-                {
-                    _allNhanVienList = response;
-                    ApplyFilter();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi tải danh sách: {ex.Message}");
+                // 3. Fallback
+                await FetchApiAndSetupUI();
             }
             finally
             {
-                if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Collapsed;
+                if (loading != null) loading.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        // ==========================================
+        // CÁC HÀM HỖ TRỢ (ĐỒNG BỘ NGẦM)
+        // ==========================================
+
+        private void PopulateFromRam()
+        {
+            if (GlobalDataCache.QL_VaiTroCache != null)
+            {
+                _vaiTroList = GlobalDataCache.QL_VaiTroCache;
+                if (FindName("cmbVaiTro") is ComboBox cmbVaiTro)
+                {
+                    cmbVaiTro.ItemsSource = _vaiTroList;
+                    cmbVaiTro.DisplayMemberPath = "Name";
+                    cmbVaiTro.SelectedValuePath = "Id";
+                }
+
+                if (FindName("cmbFilterVaiTro") is ComboBox cmbFilterVaiTro)
+                {
+                    var filterList = new List<RoleLookupDto> { new RoleLookupDto { Id = 0, Name = "Tất cả" } };
+                    filterList.AddRange(_vaiTroList);
+
+                    int currentFilter = cmbFilterVaiTro.SelectedIndex;
+                    cmbFilterVaiTro.ItemsSource = filterList;
+                    cmbFilterVaiTro.DisplayMemberPath = "Name";
+                    cmbFilterVaiTro.SelectedValuePath = "Id";
+                    cmbFilterVaiTro.SelectedIndex = currentFilter >= 0 ? currentFilter : 0;
+                }
+            }
+
+            if (GlobalDataCache.QL_NhanVienCache != null)
+            {
+                _allNhanVienList = GlobalDataCache.QL_NhanVienCache;
+                ApplyFilter();
+            }
+        }
+
+        private async Task BackgroundRefreshAsync()
+        {
+            try
+            {
+                // Gọi 2 luồng API cùng lúc
+                var tRoles = ApiClient.Instance.GetFromJsonAsync<List<RoleLookupDto>>("api/app/quanly-nhanvien/roles-lookup");
+                var tNvs = ApiClient.Instance.GetFromJsonAsync<List<QuanLyNhanVienGridDto>>("api/app/quanly-nhanvien");
+
+                await Task.WhenAll(tRoles, tNvs);
+
+                var roles = await tRoles;
+                var nvs = await tNvs;
+
+                if (roles != null && nvs != null)
+                {
+                    GlobalDataCache.QL_VaiTroCache = roles;
+                    GlobalDataCache.QL_NhanVienCache = nvs;
+
+                    // Ghi nhớ nhân viên đang click để không làm gián đoạn
+                    int? currentSelectedId = _selectedNhanVien?.IdNhanVien;
+
+                    PopulateFromRam();
+
+                    if (currentSelectedId.HasValue && FindName("dgNhanVien") is DataGrid dg)
+                    {
+                        var itemToSelect = _allNhanVienList.FirstOrDefault(x => x.IdNhanVien == currentSelectedId);
+                        if (itemToSelect != null) dg.SelectedItem = itemToSelect;
+                    }
+                }
+            }
+            catch { /* Bỏ qua nếu lỗi mạng */ }
+        }
+
+        private async Task FetchApiAndSetupUI()
+        {
+            var tRoles = ApiClient.Instance.GetFromJsonAsync<List<RoleLookupDto>>("api/app/quanly-nhanvien/roles-lookup");
+            var tNvs = ApiClient.Instance.GetFromJsonAsync<List<QuanLyNhanVienGridDto>>("api/app/quanly-nhanvien");
+
+            await Task.WhenAll(tRoles, tNvs);
+
+            var roles = await tRoles;
+            var nvs = await tNvs;
+
+            if (roles != null && nvs != null)
+            {
+                GlobalDataCache.QL_VaiTroCache = roles;
+                GlobalDataCache.QL_NhanVienCache = nvs;
+                PopulateFromRam();
             }
         }
 
         private void Filter_Changed(object sender, TextChangedEventArgs e) { ApplyFilter(); }
         private void Filter_Changed(object sender, SelectionChangedEventArgs e) { ApplyFilter(); }
 
-        // =========================================================================
-        // NÂNG CẤP GHIM TÀI KHOẢN HIỆN TẠI LÊN ĐẦU
-        // =========================================================================
         private void ApplyFilter()
         {
             if (_allNhanVienList == null) return;
@@ -270,9 +327,12 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (sender is DataGrid dg && dg.SelectedItem is QuanLyNhanVienGridDto selectedGridItem)
             {
+                // Làm mờ form bên phải thay vì che toàn màn hình bằng LoadingOverlay
+                var form = FindName("formChiTiet") as FrameworkElement;
+                if (form != null) form.IsEnabled = false;
+
                 try
                 {
-                    if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
                     var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLyNhanVienDetailDto>($"api/app/quanly-nhanvien/{selectedGridItem.IdNhanVien}");
 
                     if (detail != null)
@@ -290,7 +350,6 @@ namespace AppCafebookApi.View.quanly.pages
                         if (FindName("cmbTrangThai") is ComboBox cbTrangThai) cbTrangThai.Text = detail.TrangThaiLamViec;
 
                         if (FindName("txtMatKhau") is PasswordBox pwdMatKhau) pwdMatKhau.Password = "";
-
                         if (FindName("lblMatKhauInfo") is TextBlock lblMkInfo) lblMkInfo.Visibility = Visibility.Visible;
 
                         _currentAvatarFilePath = null;
@@ -302,15 +361,15 @@ namespace AppCafebookApi.View.quanly.pages
                         if (FindName("AvatarPreview") is ImageBrush i1) i1.ImageSource = imgSrc;
 
                         UpdateUIState();
+
+                        // Mở khóa form sau khi đã nạp xong dữ liệu
+                        if (form != null) form.IsEnabled = true;
                     }
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Lỗi tải chi tiết: {ex.Message}");
-                }
-                finally
-                {
-                    if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Collapsed;
+                    if (form != null) form.IsEnabled = true;
                 }
             }
         }
@@ -372,7 +431,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async Task SendSaveRequest(bool isUpdate)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NHAN_VIEN"))
             {
                 MessageBox.Show("Bạn không có quyền thực hiện chức năng này!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -458,7 +517,8 @@ namespace AppCafebookApi.View.quanly.pages
                 {
                     MessageBox.Show("Lưu thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                     BtnLamMoiForm_Click(null, null);
-                    await LoadDanhSachNhanVien();
+
+                    _ = BackgroundRefreshAsync();
                 }
                 else
                 {
@@ -471,7 +531,8 @@ namespace AppCafebookApi.View.quanly.pages
             }
             finally
             {
-                if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Collapsed;
+                var loading = FindName("LoadingOverlay") as Border;
+                if (loading != null) loading.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -499,7 +560,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnXoa_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN")) return;
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NHAN_VIEN")) return;
             if (_selectedNhanVien == null) return;
 
             if (AuthService.CurrentUser != null && _selectedNhanVien.IdNhanVien == AuthService.CurrentUser.IdNhanVien)
@@ -515,7 +576,8 @@ namespace AppCafebookApi.View.quanly.pages
                 {
                     MessageBox.Show("Đã cập nhật trạng thái thành công!");
                     BtnLamMoiForm_Click(null, null);
-                    await LoadDanhSachNhanVien(); 
+
+                    _ = BackgroundRefreshAsync();
                 }
                 else
                 {
@@ -528,42 +590,35 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void BtnPhanQuyen_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_PHAN_QUYEN"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_PHAN_QUYEN"))
             { MessageBox.Show("Không có quyền truy cập Phân quyền!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyPhanQuyenView());
         }
 
         private void BtnGoToBaoCao_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_NHAN_SU"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAO_CAO_NHAN_SU"))
             { MessageBox.Show("Bạn không có quyền Xem Báo cáo Nhân sự!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyBaoCaoNhanSuView());
         }
 
         private void BtnGoToLichLamViec_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_LICH_LAM_VIEC"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_LICH_LAM_VIEC"))
             { MessageBox.Show("Bạn không có quyền Xếp Lịch làm việc!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyLichLamViecView());
         }
 
         private void BtnGoToDonXinNghi_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_DON_XIN_NGHI"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DON_XIN_NGHI"))
             { MessageBox.Show("Bạn không có quyền Duyệt Đơn xin nghỉ!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyDonXinNghiView());
         }
         
-        private void BtnGoToCaiDat_Click(object sender, RoutedEventArgs e)
-        {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_CAI_DAT_NHAN_SU"))
-            { MessageBox.Show("Bạn không có quyền Cài đặt tham số Nhân sự!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-         //   this.NavigationService?.Navigate(new CaiDatNhanSuView());
-        }
-        
         private void BtnGoToHieuSuat_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU"))
             { MessageBox.Show("Bạn không có quyền Xem Báo cáo Hiệu suất!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyBaoCaoHieuSuatView());
         }

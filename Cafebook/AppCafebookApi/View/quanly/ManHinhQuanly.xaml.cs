@@ -108,31 +108,37 @@ namespace AppCafebookApi.View.quanly
                 return;
             }
 
-            btnTongQuan.Visibility = AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN", "QL_BAO_CAO_TON_KHO_SACH", "QL_BAO_CAO_TON_KHO_NL", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_BAO_CAO_DOANH_THU", "CM_CAI_DAT", "CM_NHAT_KY_HE_THONG") ? Visibility.Visible : Visibility.Collapsed;
-            btnBan.Visibility = AuthService.CoQuyen("FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC") ? Visibility.Visible : Visibility.Collapsed;
-            btnSanPham.Visibility = AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM", "QL_DANH_MUC", "QL_DINH_LUONG") ? Visibility.Visible : Visibility.Collapsed;
-            btnKho.Visibility = AuthService.CoQuyen("FULL_QL", "QL_TON_KHO", "QL_NGUYEN_LIEU", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP", "QL_DON_VI_CHUYEN_DOI") ? Visibility.Visible : Visibility.Collapsed;
-            btnDonHang.Visibility = AuthService.CoQuyen("FULL_QL", "QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG") ? Visibility.Visible : Visibility.Collapsed;
-            btnSach.Visibility = AuthService.CoQuyen("FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH") ? Visibility.Visible : Visibility.Collapsed;
-            btnLuong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT") ? Visibility.Visible : Visibility.Collapsed;
-            btnNhanSu.Visibility = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU") ? Visibility.Visible : Visibility.Collapsed;
-            btnKhachHang.Visibility = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI", "QL_DE_XUAT") ? Visibility.Visible : Visibility.Collapsed;
+            btnTongQuan.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_TONG_QUAN", "QL_BAO_CAO_TON_KHO_SACH", "QL_BAO_CAO_TON_KHO_NL", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_BAO_CAO_DOANH_THU", "CM_CAI_DAT", "CM_NHAT_KY_HE_THONG") ? Visibility.Visible : Visibility.Collapsed;
+            btnBan.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC") ? Visibility.Visible : Visibility.Collapsed;
+            btnSanPham.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_SAN_PHAM", "QL_DANH_MUC", "QL_DINH_LUONG") ? Visibility.Visible : Visibility.Collapsed;
+            btnKho.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_TON_KHO", "QL_NGUYEN_LIEU", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP", "QL_DON_VI_CHUYEN_DOI") ? Visibility.Visible : Visibility.Collapsed;
+            btnDonHang.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG") ? Visibility.Visible : Visibility.Collapsed;
+            btnSach.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH") ? Visibility.Visible : Visibility.Collapsed;
+            btnLuong.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT") ? Visibility.Visible : Visibility.Collapsed;
+            btnNhanSu.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI") ? Visibility.Visible : Visibility.Collapsed;
+            btnKhachHang.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI", "QL_DE_XUAT") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnThongTinCaNhan.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THONG_TIN") ? Visibility.Visible : Visibility.Collapsed;
-            btnChamCong.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG") ? Visibility.Visible : Visibility.Collapsed;
-            btnLichLamViecCuaToi.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_LICH_LAM_VIEC") ? Visibility.Visible : Visibility.Collapsed;
-            btnPhieuLuongCuaToi.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_PHIEU_LUONG") ? Visibility.Visible : Visibility.Collapsed;
+            btnThongTinCaNhan.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_THONG_TIN") ? Visibility.Visible : Visibility.Collapsed;
+            btnChamCong.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_CHAM_CONG") ? Visibility.Visible : Visibility.Collapsed;
+            btnLichLamViecCuaToi.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_LICH_LAM_VIEC") ? Visibility.Visible : Visibility.Collapsed;
+            btnPhieuLuongCuaToi.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_PHIEU_LUONG") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnThongBao.Visibility = AuthService.CoQuyen("FULL_QL", "CM_THONG_BAO") ? Visibility.Visible : Visibility.Collapsed;
+            btnThongBao.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "CM_THONG_BAO") ? Visibility.Visible : Visibility.Collapsed;
 
-            btnQuanLyThongBao.Visibility = AuthService.CoQuyen("FULL_QL", "QL_THONG_BAO") ? Visibility.Visible : Visibility.Collapsed;
+            btnQuanLyThongBao.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_THONG_BAO") ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async Task CheckChamCongStatusAsync()
         {
             if (AuthService.CurrentUser == null) return;
 
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG", "QL_CHAM_CONG"))
+            if (AuthService.CurrentUser.IdNhanVien == 0)
+            {
+                UpdateSidebarStatus("Tài khoản System Admin");
+                return;
+            }
+
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_CHAM_CONG", "QL_CHAM_CONG"))
                 return;
 
             try
@@ -188,67 +194,67 @@ namespace AppCafebookApi.View.quanly
 
             if (clickedButton == btnTongQuan)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_TONG_QUAN", "QL_BAO_CAO_TON_KHO_SACH", "QL_BAO_CAO_TON_KHO_NL", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_BAO_CAO_DOANH_THU", "CM_CAI_DAT", "CM_NHAT_KY_HE_THONG");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_TONG_QUAN", "QL_BAO_CAO_TON_KHO_SACH", "QL_BAO_CAO_TON_KHO_NL", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_BAO_CAO_DOANH_THU", "CM_CAI_DAT", "CM_NHAT_KY_HE_THONG");
                 pageToNavigate = new QuanLyTongQuanView();
             }
             else if (clickedButton == btnBan)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC");
                 pageToNavigate = new QuanLyBanView();
             }
             else if (clickedButton == btnSanPham)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_SAN_PHAM", "QL_DANH_MUC", "QL_DINH_LUONG");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_SAN_PHAM", "QL_DANH_MUC", "QL_DINH_LUONG");
                 pageToNavigate = new QuanLySanPhamView();
             }
             else if (clickedButton == btnKho)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_TON_KHO", "QL_NGUYEN_LIEU", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP", "QL_DON_VI_CHUYEN_DOI");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_TON_KHO", "QL_NGUYEN_LIEU", "QL_NHAP_KHO", "QL_XUAT_HUY", "QL_KIEM_KHO", "QL_NHA_CUNG_CAP", "QL_DON_VI_CHUYEN_DOI");
                 pageToNavigate = new QuanLyTonKhoView();
             }
             else if (clickedButton == btnDonHang)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG");
                 pageToNavigate = new QuanLyDonHangView();
             }
             else if (clickedButton == btnSach)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH");
                 pageToNavigate = new QuanLySachView();
             }
             else if (clickedButton == btnLuong)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT");
                 pageToNavigate = new QuanLyLuongView();
             }
             else if (clickedButton == btnNhanSu)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI", "QL_CAI_DAT_NHAN_SU");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NHAN_VIEN", "QL_PHAN_QUYEN", "QL_BAO_CAO_NHAN_SU", "QL_BAO_CAO_HIEU_SUAT_NHAN_SU", "QL_LICH_LAM_VIEC", "QL_DON_XIN_NGHI");
                 pageToNavigate = new QuanLyNhanVienView();
             }
             else if (clickedButton == btnKhachHang)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI", "QL_DE_XUAT");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI", "QL_DE_XUAT");
                 pageToNavigate = new QuanLyKhachHangView();
             }
             else if (clickedButton == btnThongTinCaNhan)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THONG_TIN");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_THONG_TIN");
                 pageToNavigate = new ThongTinCaNhanView();
             }
             else if (clickedButton == btnChamCong)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_CHAM_CONG");
                 pageToNavigate = new ChamCongView();
             }
             else if (clickedButton == btnLichLamViecCuaToi)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_LICH_LAM_VIEC");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_LICH_LAM_VIEC");
                 pageToNavigate = new LichLamViecView();
             }
             else if (clickedButton == btnPhieuLuongCuaToi)
             {
-                hasPermission = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_PHIEU_LUONG");
+                hasPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_PHIEU_LUONG");
                 pageToNavigate = new PhieuLuongView();
             }
 
@@ -284,9 +290,12 @@ namespace AppCafebookApi.View.quanly
         {
             if (AuthService.CurrentUser == null) return;
 
+            if (AuthService.CurrentUser.IdNhanVien == 0) return;
+
             try
             {
                 var myRoles = new List<string>();
+                if (AuthService.CoQuyen("FULL_ADMIN")) myRoles.Add("FULL_ADMIN");
                 if (AuthService.CoQuyen("FULL_QL")) myRoles.Add("FULL_QL");
                 if (AuthService.CoQuyen("QL_BAN")) myRoles.Add("QL_BAN");
                 if (AuthService.CoQuyen("QL_SU_CO_BAN")) myRoles.Add("QL_SU_CO_BAN");
@@ -410,7 +419,6 @@ namespace AppCafebookApi.View.quanly
                 }
 
                 popThongBao.IsOpen = false;
-
                 lblDetailSender.Text = $"Người gửi: {tb.TenNhanVienTao}";
                 lblDetailTime.Text = $"Gửi lúc: {tb.ThoiGianTao:dd/MM/yyyy HH:mm}";
                 txtDetailContent.Text = tb.NoiDung;
@@ -422,7 +430,8 @@ namespace AppCafebookApi.View.quanly
                     "DangKyLichMoi" => new QuanLyLichLamViecView(),
                     "DonXinNghi" => new QuanLyDonXinNghiView(),
                     "DonHangMoi" => new QuanLyDonHangView(),
-                    "ThongBaoQuanLy" or "ThongBaoNhanVien" or "ThongBaoToanNhanVien" => null,
+                    "GopY" => new QuanLyKhachHangView(),
+                    "DatBan" or "HuyDatBan" => new QuanLyBanView(),
                     _ => null
                 };
 
@@ -436,10 +445,16 @@ namespace AppCafebookApi.View.quanly
             DetailThongBaoOverlay.Visibility = Visibility.Collapsed;
             if (_targetPageForNotification != null)
             {
-                if (_targetPageForNotification is QuanLyBanView) UpdateSelectedButton(btnBan);
-                else if (_targetPageForNotification is QuanLyTonKhoView) UpdateSelectedButton(btnKho);
-                else if (_targetPageForNotification is QuanLyDonHangView) UpdateSelectedButton(btnDonHang);
-                else if (_targetPageForNotification is QuanLyLichLamViecView || _targetPageForNotification is QuanLyDonXinNghiView) UpdateSelectedButton(btnNhanSu);
+                if (_targetPageForNotification is QuanLyBanView || _targetPageForNotification is QuanLySuCoBanView)
+                    UpdateSelectedButton(btnBan);
+                else if (_targetPageForNotification is QuanLyTonKhoView)
+                    UpdateSelectedButton(btnKho);
+                else if (_targetPageForNotification is QuanLyDonHangView)
+                    UpdateSelectedButton(btnDonHang);
+                else if (_targetPageForNotification is QuanLyLichLamViecView || _targetPageForNotification is QuanLyDonXinNghiView)
+                    UpdateSelectedButton(btnNhanSu);
+                else if (_targetPageForNotification is QuanLyKhachHangView)
+                    UpdateSelectedButton(btnKhachHang);
 
                 MainFrame.Navigate(_targetPageForNotification);
             }
@@ -451,7 +466,7 @@ namespace AppCafebookApi.View.quanly
         }
         private void BtnMoQuanLyThongBao_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_THONG_BAO"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_THONG_BAO"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập chức năng Quản lý Thông báo!", "Từ chối truy cập", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -468,15 +483,18 @@ namespace AppCafebookApi.View.quanly
             {
                 _notificationTimer?.Stop();
 
+                _toastCts?.Cancel();
+
                 if (MainFrame != null)
                 {
                     MainFrame.Content = null;
-
                     while (MainFrame.NavigationService.CanGoBack)
                     {
                         MainFrame.NavigationService.RemoveBackEntry();
                     }
                 }
+
+                GlobalDataCache.ClearAll();
 
                 AuthService.Logout();
 

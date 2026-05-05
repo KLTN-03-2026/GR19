@@ -482,7 +482,6 @@ namespace CafebookApi.Controllers.App.NhanVien
 
             hoaDonThanhToan.GiamGia = giamGiaKM + giamGiaDiem;
 
-            // XÓA BỎ LỜI GỌI HÀM TRUKHO Ở ĐÂY
 
             hoaDonThanhToan.TrangThai = "Đã thanh toán";
             hoaDonThanhToan.ThoiGianThanhToan = DateTime.Now;

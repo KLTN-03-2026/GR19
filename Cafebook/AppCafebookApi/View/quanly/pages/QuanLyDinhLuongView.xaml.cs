@@ -30,7 +30,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_DINH_LUONG")) 
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL") && !AuthService.CoQuyen("QL_DINH_LUONG")) 
             { 
                 MessageBox.Show("Bạn không có quyền truy cập module Định lượng!", "Từ chối"); 
                 this.NavigationService?.GoBack(); 
@@ -64,15 +64,93 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async Task LoadMasterDataAsync()
         {
-            if (FindName("LoadingOverlay") is Border l1) l1.Visibility = Visibility.Visible;
+            var loading = FindName("LoadingOverlay") as Border;
+            if (loading != null) loading.Visibility = Visibility.Visible;
             try
             {
-                var sp = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDinhLuongSPDto>>("api/app/quanly-dinhluong/lookup-sp"); if (sp != null) { _spList = sp; FilterSP(); }
-                var nl = await ApiClient.Instance.GetFromJsonAsync<List<LookupDinhLuongDto>>("api/app/quanly-dinhluong/lookup-nl"); if (FindName("cmbNguyenLieu") is ComboBox cbNL) cbNL.ItemsSource = nl;
-                var dv = await ApiClient.Instance.GetFromJsonAsync<List<LookupDinhLuongDto>>("api/app/quanly-dinhluong/lookup-dv"); if (FindName("cmbDonVi") is ComboBox cbDV) cbDV.ItemsSource = dv;
+                if (GlobalDataCache.QL_DinhLuongSPCache != null && GlobalDataCache.QL_DinhLuongSPCache.Count > 0)
+                {
+                    _spList = GlobalDataCache.QL_DinhLuongSPCache;
+                    FilterSP();
+
+                    if (loading != null) loading.Visibility = Visibility.Collapsed;
+
+                    _ = BackgroundRefreshAsync();
+                    return;
+                }
+                await FetchApiAndSetupUI();
             }
             catch { }
-            finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+            finally
+            {
+                if (loading != null) loading.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        // ==========================================
+        // CÁC HÀM HỖ TRỢ (ĐỒNG BỘ NGẦM)
+        // ==========================================
+
+        private async Task BackgroundRefreshAsync()
+        {
+            try
+            {
+                // Bắn 3 API CÙNG LÚC để đạt tốc độ tối đa
+                var tSp = ApiClient.Instance.GetFromJsonAsync<List<QuanLyDinhLuongSPDto>>("api/app/quanly-dinhluong/lookup-sp");
+                var tNl = ApiClient.Instance.GetFromJsonAsync<List<LookupDinhLuongDto>>("api/app/quanly-dinhluong/lookup-nl");
+                var tDv = ApiClient.Instance.GetFromJsonAsync<List<LookupDinhLuongDto>>("api/app/quanly-dinhluong/lookup-dv");
+
+                await Task.WhenAll(tSp, tNl, tDv);
+
+                var sp = await tSp;
+                var nl = await tNl;
+                var dv = await tDv;
+
+                // Nạp dữ liệu vào ComboBox (Chạy ngầm nên UI không bị đơ)
+                if (nl != null && FindName("cmbNguyenLieu") is ComboBox cbNL) cbNL.ItemsSource = nl;
+                if (dv != null && FindName("cmbDonVi") is ComboBox cbDV) cbDV.ItemsSource = dv;
+
+                // Cập nhật lại RAM và Danh sách Sản Phẩm (Nếu có món mới thêm)
+                if (sp != null)
+                {
+                    GlobalDataCache.QL_DinhLuongSPCache = sp;
+                    _spList = sp;
+
+                    // Ghi nhớ sản phẩm đang click để không làm gián đoạn
+                    int? currentSelectedId = _selectedSP?.IdSanPham;
+                    FilterSP();
+
+                    if (currentSelectedId.HasValue && FindName("dgSanPham") is DataGrid dg)
+                    {
+                        var itemToSelect = _spList.FirstOrDefault(x => x.IdSanPham == currentSelectedId);
+                        if (itemToSelect != null) dg.SelectedItem = itemToSelect;
+                    }
+                }
+            }
+            catch { /* Lỗi mạng thì bỏ qua, người dùng vẫn dùng dữ liệu cũ trên RAM */ }
+        }
+
+        private async Task FetchApiAndSetupUI()
+        {
+            var tSp = ApiClient.Instance.GetFromJsonAsync<List<QuanLyDinhLuongSPDto>>("api/app/quanly-dinhluong/lookup-sp");
+            var tNl = ApiClient.Instance.GetFromJsonAsync<List<LookupDinhLuongDto>>("api/app/quanly-dinhluong/lookup-nl");
+            var tDv = ApiClient.Instance.GetFromJsonAsync<List<LookupDinhLuongDto>>("api/app/quanly-dinhluong/lookup-dv");
+
+            await Task.WhenAll(tSp, tNl, tDv);
+
+            var sp = await tSp;
+            var nl = await tNl;
+            var dv = await tDv;
+
+            if (nl != null && FindName("cmbNguyenLieu") is ComboBox cbNL) cbNL.ItemsSource = nl;
+            if (dv != null && FindName("cmbDonVi") is ComboBox cbDV) cbDV.ItemsSource = dv;
+
+            if (sp != null)
+            {
+                GlobalDataCache.QL_DinhLuongSPCache = sp;
+                _spList = sp;
+                FilterSP();
+            }
         }
 
         private void TxtSearchSP_TextChanged(object sender, TextChangedEventArgs e) => FilterSP();
@@ -109,11 +187,34 @@ namespace AppCafebookApi.View.quanly.pages
 
             if (idNl == 0 || idDv == 0 || sl <= 0) { MessageBox.Show("Nhập đủ thông tin hợp lệ!"); return; }
             var dto = new QuanLyDinhLuongSaveDto { IdNguyenLieu = idNl, SoLuongSuDung = sl, IdDonViSuDung = idDv };
-            if (FindName("LoadingOverlay") is Border l1) l1.Visibility = Visibility.Visible;
-            try { var res = await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-dinhluong/{_selectedSP.IdSanPham}", dto); if (res.IsSuccessStatusCode) await LoadDinhLuongAsync(_selectedSP.IdSanPham); else MessageBox.Show(await res.Content.ReadAsStringAsync()); } finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+
+            var loading = FindName("LoadingOverlay") as Border;
+            if (loading != null) loading.Visibility = Visibility.Visible;
+            try
+            {
+                var res = await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-dinhluong/{_selectedSP.IdSanPham}", dto);
+                if (res.IsSuccessStatusCode) await LoadDinhLuongAsync(_selectedSP.IdSanPham);
+                else MessageBox.Show(await res.Content.ReadAsStringAsync());
+            }
+            finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
         }
 
-        private async void BtnXoa_Click(object sender, RoutedEventArgs e) { if (!AuthService.CoQuyen("QL_DINH_LUONG") || _selectedSP == null || _selectedNL == null) return; if (MessageBox.Show("Xóa?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-dinhluong/{_selectedSP.IdSanPham}/{_selectedNL.IdNguyenLieu}"); if (res.IsSuccessStatusCode) await LoadDinhLuongAsync(_selectedSP.IdSanPham); } }
+        private async void BtnXoa_Click(object sender, RoutedEventArgs e)
+        {
+            if (!AuthService.CoQuyen("QL_DINH_LUONG") || _selectedSP == null || _selectedNL == null) return;
+            if (MessageBox.Show("Xóa?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                var loading = FindName("LoadingOverlay") as Border;
+                if (loading != null) loading.Visibility = Visibility.Visible;
+                try
+                {
+                    var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-dinhluong/{_selectedSP.IdSanPham}/{_selectedNL.IdNguyenLieu}");
+                    if (res.IsSuccessStatusCode) await LoadDinhLuongAsync(_selectedSP.IdSanPham);
+                }
+                finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
+            }
+        }
+
         private void BtnQuayLai_Click(object sender, RoutedEventArgs e) => this.NavigationService?.GoBack();
     }
 }

@@ -64,7 +64,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="NHẬT KÝ HỆ THỐNG (SYSTEM LOGS)" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+            <TextBlock Text="NHẬT KÝ HỆ THỐNG" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
             <Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
         </Grid>
 

@@ -197,7 +197,7 @@
 
         <Border Grid.Column="0" Margin="0,0,20,0" Background="{StaticResource WhiteBrush}" CornerRadius="12" Effect="{StaticResource ShadowDepth2}" Padding="20">
             <StackPanel>
-                <TextBlock Text="Thông tin cá nhân" Style="{StaticResource HeaderStyle}"/>
+                <TextBlock Text="THÔNG TIN CÁ NHÂN" Style="{StaticResource HeaderStyle}"/>
                 <Border CornerRadius="150" Width="200" Height="200" BorderBrush="{StaticResource PrimaryBrownBrush}" BorderThickness="2" Background="#EFEBE9" Margin="0,10,0,20" HorizontalAlignment="Center">
                     <Ellipse x:Name="imgAvatar" Width="200" Height="200">
                         <Ellipse.Fill>

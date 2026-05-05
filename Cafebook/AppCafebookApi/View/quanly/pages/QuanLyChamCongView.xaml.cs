@@ -30,7 +30,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_CHAM_CONG"))
             {
                 MessageBox.Show("Từ chối truy cập module Chấm công!");
                 this.NavigationService?.GoBack(); return;
@@ -65,7 +65,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void ApplyPermissions()
         {
-            bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG");
+            bool hasQuyen = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_CHAM_CONG");
             if (FindName("GridDuLieu") is Grid g) g.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;
             if (FindName("btnLuu") is Button btn2) btn2.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;

@@ -28,7 +28,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "QL_LICH_SU_THUE_SACH"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_LICH_SU_THUE_SACH"))
             {
                 MessageBox.Show("Từ chối truy cập module Lịch sử thuê sách!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack();
@@ -62,7 +62,7 @@ namespace AppCafebookApi.View.quanly.pages
         private void ApplyPermissions()
         {
             // BẢO MẬT LỚP 1: Ẩn/Hiện UI
-            bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_LICH_SU_THUE_SACH");
+            bool hasQuyen = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_LICH_SU_THUE_SACH");
             if (FindName("GridDuLieu") is Border b1) b1.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("txtThongBaoKhongCoQuyen") is Border b2) b2.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;
         }

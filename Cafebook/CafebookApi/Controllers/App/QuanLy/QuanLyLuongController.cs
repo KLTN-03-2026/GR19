@@ -26,19 +26,14 @@ namespace CafebookApi.Controllers.App.QuanLy
         {
             try
             {
-                var list = await _context.Set<PhieuThuongPhat>().AsNoTracking()
-                    .Select(p => new { p.LyDo, p.SoTien })
-                    .Distinct()
-                    .ToListAsync();
-
-                var dtos = list.Select((m, index) => new ThuongPhatMauLookupDto
+                var list = await _context.Set<ThuongPhatMau>().AsNoTracking().ToListAsync();
+                var dtos = list.Select(m => new ThuongPhatMauLookupDto
                 {
-                    IdMau = index + 1,
-                    TenMau = m.LyDo,
-                    Loai = m.SoTien >= 0 ? "Thưởng" : "Phạt",
-                    SoTien = Math.Abs(m.SoTien)
+                    IdMau = m.IdMau,
+                    TenMau = m.TenMau,
+                    Loai = m.Loai,
+                    SoTien = m.SoTien
                 }).ToList();
-
                 return Ok(dtos);
             }
             catch { return Ok(new List<ThuongPhatMauLookupDto>()); }
@@ -50,15 +45,16 @@ namespace CafebookApi.Controllers.App.QuanLy
             var configs = await _context.Set<CaiDat>().Where(c => c.TenCaiDat.StartsWith("HR_")).AsNoTracking().ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
 
             int phutTreChoPhep = int.TryParse(configs.GetValueOrDefault("HR_PhatDiTre_Phut"), out var p1) ? p1 : 10;
-            decimal phatTreMoiLan = decimal.TryParse(configs.GetValueOrDefault("HR_PhatDiTreMoiLan"), out var p2) ? p2 : 5000m;
+            decimal phatTreMoiLan = decimal.TryParse(configs.GetValueOrDefault("HR_PhatDiTreMoiLan")?.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var p2) ? p2 : 5000m;
             int phutSomChoPhep = int.TryParse(configs.GetValueOrDefault("HR_PhatRaSom_Phut"), out var p3) ? p3 : 10;
-            decimal phatSomMoiLan = decimal.TryParse(configs.GetValueOrDefault("HR_PhatVeSomMoiLan"), out var p4) ? p4 : 6000m;
+            decimal phatSomMoiLan = decimal.TryParse(configs.GetValueOrDefault("HR_PhatVeSomMoiLan")?.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var p4) ? p4 : 6000m;
 
-            double heSoOT = double.TryParse(configs.GetValueOrDefault("HR_HeSoOT"), out var p5) ? p5 : 1.5;
+            double heSoOT = double.TryParse(configs.GetValueOrDefault("HR_HeSoOT")?.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var p5) ? p5 : 1.5;
+
             int phutTinhTangCa = int.TryParse(configs.GetValueOrDefault("HR_TinhTangCa_Phut"), out var p6) ? p6 : 60;
+            double gioChuyenCan = double.TryParse(configs.GetValueOrDefault("HR_ChuyenCan_SoGio")?.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var p7) ? p7 : 120.0;
+            decimal tienThuongChuyenCan = decimal.TryParse(configs.GetValueOrDefault("HR_ChuyenCan_TienThuong")?.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var p8) ? p8 : 500000m;
 
-            double gioChuyenCan = double.TryParse(configs.GetValueOrDefault("HR_ChuyenCan_SoGio"), out var p7) ? p7 : 120.0;
-            decimal tienThuongChuyenCan = decimal.TryParse(configs.GetValueOrDefault("HR_ChuyenCan_TienThuong"), out var p8) ? p8 : 500000m;
 
             var rawData = await (from l in _context.Set<LichLamViec>()
                                  join b in _context.Set<BangChamCong>() on l.IdLichLamViec equals b.IdLichLamViec
@@ -68,7 +64,9 @@ namespace CafebookApi.Controllers.App.QuanLy
                                  select new { l.IdNhanVien, nv.HoTen, nv.LuongCoBan, b.GioVao, b.GioRa, c.GioBatDau, c.GioKetThuc, l.NgayLam }).ToListAsync();
 
             var thuongPhatThuCong = await _context.Set<PhieuThuongPhat>()
-                .Where(p => p.IdPhieuLuong == null && p.NgayTao >= tuNgay.Date && p.NgayTao <= denNgay.Date)
+                .Where(p => p.IdPhieuLuong == null
+                         && p.NgayTao.Month == tuNgay.Month
+                         && p.NgayTao.Year == tuNgay.Year)
                 .ToListAsync();
 
             var result = rawData.GroupBy(x => new { x.IdNhanVien, x.HoTen, x.LuongCoBan }).Select(g =>
@@ -167,16 +165,70 @@ namespace CafebookApi.Controllers.App.QuanLy
             {
                 IdNhanVien = dto.IdNhanVien,
                 IdNguoiTao = dto.IdNguoiTao > 0 ? dto.IdNguoiTao : 1,
-
                 NgayTao = dto.NgayTao ?? DateTime.Now,
-
                 LyDo = dto.LyDo,
                 SoTien = dto.Loai == "Phạt" ? -Math.Abs(dto.SoTien) : Math.Abs(dto.SoTien)
             };
 
             try
             {
+                bool existsMau = await _context.Set<ThuongPhatMau>()
+                    .AnyAsync(m => m.TenMau.ToLower() == dto.LyDo.ToLower() && m.Loai == dto.Loai);
+
+                if (!existsMau)
+                {
+                    _context.Set<ThuongPhatMau>().Add(new ThuongPhatMau
+                    {
+                        Loai = dto.Loai,
+                        TenMau = dto.LyDo,
+                        SoTien = Math.Abs(dto.SoTien)
+                    });
+                }
+
                 _context.Set<PhieuThuongPhat>().Add(ptp);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Lỗi tạo phiếu: {ex.InnerException?.Message ?? ex.Message}");
+            }
+        }
+
+        [HttpPost("thuong-phat-hang-loat")]
+        public async Task<IActionResult> AddThuongPhatHangLoat([FromBody] TaoThuongPhatHangLoatDto dto)
+        {
+            if (dto.IdNhanViens == null || !dto.IdNhanViens.Any())
+                return BadRequest("Chưa chọn nhân viên nào để áp dụng.");
+
+            try
+            {
+                bool existsMau = await _context.Set<ThuongPhatMau>()
+                    .AnyAsync(m => m.TenMau.ToLower() == dto.LyDo.ToLower() && m.Loai == dto.Loai);
+
+                if (!existsMau)
+                {
+                    _context.Set<ThuongPhatMau>().Add(new ThuongPhatMau
+                    {
+                        Loai = dto.Loai,
+                        TenMau = dto.LyDo,
+                        SoTien = Math.Abs(dto.SoTien)
+                    });
+                }
+
+                foreach (var idNv in dto.IdNhanViens)
+                {
+                    var ptp = new PhieuThuongPhat
+                    {
+                        IdNhanVien = idNv,
+                        IdNguoiTao = dto.IdNguoiTao > 0 ? dto.IdNguoiTao : 1,
+                        NgayTao = dto.NgayTao ?? DateTime.Now,
+                        LyDo = dto.LyDo,
+                        SoTien = dto.Loai == "Phạt" ? -Math.Abs(dto.SoTien) : Math.Abs(dto.SoTien)
+                    };
+                    _context.Set<PhieuThuongPhat>().Add(ptp);
+                }
+
                 await _context.SaveChangesAsync();
                 return Ok();
             }

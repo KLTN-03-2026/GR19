@@ -16,25 +16,11 @@ namespace AppCafebookApi.View.common
     {
         private readonly int _idHoaDon;
         private readonly int? _currentSelectedId;
-        //private static readonly HttpClient _httpClient;
         private List<KhuyenMaiHienThiGoiMonDto> _allKms = new List<KhuyenMaiHienThiGoiMonDto>();
 
         public int? SelectedId { get; private set; }
 
-        // ======================================================
-        // NÂNG CẤP 1: DYNAMIC URL (Tuyệt đối không hardcode)
-        // ======================================================
-        /*
-        static ChonKhuyenMaiWindow()
-        {
-            _httpClient = new HttpClient();
-            string? apiUrl = AppConfigManager.GetApiServerUrl();
-            if (!string.IsNullOrWhiteSpace(apiUrl))
-            {
-                _httpClient.BaseAddress = new Uri(apiUrl);
-            }
-        }
-        */
+
         public ChonKhuyenMaiWindow(int idHoaDon, int? currentSelectedId)
         {
             InitializeComponent();
@@ -44,7 +30,6 @@ namespace AppCafebookApi.View.common
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Chặn crash nếu chưa có API
             if (ApiClient.Instance.BaseAddress == null)
             {
                 MessageBox.Show("Hệ thống chưa được cấu hình URL Server.", "Thiếu cấu hình");

@@ -2,10 +2,14 @@
 using CafebookModel.Model.ModelEntities;
 using CafebookModel.Model.ModelWeb.NhanVien;
 using CafebookModel.Model.Shared;
+using CafebookModel.Utils;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -18,10 +22,12 @@ namespace CafebookApi.Controllers.Web.NhanVien
     public class TongQuanController : ControllerBase
     {
         private readonly CafebookDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public TongQuanController(CafebookDbContext context)
+        public TongQuanController(CafebookDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env; // Inject IWebHostEnvironment để lưu file ảnh
         }
 
         [HttpGet("dashboard")]
@@ -57,25 +63,18 @@ namespace CafebookApi.Controllers.Web.NhanVien
             if (!showAll)
             {
                 var allowedTypes = new List<string> { "ThongBaoToanNhanVien" };
-
                 if (roleName == "Nhân viên") allowedTypes.Add("ThongBaoNhanVien");
                 if (roleName == "Quản lý") allowedTypes.Add("ThongBaoQuanLy");
-
                 if (userRoles.Contains("QL_BAN") || userRoles.Contains("NV_DAT_BAN") || userRoles.Contains("QL_SU_CO_BAN"))
                     allowedTypes.AddRange(new[] { "DatBan", "SuCoBan" });
-
                 if (userRoles.Contains("NV_CHE_BIEN") || userRoles.Contains("NV_GOI_MON"))
                     allowedTypes.Add("PhieuGoiMon");
-
                 if (userRoles.Contains("QL_DON_HANG") || userRoles.Contains("NV_GIAO_HANG"))
                     allowedTypes.Add("DonHangMoi");
-
                 if (userRoles.Contains("QL_TON_KHO"))
                     allowedTypes.AddRange(new[] { "HetHang", "CanhBaoKho", "Kho" });
-
                 if (userRoles.Contains("QL_DON_XIN_NGHI"))
                     allowedTypes.Add("DonXinNghi");
-
                 if (userRoles.Contains("QL_LICH_LAM_VIEC"))
                     allowedTypes.Add("DangKyLichMoi");
 
@@ -85,7 +84,7 @@ namespace CafebookApi.Controllers.Web.NhanVien
             var thongBaos = await query
                 .OrderByDescending(t => t.LoaiThongBao == "ThongBaoNhanVien" || t.LoaiThongBao == "ThongBaoToanNhanVien" || t.LoaiThongBao == "ThongBaoQuanLy")
                 .ThenByDescending(t => t.ThoiGianTao)
-                .Take(10) // Màn Dashboard chỉ lấy 10 cái
+                .Take(10)
                 .Select(t => new SharedThongBaoItemDto
                 {
                     IdThongBao = t.IdThongBao,
@@ -99,9 +98,6 @@ namespace CafebookApi.Controllers.Web.NhanVien
 
             int unreadCount = await query.CountAsync(t => !t.DaXem);
 
-            // ==========================================
-            // TRẢ VỀ DỮ LIỆU TỔNG HỢP
-            // ==========================================
             var result = new TongQuanDto
             {
                 ThongTin = new ThongTinNhanVienDto
@@ -112,6 +108,7 @@ namespace CafebookApi.Controllers.Web.NhanVien
                     AnhDaiDien = avatarUrl,
                     Email = nhanVien.Email,
                     SoDienThoai = nhanVien.SoDienThoai,
+                    DiaChi = nhanVien.DiaChi,
                     TrangThaiLamViec = nhanVien.TrangThaiLamViec
                 },
                 DanhSachThongBao = thongBaos,
@@ -119,6 +116,91 @@ namespace CafebookApi.Controllers.Web.NhanVien
             };
 
             return Ok(result);
+        }
+
+        [HttpPut("update-info")]
+        public async Task<IActionResult> UpdateInfo([FromBody] CapNhatThongTinWebDto req)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idNhanVien))
+                return Unauthorized("Token không hợp lệ.");
+
+            var nhanVien = await _context.NhanViens.FindAsync(idNhanVien);
+            if (nhanVien == null) return NotFound("Không tìm thấy nhân viên.");
+
+            nhanVien.HoTen = req.HoTen;
+            nhanVien.SoDienThoai = req.SoDienThoai;
+            nhanVien.Email = req.Email;
+            nhanVien.DiaChi = req.DiaChi;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Cập nhật thông tin thành công!" });
+        }
+
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] DoiMatKhauWebDto req)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idNhanVien))
+                return Unauthorized("Token không hợp lệ.");
+
+            if (req.MatKhauCu == req.MatKhauMoi)
+                return BadRequest("Mật khẩu mới không được trùng với mật khẩu cũ.");
+
+            var nhanVien = await _context.NhanViens.FindAsync(idNhanVien);
+            if (nhanVien == null) return NotFound("Không tìm thấy nhân viên.");
+
+            if (nhanVien.MatKhau != req.MatKhauCu)
+                return BadRequest("Mật khẩu cũ không chính xác.");
+
+            nhanVien.MatKhau = req.MatKhauMoi;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Đổi mật khẩu thành công." });
+        }
+
+        [HttpPost("upload-avatar")]
+        public async Task<IActionResult> UploadAvatar(Microsoft.AspNetCore.Http.IFormFile avatarFile)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idNhanVien))
+                return Unauthorized("Token không hợp lệ.");
+
+            if (avatarFile == null || avatarFile.Length == 0) return BadRequest("Chưa chọn file.");
+
+            var nhanVien = await _context.NhanViens.FindAsync(idNhanVien);
+            if (nhanVien == null) return NotFound("Không tìm thấy nhân viên.");
+
+            // Xóa ảnh cũ
+            if (!string.IsNullOrEmpty(nhanVien.AnhDaiDien))
+            {
+                try
+                {
+                    string oldPhysicalPath = Path.Combine(_env.WebRootPath, nhanVien.AnhDaiDien.TrimStart('/'));
+                    oldPhysicalPath = oldPhysicalPath.Replace('/', Path.DirectorySeparatorChar);
+                    if (System.IO.File.Exists(oldPhysicalPath)) System.IO.File.Delete(oldPhysicalPath);
+                }
+                catch { /* Ignore error */ }
+            }
+
+            string folderUrl = HinhAnhPaths.UrlAvatarNV ?? "/images/avatars";
+            string physicalFolder = Path.Combine(_env.WebRootPath, folderUrl.TrimStart('/'));
+
+            if (!Directory.Exists(physicalFolder)) Directory.CreateDirectory(physicalFolder);
+
+            string ext = Path.GetExtension(avatarFile.FileName);
+            string slugName = nhanVien.HoTen.GenerateSlug() ?? "user";
+            string fileName = $"{DateTime.Now:yyyyMMddHHmmss}_{slugName}{ext}";
+
+            var physicalPath = Path.Combine(physicalFolder, fileName);
+            using (var stream = new FileStream(physicalPath, FileMode.Create))
+            {
+                await avatarFile.CopyToAsync(stream);
+            }
+
+            nhanVien.AnhDaiDien = $"{folderUrl}/{fileName}";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Cập nhật ảnh đại diện thành công!" });
         }
     }
 }

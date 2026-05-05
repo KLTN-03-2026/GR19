@@ -61,7 +61,7 @@
                 <li>Phí dịch vụ thuê sách hiện tại là <strong>@(Model.ChinhSach?.PhiThue.ToString("N0") ?? "0")đ</strong> và mọi khoản phí phạt trễ hạn sẽ được khấu trừ vào tiền cọc khi bạn trả sách.</li>
                 <li>Thời gian thuê tối đa là <strong>@(Model.ChinhSach?.SoNgayMuonToiDa ?? "0") ngày</strong> . Phí phạt trễ hạn là <strong>@(Model.ChinhSach?.PhiTraTreMoiNgay.ToString("N0") ?? "0")đ</strong> cho mỗi ngày quá hạn.</li>
                 <li>Với mỗi lượt thuê sách thành công, hệ thống sẽ tự động tích lũy <strong>@(Model.ChinhSach?.DiemPhieuThue ?? "0")</strong> điểm thưởng vào tài khoản của Quý khách.</li>
-                <li>Trong trường hợp sách bị hư hỏng, mức phụ thu sẽ được tính dựa trên sự chênh lệch tình trạng sách (phần trăm độ mới) được ghi nhận trên phiếu thuê trước và sau khi mượn. Cụ thể, với mỗi 1% độ mới bị hao hụt, phí phạt là <strong>@(Model.ChinhSach?.PhatGiamDoMoi1Percent ?? "0") VND</strong>. Tùy mức độ thiệt hại, chúng tôi có quyền khấu trừ hoặc giữ lại toàn bộ tiền cọc.</li>
+                <li>Trong trường hợp sách bị hư hỏng, mức phụ thu sẽ được tính dựa trên sự chênh lệch tình trạng sách (phần trăm độ mới) được ghi nhận trên phiếu thuê lúc mượn và lúc trả. Cụ thể, <strong>với mỗi 1% độ mới bị hao hụt, phí phạt sẽ bằng 1% giá trị bìa của cuốn sách đó</strong>. Tùy mức độ thiệt hại, chúng tôi có quyền khấu trừ hoặc giữ lại toàn bộ tiền cọc.</li>
             </ul>
 
             <h3 class="cb-policy-subtitle">4. Chính sách thành viên & Tích điểm</h3>

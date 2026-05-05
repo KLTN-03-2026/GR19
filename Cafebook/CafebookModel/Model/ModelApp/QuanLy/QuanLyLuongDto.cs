@@ -5,6 +5,7 @@ namespace CafebookModel.Model.ModelApp.QuanLy
 {
     public class QuanLyLuongBangKeDto
     {
+        public bool IsSelected { get; set; } 
         public int IdNhanVien { get; set; }
         public string TenNhanVien { get; set; } = string.Empty;
         public decimal LuongCoBan { get; set; }
@@ -68,4 +69,13 @@ namespace CafebookModel.Model.ModelApp.QuanLy
         public decimal SoTien { get; set; }
     }
 
+    public class TaoThuongPhatHangLoatDto
+    {
+        public List<int> IdNhanViens { get; set; } = new();
+        public string Loai { get; set; } = "Thưởng";
+        public string LyDo { get; set; } = string.Empty;
+        public decimal SoTien { get; set; }
+        public int IdNguoiTao { get; set; } = 1;
+        public DateTime? NgayTao { get; set; }
+    }
 }

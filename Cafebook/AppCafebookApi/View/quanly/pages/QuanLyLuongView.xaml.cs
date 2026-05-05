@@ -33,7 +33,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_LUONG", "QL_PHAT_LUONG", "QL_CHAM_CONG", "QL_THUONG_PHAT"))
             {
                 MessageBox.Show("Từ chối truy cập module Quản lý Lương!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack(); 
@@ -46,17 +46,17 @@ namespace AppCafebookApi.View.quanly.pages
 
             try
             {
-                bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_LUONG");
+                bool hasQuyen = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_LUONG");
                 
                 if (FindName("GridDuLieu") is Grid g) g.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
                 if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;
                 
                 if (FindName("BtnNavChamCong") is Button btnChamCong)
-                    btnChamCong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG") ? Visibility.Visible : Visibility.Collapsed;
+                    btnChamCong.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_CHAM_CONG") ? Visibility.Visible : Visibility.Collapsed;
                 if (FindName("BtnNavPhatLuong") is Button btnPhatLuong)
-                    btnPhatLuong.Visibility = AuthService.CoQuyen("FULL_QL", "QL_PHAT_LUONG") ? Visibility.Visible : Visibility.Collapsed;
+                    btnPhatLuong.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_PHAT_LUONG") ? Visibility.Visible : Visibility.Collapsed;
                 if (FindName("BtnNavThuongPhat") is Button btnThuongPhat)
-                    btnThuongPhat.Visibility = AuthService.CoQuyen("FULL_QL", "QL_THUONG_PHAT") ? Visibility.Visible : Visibility.Collapsed;
+                    btnThuongPhat.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_THUONG_PHAT") ? Visibility.Visible : Visibility.Collapsed;
 
                 if (hasQuyen)
                 {
@@ -103,7 +103,6 @@ namespace AppCafebookApi.View.quanly.pages
                 int year = (int)cNam.SelectedItem;
                 int month = (int)cThang.SelectedItem;
 
-                // Tính từ ngày đầu tháng đến ngày cuối tháng
                 _tuNgay = new DateTime(year, month, 1);
                 _denNgay = _tuNgay.AddMonths(1).AddDays(-1);
 
@@ -113,6 +112,34 @@ namespace AppCafebookApi.View.quanly.pages
         }
 
         private async void BtnTamTinh_Click(object sender, RoutedEventArgs e) => await ReloadPreviewAsync();
+
+        private void TxtSearchNhanVien_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            FilterData();
+        }
+
+        private void FilterData()
+        {
+            if (FindName("dgBangKe") is DataGrid dg)
+            {
+                string keyword = (FindName("txtSearchNhanVien") as TextBox)?.Text.Trim().ToLower() ?? "";
+                if (string.IsNullOrEmpty(keyword))
+                {
+                    dg.ItemsSource = null;
+                    dg.ItemsSource = _previewList;
+                }
+                else
+                {
+                    var filtered = _previewList.Where(x =>
+                        x.TenNhanVien.ToLower().Contains(keyword) ||
+                        x.IdNhanVien.ToString() == keyword).ToList();
+
+                    dg.ItemsSource = null;
+                    dg.ItemsSource = filtered;
+                }
+                dg.Items.Refresh(); 
+            }
+        }
 
         private async Task ReloadPreviewAsync(bool silent = false)
         {
@@ -125,7 +152,9 @@ namespace AppCafebookApi.View.quanly.pages
                 if (response.IsSuccessStatusCode)
                 {
                     _previewList = await response.Content.ReadFromJsonAsync<List<QuanLyLuongBangKeDto>>() ?? new();
-                    if (FindName("dgBangKe") is DataGrid dg) dg.ItemsSource = _previewList;
+
+                    FilterData();
+
                     if (FindName("btnChotLuong") is Button btn) btn.IsEnabled = _previewList.Any();
 
                     if (_selectedNhanVien != null)
@@ -134,20 +163,22 @@ namespace AppCafebookApi.View.quanly.pages
                         if (updatedEmp != null && FindName("dgChiTietThuongPhat") is DataGrid dChiTiet)
                         {
                             _selectedNhanVien = updatedEmp;
-
                             dChiTiet.ItemsSource = null;
                             dChiTiet.ItemsSource = updatedEmp.DanhSachThuongPhat;
+                            dChiTiet.Items.Refresh();
+
+                            if (FindName("dgBangKe") is DataGrid dgMain)
+                                dgMain.SelectedItem = updatedEmp;
                         }
                     }
 
-                    if (!silent) MessageBox.Show("Hệ thống đã tự động tính Chuyên cần, Tăng ca và Vi phạm.\nBạn có thể thêm Thưởng/Phạt thủ công ở cột bên phải.", "Tạm tính hoàn tất");
+                    if (!silent) MessageBox.Show("Hệ thống đã tự động tính Chuyên cần, Tăng ca và Vi phạm.", "Tạm tính hoàn tất");
                 }
                 else
                 {
                     MessageBox.Show(await response.Content.ReadAsStringAsync(), "Cảnh báo");
-                    if (FindName("dgBangKe") is DataGrid dg) dg.ItemsSource = null;
+                    if (FindName("dgBangKe") is DataGrid dg) { dg.ItemsSource = null; dg.Items.Refresh(); }
                     if (FindName("btnChotLuong") is Button btn) btn.IsEnabled = false;
-                    if (FindName("formChiTiet") is StackPanel form) form.IsEnabled = false;
                 }
             }
             catch { }
@@ -187,32 +218,49 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnThemThuongPhat_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedNhanVien == null) return;
-            if (!decimal.TryParse((FindName("txtSoTien") as TextBox)?.Text, out decimal soTien) || soTien <= 0) { MessageBox.Show("Số tiền phải > 0"); return; }
-            string lyDo = (FindName("txtLyDoThuongPhat") as TextBox)?.Text.Trim() ?? "";
-            if (string.IsNullOrEmpty(lyDo)) { MessageBox.Show("Vui lòng nhập lý do"); return; }
+            var selectedEmployees = _previewList.Where(x => x.IsSelected).ToList();
 
-            var dto = new TaoThuongPhatDto
+            if (!selectedEmployees.Any())
             {
-                IdNhanVien = _selectedNhanVien.IdNhanVien,
+                if (_selectedNhanVien != null)
+                    selectedEmployees.Add(_selectedNhanVien);
+                else
+                {
+                    MessageBox.Show("Vui lòng tick chọn ít nhất 1 nhân viên ở bảng bên trái!");
+                    return;
+                }
+            }
+
+            if (!decimal.TryParse((FindName("txtSoTien") as TextBox)?.Text, out decimal soTien) || soTien <= 0)
+            { MessageBox.Show("Số tiền phải lớn hơn 0"); return; }
+
+            string lyDo = (FindName("txtLyDoThuongPhat") as TextBox)?.Text.Trim() ?? "";
+            if (string.IsNullOrEmpty(lyDo))
+            { MessageBox.Show("Vui lòng nhập lý do (Tên mẫu)"); return; }
+
+            var dto = new TaoThuongPhatHangLoatDto
+            {
+                IdNhanViens = selectedEmployees.Select(x => x.IdNhanVien).ToList(),
                 Loai = (FindName("cmbLoaiThuongPhat") as ComboBox)?.Text ?? "Thưởng",
                 SoTien = soTien,
                 LyDo = lyDo,
-                IdNguoiTao = 1,
-                // SỬA TẠI ĐÂY: Gắn ngày tạo là ngày đầu tiên của tháng đang xem
+                IdNguoiTao = AuthService.CurrentUser?.IdNhanVien ?? 1,
                 NgayTao = _tuNgay
             };
 
             if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
             try
             {
-                var res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-luong/thuong-phat", dto);
+                var res = await ApiClient.Instance.PostAsJsonAsync("api/app/quanly-luong/thuong-phat-hang-loat", dto);
                 if (res.IsSuccessStatusCode)
                 {
-                    await ReloadPreviewAsync(true); // Tự động load lại danh sách sau khi thêm
+                    await LoadThuongPhatMauAsync();
+
+                    await ReloadPreviewAsync(true);
                     ResetFormThuongPhat();
-                    // Bạn có thể comment (ẩn) dòng MessageBox báo thành công dưới đây cho trải nghiệm mượt hơn
-                    // MessageBox.Show("Đã thêm khoản thủ công thành công!"); 
+
+                    foreach (var emp in _previewList) emp.IsSelected = false;
+                    if (FindName("dgBangKe") is DataGrid dg) dg.Items.Refresh();
                 }
                 else
                 {
@@ -272,17 +320,17 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void BtnNavChamCong_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_CHAM_CONG")) this.NavigationService?.Navigate(new QuanLyChamCongView());
+            if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_CHAM_CONG")) this.NavigationService?.Navigate(new QuanLyChamCongView());
         }
 
         private void BtnNavPhatLuong_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_PHAT_LUONG")) this.NavigationService?.Navigate(new QuanLyPhatLuongView());
+            if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_PHAT_LUONG")) this.NavigationService?.Navigate(new QuanLyPhatLuongView());
         }
 
         private void BtnNavThuongPhat_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_THUONG_PHAT")) this.NavigationService?.Navigate(new QuanLyThuongPhatView());
+            if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_THUONG_PHAT")) this.NavigationService?.Navigate(new QuanLyThuongPhatView());
         }
     }
 }

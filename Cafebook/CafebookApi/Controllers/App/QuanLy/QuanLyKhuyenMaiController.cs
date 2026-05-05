@@ -33,6 +33,41 @@ namespace CafebookApi.Controllers.App.QuanLy
             return Ok(sanPhams);
         }
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll()
+        {
+            var today = DateTime.Now.Date;
+
+            // Auto-update hết hạn
+            var hetHanList = await _context.Set<KhuyenMai>()
+                .Where(km => km.TrangThai != "Hết hạn" && km.NgayKetThuc < today)
+                .ToListAsync();
+
+            if (hetHanList.Any())
+            {
+                foreach (var km in hetHanList) km.TrangThai = "Hết hạn";
+                await _context.SaveChangesAsync();
+            }
+
+            var result = await _context.Set<KhuyenMai>().AsNoTracking()
+                .OrderByDescending(km => km.IdKhuyenMai)
+                .Select(km => new QuanLyKhuyenMaiGridDto
+                {
+                    IdKhuyenMai = km.IdKhuyenMai,
+                    MaKhuyenMai = km.MaKhuyenMai,
+                    TenChuongTrinh = km.TenChuongTrinh,
+                    LoaiGiamGia = km.LoaiGiamGia,
+                    GiaTriGiam = km.LoaiGiamGia == "PhanTram" ? $"{km.GiaTriGiam:0.##}%" : $"{km.GiaTriGiam:N0}đ",
+                    GiamToiDa = km.GiamToiDa,
+                    NgayBatDau = km.NgayBatDau,
+                    NgayKetThuc = km.NgayKetThuc,
+                    SoLuongConLai = km.SoLuongConLai,
+                    TrangThai = km.TrangThai
+                }).ToListAsync();
+
+            return Ok(result);
+        }
+
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] string? maKhuyenMai, [FromQuery] string? trangThai)
         {

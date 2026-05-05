@@ -39,7 +39,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_CAI_DAT"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL") && !AuthService.CoQuyen("QL_CAI_DAT"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập trang Cài đặt!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack();
@@ -66,15 +66,56 @@ namespace AppCafebookApi.View.quanly.pages
             LoadingOverlay.Visibility = Visibility.Visible;
             try
             {
-                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyCaiDatDto>>("api/app/quanly-caidat/all");
-                if (res != null)
+                // 1. KIỂM TRA RAM (Hiển thị ngay lập tức toàn bộ cấu hình)
+                if (GlobalDataCache.QL_CaiDatCache != null && GlobalDataCache.QL_CaiDatCache.Count > 0)
                 {
-                    _allSettings = res;
+                    _allSettings = GlobalDataCache.QL_CaiDatCache;
                     ApplyFilter();
+
+                    // 2. Kích hoạt cập nhật ngầm API
+                    _ = BackgroundRefreshAsync();
+                    return;
                 }
+
+                // 3. Dự phòng (Fallback): Nếu RAM trống, gọi tải API trực tiếp
+                await FetchApiAndSetupUI();
             }
             catch (Exception ex) { ShowNotification("Lỗi tải dữ liệu: " + ex.Message, true); }
             finally { LoadingOverlay.Visibility = Visibility.Collapsed; }
+        }
+
+        // ==========================================
+        // CÁC HÀM HỖ TRỢ (ĐỒNG BỘ NGẦM)
+        // ==========================================
+
+        private async Task BackgroundRefreshAsync()
+        {
+            try
+            {
+                // Gọi ngầm lấy dữ liệu cấu hình mới nhất
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyCaiDatDto>>("api/app/quanly-caidat/all");
+                if (res != null)
+                {
+                    // Nạp vào RAM
+                    GlobalDataCache.QL_CaiDatCache = res;
+                    _allSettings = res;
+
+                    // Cập nhật lại List UI mà không làm gián đoạn thao tác của user
+                    ApplyFilter();
+                }
+            }
+            catch { /* Lỗi mạng thì im lặng bỏ qua, người dùng vẫn xem được cấu hình cũ trên RAM */ }
+        }
+
+        private async Task FetchApiAndSetupUI()
+        {
+            var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyCaiDatDto>>("api/app/quanly-caidat/all");
+            if (res != null)
+            {
+                GlobalDataCache.QL_CaiDatCache = res;
+                _allSettings = res;
+                ApplyFilter();
+            }
         }
 
         private void ApplyFilter()

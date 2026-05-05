@@ -76,6 +76,10 @@ namespace AppCafebookApi.View.common
             try
             {
                 var printDialog = new PrintDialog();
+
+                // Tạm tắt Topmost để hộp thoại in của Windows nổi lên
+                this.Topmost = false;
+
                 if (printDialog.ShowDialog() == true)
                 {
                     // Tạm ẩn 2 nút để khi in không bị thấy
@@ -96,10 +100,15 @@ namespace AppCafebookApi.View.common
                     if (FindName("BtnClose") is Button btnCloseRe)
                         btnCloseRe.Visibility = Visibility.Visible;
                 }
+
+                // Bật lại Topmost sau khi in (hoặc hủy in) xong
+                this.Topmost = true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Lỗi khi in: {ex.Message}", "Lỗi");
+                // Đảm bảo bật lại Topmost nếu có lỗi
+                this.Topmost = true;
             }
         }
 

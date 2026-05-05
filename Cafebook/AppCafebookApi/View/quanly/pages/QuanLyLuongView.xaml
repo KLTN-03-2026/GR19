@@ -92,6 +92,9 @@
                         <TextBlock Text="Tháng:" VerticalAlignment="Center" Margin="15,0,5,0" FontWeight="SemiBold"/>
                         <ComboBox x:Name="cmbThang" Width="80" SelectionChanged="CmbThoiGian_SelectionChanged"/>
 
+                        <TextBlock Text="Tìm kiếm:" VerticalAlignment="Center" Margin="25,0,5,0" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtSearchNhanVien" Width="180" ToolTip="Nhập Tên hoặc ID nhân viên..." TextChanged="TxtSearchNhanVien_TextChanged"/>
+
                         <TextBlock x:Name="txtKhoangThoiGian" Text="(...)" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="Gray" FontStyle="Italic"/>
 
                         <Button x:Name="btnTamTinh" Content="🔄 Tạm Tính Tự Động" Style="{StaticResource ActionBtn}" Background="#2196F3" Margin="15,0,0,0" HorizontalAlignment="Right" Click="BtnTamTinh_Click"/>
@@ -99,6 +102,15 @@
 
                     <DataGrid x:Name="dgBangKe" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0" Background="Transparent" SelectionChanged="DgBangKe_SelectionChanged">
                         <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="☑" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="40">
+                                <DataGridCheckBoxColumn.ElementStyle>
+                                    <Style TargetType="CheckBox">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridCheckBoxColumn.ElementStyle>
+                            </DataGridCheckBoxColumn>
+                            
                             <DataGridTextColumn Header="Nhân viên" Binding="{Binding TenNhanVien}" Width="*"/>
                             <DataGridTextColumn Header="Lương CB" Binding="{Binding LuongCoBan, StringFormat=N0}" Width="80"/>
                             <DataGridTextColumn Header="Giờ chuẩn" Binding="{Binding TongGioLamChuan, StringFormat='0.##'}" Width="80"/>
@@ -112,6 +124,14 @@
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
 
+                            <DataGridTextColumn Header="Tiền OT" Binding="{Binding TienThuongOT, StringFormat=N0}" Width="80">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#2196F3"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
                             <DataGridTextColumn Header="Chuyên Cần" Binding="{Binding ThuongChuyenCan, StringFormat=N0}" Width="90">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
@@ -120,10 +140,28 @@
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
 
+                            <DataGridTextColumn Header="Thưởng Khác" Binding="{Binding ThuongThuCong, StringFormat=N0}" Width="95">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
                             <DataGridTextColumn Header="Phạt Vi Phạm" Binding="{Binding TienPhatTreSom, StringFormat=N0}" Width="90">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Foreground" Value="#F44336"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="Phạt Khác" Binding="{Binding PhatThuCong, StringFormat=N0}" Width="80">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#F44336"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>

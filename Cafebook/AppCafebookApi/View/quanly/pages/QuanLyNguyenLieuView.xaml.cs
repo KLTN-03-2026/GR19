@@ -30,7 +30,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            bool hasAccess = AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU", "QL_DON_VI_CHUYEN_DOI");
+            bool hasAccess = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NGUYEN_LIEU", "QL_DON_VI_CHUYEN_DOI");
             if (!hasAccess)
             {
                 MessageBox.Show("Bạn không có quyền truy cập module này!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -46,7 +46,7 @@ namespace AppCafebookApi.View.quanly.pages
             {
                 ApplyPermissions(); 
 
-                if (AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU"))
+                if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NGUYEN_LIEU"))
                 {
                     if (FindName("GridDuLieuNL") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
                     if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Collapsed;
@@ -74,10 +74,10 @@ namespace AppCafebookApi.View.quanly.pages
         {
             // Nút Quản lý Đơn vị quy đổi (Cấp quyền riêng)
             if (FindName("btnQuanLyDVT") is Button btnDVT)
-                btnDVT.Visibility = AuthService.CoQuyen("FULL_QL", "QL_DON_VI_CHUYEN_DOI") ? Visibility.Visible : Visibility.Collapsed;
+                btnDVT.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DON_VI_CHUYEN_DOI") ? Visibility.Visible : Visibility.Collapsed;
 
             // Các nút thao tác trên Nguyên liệu
-            bool canEdit = AuthService.CoQuyen("FULL_QL", "QL_NGUYEN_LIEU");
+            bool canEdit = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NGUYEN_LIEU");
             if (FindName("btnLamMoiForm") is Button b1) b1.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnLuu") is Button b2) b2.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnXoa") is Button b3) b3.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;

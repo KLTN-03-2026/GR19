@@ -51,7 +51,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHAM_CONG"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "FULL_NV", "NV_CHAM_CONG"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập chức năng Chấm công.", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService != null && this.NavigationService.CanGoBack) this.NavigationService.GoBack();

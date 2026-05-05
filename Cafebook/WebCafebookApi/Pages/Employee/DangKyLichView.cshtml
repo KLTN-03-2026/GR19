@@ -145,11 +145,8 @@
 
         function renderUI() {
             const selDate = $("#date-filter").val();
-            // Render Ca Của Tôi
             renderMyShifts(_currentData.filter(x => x.trangThaiCuaToi !== 'Chưa đăng ký'));
-            
-            // Lọc & Render Ca Cần Người
-            if (_currentMode === 'list') {
+                        if (_currentMode === 'list') {
                 const dayData = _currentData.filter(x => x.trangThaiCuaToi === 'Chưa đăng ký' && x.ngayLam.startsWith(selDate));
                 renderList(dayData);
             } else {

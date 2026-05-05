@@ -63,7 +63,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="QUẢN LÝ ĐƠN VỊ VẬN CHUYỂN / SHIPPER" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
+            <TextBlock Text="QUẢN LÝ ĐƠN VỊ VẬN CHUYỂN" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}"/>
             <Button Content="🡄 Quay lại" HorizontalAlignment="Right" Style="{StaticResource ActionBtn}" Background="Gray" Click="BtnQuayLai_Click"/>
         </Grid>
 

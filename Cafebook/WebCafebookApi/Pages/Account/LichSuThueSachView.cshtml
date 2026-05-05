@@ -154,11 +154,12 @@
                 <h5 class="modal-title fw-bold"><i class="fas fa-file-invoice me-2"></i>Biên bản đánh giá <span id="modalHeaderMaPhieu" class="text-warning"></span></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-3 p-md-4 bg-light">
-                <div class="mb-4 p-3 bg-white rounded border-start border-warning border-4 shadow-sm">
-                    <p class="mb-1 fw-semibold text-dark"><i class="fas fa-info-circle text-primary me-1"></i> Quy định của Cafebook:</p>
-                    <p class="text-muted small mb-0">Tiền cọc sẽ được hệ thống tự động khấu trừ nếu sách bị giảm sút độ mới do hư hỏng (Mức phạt: <b><strong>@(Model.PagedData.PhatGiamDoMoi1Percent.ToString("N0")) đ</strong> / 1%</b> giảm).</p>
-                </div>
+            <div class="mb-4 p-3 bg-white rounded border-start border-warning border-4 shadow-sm">
+                <p class="mb-1 fw-semibold text-dark"><i class="fas fa-info-circle text-primary me-1"></i> Quy định của Cafebook:</p>
+                <p class="text-muted small mb-0">
+                    Trong trường hợp sách bị hư hỏng, mức phụ thu sẽ được tính dựa trên sự chênh lệch tình trạng sách (phần trăm độ mới) được ghi nhận trên phiếu thuê lúc mượn và lúc trả. Cụ thể, <strong>với mỗi 1% độ mới bị hao hụt, phí phạt sẽ bằng 1% giá trị bìa của cuốn sách đó</strong>. Tùy mức độ thiệt hại, chúng tôi có quyền khấu trừ hoặc giữ lại toàn bộ tiền cọc.
+                </p>
+            </div>
 
                 <div class="lsts-modal-table-wrapper bg-white shadow-sm">
                     <table class="table align-middle mb-0">

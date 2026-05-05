@@ -37,7 +37,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHUYEN_MAI"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập module Khuyến mãi!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack();
@@ -68,7 +68,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void ApplyPermissions()
         {
-            bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI");
+            bool hasQuyen = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHUYEN_MAI");
             if (FindName("GridDuLieu") is Grid g) g.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;
             if (FindName("btnXuatExcel") is Button bx) bx.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
@@ -99,18 +99,115 @@ namespace AppCafebookApi.View.quanly.pages
             SetLoading(true);
             try
             {
-                string maKM = (FindName("txtTimKiem") as TextBox)?.Text ?? "";
-                string trangThai = (FindName("cmbFilterTrangThai") as ComboBox)?.Text ?? "Tất cả";
-
-                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhuyenMaiGridDto>>($"api/app/quanly-khuyenmai/search?maKhuyenMai={maKM}&trangThai={trangThai}");
-                if (res != null && FindName("dgKhuyenMai") is DataGrid dg)
+                // 1. KIỂM TRA RAM (Hiển thị ngay lập tức)
+                if (GlobalDataCache.QL_KhuyenMaiCache != null && GlobalDataCache.QL_KhuyenMaiCache.Count > 0)
                 {
-                    _allKhuyenMaiList = res;
-                    dg.ItemsSource = _allKhuyenMaiList;
-                    LamMoiUI();
+                    PopulateFromRam();
+                    SetLoading(false); // Tắt loading sớm để user xem data
+
+                    // 2. Kích hoạt cập nhật ngầm API
+                    _ = BackgroundRefreshAsync();
+                    return;
                 }
+
+                // 3. Dự phòng (Fallback): Nếu RAM trống
+                await FetchApiAndSetupUI();
             }
             finally { SetLoading(false); }
+        }
+
+        // ==========================================
+        // CÁC HÀM HỖ TRỢ (ĐỒNG BỘ NGẦM & LỌC LOCAL)
+        // ==========================================
+
+        private void PopulateFromRam()
+        {
+            // Nạp danh sách Sản phẩm cho ComboBox
+            if (GlobalDataCache.QL_LookupSanPhamKMCache != null && FindName("cmbSanPhamApDung") is ComboBox cmb)
+            {
+                var viewList = new List<QuanLyKhuyenMaiLookupDto> { new QuanLyKhuyenMaiLookupDto { Id = 0, Ten = "Không áp dụng (cho toàn hóa đơn)" } };
+                viewList.AddRange(GlobalDataCache.QL_LookupSanPhamKMCache);
+
+                int currentIdx = cmb.SelectedIndex;
+                cmb.ItemsSource = viewList;
+                cmb.SelectedIndex = currentIdx >= 0 ? currentIdx : 0;
+            }
+
+            // Nạp danh sách Khuyến mãi
+            if (GlobalDataCache.QL_KhuyenMaiCache != null)
+            {
+                _allKhuyenMaiList = GlobalDataCache.QL_KhuyenMaiCache;
+                FilterData();
+            }
+        }
+
+        // Thay vì gọi API mỗi lần lọc, ta lọc trực tiếp trên RAM siêu tốc
+        private void FilterData()
+        {
+            if (FindName("dgKhuyenMai") is DataGrid dg && _allKhuyenMaiList != null)
+            {
+                string maKM = (FindName("txtTimKiem") as TextBox)?.Text.ToLower().Trim() ?? "";
+                string trangThai = (FindName("cmbFilterTrangThai") as ComboBox)?.Text ?? "Tất cả";
+
+                var filtered = _allKhuyenMaiList.AsEnumerable();
+
+                if (!string.IsNullOrEmpty(maKM))
+                {
+                    filtered = filtered.Where(x => x.MaKhuyenMai.ToLower().Contains(maKM));
+                }
+
+                if (trangThai != "Tất cả")
+                {
+                    filtered = filtered.Where(x => x.TrangThai == trangThai);
+                }
+
+                dg.ItemsSource = filtered.ToList();
+            }
+        }
+
+        private async Task BackgroundRefreshAsync()
+        {
+            try
+            {
+                // Gọi API lấy toàn bộ dữ liệu MỚI NHẤT (không truyền param để lấy full)
+                var tFilters = ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhuyenMaiLookupDto>>("api/app/quanly-khuyenmai/filters");
+                var tData = ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhuyenMaiGridDto>>("api/app/quanly-khuyenmai/search");
+
+                await Task.WhenAll(tFilters, tData);
+
+                var filters = await tFilters;
+                var data = await tData;
+
+                if (filters != null && data != null)
+                {
+                    GlobalDataCache.QL_LookupSanPhamKMCache = filters;
+                    GlobalDataCache.QL_KhuyenMaiCache = data;
+
+                    // Vẽ lại giao diện ngầm (Không làm mất trạng thái đang nhập của user)
+                    PopulateFromRam();
+                }
+            }
+            catch { /* Lỗi mạng thì bỏ qua, người dùng vẫn xem được dữ liệu cũ */ }
+        }
+
+        private async Task FetchApiAndSetupUI()
+        {
+            var tFilters = ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhuyenMaiLookupDto>>("api/app/quanly-khuyenmai/filters");
+            var tData = ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhuyenMaiGridDto>>("api/app/quanly-khuyenmai/search");
+
+            await Task.WhenAll(tFilters, tData);
+
+            var filters = await tFilters;
+            var data = await tData;
+
+            if (filters != null && data != null)
+            {
+                GlobalDataCache.QL_LookupSanPhamKMCache = filters;
+                GlobalDataCache.QL_KhuyenMaiCache = data;
+
+                PopulateFromRam();
+                LamMoiUI();
+            }
         }
 
         private async void Filters_Changed(object sender, RoutedEventArgs e) { if (IsLoaded) await LoadDataAsync(); }
@@ -239,7 +336,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnThem_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI") || !ValidateInput()) return;
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHUYEN_MAI") || !ValidateInput()) return;
 
             SetLoading(true);
             try
@@ -256,7 +353,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnLuu_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedKhuyenMai == null || !AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI") || !ValidateInput()) return;
+            if (_selectedKhuyenMai == null || !AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHUYEN_MAI") || !ValidateInput()) return;
 
             SetLoading(true);
             try
@@ -275,7 +372,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnXoa_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedKhuyenMai == null || !AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI")) return;
+            if (_selectedKhuyenMai == null || !AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHUYEN_MAI")) return;
 
             if (MessageBox.Show($"Bạn có chắc muốn xóa mã '{_selectedKhuyenMai.MaKhuyenMai}'?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
@@ -292,7 +389,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnTamDung_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedKhuyenMai == null || !AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI")) return;
+            if (_selectedKhuyenMai == null || !AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHUYEN_MAI")) return;
             SetLoading(true);
             try
             {

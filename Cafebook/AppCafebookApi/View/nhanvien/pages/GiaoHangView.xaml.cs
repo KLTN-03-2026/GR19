@@ -42,7 +42,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_GIAO_HANG"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_GIAO_HANG"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập module Giao hàng.", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService?.CanGoBack == true) this.NavigationService.GoBack();
@@ -73,7 +73,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private void ApplyPermissions()
         {
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_GIAO_HANG_DUYET"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_GIAO_HANG_DUYET"))
             {
                 if (FindName("btnConfirmAll") is Button btnDuyet) btnDuyet.Visibility = Visibility.Collapsed;
             }

@@ -111,17 +111,31 @@
                                    FontSize="18" 
                                    FontWeight="SemiBold" 
                                    Foreground="{StaticResource DarkTextBrush}"/>
+
                         <TextBlock x:Name="txtSub" 
-                                   Text="Đang chuẩn bị không gian làm việc cho bạn..." 
+                                   Text="Đang kết nối hệ thống..." 
                                    FontSize="13" 
                                    Foreground="{StaticResource DarkTextBrush}" Opacity="0.7"
-                                   Margin="0,6,0,12"/>
+                                   Margin="0,6,0,8"/>
 
-                        <ProgressBar Width="280" IsIndeterminate="True" HorizontalAlignment="Left">
+                        <ProgressBar x:Name="progressBar" Width="280" Height="8" 
+                                     Minimum="0" Maximum="100" Value="0" 
+                                     HorizontalAlignment="Left"
+                                     Foreground="{StaticResource PrimaryBrownBrush}">
                             <ProgressBar.Clip>
-                                <RectangleGeometry Rect="0,0,280,6" RadiusX="3" RadiusY="3"/>
+                                <RectangleGeometry Rect="0,0,280,8" RadiusX="4" RadiusY="4"/>
                             </ProgressBar.Clip>
                         </ProgressBar>
+
+                        <TextBlock x:Name="txtPercent" 
+                                   Text="0%" 
+                                   FontSize="12" 
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   Width="280"
+                                   TextAlignment="Center"
+                                   Foreground="{StaticResource PrimaryBrownBrush}" 
+                                   Margin="0,4,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Grid>

@@ -26,7 +26,7 @@ namespace AppCafebookApi.View.quanly.pages
         {
             if (_isDataLoaded) return;
 
-            bool hasAnyPermission = AuthService.CoQuyen("FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC");
+            bool hasAnyPermission = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAN", "QL_SU_CO_BAN", "QL_KHU_VUC");
             if (!hasAnyPermission)
             {
                 MessageBox.Show("Bạn không có quyền truy cập phân hệ Bàn & Khu vực!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -42,7 +42,7 @@ namespace AppCafebookApi.View.quanly.pages
 
             try
             {
-                if (AuthService.CoQuyen("FULL_QL", "QL_BAN"))
+                if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAN"))
                 {
                     await LoadDataAsync();
                 }
@@ -62,10 +62,10 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void ApplyPermissions()
         {
-            if (FindName("btnNavKhuVuc") is Button b1) b1.Visibility = AuthService.CoQuyen("FULL_QL", "QL_KHU_VUC") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnNavSuCo") is Button b2) b2.Visibility = AuthService.CoQuyen("FULL_QL", "QL_SU_CO_BAN") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnNavKhuVuc") is Button b1) b1.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHU_VUC") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnNavSuCo") is Button b2) b2.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_SU_CO_BAN") ? Visibility.Visible : Visibility.Collapsed;
 
-            bool canEdit = AuthService.CoQuyen("FULL_QL", "QL_BAN");
+            bool canEdit = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAN");
             if (FindName("btnThem") is Button btnThem) btnThem.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnLuu") is Button btnLuu) btnLuu.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnXoa") is Button btnXoa) btnXoa.Visibility = canEdit ? Visibility.Visible : Visibility.Collapsed;
@@ -75,26 +75,136 @@ namespace AppCafebookApi.View.quanly.pages
         {
             var overlay = FindName("LoadingOverlay") as Border;
             if (overlay != null) overlay.Visibility = Visibility.Visible;
+
             try
             {
-                var kvs = await ApiClient.Instance.GetFromJsonAsync<List<LookupKhuVucDto>>("api/app/quanly-ban/lookup-khuvuc");
-                if (kvs != null)
+                // 1. KIỂM TRA RAM (Lấy dữ liệu Khu Vực và Bàn hiển thị lập tức)
+                if (GlobalDataCache.QL_BanCache != null && GlobalDataCache.QL_KhuVucCache != null)
                 {
+                    PopulateBanUiFromRam();
+
+                    // 2. Kích hoạt cập nhật ngầm API
+                    _ = BackgroundRefreshAsync();
+                    return;
+                }
+
+                // 3. Fallback: Nếu RAM bị lỗi hoặc trống, gọi tải API trực tiếp
+                await FetchApiAndSetupUI();
+            }
+            finally
+            {
+                if (overlay != null) overlay.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        // ==========================================
+        // CÁC HÀM HỖ TRỢ (TÁCH LOGIC ĐỂ DÙNG CHUNG)
+        // ==========================================
+
+        private void PopulateBanUiFromRam()
+        {
+            // Ép kiểu nhanh từ QuanLyKhuVucDto (RAM) sang LookupKhuVucDto (ComboBox cần)
+            if (GlobalDataCache.QL_KhuVucCache != null)
+            {
+                _lookupKv = GlobalDataCache.QL_KhuVucCache.Select(k => new LookupKhuVucDto
+                {
+                    IdKhuVuc = k.IdKhuVuc,
+                    TenKhuVuc = k.TenKhuVuc
+                }).ToList();
+
+                if (FindName("cmbKhuVuc") is ComboBox cb) cb.ItemsSource = _lookupKv;
+                if (FindName("cmbFilterKhuVuc") is ComboBox cbF)
+                {
+                    var list = new List<LookupKhuVucDto> { new LookupKhuVucDto { IdKhuVuc = 0, TenKhuVuc = "Tất cả" } };
+                    list.AddRange(_lookupKv);
+
+                    int? currentFilterId = cbF.SelectedValue as int?;
+                    cbF.ItemsSource = list;
+                    cbF.SelectedValue = currentFilterId ?? 0; // Giữ nguyên bộ lọc cũ nếu đang chọn
+                }
+            }
+
+            if (GlobalDataCache.QL_BanCache != null)
+            {
+                _dataList = GlobalDataCache.QL_BanCache;
+                FilterData();
+            }
+        }
+
+        private async Task BackgroundRefreshAsync()
+        {
+            try
+            {
+                // Bắn 2 luồng API cùng lúc để tối đa hóa tốc độ đồng bộ ngầm
+                var tKvs = ApiClient.Instance.GetFromJsonAsync<List<LookupKhuVucDto>>("api/app/quanly-ban/lookup-khuvuc");
+                var tBans = ApiClient.Instance.GetFromJsonAsync<List<QuanLyBanGridDto>>("api/app/quanly-ban");
+
+                await Task.WhenAll(tKvs, tBans);
+
+                var kvs = await tKvs;
+                var bans = await tBans;
+
+                if (kvs != null && bans != null)
+                {
+                    // Cập nhật lại RAM
+                    GlobalDataCache.QL_BanCache = bans;
+                    _dataList = bans;
                     _lookupKv = kvs;
+
+                    // Ghi nhớ trạng thái đang chọn trên UI
+                    int? currentFilterId = (FindName("cmbFilterKhuVuc") as ComboBox)?.SelectedValue as int?;
+                    int? currentSelectedBanId = _selectedItem?.IdBan;
+
+                    // Vẽ lại giao diện ngầm
                     if (FindName("cmbKhuVuc") is ComboBox cb) cb.ItemsSource = _lookupKv;
                     if (FindName("cmbFilterKhuVuc") is ComboBox cbF)
                     {
                         var list = new List<LookupKhuVucDto> { new LookupKhuVucDto { IdKhuVuc = 0, TenKhuVuc = "Tất cả" } };
                         list.AddRange(_lookupKv);
-                        cbF.ItemsSource = list; cbF.SelectedIndex = 0;
+                        cbF.ItemsSource = list;
+                        cbF.SelectedValue = currentFilterId ?? 0;
+                    }
+
+                    FilterData();
+
+                    // Phục hồi lại dòng đang click chọn (nếu có)
+                    if (currentSelectedBanId.HasValue && FindName("dgBan") is DataGrid dg)
+                    {
+                        var itemToSelect = _dataList.FirstOrDefault(x => x.IdBan == currentSelectedBanId);
+                        if (itemToSelect != null) dg.SelectedItem = itemToSelect;
                     }
                 }
-
-                var bans = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyBanGridDto>>("api/app/quanly-ban");
-                if (bans != null) { _dataList = bans; FilterData(); }
             }
-            catch { }
-            finally { if (overlay != null) overlay.Visibility = Visibility.Collapsed; }
+            catch { /* Lỗi mạng thì bỏ qua, giữ nguyên UI cũ */ }
+        }
+
+        private async Task FetchApiAndSetupUI()
+        {
+            var tKvs = ApiClient.Instance.GetFromJsonAsync<List<LookupKhuVucDto>>("api/app/quanly-ban/lookup-khuvuc");
+            var tBans = ApiClient.Instance.GetFromJsonAsync<List<QuanLyBanGridDto>>("api/app/quanly-ban");
+
+            await Task.WhenAll(tKvs, tBans);
+
+            var kvs = await tKvs;
+            var bans = await tBans;
+
+            if (kvs != null && bans != null)
+            {
+                _lookupKv = kvs;
+                _dataList = bans;
+                GlobalDataCache.QL_BanCache = bans;
+
+                if (FindName("cmbKhuVuc") is ComboBox cb) cb.ItemsSource = _lookupKv;
+                if (FindName("cmbFilterKhuVuc") is ComboBox cbF)
+                {
+                    var list = new List<LookupKhuVucDto> { new LookupKhuVucDto { IdKhuVuc = 0, TenKhuVuc = "Tất cả" } };
+                    list.AddRange(_lookupKv);
+                    cbF.ItemsSource = list;
+                    cbF.SelectedIndex = 0;
+                }
+
+                FilterData();
+            }
         }
 
         private void Filter_Changed(object sender, SelectionChangedEventArgs e) => FilterData();
@@ -140,7 +250,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnLuu_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_BAN")) return;
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAN")) return;
             string soBan = (FindName("txtSoBan") as TextBox)?.Text.Trim() ?? "";
             int idKv = (FindName("cmbKhuVuc") as ComboBox)?.SelectedValue as int? ?? 0;
 
@@ -172,7 +282,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnXoa_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_BAN") || _selectedItem == null || _isAdding) return;
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAN") || _selectedItem == null || _isAdding) return;
             if (MessageBox.Show("Xóa bàn này?", "Xác nhận", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
 
             var overlay = FindName("LoadingOverlay") as Border;
@@ -188,7 +298,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnLichSu_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_BAN") || _selectedItem == null || _isAdding) return;
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_BAN") || _selectedItem == null || _isAdding) return;
             try
             {
                 var his = await ApiClient.Instance.GetFromJsonAsync<QuanLyBanHistoryDto>($"api/app/quanly-ban/{_selectedItem.IdBan}/history");
@@ -199,13 +309,13 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void BtnNavKhuVuc_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_KHU_VUC")) this.NavigationService?.Navigate(new QuanLyKhuVucView());
+            if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHU_VUC")) this.NavigationService?.Navigate(new QuanLyKhuVucView());
             else MessageBox.Show("Bạn không có quyền truy cập!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         private void BtnNavSuCo_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_SU_CO_BAN")) this.NavigationService?.Navigate(new QuanLySuCoBanView());
+            if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_SU_CO_BAN")) this.NavigationService?.Navigate(new QuanLySuCoBanView());
             else MessageBox.Show("Bạn không có quyền truy cập!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 

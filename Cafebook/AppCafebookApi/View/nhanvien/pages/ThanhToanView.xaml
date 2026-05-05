@@ -121,7 +121,7 @@
 
         <Border Grid.Column="0" Padding="20">
             <StackPanel>
-                <TextBlock x:Name="lblTieuDeThanhToan" Text="Thanh toán cho Bàn..." FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,20"/>
+                <TextBlock x:Name="lblTieuDeThanhToan" Text="THANH TOÁN CHO BÀN..." FontSize="24" FontWeight="SemiBold" Foreground="{StaticResource DarkBrownBrush}" Margin="0,0,0,20"/>
 
                 <Grid>
                     <Grid.ColumnDefinitions>

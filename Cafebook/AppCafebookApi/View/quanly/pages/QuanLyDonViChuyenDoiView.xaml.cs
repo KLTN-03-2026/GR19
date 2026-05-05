@@ -31,7 +31,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_DON_VI_CHUYEN_DOI"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL") && !AuthService.CoQuyen("QL_DON_VI_CHUYEN_DOI"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập module Đơn vị chuyển đổi!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack();

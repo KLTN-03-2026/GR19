@@ -30,7 +30,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "QL_DANH_MUC_SACH"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DANH_MUC_SACH"))
             {
                 MessageBox.Show("Từ chối truy cập module Danh mục sách!");
                 this.NavigationService?.GoBack();
@@ -56,25 +56,94 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void ApplyPermissions()
         {
-            bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_DANH_MUC_SACH");
+            bool hasQuyen = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DANH_MUC_SACH");
             if (FindName("GridDuLieu") is Grid g) g.Visibility = hasQuyen ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyen ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private async Task LoadDataAsync()
         {
-            if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
+            var loading = FindName("LoadingOverlay") as Border;
+            if (loading != null) loading.Visibility = Visibility.Visible;
+            try
+            {
+                if (LoadFromRam())
+                {
+                    if (loading != null) loading.Visibility = Visibility.Collapsed;
+                    _ = BackgroundRefreshAsync();
+                    return;
+                }
+                await FetchApiAndSetupUI();
+            }
+            finally
+            {
+                if (loading != null) loading.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        // ==========================================
+        // CÁC HÀM HỖ TRỢ (ĐỒNG BỘ NGẦM TÙY THEO TAB)
+        // ==========================================
+
+        private bool LoadFromRam()
+        {
+            List<QuanLyDanhMucSachItemDto>? cacheData = null;
+
+            if (_currentEndpoint == "tacgia") cacheData = GlobalDataCache.QL_TacGiaCache;
+            else if (_currentEndpoint == "theloai") cacheData = GlobalDataCache.QL_TheLoaiCache;
+            else if (_currentEndpoint == "nhaxuatban") cacheData = GlobalDataCache.QL_NhaXuatBanCache;
+
+            if (cacheData != null && cacheData.Count > 0)
+            {
+                _currentDataList = cacheData;
+                FilterData();
+                return true;
+            }
+            return false;
+        }
+
+        private async Task BackgroundRefreshAsync()
+        {
             try
             {
                 var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDanhMucSachItemDto>>($"api/app/quanly-danhmucsach/{_currentEndpoint}");
                 if (res != null)
                 {
+                    // Nạp vào RAM đúng cái Tab đang mở
+                    if (_currentEndpoint == "tacgia") GlobalDataCache.QL_TacGiaCache = res;
+                    else if (_currentEndpoint == "theloai") GlobalDataCache.QL_TheLoaiCache = res;
+                    else if (_currentEndpoint == "nhaxuatban") GlobalDataCache.QL_NhaXuatBanCache = res;
+
                     _currentDataList = res;
+
+                    // Giữ nguyên dòng đang chọn trên DataGrid để thao tác không bị đứt quãng
+                    int? currentSelectedId = _selectedItem?.Id;
+
                     FilterData();
+
+                    if (currentSelectedId.HasValue && FindName("dgDanhMuc") is DataGrid dg)
+                    {
+                        var itemToSelect = _currentDataList.FirstOrDefault(x => x.Id == currentSelectedId);
+                        if (itemToSelect != null) dg.SelectedItem = itemToSelect;
+                    }
                 }
             }
-            catch { }
-            finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+            catch { /* Lỗi mạng thì bỏ qua, người dùng vẫn xem được dữ liệu cũ */ }
+        }
+
+        private async Task FetchApiAndSetupUI()
+        {
+            var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDanhMucSachItemDto>>($"api/app/quanly-danhmucsach/{_currentEndpoint}");
+            if (res != null)
+            {
+                // Tải lần đầu xong thì ném ngay vào RAM để lần sau không phải đợi
+                if (_currentEndpoint == "tacgia") GlobalDataCache.QL_TacGiaCache = res;
+                else if (_currentEndpoint == "theloai") GlobalDataCache.QL_TheLoaiCache = res;
+                else if (_currentEndpoint == "nhaxuatban") GlobalDataCache.QL_NhaXuatBanCache = res;
+
+                _currentDataList = res;
+                FilterData();
+            }
         }
 
         private async void CmbLoaiDanhMuc_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -136,17 +205,23 @@ namespace AppCafebookApi.View.quanly.pages
 
             var dto = new QuanLyDanhMucSachSaveDto { Ten = ten, MoTa = moTa };
 
-            if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
+            var loading = FindName("LoadingOverlay") as Border;
+            if (loading != null) loading.Visibility = Visibility.Visible;
             try
             {
                 HttpResponseMessage res = _selectedItem == null
                     ? await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-danhmucsach/{_currentEndpoint}", dto)
                     : await ApiClient.Instance.PutAsJsonAsync($"api/app/quanly-danhmucsach/{_currentEndpoint}/{_selectedItem.Id}", dto);
 
-                if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu thành công!"); await LoadDataAsync(); BtnLamMoiForm_Click(this, new RoutedEventArgs()); }
+                if (res.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Lưu thành công!");
+                    _ = BackgroundRefreshAsync(); // Smart update
+                    BtnLamMoiForm_Click(this, new RoutedEventArgs());
+                }
                 else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
             }
-            finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+            finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
         }
 
         private async void BtnXoa_Click(object sender, RoutedEventArgs e)
@@ -154,14 +229,20 @@ namespace AppCafebookApi.View.quanly.pages
             if (_selectedItem == null) return;
             if (MessageBox.Show($"Bạn chắc chắn xóa '{_selectedItem.Ten}'?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
-                if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
+                var loading = FindName("LoadingOverlay") as Border;
+                if (loading != null) loading.Visibility = Visibility.Visible;
                 try
                 {
                     var res = await ApiClient.Instance.DeleteAsync($"api/app/quanly-danhmucsach/{_currentEndpoint}/{_selectedItem.Id}");
-                    if (res.IsSuccessStatusCode) { MessageBox.Show("Xóa thành công!"); await LoadDataAsync(); BtnLamMoiForm_Click(this, new RoutedEventArgs()); }
+                    if (res.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Xóa thành công!");
+                        _ = BackgroundRefreshAsync(); // Smart update
+                        BtnLamMoiForm_Click(this, new RoutedEventArgs());
+                    }
                     else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
                 }
-                finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+                finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
             }
         }
 

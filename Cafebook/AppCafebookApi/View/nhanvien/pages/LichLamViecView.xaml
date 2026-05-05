@@ -57,7 +57,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="📅 Lịch Làm Việc Của Tôi" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" VerticalAlignment="Center"/>
+            <TextBlock Text="LỊCH LÀM VIỆC CỦA TÔI" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" VerticalAlignment="Center"/>
         </Grid>
 
         <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="15" Margin="0,0,0,20" Effect="{StaticResource SoftShadow}">

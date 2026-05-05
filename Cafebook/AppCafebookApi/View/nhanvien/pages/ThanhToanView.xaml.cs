@@ -86,7 +86,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             // LỚP 2: Chặn truy cập Page nếu không có quyền
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THANH_TOAN"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_THANH_TOAN"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập trang Thanh Toán!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService != null && this.NavigationService.CanGoBack) this.NavigationService.GoBack();
@@ -119,12 +119,12 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             if (FindName("btnXacNhanThanhToan") is Button btnXacNhanThanhToan)
             {
-                btnXacNhanThanhToan.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THANH_TOAN")
+                btnXacNhanThanhToan.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_THANH_TOAN")
                                             ? Visibility.Visible : Visibility.Collapsed;
             }
             if (FindName("btnInTamTinh") is Button btnInTamTinh)
             {
-                btnInTamTinh.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THANH_TOAN")
+                btnInTamTinh.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_THANH_TOAN")
                                             ? Visibility.Visible : Visibility.Collapsed;
             }
         }

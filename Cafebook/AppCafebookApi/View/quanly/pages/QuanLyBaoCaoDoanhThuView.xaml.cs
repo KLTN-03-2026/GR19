@@ -36,7 +36,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_BAO_CAO_DOANH_THU"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL") && !AuthService.CoQuyen("QL_BAO_CAO_DOANH_THU"))
             {
                 MessageBox.Show("Từ chối truy cập!");
                 this.NavigationService?.GoBack();
@@ -63,7 +63,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void ApplyPermissions()
         {
-            bool canUseFull = AuthService.CoQuyen("FULL_QL") || AuthService.CoQuyen("QL_BAO_CAO_DOANH_THU");
+            bool canUseFull = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL") || AuthService.CoQuyen("QL_BAO_CAO_DOANH_THU");
 
             if (FindName("btnGenerate") is Button b1) b1.Visibility = canUseFull ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnExportToExcel") is Button b2) b2.Visibility = canUseFull ? Visibility.Visible : Visibility.Collapsed;

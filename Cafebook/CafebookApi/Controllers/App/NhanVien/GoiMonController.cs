@@ -348,6 +348,7 @@ namespace CafebookApi.Controllers.App.NhanVien
             var hoaDon = await _context.HoaDons.Include(h => h.Ban).FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon);
             if (hoaDon == null) return 0;
 
+            // Đã có Include SanPham nên có thể lấy NhomIn từ đây
             var chiTietItems = await _context.ChiTietHoaDons.Include(c => c.SanPham)
                                 .Where(c => c.IdHoaDon == idHoaDon).ToListAsync();
 
@@ -361,7 +362,7 @@ namespace CafebookApi.Controllers.App.NhanVien
             {
                 var cb = existingCheBiens.FirstOrDefault(x => x.IdChiTietHoaDon == item.IdChiTietHoaDon);
 
-                if (cb == null) 
+                if (cb == null)
                 {
                     _context.TrangThaiCheBiens.Add(new TrangThaiCheBien
                     {
@@ -373,11 +374,12 @@ namespace CafebookApi.Controllers.App.NhanVien
                         SoLuong = item.SoLuong,
                         GhiChu = item.GhiChu,
                         TrangThai = "Chờ làm",
-                        ThoiGianGoi = now
+                        ThoiGianGoi = now,
+                        NhomIn = item.SanPham.NhomIn
                     });
                     itemsUpdated++;
                 }
-                else if (cb.SoLuong != item.SoLuong || cb.GhiChu != item.GhiChu) 
+                else if (cb.SoLuong != item.SoLuong || cb.GhiChu != item.GhiChu)
                 {
                     cb.SoLuong = item.SoLuong;
                     cb.GhiChu = item.GhiChu;
@@ -580,7 +582,6 @@ namespace CafebookApi.Controllers.App.NhanVien
                 }
             }
 
-            // Tính toán giá trị giảm & Kiểm tra Sản phẩm áp dụng
             decimal tongTienGocChoKM = hoaDon.TongTienGoc;
             if (km.IdSanPhamApDung.HasValue)
             {
@@ -607,6 +608,31 @@ namespace CafebookApi.Controllers.App.NhanVien
             }
 
             return (true, null, calculatedDiscount);
+        }
+
+        [HttpGet("menu")]
+        public async Task<IActionResult> GetMenuData()
+        {
+            try
+            {
+                var rawSanPhams = await _context.SanPhams.Where(s => s.TrangThaiKinhDoanh == true).AsNoTracking()
+                    .Select(s => new { s.IdSanPham, s.TenSanPham, s.GiaBan, s.HinhAnh, s.IdDanhMuc }).ToListAsync();
+
+                var sanPhams = rawSanPhams.Select(s => new SanPhamDto
+                {
+                    IdSanPham = s.IdSanPham,
+                    TenSanPham = s.TenSanPham,
+                    DonGia = s.GiaBan,
+                    HinhAnh = GetFullImageUrl(s.HinhAnh),
+                    IdDanhMuc = s.IdDanhMuc
+                }).ToList();
+
+                var danhMucs = await _context.DanhMucs.OrderBy(d => d.TenDanhMuc).AsNoTracking()
+                    .Select(d => new DanhMucDto { IdDanhMuc = d.IdDanhMuc, TenLoaiSP = d.TenDanhMuc }).ToListAsync();
+
+                return Ok(new { DanhMucs = danhMucs, SanPhams = sanPhams });
+            }
+            catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
     }
 }

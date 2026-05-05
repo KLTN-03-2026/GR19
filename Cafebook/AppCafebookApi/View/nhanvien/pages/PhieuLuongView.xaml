@@ -95,7 +95,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="Phiếu Lương Của Tôi" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" VerticalAlignment="Center"/>
+            <TextBlock Text="PHIẾU LƯƠNG CỦA TÔI" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrownBrush}" VerticalAlignment="Center"/>
         </Grid>
 
         <Grid Grid.Row="1">

@@ -111,7 +111,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Màn Hình Chế Biến" FontSize="22" FontWeight="Bold" Foreground="{StaticResource CafeBrown}"/>
+                    <TextBlock Text="MÀN HÌNH CHẾ BIẾN" FontSize="24" FontWeight="Bold" Foreground="{StaticResource CafeBrown}"/>
                     <TextBlock x:Name="lblLastUpdated" Text="(Đang tải...)" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="{StaticResource TextGray}" FontStyle="Italic"/>
                 </StackPanel>
 
@@ -297,7 +297,7 @@
             </DataGrid>
         </Grid>
 
-        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#66000000" Visibility="Collapsed">
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#80FFFFFF" Visibility="Collapsed">
             <TextBlock Text="Đang tải..." HorizontalAlignment="Center" VerticalAlignment="Center"
                        FontSize="18" FontWeight="SemiBold" Foreground="White"/>
         </Border>

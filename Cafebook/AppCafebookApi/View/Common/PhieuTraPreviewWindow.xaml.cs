@@ -10,23 +10,8 @@ namespace AppCafebookApi.View.common
 {
     public partial class PhieuTraPreviewWindow : Window
     {
-        //private static readonly HttpClient httpClient;
         private readonly int _idPhieuTra;
-        /*
-        static PhieuTraPreviewWindow()
-        {
-            httpClient = new HttpClient();
-            string? apiUrl = AppConfigManager.GetApiServerUrl();
-            if (!string.IsNullOrWhiteSpace(apiUrl))
-            {
-                httpClient.BaseAddress = new Uri(apiUrl);
-            }
-            else
-            {
-                httpClient.BaseAddress = new Uri("http://127.0.0.1:5166"); // Fallback an toàn
-            }
-        }
-        */
+
         public PhieuTraPreviewWindow(int idPhieuTra)
         {
             InitializeComponent();
@@ -81,6 +66,10 @@ namespace AppCafebookApi.View.common
             try
             {
                 var printDialog = new PrintDialog();
+
+                // Tạm tắt Topmost
+                this.Topmost = false;
+
                 if (printDialog.ShowDialog() == true)
                 {
                     // 1. Tạm ẩn nút In
@@ -103,10 +92,15 @@ namespace AppCafebookApi.View.common
                     if (FindName("btnClose") is Button btnCloseRe)
                         btnCloseRe.Visibility = Visibility.Visible;
                 }
+
+                // Bật lại Topmost 
+                this.Topmost = true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Lỗi khi in: {ex.Message}", "Lỗi");
+                // Đảm bảo bật lại Topmost nếu có lỗi
+                this.Topmost = true;
             }
         }
 

@@ -35,7 +35,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "QL_NHA_CUNG_CAP")) 
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NHA_CUNG_CAP")) 
             { 
                 MessageBox.Show("Bạn không có quyền truy cập module Nhà cung cấp!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); 
                 this.NavigationService?.GoBack(); 

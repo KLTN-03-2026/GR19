@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AppCafebookApi.View.common"
         mc:Ignorable="d"
-        Title="Phiếu Giao Hàng" Height="700" Width="450"
+        Title="Phiếu Giao Hàng" SizeToContent="Height" MaxHeight="2000" Width="450"
         WindowStartupLocation="CenterScreen" WindowStyle="ToolWindow"
         FontFamily="Segoe UI" Loaded="Window_Loaded"
         Background="#F5F5F5">
@@ -14,13 +14,79 @@
         <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#795548"/>
         <SolidColorBrush x:Key="DarkBrownBrush" Color="#4E342E"/>
         <SolidColorBrush x:Key="TextGrayBrush" Color="#757575"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="#66BB6A"/>
+        <SolidColorBrush x:Key="ErrorBrush" Color="#EF5350"/>
+        <SolidColorBrush x:Key="BorderGrayBrush" Color="#BDBDBD"/>
+        <SolidColorBrush x:Key="ActionBlueBrush" Color="#42A5F5"/>
+        <SolidColorBrush x:Key="ActionOrangeBrush" Color="#FFA726"/>
+        <SolidColorBrush x:Key="SubtleGrayBrush" Color="#F5F5F5"/>
         <SolidColorBrush x:Key="PrimaryBrown" Color="#6F4E37"/>
         <SolidColorBrush x:Key="AccentOrange" Color="#D27D2D"/>
         <SolidColorBrush x:Key="LightCreamBrush" Color="#FFF8E1"/>
         <SolidColorBrush x:Key="WhiteText" Color="#FFFFFF"/>
+
         <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrown}"/>
+            <Setter Property="Foreground" Value="{StaticResource WhiteText}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                CornerRadius="21"
+                                Background="{TemplateBinding Background}">
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="2" Color="#6F4E37" Opacity="0.3" BlurRadius="10"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource AccentOrange}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource BorderGrayBrush}"/>
+                                <Setter TargetName="border" Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+
         <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrownBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrownBrush}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                CornerRadius="21"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource SubtleGrayBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -31,7 +97,7 @@
         </Grid.RowDefinitions>
 
         <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
-            <Border x:Name="printArea" Background="White" Margin="10" Padding="20" Width="380" HorizontalAlignment="Center">
+            <Border x:Name="printArea" Background="White" Margin="10" Padding="20" Width="400" HorizontalAlignment="Center">
                 <StackPanel>
                     <TextBlock x:Name="lblTenQuan" Text="CAFEBOOK" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
                     <TextBlock x:Name="lblDiaChi" Text="123 Đường ABC, Q.1, TP.HCM" HorizontalAlignment="Center" Margin="0,5,0,0"/>
@@ -99,11 +165,11 @@
             </Grid.ColumnDefinitions>
 
             <Button x:Name="btnIn" Grid.Column="1" Style="{StaticResource SecondaryButton}" 
-                    Content="In Phiếu" Width="100" Margin="5" Click="BtnIn_Click"/>
+                    Content="In Phiếu" Width="200" Margin="5" Click="BtnIn_Click"/>
 
             <Button x:Name="btnClose" Grid.Column="2" Style="{StaticResource SecondaryButton}" 
                     Background="{StaticResource TextGrayBrush}" Foreground="White" BorderThickness="0"
-                    Content="Đóng" Width="100" Margin="5" Click="BtnClose_Click" IsCancel="True"/>
+                    Content="Đóng" Width="200" Margin="5" Click="BtnClose_Click" IsCancel="True"/>
         </Grid>
     </Grid>
 </Window>

@@ -34,7 +34,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            bool hasAccess = AuthService.CoQuyen("FULL_QL", "QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG");
+            bool hasAccess = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DON_HANG", "QL_PHU_THU", "QL_NGUOI_GIAO_HANG");
             if (!hasAccess)
             {
                 MessageBox.Show("Từ chối truy cập phân hệ Đơn hàng!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -50,7 +50,7 @@ namespace AppCafebookApi.View.quanly.pages
             {
                 ApplyPermissions();
 
-                if (AuthService.CoQuyen("FULL_QL", "QL_DON_HANG"))
+                if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DON_HANG"))
                 {
                     if (FindName("GridDuLieuDonHang") is System.Windows.Controls.Grid g) g.Visibility = Visibility.Visible;
                     if (FindName("txtThongBaoKhongCoQuyen") is System.Windows.Controls.Border b) b.Visibility = Visibility.Collapsed;
@@ -79,11 +79,11 @@ namespace AppCafebookApi.View.quanly.pages
         private void ApplyPermissions()
         {
             // Ẩn hiện các nút chức năng Header
-            if (FindName("btnNavPhuThu") is Button b1) b1.Visibility = AuthService.CoQuyen("FULL_QL", "QL_PHU_THU") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnNavShipper") is Button b2) b2.Visibility = AuthService.CoQuyen("FULL_QL", "QL_NGUOI_GIAO_HANG") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnNavPhuThu") is Button b1) b1.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_PHU_THU") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnNavShipper") is Button b2) b2.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NGUOI_GIAO_HANG") ? Visibility.Visible : Visibility.Collapsed;
 
             // Nút Xuất Excel và Hủy đơn thuộc về QL_DON_HANG
-            bool canOrder = AuthService.CoQuyen("FULL_QL", "QL_DON_HANG");
+            bool canOrder = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DON_HANG");
             if (FindName("btnXuatExcel") is Button b3) b3.Visibility = canOrder ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnHuyDon") is Button b4) b4.Visibility = canOrder ? Visibility.Visible : Visibility.Collapsed;
         }
@@ -297,12 +297,12 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void BtnNavPhuThu_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_PHU_THU"))
+            if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_PHU_THU"))
                 this.NavigationService?.Navigate(new QuanLyPhuThuView());
         }
         private void BtnNavShipper_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_NGUOI_GIAO_HANG"))
+            if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_NGUOI_GIAO_HANG"))
                 this.NavigationService?.Navigate(new QuanLyDonViVanChuyenView());
         }
     }

@@ -5,8 +5,9 @@
 
 @{
     bool HasPerm(string p) => User.HasClaim("Permission", p)
-                           || User.HasClaim("Permission", "FULL_NV")
-                           || User.HasClaim("Permission", "FULL_QL");
+                           || User.HasClaim("Permission", "FULL_ADMIN")
+                           || User.HasClaim("Permission", "FULL_QL")
+                           || User.HasClaim("Permission", "FULL_NV");
 
     var userName = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity?.Name ?? "Nhân viên";
     var userRole = User.FindFirstValue(ClaimTypes.Role) ?? "Nhân viên";
@@ -53,9 +54,9 @@
                     </a>
                 </li>
 
-                <div class="emplayout-nav-divider">Vận hành</div>
+                <li class="emplayout-nav-divider">Vận hành</li>
 
-                @if (HasPerm("NV_SO_DO_BAN"))
+                @if (HasPerm("NV_SO_DO_BAN") || HasPerm("NV_GOI_MON"))
                 {
                     <li class="emplayout-nav-item">
                         <a class="emplayout-nav-link @(ViewData["Title"]?.ToString() == "Sơ Đồ Bàn" ? "active" : "")" asp-page="/Employee/SoDoBanView">
@@ -91,7 +92,7 @@
                     </li>
                 }
 
-                <div class="emplayout-nav-divider">Nhân sự</div>
+                <li class="emplayout-nav-divider">Nhân sự</li>
 
                 @if (HasPerm("NV_LICH_LAM_VIEC") || HasPerm("NV_DANG_KY_CA_LAM"))
                 {
@@ -101,6 +102,7 @@
                         </a>
                     </li>
                 }
+                
                 @if (HasPerm("NV_LICH_LAM_VIEC") || HasPerm("NV_DANG_KY_CA_LAM") || HasPerm("NV_THONG_TIN"))
                 {
                     <li class="emplayout-nav-item">
@@ -148,9 +150,9 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
         $(document).ready(function () {
-        // Logic Mở/Đóng Sidebar mượt mà
         $('#openSidebarBtn').click(function () {
         $('#employeeSidebar').addClass('show');
         $('#sidebarOverlay').addClass('show');
@@ -173,7 +175,7 @@
         confirmButtonText: 'Có, Đăng xuất',
         cancelButtonText: 'Hủy bỏ',
         customClass: {
-        popup: 'swal-coffee-theme' // Có thể custom thêm CSS cho SweetAlert nếu muốn
+        popup: 'swal-coffee-theme'
         }
         }).then((result) => {
         if (result.isConfirmed) {

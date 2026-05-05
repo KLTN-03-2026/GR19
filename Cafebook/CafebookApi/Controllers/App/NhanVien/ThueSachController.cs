@@ -48,18 +48,22 @@ namespace CafebookApi.Controllers.App.NhanVien
             return Ok(dto);
         }
 
-        // TỐI ƯU SQL: Nhận tham số tuNgay, denNgay để giới hạn số lượng Data kéo từ DB
         [HttpGet("phieuthue")]
-        public async Task<IActionResult> GetPhieuThue([FromQuery] string? search, [FromQuery] string status = "Đang Thuê", [FromQuery] DateTime? tuNgay = null, [FromQuery] DateTime? denNgay = null)
+        public async Task<IActionResult> GetPhieuThue([FromQuery] string? search, [FromQuery] string status = "Tất Cả", [FromQuery] DateTime? tuNgay = null, [FromQuery] DateTime? denNgay = null)
         {
             var query = _context.PhieuThueSachs.AsNoTracking().AsQueryable();
 
-            if (status == "Đang Thuê" || status == "Đã Trả") { query = query.Where(p => p.TrangThai == status); }
+            if (status == "Đang Thuê") { query = query.Where(p => p.TrangThai == "Đang Thuê"); }
+            else if (status == "Đã Trả") { query = query.Where(p => p.TrangThai == "Đã Trả"); }
+            else if (status == "Trễ Hạn")
+            {
+                var today = DateTime.Today;
+                query = query.Where(p => p.TrangThai == "Đang Thuê" && p.ChiTietPhieuThues.Any(ct => ct.NgayTraThucTe == null && ct.NgayHenTra < today));
+            }
 
-            // Lọc Ngày (NẾU API không nhận tuNgay/denNgay từ Frontend, tự động áp dụng khung thời gian để chống lag)
-            DateTime fromDate = tuNgay ?? (status == "Đang Thuê" ? DateTime.Today.AddDays(-30) : DateTime.Today.AddDays(-7));
+            DateTime fromDate = tuNgay ?? DateTime.Today.AddDays(-30);
             DateTime toDate = denNgay ?? DateTime.Today;
-            toDate = toDate.AddDays(1).AddTicks(-1); // Lấy đến hết ngày
+            toDate = toDate.AddDays(1).AddTicks(-1);
 
             query = query.Where(p => p.NgayThue >= fromDate && p.NgayThue <= toDate);
 
@@ -77,6 +81,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                 IdPhieuThueSach = p.IdPhieuThueSach,
                 HoTenKH = p.KhachHang.HoTen,
                 SoDienThoaiKH = p.KhachHang.SoDienThoai,
+                EmailKH = p.KhachHang.Email,
                 NgayThue = p.NgayThue,
                 NgayHenTra = p.ChiTietPhieuThues.Where(ct => ct.NgayTraThucTe == null).Select(ct => (DateTime?)ct.NgayHenTra).Min() ?? p.NgayThue,
                 SoLuongSach = p.ChiTietPhieuThues.Count(ct => ct.NgayTraThucTe == null),
@@ -119,6 +124,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                         IdPhieuThueSach = ct.IdPhieuThueSach,
                         IdSach = ct.IdSach,
                         TenSach = ct.Sach.TenSach,
+                        GiaBia = ct.Sach.GiaBia ?? ct.TienCoc,
                         NgayHenTra = ct.NgayHenTra,
                         TienCoc = ct.TienCoc,
                         TienPhat = daysLate * settings.PhiTraTreMoiNgay,
@@ -172,14 +178,31 @@ namespace CafebookApi.Controllers.App.NhanVien
                 var phieuThue = new PhieuThueSach { IdKhachHang = khachHangId, IdNhanVien = dto.IdNhanVien, NgayThue = DateTime.Now, TrangThai = "Đang Thuê", TongTienCoc = tongCoc };
                 _context.PhieuThueSachs.Add(phieuThue); await _context.SaveChangesAsync();
 
+                var chiTietPrints = new List<ChiTietPrintDto>();
+
                 foreach (var sachThue in dto.SachCanThue)
                 {
                     var sach = await _context.Sachs.FindAsync(sachThue.IdSach);
                     if (sach == null || sach.SoLuongHienCo <= 0) { await transaction.RollbackAsync(); return Conflict($"Sách {sachThue.IdSach} hết hàng."); }
                     sach.SoLuongHienCo--;
                     _context.ChiTietPhieuThues.Add(new ChiTietPhieuThue { IdPhieuThueSach = phieuThue.IdPhieuThueSach, IdSach = sachThue.IdSach, NgayHenTra = dto.NgayHenTra, TienCoc = sachThue.TienCoc, DoMoiKhiThue = sachThue.DoMoiKhiThue > 0 ? sachThue.DoMoiKhiThue : 100, GhiChuKhiThue = sachThue.GhiChuKhiThue });
+
+                    chiTietPrints.Add(new ChiTietPrintDto
+                    {
+                        TenSach = sach.TenSach,
+                        DoMoi = sachThue.DoMoiKhiThue > 0 ? sachThue.DoMoiKhiThue : 100,
+                        GhiChu = sachThue.GhiChuKhiThue,
+                        TienCoc = sachThue.TienCoc
+                    });
                 }
                 await _context.SaveChangesAsync(); await transaction.CommitAsync();
+
+                if (!string.IsNullOrEmpty(khach.Email))
+                {
+                    var generalSettings = await GetGeneralSettingsAsync();
+                    _ = SendConfirmationEmailAsync(khach.Email, khach.HoTen, chiTietPrints, dto.NgayHenTra, phieuThue.IdPhieuThueSach, tongCoc, generalSettings);
+                }
+
                 return Ok(new { IdPhieuThueSach = phieuThue.IdPhieuThueSach, TongTienCoc = tongCoc });
             }
             catch (Exception ex) { await transaction.RollbackAsync(); return StatusCode(500, ex.Message); }
@@ -211,6 +234,8 @@ namespace CafebookApi.Controllers.App.NhanVien
 
                 var phieuTra = new PhieuTraSach { IdPhieuThueSach = phieu.IdPhieuThueSach, IdNhanVien = dto.IdNhanVien, NgayTra = now, ChiTietPhieuTras = new List<ChiTietPhieuTra>() };
 
+                var dsSachTraHtml = new List<string>();
+
                 foreach (var item in dto.DanhSachTra)
                 {
                     var ct = phieu.ChiTietPhieuThues.FirstOrDefault(c => c.IdSach == item.IdSach && c.NgayTraThucTe == null);
@@ -224,10 +249,13 @@ namespace CafebookApi.Controllers.App.NhanVien
                     ct.TienPhatTraTre = tienPhatTre;
 
                     int doMoiCu = ct.DoMoiKhiThue ?? 100;
-                    decimal tienPhatHong = item.DoMoiKhiTra < doMoiCu ? (doMoiCu - item.DoMoiKhiTra) * mucPhat : 0;
+                    decimal giaBia = sach?.GiaBia ?? ct.TienCoc;
+                    decimal tienPhatHong = item.DoMoiKhiTra < doMoiCu ? (doMoiCu - item.DoMoiKhiTra) * (giaBia / 100m) : 0;
 
                     totalPhat += (tienPhatTre + tienPhatHong); totalCoc += ct.TienCoc; totalPhi += settings.PhiThue; sachDaTra++;
                     phieuTra.ChiTietPhieuTras.Add(new ChiTietPhieuTra { IdSach = item.IdSach, TienPhat = tienPhatTre, TienPhatHuHong = tienPhatHong, DoMoiKhiTra = item.DoMoiKhiTra, GhiChuKhiTra = item.GhiChuKhiTra });
+
+                    dsSachTraHtml.Add($"<li style='margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;'>📖 <strong>{sach?.TenSach}</strong><br><small>Trả lúc mới: {item.DoMoiKhiTra}% | Phạt: {tienPhatTre + tienPhatHong:N0} đ</small></li>");
                 }
 
                 if (!phieu.ChiTietPhieuThues.Any(ct => ct.NgayTraThucTe == null)) phieu.TrangThai = "Đã Trả";
@@ -237,7 +265,15 @@ namespace CafebookApi.Controllers.App.NhanVien
                 _context.PhieuTraSachs.Add(phieuTra);
                 await _context.SaveChangesAsync(); await transaction.CommitAsync();
 
-                return Ok(new TraSachResponseDto { IdPhieuTra = phieuTra.IdPhieuTra, TongHoanTra = totalCoc - totalPhi - totalPhat });
+                decimal hoanTra = totalCoc - totalPhi - totalPhat;
+
+                if (khach != null && !string.IsNullOrEmpty(khach.Email))
+                {
+                    var generalSettings = await GetGeneralSettingsAsync();
+                    _ = SendReturnEmailAsync(khach.Email, khach.HoTen, phieuTra.IdPhieuTra, phieu.IdPhieuThueSach, totalPhi, totalPhat, hoanTra, settings.DiemPhieuThue, dsSachTraHtml, generalSettings);
+                }
+
+                return Ok(new TraSachResponseDto { IdPhieuTra = phieuTra.IdPhieuTra, TongHoanTra = hoanTra });
             }
             catch (Exception ex) { await transaction.RollbackAsync(); return StatusCode(500, ex.Message); }
         }
@@ -247,8 +283,7 @@ namespace CafebookApi.Controllers.App.NhanVien
         {
             var query = _context.PhieuTraSachs.AsNoTracking().Include(pt => pt.NhanVien).AsQueryable();
 
-            // Lọc Ngày
-            DateTime fromDate = tuNgay ?? DateTime.Today; // Mặc định chỉ lấy Lịch Sử hôm nay để chống Lag Server
+            DateTime fromDate = tuNgay ?? DateTime.Today;
             DateTime toDate = denNgay ?? DateTime.Today;
             toDate = toDate.AddDays(1).AddTicks(-1);
 
@@ -361,6 +396,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                 ChiTiet = phieuTra.ChiTietPhieuTras.Select(ct => new ChiTietTraPrintDto
                 {
                     TenSach = ct.Sach.TenSach,
+                    DoMoiKhiThue = phieuTra.PhieuThueSach?.ChiTietPhieuThues.FirstOrDefault(cts => cts.IdSach == ct.IdSach)?.DoMoiKhiThue ?? 100, // Thêm dòng này
                     DoMoi = ct.DoMoiKhiTra ?? 100,
                     GhiChu = string.IsNullOrWhiteSpace(ct.GhiChuKhiTra) ? "-" : ct.GhiChuKhiTra,
                     TienPhat = ct.TienPhat + (ct.TienPhatHuHong ?? 0),
@@ -457,7 +493,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                             - Phí thuê <b>{phiThue:N0} đ/cuốn</b> sẽ được trừ vào tiền cọc khi trả sách.<br>
                             - Vui lòng trả sách đúng hạn trước ngày <b>{ngayHenTra:dd/MM/yyyy}</b>.<br>
                             - Quá hạn sẽ tính phí phạt <b>{phiPhat:N0} đ/ngày/cuốn</b>.<br>
-                            - Quán sẽ kiểm tra đánh giá độ mới của sách khi trả. Nếu bị giảm % so với lúc thuê, mức phạt khấu hao là <b>2.000 đ/1%</b> giảm.<br>
+                            - Quán sẽ kiểm tra đánh giá độ mới của sách khi trả. Nếu bị giảm % so với lúc thuê, mức phạt khấu hao là <b>1% giá bìa</b> cho mỗi 1% độ mới giảm.<br>
                             - Số tiền cọc còn lại (sau khi trừ phí thuê và phí phạt) sẽ được hoàn trả đầy đủ cho quý khách.
                         </div>
                     </div>

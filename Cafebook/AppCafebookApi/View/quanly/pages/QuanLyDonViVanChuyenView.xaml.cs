@@ -30,7 +30,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_NGUOI_GIAO_HANG")) 
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL") && !AuthService.CoQuyen("QL_NGUOI_GIAO_HANG")) 
             { 
                 MessageBox.Show("Bạn không có quyền truy cập module Đơn vị vận chuyển!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); 
                 this.NavigationService?.GoBack(); 

@@ -74,7 +74,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_DAT_BAN"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_DAT_BAN"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập trang Đặt Bàn!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService != null && this.NavigationService.CanGoBack) this.NavigationService.GoBack();

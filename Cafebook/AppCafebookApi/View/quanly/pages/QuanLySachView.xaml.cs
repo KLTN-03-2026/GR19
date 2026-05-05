@@ -1,28 +1,29 @@
-﻿using System;
+﻿using AppCafebookApi.Services;
+using CafebookModel.Model.ModelApp.QuanLy;
+using CafebookModel.Utils;
+using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.IO;
-using Microsoft.Win32;
-using System.Windows.Media.Imaging;
-using AppCafebookApi.Services;
-using CafebookModel.Utils;
-using CafebookModel.Model.ModelApp.QuanLy;
-using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace AppCafebookApi.View.quanly.pages
 {
     public partial class QuanLySachView : Page
     {
-        private List<QuanLySachGridDto> _allSachList = new();
+        //private List<QuanLySachGridDto> _allSachList = new();
         private QuanLySachDetailDto? _selectedSach = null;
         private string? _currentAnhBiaFilePath = null;
         private bool _deleteImageRequest = false;
@@ -37,7 +38,7 @@ namespace AppCafebookApi.View.quanly.pages
         private List<QuanLySachFilterLookupDto> _lookupNXB = new();
 
         private bool _isDataLoaded = false;
-
+        private ObservableCollection<QuanLySachGridDto> _allSachList = new();
         public QuanLySachView() { InitializeComponent(); }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
@@ -47,7 +48,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            bool hasAnyQuyen = AuthService.CoQuyen("FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH");
+            bool hasAnyQuyen = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_SACH", "QL_DANH_MUC_SACH", "QL_LICH_SU_THUE_SACH");
             if (!hasAnyQuyen)
             {
                 MessageBox.Show("Bạn không có quyền truy cập module này!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -63,7 +64,7 @@ namespace AppCafebookApi.View.quanly.pages
             {
                 ApplyPermissions();
 
-                if (AuthService.CoQuyen("FULL_QL", "QL_SACH"))
+                if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_SACH"))
                 {
                     await LoadLookupsAsync();
                     await LoadSachAsync();
@@ -79,12 +80,12 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void ApplyPermissions()
         {
-            bool hasQlSach = AuthService.CoQuyen("FULL_QL", "QL_SACH");
+            bool hasQlSach = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_SACH");
             if (FindName("GridDuLieuSach") is Grid g) g.Visibility = hasQlSach ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQlSach ? Visibility.Collapsed : Visibility.Visible;
 
-            if (FindName("btnNavDanhMuc") is Button bNav1) bNav1.Visibility = AuthService.CoQuyen("FULL_QL", "QL_DANH_MUC_SACH") ? Visibility.Visible : Visibility.Collapsed;
-            if (FindName("btnNavLichSu") is Button bNav2) bNav2.Visibility = AuthService.CoQuyen("FULL_QL", "QL_LICH_SU_THUE_SACH") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnNavDanhMuc") is Button bNav1) bNav1.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DANH_MUC_SACH") ? Visibility.Visible : Visibility.Collapsed;
+            if (FindName("btnNavLichSu") is Button bNav2) bNav2.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_LICH_SU_THUE_SACH") ? Visibility.Visible : Visibility.Collapsed;
 
             if (FindName("btnLamMoiForm") is Button b1) b1.Visibility = hasQlSach ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnLuu") is Button b2) b2.Visibility = hasQlSach ? Visibility.Visible : Visibility.Collapsed;
@@ -95,23 +96,113 @@ namespace AppCafebookApi.View.quanly.pages
         {
             try
             {
-                var tl = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/theloai");
-                var tg = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/tacgia");
-                var nxb = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/nxb");
+                // 1. KIỂM TRA RAM (Hiển thị ngay lập tức)
+                if (GlobalDataCache.QL_LookupTheLoaiCache != null &&
+                    GlobalDataCache.QL_LookupTacGiaCache != null &&
+                    GlobalDataCache.QL_LookupNXBCache != null)
+                {
+                    PopulateLookupsFromRam();
 
-                if (tl != null)
-                {
-                    _lookupTheLoai = tl;
-                    if (FindName("cmbFilterTheLoai") is ComboBox c1) { var filterTl = new List<QuanLySachFilterLookupDto> { new QuanLySachFilterLookupDto { Ten = "Tất cả" } }; filterTl.AddRange(tl); c1.ItemsSource = filterTl; c1.SelectedIndex = 0; }
+                    // 2. Kích hoạt cập nhật ngầm API (Bắn 3 luồng song song)
+                    _ = BackgroundRefreshLookupsAsync();
+                    return;
                 }
-                if (tg != null)
-                {
-                    _lookupTacGia = tg;
-                    if (FindName("cmbFilterTacGia") is ComboBox c2) { var filterTg = new List<QuanLySachFilterLookupDto> { new QuanLySachFilterLookupDto { Ten = "Tất cả" } }; filterTg.AddRange(tg); c2.ItemsSource = filterTg; c2.SelectedIndex = 0; }
-                }
-                if (nxb != null) _lookupNXB = nxb;
+
+                // 3. Dự phòng (Fallback): Nếu RAM trống
+                await FetchLookupsApiAndSetupUI();
             }
             catch { }
+        }
+
+        // ==========================================
+        // CÁC HÀM HỖ TRỢ (ĐỒNG BỘ NGẦM)
+        // ==========================================
+
+        private void PopulateLookupsFromRam()
+        {
+            if (GlobalDataCache.QL_LookupTheLoaiCache != null)
+            {
+                _lookupTheLoai = GlobalDataCache.QL_LookupTheLoaiCache;
+                if (FindName("cmbFilterTheLoai") is ComboBox c1)
+                {
+                    var filterTl = new List<QuanLySachFilterLookupDto> { new QuanLySachFilterLookupDto { Ten = "Tất cả" } };
+                    filterTl.AddRange(_lookupTheLoai);
+
+                    int currentIndex = c1.SelectedIndex;
+                    c1.ItemsSource = filterTl;
+                    c1.SelectedIndex = currentIndex >= 0 ? currentIndex : 0;
+                }
+            }
+
+            if (GlobalDataCache.QL_LookupTacGiaCache != null)
+            {
+                _lookupTacGia = GlobalDataCache.QL_LookupTacGiaCache;
+                if (FindName("cmbFilterTacGia") is ComboBox c2)
+                {
+                    var filterTg = new List<QuanLySachFilterLookupDto> { new QuanLySachFilterLookupDto { Ten = "Tất cả" } };
+                    filterTg.AddRange(_lookupTacGia);
+
+                    int currentIndex = c2.SelectedIndex;
+                    c2.ItemsSource = filterTg;
+                    c2.SelectedIndex = currentIndex >= 0 ? currentIndex : 0;
+                }
+            }
+
+            if (GlobalDataCache.QL_LookupNXBCache != null)
+            {
+                _lookupNXB = GlobalDataCache.QL_LookupNXBCache;
+            }
+        }
+
+        private async Task BackgroundRefreshLookupsAsync()
+        {
+            try
+            {
+                // Phát động 3 luồng API chạy CÙNG LÚC ngầm
+                var tTl = ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/theloai");
+                var tTg = ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/tacgia");
+                var tNxb = ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/nxb");
+
+                await Task.WhenAll(tTl, tTg, tNxb);
+
+                var tl = await tTl;
+                var tg = await tTg;
+                var nxb = await tNxb;
+
+                if (tl != null && tg != null && nxb != null)
+                {
+                    // Cập nhật lại RAM
+                    GlobalDataCache.QL_LookupTheLoaiCache = tl;
+                    GlobalDataCache.QL_LookupTacGiaCache = tg;
+                    GlobalDataCache.QL_LookupNXBCache = nxb;
+
+                    // Vẽ lại giao diện ngầm (giữ nguyên index đang chọn)
+                    PopulateLookupsFromRam();
+                }
+            }
+            catch { /* Lỗi mạng thì bỏ qua, người dùng vẫn giữ được danh sách cũ đang hiển thị trên RAM */ }
+        }
+
+        private async Task FetchLookupsApiAndSetupUI()
+        {
+            var tTl = ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/theloai");
+            var tTg = ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/tacgia");
+            var tNxb = ApiClient.Instance.GetFromJsonAsync<List<QuanLySachFilterLookupDto>>("api/app/quanly-sach/lookup/nxb");
+
+            await Task.WhenAll(tTl, tTg, tNxb);
+
+            var tl = await tTl;
+            var tg = await tTg;
+            var nxb = await tNxb;
+
+            if (tl != null && tg != null && nxb != null)
+            {
+                GlobalDataCache.QL_LookupTheLoaiCache = tl;
+                GlobalDataCache.QL_LookupTacGiaCache = tg;
+                GlobalDataCache.QL_LookupNXBCache = nxb;
+
+                PopulateLookupsFromRam();
+            }
         }
 
         private string RemoveVietnameseSigns(string str)
@@ -130,33 +221,124 @@ namespace AppCafebookApi.View.quanly.pages
             return str;
         }
 
+        private void SmartUpdateSachList(List<QuanLySachGridDto> newLists)
+        {
+            // Lần đầu tiên: Nếu danh sách trên UI chưa có gì, ta add toàn bộ vào
+            if (_sachView == null)
+            {
+                foreach (var s in newLists)
+                {
+                    s.SearchKeyword = $"{RemoveVietnameseSigns(s.TenSach)} {RemoveVietnameseSigns(s.TenTacGia)}".ToLower();
+                    _allSachList.Add(s);
+                }
+
+                _sachView = CollectionViewSource.GetDefaultView(_allSachList);
+                _sachView.Filter = SachFilter;
+
+                if (FindName("dgSach") is DataGrid dg) dg.ItemsSource = _sachView;
+                FilterData();
+                return;
+            }
+
+            // Các lần sau: Lọc và so sánh để cập nhật thông minh
+            bool hasChanges = false;
+
+            // 1. Xóa các sách không còn tồn tại (bị ai đó xóa)
+            for (int i = _allSachList.Count - 1; i >= 0; i--)
+            {
+                if (!newLists.Any(n => n.IdSach == _allSachList[i].IdSach))
+                {
+                    _allSachList.RemoveAt(i);
+                    hasChanges = true;
+                }
+            }
+
+            // 2. Thêm mới hoặc Cập nhật sách bị thay đổi
+            foreach (var newSach in newLists)
+            {
+                newSach.SearchKeyword = $"{RemoveVietnameseSigns(newSach.TenSach)} {RemoveVietnameseSigns(newSach.TenTacGia)}".ToLower();
+
+                var existingItem = _allSachList.FirstOrDefault(o => o.IdSach == newSach.IdSach);
+                if (existingItem == null)
+                {
+                    _allSachList.Add(newSach); // Thêm sách mới
+                    hasChanges = true;
+                }
+                else
+                {
+                    // So sánh xem có trường nào thay đổi không
+                    bool isChanged = existingItem.TenSach != newSach.TenSach ||
+                                     existingItem.TenTacGia != newSach.TenTacGia ||
+                                     existingItem.TenTheLoai != newSach.TenTheLoai ||
+                                     existingItem.SoLuongTong != newSach.SoLuongTong ||
+                                     existingItem.SoLuongHienCo != newSach.SoLuongHienCo ||
+                                     existingItem.ViTri != newSach.ViTri;
+
+                    if (isChanged)
+                    {
+                        int index = _allSachList.IndexOf(existingItem);
+                        if (index >= 0)
+                        {
+                            _allSachList[index] = newSach; // Ghi đè dòng bị thay đổi
+                            hasChanges = true;
+                        }
+                    }
+                }
+            }
+
+            // Nếu có sự thay đổi, làm mới bộ lọc và giữ nguyên dòng đang chọn
+            if (hasChanges)
+            {
+                _sachView.Refresh();
+
+                if (_selectedSach != null && FindName("dgSach") is DataGrid dg)
+                {
+                    var updatedSelected = _allSachList.FirstOrDefault(x => x.IdSach == _selectedSach.IdSach);
+                    if (updatedSelected != null) dg.SelectedItem = updatedSelected;
+                }
+            }
+        }
+
         private async Task LoadSachAsync()
         {
-            if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
+            var loading = FindName("LoadingOverlay") as Border;
+            if (loading != null) loading.Visibility = Visibility.Visible;
+            try
+            {
+                // 1. Kéo RAM lên trước (Mượt, không delay)
+                if (GlobalDataCache.QL_SachCache != null && GlobalDataCache.QL_SachCache.Count > 0)
+                {
+                    SmartUpdateSachList(GlobalDataCache.QL_SachCache);
+                    if (loading != null) loading.Visibility = Visibility.Collapsed;
+
+                    // 2. Chạy ngầm API để đồng bộ những thay đổi mới nhất
+                    _ = BackgroundRefreshSachAsync();
+                    return;
+                }
+
+                // Dự phòng: RAM rỗng thì gọi API
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySachGridDto>>("api/app/quanly-sach");
+                if (res != null)
+                {
+                    GlobalDataCache.QL_SachCache = res;
+                    SmartUpdateSachList(res);
+                }
+            }
+            finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
+        }
+
+        private async Task BackgroundRefreshSachAsync()
+        {
             try
             {
                 var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLySachGridDto>>("api/app/quanly-sach");
                 if (res != null)
                 {
-                    _allSachList = res;
-
-                    // Sinh từ khóa tìm kiếm 1 lần
-                    foreach (var s in _allSachList)
-                    {
-                        s.SearchKeyword = $"{RemoveVietnameseSigns(s.TenSach)} {RemoveVietnameseSigns(s.TenTacGia)}".ToLower();
-                    }
-
-                    // Gắn vào ICollectionView
-                    _sachView = CollectionViewSource.GetDefaultView(_allSachList);
-                    _sachView.Filter = SachFilter;
-
-                    if (FindName("dgSach") is DataGrid dg)
-                        dg.ItemsSource = _sachView;
-
-                    FilterData();
+                    GlobalDataCache.QL_SachCache = res; // Cập nhật lại kho RAM
+                    SmartUpdateSachList(res); // Gọi hàm cập nhật thông minh cho Grid
                 }
             }
-            finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+            catch { /* Lỗi mạng thì bỏ qua */ }
         }
 
         private void Filters_Changed(object sender, RoutedEventArgs e) => FilterData();
@@ -279,7 +461,12 @@ namespace AppCafebookApi.View.quanly.pages
                     ? await ApiClient.Instance.PostAsync("api/app/quanly-sach", formData)
                     : await ApiClient.Instance.PutAsync($"api/app/quanly-sach/{_selectedSach.IdSach}", formData);
 
-                if (res.IsSuccessStatusCode) { MessageBox.Show("Lưu sách thành công!"); await LoadLookupsAsync(); await LoadSachAsync(); }
+                if (res.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Lưu sách thành công!");
+                    await LoadLookupsAsync();
+                    await BackgroundRefreshSachAsync();
+                }
                 else MessageBox.Show($"Lỗi: {await res.Content.ReadAsStringAsync()}");
             }
             finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
@@ -377,7 +564,7 @@ namespace AppCafebookApi.View.quanly.pages
                     {
                         MessageBox.Show(responseMessage, "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                         BtnLamMoiForm_Click(this, new RoutedEventArgs());
-                        await LoadSachAsync();
+                        await BackgroundRefreshSachAsync();
                     }
                     else MessageBox.Show($"Lỗi: {responseMessage}");
                 }
@@ -508,13 +695,13 @@ namespace AppCafebookApi.View.quanly.pages
         #region ĐIỀU HƯỚNG
         private void BtnNavDanhMuc_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_DANH_MUC_SACH"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DANH_MUC_SACH"))
             { MessageBox.Show("Không có quyền truy cập Danh mục sách!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyDanhMucSachView());
         }
         private void BtnNavLichSu_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.CoQuyen("FULL_QL", "QL_LICH_SU_THUE_SACH"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_LICH_SU_THUE_SACH"))
             { MessageBox.Show("Không có quyền truy cập lịch sử thuê sách", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             this.NavigationService?.Navigate(new QuanLyLichSuThueSachView());
         }

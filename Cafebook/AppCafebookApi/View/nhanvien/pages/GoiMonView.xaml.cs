@@ -51,7 +51,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             if (_isDataLoaded) return;
 
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_GOI_MON"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_GOI_MON"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập trang Gọi Món!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService != null && this.NavigationService.CanGoBack) this.NavigationService.GoBack();
@@ -84,41 +84,26 @@ namespace AppCafebookApi.View.nhanvien.pages
             e.Handled = true;
         }
 
-        // ======================================================
-        // NÂNG CẤP 3: BẢO VỆ FINDNAME CHO CÁC NÚT QUYỀN
-        // ======================================================
         private void ApplyPermissions()
         {
             if (FindName("btnThanhToan") is Button btnThanhToan)
             {
-                btnThanhToan.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THANH_TOAN")
+                btnThanhToan.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_THANH_TOAN")
                                             ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
-        // ======================================================
-        // TỪ ĐÂY TRỞ XUỐNG: LOGIC CŨ ĐƯỢC GIỮ NGUYÊN 100%
-        // ======================================================
         private async Task LoadDataAsync()
         {
             _isDataLoading = true;
-            try
+
+            if (GlobalDataCache.SanPhamCache != null && GlobalDataCache.DanhMucCache != null)
             {
-                var response = await ApiClient.Instance.GetFromJsonAsync<GoiMonViewDto>($"api/app/nhanvien/goimon/load/{_idHoaDon}");
-                if (response == null) { MessageBox.Show("Không thể tải dữ liệu hóa đơn.", "Lỗi API"); return; }
+                _allSanPhams = GlobalDataCache.SanPhamCache;
 
-                _allSanPhams = response.SanPhams ?? new List<SanPhamDto>();
-
-                var danhMucs = response.DanhMucs ?? new List<DanhMucDto>();
-                danhMucs.Insert(0, new DanhMucDto { IdDanhMuc = 0, TenLoaiSP = "Tất cả" });
-                lbLoaiSP.ItemsSource = danhMucs;
-
-                _chiTietItems.Clear();
-                response.ChiTietItems?.ForEach(item => _chiTietItems.Add(item));
-
-                _availableKms = response.KhuyenMais ?? new List<KhuyenMaiDto>();
-
-                UpdateBillUI(response.HoaDonInfo);
+                var danhMucsRam = new List<DanhMucDto>(GlobalDataCache.DanhMucCache);
+                danhMucsRam.Insert(0, new DanhMucDto { IdDanhMuc = 0, TenLoaiSP = "Tất cả" });
+                lbLoaiSP.ItemsSource = danhMucsRam;
 
                 if (lbLoaiSP.Items.Count > 0)
                 {
@@ -129,7 +114,47 @@ namespace AppCafebookApi.View.nhanvien.pages
                     UpdateProductFilter();
                 }
             }
-            catch (Exception ex) { MessageBox.Show($"Lỗi tải dữ liệu: {ex.Message}", "Lỗi nghiêm trọng"); }
+
+            try
+            {
+                var response = await ApiClient.Instance.GetFromJsonAsync<GoiMonViewDto>($"api/app/nhanvien/goimon/load/{_idHoaDon}");
+                if (response == null)
+                {
+                    MessageBox.Show("Không thể tải dữ liệu hóa đơn.", "Lỗi API");
+                    _isDataLoading = false;
+                    return;
+                }
+
+                if (_allSanPhams == null || _allSanPhams.Count == 0)
+                {
+                    _allSanPhams = response.SanPhams ?? new List<SanPhamDto>();
+
+                    var danhMucsApi = response.DanhMucs ?? new List<DanhMucDto>();
+                    danhMucsApi.Insert(0, new DanhMucDto { IdDanhMuc = 0, TenLoaiSP = "Tất cả" });
+                    lbLoaiSP.ItemsSource = danhMucsApi;
+
+                    if (lbLoaiSP.Items.Count > 0)
+                    {
+                        lbLoaiSP.UpdateLayout();
+                        var container = lbLoaiSP.ItemContainerGenerator.ContainerFromIndex(0) as FrameworkElement;
+                        var rb = FindVisualChild<RadioButton>(container);
+                        if (rb != null) rb.IsChecked = true;
+                        UpdateProductFilter();
+                    }
+                }
+
+                _chiTietItems.Clear();
+                response.ChiTietItems?.ForEach(item => _chiTietItems.Add(item));
+
+                _availableKms = response.KhuyenMais ?? new List<KhuyenMaiDto>();
+
+                UpdateBillUI(response.HoaDonInfo);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải dữ liệu: {ex.Message}", "Lỗi nghiêm trọng");
+            }
+
             _isDataLoading = false;
         }
 
@@ -211,11 +236,13 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (sanPham == null) return;
 
             var inputBox = new InputBoxWindow("Thêm ghi chú", $"Nhập ghi chú cho món [{sanPham.TenSanPham}]:", "");
+            if (inputBox.ShowDialog() != true)
+            {
+                return;
+            }
 
-            string? ghiChu = null;
-            if (inputBox.ShowDialog() == true) ghiChu = inputBox.InputText;
+            string? ghiChu = inputBox.InputText;
             if (string.IsNullOrWhiteSpace(ghiChu)) ghiChu = null;
-
             var request = new AddItemRequest { IdHoaDon = _idHoaDon, IdSanPham = sanPham.IdSanPham, SoLuong = 1, GhiChu = ghiChu };
 
             try

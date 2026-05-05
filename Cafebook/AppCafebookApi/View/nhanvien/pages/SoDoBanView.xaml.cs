@@ -15,6 +15,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace AppCafebookApi.View.nhanvien.pages
 {
@@ -22,7 +23,7 @@ namespace AppCafebookApi.View.nhanvien.pages
     {
         private int? _idBanToHighlight = null;
         private bool _isDataLoaded = false;
-
+        private DispatcherTimer _autoRefreshTimer;
         private class CreateOrderResponseDto
         {
             [System.Text.Json.Serialization.JsonPropertyName("idHoaDon")]
@@ -40,13 +41,22 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             InitializeComponent();
             this.DataContext = this;
-            icBan.ItemsSource = DisplayedTables; 
+            icBan.ItemsSource = DisplayedTables;
+            _autoRefreshTimer = new DispatcherTimer();
+            _autoRefreshTimer.Interval = TimeSpan.FromSeconds(5);
+            _autoRefreshTimer.Tick += async (s, e) => await BackgroundRefreshAsync();
+            _autoRefreshTimer.Start();
         }
 
         public SoDoBanView(int idBan)
         {
             InitializeComponent();
+            this.DataContext = this;
+            icBan.ItemsSource = DisplayedTables;
             _idBanToHighlight = idBan;
+            _autoRefreshTimer = new DispatcherTimer();
+            _autoRefreshTimer.Interval = TimeSpan.FromSeconds(60);
+            _autoRefreshTimer.Tick += async (s, e) => await BackgroundRefreshAsync();
         }
 
         #region Tải Dữ Liệu và Lọc Khu Vực
@@ -54,7 +64,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             if (_isDataLoaded) return;
 
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_SO_DO_BAN"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_SO_DO_BAN"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập Sơ Đồ Bàn!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService != null && this.NavigationService.CanGoBack)
@@ -125,13 +135,14 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             if (FindName("btnGoiMon") is Button btnGoiMon)
             {
-                btnGoiMon.Visibility = AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_GOI_MON", "NV_THANH_TOAN")
+                btnGoiMon.Visibility = AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_GOI_MON", "NV_THANH_TOAN")
                                         ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
         private async Task ReloadDataAsync()
         {
+            // 1. Ghi nhớ khu vực đang được chọn để phục hồi sau khi load
             var selectedKhuVucBtn = FindCheckedKhuVucButton();
             int? selectedKhuVucId = null;
             if (selectedKhuVucBtn != null && selectedKhuVucBtn != btnKhuVucAll && selectedKhuVucBtn.DataContext is KhuVucDto dto)
@@ -142,13 +153,49 @@ namespace AppCafebookApi.View.nhanvien.pages
             panelChuaChon.Visibility = Visibility.Visible;
             panelDaChon.Visibility = Visibility.Collapsed;
 
-            await Task.WhenAll(LoadKhuVucSidebarAsync(), LoadTablesAsync());
+            // 2. Kiểm tra dữ liệu trong RAM (GlobalDataCache)
+            bool needsKhuVucApi = true;
+            if (GlobalDataCache.KhuVucCache != null && GlobalDataCache.KhuVucCache.Count > 0)
+            {
+                _khuVucCache = GlobalDataCache.KhuVucCache;
+                if (FindName("icKhuVuc") is ItemsControl icKhuVuc)
+                    icKhuVuc.ItemsSource = _khuVucCache;
+                needsKhuVucApi = false; // Đã có trong RAM, không cần gọi API
+            }
+
+            bool needsBanApi = true;
+            if (GlobalDataCache.BanCache != null && GlobalDataCache.BanCache.Count > 0)
+            {
+                _allTablesCache = GlobalDataCache.BanCache;
+                needsBanApi = false; // Đã có trong RAM, không cần gọi API
+            }
+
+            // 3. Nếu RAM trống (trường hợp hiếm khi bỏ qua WelcomeWindow), dự phòng gọi API
+            var tasks = new List<Task>();
+            if (needsKhuVucApi) tasks.Add(LoadKhuVucSidebarAsync());
+            if (needsBanApi) tasks.Add(LoadTablesAsync());
+
+            if (tasks.Count > 0)
+            {
+                await Task.WhenAll(tasks);
+            }
+
+            // 4. Vẽ bàn ra giao diện (sử dụng dữ liệu vừa lấy từ RAM hoặc API)
             ApplyTableFilter(selectedKhuVucId);
 
+            // 5. Phục hồi trạng thái nút Khu Vực
             if (selectedKhuVucBtn != null)
                 selectedKhuVucBtn.IsChecked = true;
             else if (btnKhuVucAll != null)
                 btnKhuVucAll.IsChecked = true;
+
+            // 6. KÍCH HOẠT ĐỒNG BỘ NGẦM (SMART UPDATE)
+            // Nếu vừa lấy dữ liệu từ RAM, ta "bắn" một lệnh cập nhật ngầm ngay lập tức 
+            // để kiểm tra xem trong lúc load RAM, có bàn nào thay đổi trạng thái không.
+            if (!needsBanApi)
+            {
+                _ = BackgroundRefreshAsync();
+            }
         }
 
         private async Task LoadKhuVucSidebarAsync()
@@ -209,13 +256,13 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private void ApplyTableFilter(int? khuVucId)
         {
-            if (khuVucId == null)
+            var filtered = khuVucId == null
+                ? _allTablesCache
+                : _allTablesCache.Where(ban => ban.IdKhuVuc == khuVucId).ToList();
+            DisplayedTables.Clear();
+            foreach (var ban in filtered)
             {
-                icBan.ItemsSource = _allTablesCache;
-            }
-            else
-            {
-                icBan.ItemsSource = _allTablesCache.Where(ban => ban.IdKhuVuc == khuVucId).ToList();
+                DisplayedTables.Add(ban);
             }
         }
 
@@ -600,6 +647,93 @@ namespace AppCafebookApi.View.nhanvien.pages
             finally
             {
                 ResetForm();
+            }
+        }
+
+        private async Task BackgroundRefreshAsync()
+        {
+            try
+            {
+                var newTables = await ApiClient.Instance.GetFromJsonAsync<List<BanSoDoDto>>("api/app/sodoban/tables");
+                if (newTables == null) return;
+
+                GlobalDataCache.BanCache = newTables;
+                _allTablesCache = newTables;
+
+                var selectedKhuVucBtn = FindCheckedKhuVucButton();
+                int? selectedKhuVucId = (selectedKhuVucBtn != null && selectedKhuVucBtn != btnKhuVucAll && selectedKhuVucBtn.DataContext is KhuVucDto dto) ? dto.IdKhuVuc : null;
+
+                var filteredTables = selectedKhuVucId == null ? _allTablesCache : _allTablesCache.Where(b => b.IdKhuVuc == selectedKhuVucId).ToList();
+
+                if (DisplayedTables.Count != filteredTables.Count)
+                {
+                    DisplayedTables.Clear();
+                    foreach (var table in filteredTables) DisplayedTables.Add(table);
+
+                    if (_selectedBan != null)
+                    {
+                        var updatedSelectedBan = DisplayedTables.FirstOrDefault(b => b.IdBan == _selectedBan.IdBan);
+                        if (updatedSelectedBan != null) ShowPanelForBan(updatedSelectedBan);
+                        else ResetForm();
+                    }
+                    return;
+                }
+
+                bool isSelectedTableChanged = false; 
+
+                for (int i = 0; i < DisplayedTables.Count; i++)
+                {
+                    var oldBan = DisplayedTables[i];
+                    var newBan = filteredTables.FirstOrDefault(b => b.IdBan == oldBan.IdBan);
+
+                    if (newBan != null)
+                    {
+                        bool isChanged = oldBan.TrangThai != newBan.TrangThai ||
+                                         oldBan.TongTienHienTai != newBan.TongTienHienTai ||
+                                         oldBan.IdHoaDonHienTai != newBan.IdHoaDonHienTai ||
+                                         oldBan.ThongTinDatBan != newBan.ThongTinDatBan ||
+                                         oldBan.GhiChu != newBan.GhiChu;
+
+                        if (isChanged)
+                        {
+                            oldBan.TrangThai = newBan.TrangThai;
+                            oldBan.TongTienHienTai = newBan.TongTienHienTai;
+                            oldBan.IdHoaDonHienTai = newBan.IdHoaDonHienTai;
+                            oldBan.ThongTinDatBan = newBan.ThongTinDatBan;
+                            oldBan.GhiChu = newBan.GhiChu;
+                            oldBan.IdKhuVuc = newBan.IdKhuVuc;
+
+                            if (_selectedBan != null && _selectedBan.IdBan == oldBan.IdBan)
+                            {
+                                isSelectedTableChanged = true;
+                            }
+                        }
+                    }
+                }
+
+                if (isSelectedTableChanged && _selectedBan != null)
+                {
+                    ShowPanelForBan(_selectedBan);
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private async void Page_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if ((bool)e.NewValue == true) 
+            {
+                _autoRefreshTimer?.Start(); 
+                if (_isDataLoaded)
+                {
+                    await BackgroundRefreshAsync();
+                }
+            }
+            else 
+            {
+                _autoRefreshTimer?.Stop();
             }
         }
 

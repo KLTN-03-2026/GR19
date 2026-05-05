@@ -47,8 +47,8 @@ namespace AppCafebookApi.View.nhanvien.pages
         private bool _isUpdatingKhachText = false;
         private bool _isDataLoaded = false;
         private SachTimKiemDto? _tempSachTimKiem;
+        private SachChonUI_Dto? _sachChonDangSua = null; // Trạng thái dùng để sửa sách
         private ChiTietSachTraUI_Dto? _tempSachTraPopup;
-
 
         public ThueSachView()
         {
@@ -61,11 +61,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             _searchSachTimer.Tick += async (s, e) => { _searchSachTimer.Stop(); await SearchSachAsync(); };
 
             _autoRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(300) };
-
             _autoRefreshTimer.Tick += async (s, e) => { await SafeAutoRefreshAsync(); };
-
-            dpLocNgayThue.SelectedDate = null;
-            dpLocNgayTra.SelectedDate = DateTime.Today;
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
@@ -74,7 +70,7 @@ namespace AppCafebookApi.View.nhanvien.pages
 
             ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_THUE_SACH"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_THUE_SACH"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập chức năng này.", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService?.CanGoBack == true) this.NavigationService.GoBack();
@@ -82,12 +78,11 @@ namespace AppCafebookApi.View.nhanvien.pages
             }
 
             await Task.Delay(350);
-
             if (!this.IsLoaded) return;
 
             try
             {
-                ClearRightPanel();
+                ShowTaoPhieuPanel(); // Mặc định mở panel Tạo phiếu mới
 
                 if (FindName("LoadingOverlay") is FrameworkElement overlay) overlay.Visibility = Visibility.Visible;
 
@@ -100,7 +95,6 @@ namespace AppCafebookApi.View.nhanvien.pages
                 if (FindName("LoadingOverlay") is FrameworkElement overlayHidden) overlayHidden.Visibility = Visibility.Collapsed;
 
                 _autoRefreshTimer.Start();
-
                 _isDataLoaded = true;
             }
             catch (Exception ex)
@@ -133,64 +127,62 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (AuthService.CurrentUser == null || string.IsNullOrEmpty(AuthService.AuthToken))
             {
                 _autoRefreshTimer.Stop();
-                MessageBox.Show("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để làm mới dữ liệu.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-
             try
             {
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
-
                 await LoadPhieuThueAsync(true);
                 await LoadPhieuTraAsync(true);
             }
-            catch (HttpRequestException httpEx) when (httpEx.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            {
-                _autoRefreshTimer.Stop();
-                Console.WriteLine("Phiên đăng nhập hết hạn trong lúc làm mới ngầm.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi làm mới tự động: {ex.Message}");
-            }
+            catch (Exception ex) { Console.WriteLine($"Lỗi làm mới tự động: {ex.Message}"); }
         }
 
-        #region Logic Đóng Mở Bảng Bên Phải
-        private void ClearRightPanel()
+        #region Logic Đóng Mở Bảng Đa Năng Bên Phải
+        private void ShowTaoPhieuPanel()
         {
-            colRightPanel.Width = new GridLength(0);
-            borderRightPanel.Visibility = Visibility.Collapsed;
+            panelTaoPhieu.Visibility = Visibility.Visible;
+            panelChiTietPhieu.Visibility = Visibility.Collapsed;
+            if (dgPhieuThue != null) dgPhieuThue.SelectedIndex = -1;
+            if (dgPhieuTra != null) dgPhieuTra.SelectedIndex = -1;
         }
 
-        private void ExpandRightPanel()
+        private void ShowChiTietPanel()
         {
-            colRightPanel.Width = new GridLength(0.9, GridUnitType.Star);
-            borderRightPanel.Visibility = Visibility.Visible;
+            panelTaoPhieu.Visibility = Visibility.Collapsed;
+            panelChiTietPhieu.Visibility = Visibility.Visible;
+        }
+
+        private void BtnHienThiTaoPhieu_Click(object sender, RoutedEventArgs e)
+        {
+            ShowTaoPhieuPanel();
         }
 
         private void TabPhieu_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Chỉ xóa panel nếu người dùng đổi Tab chính (tránh đụng chạm TabControl con)
             if (e.OriginalSource == TabPhieu)
             {
-                ClearRightPanel();
-                if (dgPhieuThue != null) dgPhieuThue.SelectedIndex = -1;
-                if (dgPhieuTra != null) dgPhieuTra.SelectedIndex = -1;
+                ShowTaoPhieuPanel(); // Mặc định khi nhảy tab, ta khôi phục về panel Tạo Phiếu
             }
         }
         #endregion
 
-        #region Tối ưu Tải Danh Sách Phân Trang/Ngày
+        #region Tải Danh Sách Phân Trang/Ngày
         private async Task LoadPhieuThueAsync(bool isBackground)
         {
             try
             {
                 string search = txtSearchPhieuThue.Text;
-                string status = (cmbTrangThaiFilter.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Đang Thuê";
-                string dateParam = dpLocNgayThue.SelectedDate.HasValue ? $"&tuNgay={dpLocNgayThue.SelectedDate.Value:yyyy-MM-dd}&denNgay={dpLocNgayThue.SelectedDate.Value:yyyy-MM-dd}" : "";
+                string status = (cmbTrangThaiFilter.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Tất Cả";
+
+                string dateParam = "";
+                if (dpLocNgayThueTu.SelectedDate.HasValue && dpLocNgayThueDen.SelectedDate.HasValue)
+                {
+                    dateParam = $"&tuNgay={dpLocNgayThueTu.SelectedDate.Value:yyyy-MM-dd}&denNgay={dpLocNgayThueDen.SelectedDate.Value:yyyy-MM-dd}";
+                }
 
                 var url = $"api/app/nhanvien/thuesach/phieuthue?search={Uri.EscapeDataString(search)}&status={Uri.EscapeDataString(status)}{dateParam}";
-
                 var response = await ApiClient.Instance.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
@@ -203,10 +195,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                     if (!isBackground) MessageBox.Show("Hết phiên đăng nhập. Vui lòng đăng nhập lại.");
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi LoadPhieuThueAsync: {ex.Message}");
-            }
+            catch (Exception ex) { Console.WriteLine($"Lỗi LoadPhieuThueAsync: {ex.Message}"); }
         }
 
         private async Task LoadPhieuTraAsync(bool isBackground)
@@ -214,7 +203,11 @@ namespace AppCafebookApi.View.nhanvien.pages
             try
             {
                 string search = txtSearchPhieuTra.Text;
-                string dateParam = dpLocNgayTra.SelectedDate.HasValue ? $"&tuNgay={dpLocNgayTra.SelectedDate.Value:yyyy-MM-dd}&denNgay={dpLocNgayTra.SelectedDate.Value:yyyy-MM-dd}" : "";
+                string dateParam = "";
+                if (dpLocNgayTraTu.SelectedDate.HasValue && dpLocNgayTraDen.SelectedDate.HasValue)
+                {
+                    dateParam = $"&tuNgay={dpLocNgayTraTu.SelectedDate.Value:yyyy-MM-dd}&denNgay={dpLocNgayTraDen.SelectedDate.Value:yyyy-MM-dd}";
+                }
 
                 var url = $"api/app/nhanvien/thuesach/phieutra?search={Uri.EscapeDataString(search)}{dateParam}";
                 var phieuTraList = await ApiClient.Instance.GetFromJsonAsync<List<PhieuTraGridDto>>(url);
@@ -229,11 +222,26 @@ namespace AppCafebookApi.View.nhanvien.pages
         private void CmbTrangThaiFilter_SelectionChanged(object sender, SelectionChangedEventArgs e) { if (IsLoaded) _ = LoadPhieuThueAsync(false); }
         private void DpLocNgayThue_SelectedDateChanged(object sender, SelectionChangedEventArgs e) { if (IsLoaded) _ = LoadPhieuThueAsync(false); }
 
+        private void BtnXoaLocThue_Click(object sender, RoutedEventArgs e)
+        {
+            txtSearchPhieuThue.Text = "";
+            dpLocNgayThueTu.SelectedDate = null;
+            dpLocNgayThueDen.SelectedDate = null;
+            cmbTrangThaiFilter.SelectedIndex = 1; // Chọn mặc định "Đang Thuê"
+        }
+
         private void TxtSearchPhieuTra_TextChanged(object sender, TextChangedEventArgs e) { if (IsLoaded) _ = LoadPhieuTraAsync(false); }
         private void DpLocNgayTra_SelectedDateChanged(object sender, SelectionChangedEventArgs e) { if (IsLoaded) _ = LoadPhieuTraAsync(false); }
+
+        private void BtnXoaLocTra_Click(object sender, RoutedEventArgs e)
+        {
+            txtSearchPhieuTra.Text = "";
+            dpLocNgayTraTu.SelectedDate = null;
+            dpLocNgayTraDen.SelectedDate = null;
+        }
         #endregion
 
-        #region Tìm kiếm Khách Hàng & Sách (Kèm Popup Thêm)
+        #region Tìm kiếm Khách Hàng & Sách (Kèm Popup Thêm & Sửa)
         private void TxtKhachInfo_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_isUpdatingKhachText) return;
@@ -278,14 +286,14 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (string.IsNullOrEmpty(q)) { lbSachResults.ItemsSource = null; lbSachResults.Visibility = Visibility.Collapsed; return; }
             try
             {
-                var results = await ApiClient.Instance.GetFromJsonAsync<List<SachTimKiemDto>>($"api/app/nhanvien/thuesach/search-sach?query={q}");
+                // 🔥 Đã fix: Thêm Uri.EscapeDataString() chống lỗi 400 Bad Request
+                var results = await ApiClient.Instance.GetFromJsonAsync<List<SachTimKiemDto>>($"api/app/nhanvien/thuesach/search-sach?query={Uri.EscapeDataString(q)}");
                 lbSachResults.ItemsSource = results;
                 lbSachResults.Visibility = Visibility.Visible;
             }
             catch { }
         }
 
-        // Bấm chọn sách -> Hiện Popup nhập % mới
         private void LbSachResults_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (lbSachResults.SelectedItem is SachTimKiemDto selectedSach)
@@ -309,38 +317,20 @@ namespace AppCafebookApi.View.nhanvien.pages
             }
         }
 
-        private void BtnXacNhanNhapSachThue_Click(object sender, RoutedEventArgs e)
+        private void BtnSuaSachChon_Click(object sender, RoutedEventArgs e)
         {
-            if (_tempSachTimKiem == null) return;
-
-            if (!int.TryParse(txtDoMoiThuePopup.Text, out int domoi) || domoi <= 0 || domoi > 100)
+            if (dgSachChon.SelectedItem is SachChonUI_Dto selected)
             {
-                MessageBox.Show("Vui lòng nhập độ mới hợp lệ (1 - 100).", "Lỗi nhập liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                _sachChonDangSua = selected; // Lưu trạng thái
+                lblTenSachThuePopup.Text = selected.TenSach;
+                txtDoMoiThuePopup.Text = selected.DoMoiKhiThue.ToString();
+                txtGhiChuThuePopup.Text = selected.GhiChuKhiThue ?? "";
+                PopupNhapSachThue.Visibility = Visibility.Visible;
             }
-
-            var currentList = (dgSachChon.ItemsSource as List<SachChonUI_Dto>) ?? new List<SachChonUI_Dto>();
-            currentList.Add(new SachChonUI_Dto
+            else
             {
-                IdSach = _tempSachTimKiem.IdSach,
-                TenSach = _tempSachTimKiem.TenSach,
-                GiaBia = _tempSachTimKiem.GiaBia,
-                DoMoiKhiThue = domoi,
-                GhiChuKhiThue = txtGhiChuThuePopup.Text.Trim()
-            });
-
-            dgSachChon.ItemsSource = null;
-            dgSachChon.ItemsSource = currentList;
-            UpdateTongCoc();
-
-            PopupNhapSachThue.Visibility = Visibility.Collapsed;
-            _tempSachTimKiem = null;
-        }
-
-        private void BtnHuyNhapSachThue_Click(object sender, RoutedEventArgs e)
-        {
-            PopupNhapSachThue.Visibility = Visibility.Collapsed;
-            _tempSachTimKiem = null;
+                MessageBox.Show("Vui lòng click chọn một quyển sách ở bảng trên để sửa.", "Chú ý", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
         private void BtnXoaSachChon_Click(object sender, RoutedEventArgs e)
@@ -351,6 +341,50 @@ namespace AppCafebookApi.View.nhanvien.pages
                 dgSachChon.ItemsSource = null; dgSachChon.ItemsSource = currentList;
                 UpdateTongCoc();
             }
+        }
+
+        private void BtnXacNhanNhapSachThue_Click(object sender, RoutedEventArgs e)
+        {
+            if (!int.TryParse(txtDoMoiThuePopup.Text, out int domoi) || domoi <= 0 || domoi > 100)
+            {
+                MessageBox.Show("Vui lòng nhập độ mới hợp lệ (1 - 100).", "Lỗi nhập liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (_sachChonDangSua != null)
+            {
+                // Cập nhật Sách
+                _sachChonDangSua.DoMoiKhiThue = domoi;
+                _sachChonDangSua.GhiChuKhiThue = txtGhiChuThuePopup.Text.Trim();
+            }
+            else if (_tempSachTimKiem != null)
+            {
+                // Thêm Sách mới
+                var currentList = (dgSachChon.ItemsSource as List<SachChonUI_Dto>) ?? new List<SachChonUI_Dto>();
+                currentList.Add(new SachChonUI_Dto
+                {
+                    IdSach = _tempSachTimKiem.IdSach,
+                    TenSach = _tempSachTimKiem.TenSach,
+                    GiaBia = _tempSachTimKiem.GiaBia,
+                    DoMoiKhiThue = domoi,
+                    GhiChuKhiThue = txtGhiChuThuePopup.Text.Trim()
+                });
+
+                dgSachChon.ItemsSource = null;
+                dgSachChon.ItemsSource = currentList;
+            }
+
+            UpdateTongCoc();
+            PopupNhapSachThue.Visibility = Visibility.Collapsed;
+            _tempSachTimKiem = null;
+            _sachChonDangSua = null; // Trả về trạng thái trống
+        }
+
+        private void BtnHuyNhapSachThue_Click(object sender, RoutedEventArgs e)
+        {
+            PopupNhapSachThue.Visibility = Visibility.Collapsed;
+            _tempSachTimKiem = null;
+            _sachChonDangSua = null;
         }
 
         private void UpdateTongCoc()
@@ -422,7 +456,6 @@ namespace AppCafebookApi.View.nhanvien.pages
                 _idPhieuTraCanIn = null;
                 await LoadChiTietPhieuCommon(selected.IdPhieuThueSach, false);
             }
-            else { ClearRightPanel(); }
         }
 
         private async void DgPhieuTra_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -432,7 +465,6 @@ namespace AppCafebookApi.View.nhanvien.pages
                 _idPhieuTraCanIn = selected.IdPhieuTra;
                 await LoadChiTietPhieuCommon(selected.IdPhieuThueSach, true);
             }
-            else { ClearRightPanel(); }
         }
 
         private async Task LoadChiTietPhieuCommon(int idPhieuThue, bool isHistoryTab)
@@ -443,11 +475,11 @@ namespace AppCafebookApi.View.nhanvien.pages
                 _selectedPhieuChiTiet = await ApiClient.Instance.GetFromJsonAsync<PhieuThueChiTietDto>($"api/app/nhanvien/thuesach/chitiet/{idPhieuThue}");
                 if (_selectedPhieuChiTiet != null)
                 {
-                    ExpandRightPanel();
+                    ShowChiTietPanel(); // Thay vì ExpandRightPanel() như cũ
+
                     lblTenKH_ChiTiet.Text = _selectedPhieuChiTiet.HoTenKH;
                     lblSdtKH_ChiTiet.Text = _selectedPhieuChiTiet.SoDienThoaiKH;
 
-                    // KIỂM TRA TRẠNG THÁI: KHÓA FORM NẾU ĐÃ TRẢ HOÀN TOÀN HOẶC Ở TAB LỊCH SỬ
                     if (isHistoryTab || _selectedPhieuChiTiet.TrangThaiPhieu == "Đã Trả")
                     {
                         panelTraSachInput.IsEnabled = false;
@@ -468,6 +500,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                             IdPhieuThueSach = s.IdPhieuThueSach,
                             IdSach = s.IdSach,
                             TenSach = s.TenSach,
+                            GiaBia = s.GiaBia,
                             TienCoc = s.TienCoc,
                             TienPhat = s.TienPhat,
                             DoMoiKhiThue = s.DoMoiKhiThue,
@@ -494,7 +527,6 @@ namespace AppCafebookApi.View.nhanvien.pages
             finally { LoadingOverlay.Visibility = Visibility.Collapsed; }
         }
 
-        // --- Logic cho Popup Đánh giá Trả sách ---
         private void BtnMoPopupDanhGiaTra_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.DataContext is ChiTietSachTraUI_Dto item)
@@ -519,7 +551,6 @@ namespace AppCafebookApi.View.nhanvien.pages
                 return;
             }
 
-            // Cập nhật Dto (Sự kiện PropertyChanged sẽ tự chạy để update UI bảng và tổng tiền)
             _tempSachTraPopup.DoMoiKhiTra = domoi;
             _tempSachTraPopup.GhiChuKhiTra = txtGhiChuTraPopup.Text.Trim();
 
@@ -541,8 +572,9 @@ namespace AppCafebookApi.View.nhanvien.pages
                 {
                     if (item.DoMoiKhiTra > item.DoMoiKhiThue) item.DoMoiKhiTra = item.DoMoiKhiThue;
                     if (item.DoMoiKhiTra < 0) item.DoMoiKhiTra = 0;
+
                     int diff = item.DoMoiKhiThue - item.DoMoiKhiTra;
-                    item.TienPhatHuHong = diff > 0 ? diff * _settings.PhatGiamDoMoi1Percent : 0;
+                    item.TienPhatHuHong = diff > 0 ? diff * (item.GiaBia / 100m) : 0;
                 }
                 UpdateTraSachSummary();
             }
@@ -581,7 +613,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 {
                     var result = await response.Content.ReadFromJsonAsync<TraSachResponseDto>();
                     await LoadPhieuThueAsync(false); await LoadPhieuTraAsync(false);
-                    ClearRightPanel();
+                    ShowTaoPhieuPanel(); // Trả xong thì reset về trang Tạo Phiếu
                     if (result != null) new PhieuTraPreviewWindow(result.IdPhieuTra).ShowDialog();
                 }
                 else MessageBox.Show($"Lỗi: {await response.Content.ReadAsStringAsync()}");
@@ -602,7 +634,11 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private void BtnLienHe_Click(object sender, RoutedEventArgs e)
         {
-            if ((sender as Button)?.DataContext is PhieuThueGridDto p) MessageBox.Show($"Khách: {p.HoTenKH}\nSĐT: {p.SoDienThoaiKH}", "Liên Hệ", MessageBoxButton.OK, MessageBoxImage.Information);
+            // 🔥 Đã fix: Hiện thêm Email của khách hàng
+            if ((sender as Button)?.DataContext is PhieuThueGridDto p)
+            {
+                MessageBox.Show($"Khách: {p.HoTenKH}\nSĐT: {p.SoDienThoaiKH}\nEmail: {p.EmailKH ?? "Chưa cung cấp"}", "Thông tin liên hệ", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
         private void BtnGiaHan_Click(object sender, RoutedEventArgs e)
@@ -653,7 +689,7 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             string status = value as string ?? "";
             if (status == "Đúng Hạn") return Brushes.Green;
-            if (status == "Trễ Hạn") return Brushes.Red;
+            if (status == "Trễ Hạn") return Brushes.White; // Row màu đỏ nhạt, text màu trắng cho nổi bật
             if (status == "Hoàn tất") return Brushes.Gray;
             return Brushes.Black;
         }

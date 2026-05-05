@@ -5,6 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:AppCafebookApi.View.nhanvien.pages"
       xmlns:sys="clr-namespace:System;assembly=mscorlib"
+      IsVisibleChanged="Page_IsVisibleChanged"
       mc:Ignorable="d" 
       d:DesignHeight="700" d:DesignWidth="1100"
       Title="SoDoBanView" FontFamily="Segoe UI" Loaded="Page_Loaded">
@@ -78,7 +79,7 @@
             </Setter>
         </Style>
 
-        <Style x:Key="TableCardStyle" TargetType="Button">
+        <Style x:Key="BaseTableCardStyle" TargetType="Button">
             <Setter Property="Width" Value="150"/>
             <Setter Property="Height" Value="130"/>
             <Setter Property="Margin" Value="15"/>
@@ -106,6 +107,9 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <Style x:Key="TableCardStyle" TargetType="Button" BasedOn="{StaticResource BaseTableCardStyle}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding TrangThai}" Value="Có khách">
                     <Setter Property="BorderBrush" Value="{StaticResource StatusRedBrush}"/>
@@ -176,7 +180,7 @@
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
                 <WrapPanel Margin="15,15,15,0">
-                    <Button Style="{StaticResource TableCardStyle}" 
+                    <Button Style="{StaticResource BaseTableCardStyle}" 
                             BorderBrush="{StaticResource AccentOrangeBrush}"
                             ToolTip="Tạo hóa đơn Tại Quầy / Mang Về"
                             Click="BtnDonMoi_Click">

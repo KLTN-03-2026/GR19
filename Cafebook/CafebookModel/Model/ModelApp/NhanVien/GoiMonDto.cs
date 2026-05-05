@@ -41,7 +41,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public int IdSanPham { get; set; }
         public string TenSanPham { get; set; } = default!;
         public decimal DonGia { get; set; }
-        public string HinhAnh { get; set; } = default!;
+        public object HinhAnh { get; set; } = default!; 
         public int IdDanhMuc { get; set; }
     }
 

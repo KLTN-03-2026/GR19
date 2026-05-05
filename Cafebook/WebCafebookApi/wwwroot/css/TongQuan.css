@@ -55,7 +55,7 @@
     }
 
 /* ==========================================================
-   1. PROFILE CARD
+   1. PROFILE CARD & TÍNH NĂNG MỚI
 ========================================================== */
 .tqnv-profile-header {
     text-align: center;
@@ -64,6 +64,7 @@
     margin-bottom: 24px;
 }
 
+/* Bọc Avatar & Nút Camera */
 .tqnv-avatar-wrapper {
     display: inline-block;
     position: relative;
@@ -81,7 +82,31 @@
 }
 
 .tqnv-avatar-wrapper:hover .tqnv-avatar-large {
-    transform: scale(1.05) rotate(2deg);
+    transform: scale(1.02);
+}
+
+/* Nút Camera overlay mới */
+.tqnv-avatar-upload-overlay {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: var(--tq-primary);
+    color: #fff;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    border: 2px solid var(--tq-surface);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.tqnv-avatar-wrapper:hover .tqnv-avatar-upload-overlay {
+    background-color: var(--tq-accent);
+    transform: scale(1.1) rotate(5deg);
 }
 
 .tqnv-profile-name {
@@ -177,7 +202,7 @@
     color: var(--tq-text-main);
 }
 
-/* Nút bấm viền Material */
+/* Nút bấm viền Primary */
 .tqnv-btn-outline {
     display: inline-flex;
     justify-content: center;
@@ -197,8 +222,88 @@
         box-shadow: var(--tq-shadow-md);
     }
 
+/* Nút bấm viền Danger (Đổi mật khẩu) */
+.tqnv-btn-outline-danger {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #E53935;
+    color: #E53935;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 10px 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+}
+
+    .tqnv-btn-outline-danger:hover {
+        background-color: #E53935;
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
+    }
+
 /* ==========================================================
-   2. NOTIFICATION CARD
+   2. CUSTOM MODAL & FORM 
+========================================================== */
+.modal-content {
+    border: none;
+    border-radius: var(--tq-radius-lg);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--tq-border);
+    background-color: #FAFAFA;
+    border-radius: var(--tq-radius-lg) var(--tq-radius-lg) 0 0;
+    padding: 16px 24px;
+}
+
+.modal-title {
+    color: var(--tq-primary);
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--tq-border);
+    padding: 16px 24px;
+    border-radius: 0 0 var(--tq-radius-lg) var(--tq-radius-lg);
+}
+
+/* Ghi đè Form Input Bootstrap */
+.modal-body label {
+    font-weight: 600;
+    color: var(--tq-text-main);
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.modal-body .form-control {
+    border-radius: 8px;
+    border: 1px solid #E0E0E0;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    color: var(--tq-text-main);
+}
+
+    .modal-body .form-control:focus {
+        border-color: var(--tq-primary);
+        box-shadow: 0 0 0 0.2rem rgba(93, 64, 55, 0.15);
+    }
+
+.modal-body .text-muted {
+    font-size: 0.8rem;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+/* ==========================================================
+   3. NOTIFICATION CARD
 ========================================================== */
 .tqnv-card-header {
     display: flex;
@@ -268,7 +373,6 @@
     transition: all 0.3s ease;
 }
 
-    /* Hiệu ứng nổi lên khi hover */
     .tqnv-noti-item:hover {
         background-color: #fff;
         transform: translateY(-2px);
@@ -322,7 +426,7 @@
     font-size: 1.05rem;
     color: var(--tq-text-main);
     margin-bottom: 6px;
-    padding-right: 20px; /* Nhường chỗ cho dấu chấm đỏ */
+    padding-right: 20px;
 }
 
 .tqnv-noti-time {

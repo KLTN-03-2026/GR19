@@ -35,7 +35,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
-            if (!AuthService.CoQuyen("FULL_NV", "FULL_QL", "NV_THONG_TIN"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "FULL_QL", "NV_THONG_TIN"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập Thông Tin Cá Nhân.", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService != null && this.NavigationService.CanGoBack) this.NavigationService.GoBack();

@@ -32,7 +32,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_THONG_BAO");
+            bool hasQuyen = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_THONG_BAO");
             if (!hasQuyen)
             {
                 if (FindName("GridDuLieu") is Grid g) g.Visibility = Visibility.Collapsed;

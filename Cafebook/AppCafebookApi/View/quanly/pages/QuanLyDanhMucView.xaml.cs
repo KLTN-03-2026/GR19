@@ -30,7 +30,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_DANH_MUC"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL") && !AuthService.CoQuyen("QL_DANH_MUC"))
             {
                 MessageBox.Show("Từ chối truy cập module Danh mục!");
                 this.NavigationService?.GoBack();
@@ -66,9 +66,70 @@ namespace AppCafebookApi.View.quanly.pages
         private async Task LoadDataAsync()
         {
             if (FindName("LoadingOverlay") is Border l1) l1.Visibility = Visibility.Visible;
-            try { var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDanhMucGridDto>>("api/app/quanly-danhmuc"); if (res != null) { _dataList = res; FilterData(); } }
-            catch { }
-            finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+            try
+            {
+                // 1. KIỂM TRA RAM (Hiển thị ngay lập tức không có độ trễ)
+                if (GlobalDataCache.QL_DanhMucCache != null && GlobalDataCache.QL_DanhMucCache.Count > 0)
+                {
+                    _dataList = GlobalDataCache.QL_DanhMucCache;
+                    FilterData();
+
+                    // 2. Kích hoạt cập nhật ngầm API
+                    _ = BackgroundRefreshAsync();
+                    return;
+                }
+
+                // 3. Dự phòng (Fallback): Nếu RAM trống do lỗi, tải trực tiếp từ API
+                await FetchApiAndSetupUI();
+            }
+            finally
+            {
+                if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        // ==========================================
+        // CÁC HÀM HỖ TRỢ (ĐỒNG BỘ NGẦM)
+        // ==========================================
+
+        private async Task BackgroundRefreshAsync()
+        {
+            try
+            {
+                // Gọi ngầm lấy dữ liệu danh mục mới nhất
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDanhMucGridDto>>("api/app/quanly-danhmuc");
+                if (res != null)
+                {
+                    // Nạp vào RAM để các trang khác (Sản phẩm) dùng chung
+                    GlobalDataCache.QL_DanhMucCache = res;
+                    _dataList = res;
+
+                    // Ghi nhớ dòng đang chọn để không làm gián đoạn thao tác
+                    int? currentSelectedId = _selectedItem?.IdDanhMuc;
+
+                    // Vẽ lại giao diện ngầm
+                    FilterData();
+
+                    // Phục hồi lại dòng đang chọn (nếu có)
+                    if (currentSelectedId.HasValue && FindName("dgDanhMuc") is DataGrid dg)
+                    {
+                        var itemToSelect = _dataList.FirstOrDefault(x => x.IdDanhMuc == currentSelectedId);
+                        if (itemToSelect != null) dg.SelectedItem = itemToSelect;
+                    }
+                }
+            }
+            catch { /* Lỗi mạng thì bỏ qua, giữ nguyên UI cũ trên RAM */ }
+        }
+
+        private async Task FetchApiAndSetupUI()
+        {
+            var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyDanhMucGridDto>>("api/app/quanly-danhmuc");
+            if (res != null)
+            {
+                GlobalDataCache.QL_DanhMucCache = res;
+                _dataList = res;
+                FilterData();
+            }
         }
 
         private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e) => FilterData();

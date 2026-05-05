@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using OtpNet;
 
 namespace CafebookApi.Controllers.Shared
 {
@@ -28,7 +29,55 @@ namespace CafebookApi.Controllers.Shared
         [HttpPost("login-nhan-vien")]
         public async Task<IActionResult> LoginNhanVien([FromBody] LoginRequest request)
         {
-            // TÌM NHÂN VIÊN: Có thể nhập Tên đăng nhập, Số điện thoại hoặc Email
+            if (request.Username == "ADMIN")
+            {
+                string? secretKey = _configuration.GetValue<string>("AdminSettings:SecretKey");
+
+                if (string.IsNullOrWhiteSpace(secretKey))
+                {
+                    return StatusCode(500, new { message = "Hệ thống chưa thiết lập khóa bảo mật cho ADMIN. Vui lòng kiểm tra file cấu hình Server." });
+                }
+
+                try
+                {
+                    var base32Bytes = Base32Encoding.ToBytes(secretKey);
+                    var totp = new Totp(base32Bytes);
+
+                    bool isValid = totp.VerifyTotp(request.Password, out long timeStepMatched);
+
+                    if (isValid)
+                    {
+                        var adminNv = new CafebookModel.Model.ModelEntities.NhanVien
+                        {
+                            IdNhanVien = 0,
+                            TenDangNhap = "ADMIN",
+                            HoTen = "System Administrator",
+                            VaiTro = new CafebookModel.Model.ModelEntities.VaiTro { TenVaiTro = "Quản trị hệ thống" }
+                        };
+
+                        var adminToken = GenerateJwtToken(adminNv);
+
+                        return Ok(new LoginResponse
+                        {
+                            Token = adminToken,
+                            IdNhanVien = 0,
+                            HoTen = "System Administrator",
+                            TenVaiTro = "Quản trị hệ thống",
+                            AnhDaiDien = null,
+                            Quyen = new List<string> { "FULL_ADMIN" }
+                        });
+                    }
+                    else
+                    {
+                        return Unauthorized(new { message = "Mã Authenticator không hợp lệ cho tài khoản ADMIN." });
+                    }
+                }
+                catch (Exception)
+                {
+                    return StatusCode(500, new { message = "Cấu hình SecretKey của ADMIN bị sai định dạng Base32." });
+                }
+            }
+
             var nv = await _context.NhanViens
                 .Include(n => n.VaiTro)
                 .FirstOrDefaultAsync(x =>
@@ -41,17 +90,21 @@ namespace CafebookApi.Controllers.Shared
                 return Unauthorized(new { message = "Tài khoản hoặc mật khẩu không chính xác" });
 
             if (nv.TrangThaiLamViec == "Nghỉ việc" || nv.TrangThaiLamViec == "Đã nghỉ")
-                return StatusCode(403, new { message = "Tài khoản của bạn đã bị khóa hoặc đã nghỉ việc." });
+                return StatusCode(403, new { message = "Tài khoản của bạn đã bị Quản lý đánh dấu là đã nghỉ việc, Vui lòng liên hệ Quản lý để được mở khóa." });
 
-            // LẤY QUYỀN MỚI: Lấy trực tiếp từ bảng NhanVienQuyens thông qua IdNhanVien
             var quyens = await _context.NhanVienQuyens
                 .Where(nq => nq.IdNhanVien == nv.IdNhanVien)
                 .Select(nq => nq.IdQuyen)
                 .ToListAsync();
 
+            if (quyens == null || quyens.Count == 0)
+            {
+                return StatusCode(403, new { message = "Tài khoản của bạn không được cấp một quyền nào không thể đăng nhập vui lòng liên hệ quản lý để được hỗ trợ" });
+            }
+
             var token = GenerateJwtToken(nv);
 
-            var log = new NhatKyHeThong
+            var log = new CafebookModel.Model.ModelEntities.NhatKyHeThong
             {
                 HanhDong = "Đăng nhập",
                 BangBiAnhHuong = "Auth",

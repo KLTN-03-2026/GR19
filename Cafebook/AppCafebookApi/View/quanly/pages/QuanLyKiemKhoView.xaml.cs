@@ -32,7 +32,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL") && !AuthService.CoQuyen("QL_KIEM_KHO")) 
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL") && !AuthService.CoQuyen("QL_KIEM_KHO")) 
             { 
                 MessageBox.Show("Từ chối truy cập module Kiểm kho!", "Bảo mật", MessageBoxButton.OK, MessageBoxImage.Warning); 
                 this.NavigationService?.GoBack(); 

@@ -20,24 +20,20 @@ namespace CafebookApi.Controllers.App.QuanLy
         public QuanLyThuongPhatController(CafebookDbContext context) { _context = context; }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] int idNhanVien, [FromQuery] DateTime? tuNgay, [FromQuery] DateTime? denNgay)
+        public async Task<IActionResult> Search([FromQuery] string? keyword)
         {
-            var query = _context.Set<PhieuThuongPhat>().Include(p => p.NguoiTao).AsNoTracking().AsQueryable();
+            var query = _context.Set<ThuongPhatMau>().AsNoTracking().AsQueryable();
 
-            if (idNhanVien > 0) query = query.Where(p => p.IdNhanVien == idNhanVien);
-            if (tuNgay.HasValue) query = query.Where(p => p.NgayTao.Date >= tuNgay.Value.Date);
-            if (denNgay.HasValue) query = query.Where(p => p.NgayTao.Date <= denNgay.Value.Date);
+            if (!string.IsNullOrEmpty(keyword))
+                query = query.Where(p => p.TenMau.Contains(keyword));
 
-            var data = await query.OrderByDescending(p => p.NgayTao)
+            var data = await query.OrderBy(p => p.Loai).ThenBy(p => p.TenMau)
                 .Select(p => new QuanLyThuongPhatGridDto
                 {
-                    IdPhieuThuongPhat = p.IdPhieuThuongPhat,
-                    NgayTao = p.NgayTao,
-                    SoTien = Math.Abs(p.SoTien), // Lấy giá trị tuyệt đối để hiển thị UI
-                    Loai = p.SoTien >= 0 ? "Thưởng" : "Phạt",
-                    LyDo = p.LyDo,
-                    TenNguoiTao = p.NguoiTao != null ? p.NguoiTao.HoTen : "Hệ thống",
-                    DaChot = p.IdPhieuLuong != null
+                    IdMau = p.IdMau,
+                    Loai = p.Loai,
+                    TenMau = p.TenMau,
+                    SoTien = p.SoTien
                 }).ToListAsync();
 
             return Ok(data);
@@ -46,18 +42,17 @@ namespace CafebookApi.Controllers.App.QuanLy
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] QuanLyThuongPhatSaveDto dto)
         {
-            decimal tienThucTe = dto.Loai == "Phạt" ? -Math.Abs(dto.SoTien) : Math.Abs(dto.SoTien);
+            if (await _context.Set<ThuongPhatMau>().AnyAsync(x => x.TenMau == dto.TenMau && x.Loai == dto.Loai))
+                return BadRequest("Mẫu này đã tồn tại trong hệ thống!");
 
-            var phieu = new PhieuThuongPhat
+            var mau = new ThuongPhatMau
             {
-                IdNhanVien = dto.IdNhanVien,
-                IdNguoiTao = dto.IdNguoiTao,
-                NgayTao = dto.NgayTao,
-                SoTien = tienThucTe,
-                LyDo = dto.LyDo
+                Loai = dto.Loai,
+                TenMau = dto.TenMau,
+                SoTien = Math.Abs(dto.SoTien)
             };
 
-            _context.Set<PhieuThuongPhat>().Add(phieu);
+            _context.Set<ThuongPhatMau>().Add(mau);
             await _context.SaveChangesAsync();
             return Ok();
         }
@@ -65,17 +60,12 @@ namespace CafebookApi.Controllers.App.QuanLy
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] QuanLyThuongPhatSaveDto dto)
         {
-            var phieu = await _context.Set<PhieuThuongPhat>().FindAsync(id);
-            if (phieu == null) return NotFound();
-            if (phieu.IdPhieuLuong != null) return BadRequest("Không thể sửa khoản Thưởng/Phạt đã được chốt vào Phiếu Lương.");
+            var mau = await _context.Set<ThuongPhatMau>().FindAsync(id);
+            if (mau == null) return NotFound("Không tìm thấy mẫu.");
 
-            decimal tienThucTe = dto.Loai == "Phạt" ? -Math.Abs(dto.SoTien) : Math.Abs(dto.SoTien);
-
-            phieu.IdNhanVien = dto.IdNhanVien;
-            // Không đổi người tạo ban đầu
-            phieu.NgayTao = dto.NgayTao;
-            phieu.SoTien = tienThucTe;
-            phieu.LyDo = dto.LyDo;
+            mau.Loai = dto.Loai;
+            mau.TenMau = dto.TenMau;
+            mau.SoTien = Math.Abs(dto.SoTien);
 
             await _context.SaveChangesAsync();
             return Ok();
@@ -84,11 +74,10 @@ namespace CafebookApi.Controllers.App.QuanLy
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var phieu = await _context.Set<PhieuThuongPhat>().FindAsync(id);
-            if (phieu == null) return NotFound();
-            if (phieu.IdPhieuLuong != null) return BadRequest("Không thể xóa khoản Thưởng/Phạt đã được chốt vào Phiếu Lương.");
+            var mau = await _context.Set<ThuongPhatMau>().FindAsync(id);
+            if (mau == null) return NotFound();
 
-            _context.Set<PhieuThuongPhat>().Remove(phieu);
+            _context.Set<ThuongPhatMau>().Remove(mau);
             await _context.SaveChangesAsync();
             return Ok();
         }

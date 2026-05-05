@@ -29,7 +29,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "CM_NHAT_KY_HE_THONG"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "CM_NHAT_KY_HE_THONG"))
             {
                 if (FindName("GridDuLieu") is Grid g) g.Visibility = Visibility.Collapsed;
                 if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = Visibility.Visible;

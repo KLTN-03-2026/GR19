@@ -29,7 +29,6 @@ namespace AppCafebookApi.View.quanly.pages
         private QuanLyKhachHangDetailDto? _selectedKhachHang = null;
         private DispatcherTimer _searchTimer;
 
-        private ICollectionView? _khachHangView;
         private string _currentSearchKey = "";
         private int _currentCmbIndex = 0;
         private bool _currentHideLocked = false;
@@ -50,7 +49,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken)) 
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập module Khách hàng!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack();
@@ -78,7 +77,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void ApplyPermissions()
         {
-            bool hasQuyenKH = AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI", "QL_DE_XUAT");
+            bool hasQuyenKH = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHACH_HANG", "QL_KHUYEN_MAI", "QL_DE_XUAT");
 
             if (FindName("GridDuLieu") is Grid g) g.Visibility = hasQuyenKH ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("txtThongBaoKhongCoQuyen") is Border b) b.Visibility = hasQuyenKH ? Visibility.Collapsed : Visibility.Visible;
@@ -87,45 +86,79 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("btnKhoa") is Button bk) bk.Visibility = hasQuyenKH ? Visibility.Visible : Visibility.Collapsed;
             if (FindName("btnXoa") is Button bx) bx.Visibility = hasQuyenKH ? Visibility.Visible : Visibility.Collapsed;
 
-            bool hasQuyenKM = AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI");
+            bool hasQuyenKM = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHUYEN_MAI");
             if (FindName("btnNavKhuyenMai") is Button btnKM) btnKM.Visibility = hasQuyenKM ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async Task LoadKhachHangAsync()
         {
-            if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible; //[cite: 1]
+            var loading = FindName("LoadingOverlay") as Border;
+            if (loading != null) loading.Visibility = Visibility.Visible;
             try
             {
-                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhachHangGridDto>>("api/app/quanly-khachhang"); //[cite: 1]
+                if (GlobalDataCache.QL_KhachHangCache != null && GlobalDataCache.QL_KhachHangCache.Count > 0)
+                {
+                    _allKhachHangList = GlobalDataCache.QL_KhachHangCache;
+                    SetupKhachHangUI();
+
+                    if (loading != null) loading.Visibility = Visibility.Collapsed;
+
+                    _ = BackgroundRefreshAsync();
+                    return;
+                }
+                await FetchApiAndSetupUI();
+            }
+            finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
+        }
+
+        // ==========================================
+        // CÁC HÀM HỖ TRỢ (TÁCH LOGIC ĐỂ DÙNG CHUNG)
+        // ==========================================
+
+        private void SetupKhachHangUI()
+        {
+            foreach (var kh in _allKhachHangList)
+            {
+                kh.SearchKeyword = $"{RemoveVietnameseSigns(kh.HoTen)} {RemoveVietnameseSigns(kh.Email)} {(kh.SoDienThoai ?? "")}".ToLower();
+            }
+
+            FilterData();
+        }
+
+        private async Task BackgroundRefreshAsync()
+        {
+            try
+            {
+                var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhachHangGridDto>>("api/app/quanly-khachhang");
                 if (res != null)
                 {
+                    GlobalDataCache.QL_KhachHangCache = res;
                     _allKhachHangList = res;
 
-                    // 1. Khởi tạo chuỗi tìm kiếm 1 lần duy nhất cho tốc độ cực nhanh
-                    foreach (var kh in _allKhachHangList)
+                    // Ghi nhớ ID đang chọn để giữ nguyên form chi tiết bên phải
+                    int? currentSelectedId = _selectedKhachHang?.IdKhachHang;
+
+                    SetupKhachHangUI();
+
+                    if (currentSelectedId.HasValue && FindName("dgKhachHang") is DataGrid dg)
                     {
-                        kh.SearchKeyword = $"{RemoveVietnameseSigns(kh.HoTen)} {RemoveVietnameseSigns(kh.Email)} {(kh.SoDienThoai ?? "")}".ToLower();
+                        var itemToSelect = _allKhachHangList.FirstOrDefault(x => x.IdKhachHang == currentSelectedId);
+                        if (itemToSelect != null) dg.SelectedItem = itemToSelect;
                     }
-
-                    // 2. Khởi tạo CollectionView
-                    _khachHangView = CollectionViewSource.GetDefaultView(_allKhachHangList);
-                    _khachHangView.Filter = KhachHangFilter;
-
-                    // 3. Sắp xếp trực tiếp trên View (giống hệt OrderBy cũ)
-                    _khachHangView.SortDescriptions.Clear();
-                    _khachHangView.SortDescriptions.Add(new SortDescription("DaXoa", ListSortDirection.Ascending));
-                    _khachHangView.SortDescriptions.Add(new SortDescription("BiKhoa", ListSortDirection.Ascending));
-                    _khachHangView.SortDescriptions.Add(new SortDescription("IdKhachHang", ListSortDirection.Descending));
-
-                    if (FindName("dgKhachHang") is DataGrid dg)
-                    {
-                        dg.ItemsSource = _khachHangView; // Gán 1 lần duy nhất
-                    }
-
-                    FilterData(); // Cập nhật lại UI dựa trên các ô input hiện tại
                 }
             }
-            finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; } //[cite: 1]
+            catch { /* Lỗi mạng thì bỏ qua, giữ nguyên UI cũ trên RAM */ }
+        }
+
+        private async Task FetchApiAndSetupUI()
+        {
+            var res = await ApiClient.Instance.GetFromJsonAsync<List<QuanLyKhachHangGridDto>>("api/app/quanly-khachhang");
+            if (res != null)
+            {
+                GlobalDataCache.QL_KhachHangCache = res;
+                _allKhachHangList = res;
+                SetupKhachHangUI();
+            }
         }
 
         private bool KhachHangFilter(object obj)
@@ -189,17 +222,49 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void FilterData()
         {
-            if (_khachHangView == null) return;
+            if (_allKhachHangList == null || !_allKhachHangList.Any()) return;
 
-            // Lấy trước các giá trị vào biến toàn cục để hàm Filter chạy nhanh nhất có thể (tránh cross-thread UI check)
+            // 1. Lấy thông tin từ giao diện
             if (FindName("txtSearch") is TextBox txt)
                 _currentSearchKey = string.IsNullOrWhiteSpace(txt.Text) ? "" : RemoveVietnameseSigns(txt.Text);
 
-            _currentCmbIndex = (FindName("cmbLoaiTK") as ComboBox)?.SelectedIndex ?? 0; //[cite: 1]
-            _currentHideLocked = (FindName("chkHideLocked") as CheckBox)?.IsChecked == true; //[cite: 1]
+            _currentCmbIndex = (FindName("cmbLoaiTK") as ComboBox)?.SelectedIndex ?? 0;
+            _currentHideLocked = (FindName("chkHideLocked") as CheckBox)?.IsChecked == true;
 
-            // Gọi Refresh -> Sẽ kích hoạt hàm KhachHangFilter cho từng item
-            _khachHangView.Refresh();
+            var filtered = _allKhachHangList.AsEnumerable();
+
+            // 2. Lọc theo từ khóa
+            if (!string.IsNullOrEmpty(_currentSearchKey))
+            {
+                filtered = filtered.Where(x => x.SearchKeyword.Contains(_currentSearchKey));
+            }
+
+            // 3. Lọc theo Loại TK (Combobox)
+            if (_currentCmbIndex == 1) filtered = filtered.Where(x => x.TaiKhoanTam && !x.DaXoa);
+            if (_currentCmbIndex == 2) filtered = filtered.Where(x => !x.TaiKhoanTam && !x.DaXoa);
+            if (_currentCmbIndex == 3) filtered = filtered.Where(x => x.BiKhoa && !x.DaXoa);
+            if (_currentCmbIndex == 4) filtered = filtered.Where(x => x.DaXoa);
+            if (_currentCmbIndex == 0) filtered = filtered.Where(x => !x.DaXoa);
+
+            // 4. Lọc ẩn tài khoản khóa
+            if (_currentHideLocked)
+            {
+                filtered = filtered.Where(x => !x.BiKhoa);
+            }
+
+            // ============================================================
+            // 5. PHỤC HỒI LOGIC SẮP XẾP CHUẨN (Bằng LINQ)
+            // Ưu tiên: Chưa xóa -> Chưa khóa -> Mới nhất (IdKhachHang giảm dần)
+            // ============================================================
+            filtered = filtered.OrderBy(x => x.DaXoa)
+                               .ThenBy(x => x.BiKhoa)
+                               .ThenByDescending(x => x.IdKhachHang);
+
+            // 6. Gán thẳng vào DataGrid
+            if (FindName("dgKhachHang") is DataGrid dg)
+            {
+                dg.ItemsSource = filtered.ToList();
+            }
         }
 
         private async void DgKhachHang_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -207,7 +272,9 @@ namespace AppCafebookApi.View.quanly.pages
             if (FindName("dgKhachHang") is DataGrid dg && dg.SelectedItem is QuanLyKhachHangGridDto item)
             {
                 if (FindName("formChiTiet") is StackPanel form) form.IsEnabled = true;
-                if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
+
+                var loading = FindName("LoadingOverlay") as Border;
+                if (loading != null) loading.Visibility = Visibility.Visible;
                 try
                 {
                     var detail = await ApiClient.Instance.GetFromJsonAsync<QuanLyKhachHangDetailDto>($"api/app/quanly-khachhang/{item.IdKhachHang}");
@@ -266,7 +333,7 @@ namespace AppCafebookApi.View.quanly.pages
                             panelLS.Visibility = Visibility.Visible;
                     }
                 }
-                finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+                finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
             }
         }
 
@@ -295,92 +362,71 @@ namespace AppCafebookApi.View.quanly.pages
 
         private async void BtnXacNhanKhoa_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedKhachHang == null || !AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG")) return;
+            if (_selectedKhachHang == null || !AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHACH_HANG")) return;
             string lyDo = (FindName("txtLyDoKhoa") as TextBox)?.Text.Trim() ?? "";
             int? soNgay = null;
             if (FindName("cmbThoiGianKhoa") is ComboBox cmb && cmb.SelectedItem is ComboBoxItem item && int.TryParse(item.Tag?.ToString(), out int ngay) && ngay > 0)
                 soNgay = ngay;
 
             if (FindName("PopupKhoa") is Border p) p.Visibility = Visibility.Collapsed;
-            if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
+
+            var loading = FindName("LoadingOverlay") as Border;
+            if (loading != null) loading.Visibility = Visibility.Visible;
             try
             {
                 var req = new KhoaKhachHangRequestDto { LyDoKhoa = lyDo, SoNgayKhoa = soNgay };
                 await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}/khoa", req);
                 MessageBox.Show("Khóa thành công. Hệ thống đang gửi Email.");
 
-                // GIỮ LẠI ID ĐỂ TỰ ĐỘNG CHỌN LẠI SAU KHI LOAD
-                int currentId = _selectedKhachHang.IdKhachHang;
-                await LoadKhachHangAsync();
-
-                if (FindName("dgKhachHang") is DataGrid dg)
-                {
-                    var itemToSelect = _allKhachHangList.FirstOrDefault(x => x.IdKhachHang == currentId);
-                    if (itemToSelect != null) dg.SelectedItem = itemToSelect;
-                }
+                _ = BackgroundRefreshAsync();
             }
-            finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+            finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
         }
 
         private async void BtnXacNhanDiem_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedKhachHang == null || !AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG")) return;
+            if (_selectedKhachHang == null || !AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHACH_HANG")) return;
             string diemStr = (FindName("txtDiemThayDoi") as TextBox)?.Text.Trim() ?? "0";
             if (!int.TryParse(diemStr, out int diemThayDoi)) { MessageBox.Show("Sai định dạng số!"); return; }
 
             if (FindName("PopupDiem") is Border p) p.Visibility = Visibility.Collapsed;
-            if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
+
+            var loading = FindName("LoadingOverlay") as Border;
+            if (loading != null) loading.Visibility = Visibility.Visible;
             try
             {
                 var req = new CapNhatDiemKhachHangDto { DiemThayDoi = diemThayDoi, LyDo = "Cập nhật thủ công" };
                 await ApiClient.Instance.PostAsJsonAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}/diem", req);
                 MessageBox.Show("Cập nhật điểm thành công!");
 
-                // GIỮ LẠI ID ĐỂ TỰ ĐỘNG CHỌN LẠI SAU KHI LOAD
-                int currentId = _selectedKhachHang.IdKhachHang;
-                await LoadKhachHangAsync();
-
-                if (FindName("dgKhachHang") is DataGrid dg)
-                {
-                    var itemToSelect = _allKhachHangList.FirstOrDefault(x => x.IdKhachHang == currentId);
-                    if (itemToSelect != null) dg.SelectedItem = itemToSelect;
-                }
+                _ = BackgroundRefreshAsync();
             }
-            finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+            finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
         }
 
         private async void BtnMoKhoa_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedKhachHang == null || !AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG")) return;
+            if (_selectedKhachHang == null || !AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHACH_HANG")) return;
 
-            // Thêm thông báo hỏi xác nhận cho an toàn
             if (MessageBox.Show($"Bạn có chắc chắn muốn mở khóa cho tài khoản '{_selectedKhachHang.HoTen}' không?", "Xác nhận mở khóa", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
                 return;
 
-            if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
+            var loading = FindName("LoadingOverlay") as Border;
+            if (loading != null) loading.Visibility = Visibility.Visible;
             try
             {
                 await ApiClient.Instance.PostAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}/mokhoa", null);
                 MessageBox.Show("Đã mở khóa tài khoản thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                // GIỮ LẠI ID ĐỂ TỰ ĐỘNG CHỌN LẠI SAU KHI LOAD
-                int currentId = _selectedKhachHang.IdKhachHang;
-                await LoadKhachHangAsync();
-
-                if (FindName("dgKhachHang") is DataGrid dg)
-                {
-                    var itemToSelect = _allKhachHangList.FirstOrDefault(x => x.IdKhachHang == currentId);
-                    if (itemToSelect != null) dg.SelectedItem = itemToSelect;
-                }
+                _ = BackgroundRefreshAsync();
             }
-            finally { if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed; }
+            finally { if (loading != null) loading.Visibility = Visibility.Collapsed; }
         }
 
         private async void BtnXoa_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedKhachHang == null || !AuthService.CoQuyen("FULL_QL", "QL_KHACH_HANG")) return;
+            if (_selectedKhachHang == null || !AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHACH_HANG")) return;
 
-            // XÂY DỰNG CÂU CẢNH BÁO CHI TIẾT
             string thongBao = $"Bạn có chắc chắn muốn xóa khách hàng '{_selectedKhachHang.HoTen}' không?\n\n" +
                               $"LƯU Ý (Hệ thống áp dụng Xóa Mềm):\n" +
                               $"❌ BỊ XÓA (Ẩn đi): Khách hàng này sẽ biến mất khỏi danh sách và không thể đăng nhập hay tạo giao dịch mới.\n" +
@@ -388,7 +434,8 @@ namespace AppCafebookApi.View.quanly.pages
 
             if (MessageBox.Show(thongBao, "Xác nhận Xóa Khách Hàng", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
-                if (FindName("LoadingOverlay") is Border l) l.Visibility = Visibility.Visible;
+                var loading = FindName("LoadingOverlay") as Border;
+                if (loading != null) loading.Visibility = Visibility.Visible;
                 try
                 {
                     var response = await ApiClient.Instance.DeleteAsync($"api/app/quanly-khachhang/{_selectedKhachHang.IdKhachHang}");
@@ -396,7 +443,8 @@ namespace AppCafebookApi.View.quanly.pages
                     {
                         MessageBox.Show("Đã xóa khách hàng thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                         if (FindName("formChiTiet") is StackPanel f) f.IsEnabled = false;
-                        await LoadKhachHangAsync();
+
+                        _ = BackgroundRefreshAsync();
                     }
                     else
                     {
@@ -409,7 +457,7 @@ namespace AppCafebookApi.View.quanly.pages
                 }
                 finally
                 {
-                    if (FindName("LoadingOverlay") is Border l2) l2.Visibility = Visibility.Collapsed;
+                    if (loading != null) loading.Visibility = Visibility.Collapsed;
                 }
             }
         }
@@ -535,7 +583,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void BtnNavKhuyenMai_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_KHUYEN_MAI"))
+            if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_KHUYEN_MAI"))
                 this.NavigationService?.Navigate(new QuanLyKhuyenMaiView());
             else
                 MessageBox.Show("Bạn không có quyền truy cập trang Khuyến mãi!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -543,7 +591,7 @@ namespace AppCafebookApi.View.quanly.pages
 
         private void BtnNavDeXuat_Click(object sender, RoutedEventArgs e)
         {
-            if (AuthService.CoQuyen("FULL_QL", "QL_DE_XUAT"))
+            if (AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DE_XUAT"))
                 this.NavigationService?.Navigate(new QuanLyDeXuatView());
             else
                 MessageBox.Show("Bạn không có quyền truy cập trang Đề xuất!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);

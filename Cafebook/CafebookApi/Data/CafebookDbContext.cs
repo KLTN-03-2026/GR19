@@ -54,6 +54,7 @@ namespace CafebookApi.Data
         public DbSet<PhieuDatBan> PhieuDatBans { get; set; }
         public DbSet<PhieuKiemKho> PhieuKiemKhos { get; set; }
         public DbSet<PhieuLuong> PhieuLuongs { get; set; }
+        public virtual DbSet<ThuongPhatMau> ThuongPhatMaus { get; set; }
         public DbSet<PhieuNhapKho> PhieuNhapKhos { get; set; }
         public DbSet<PhieuThueSach> PhieuThueSachs { get; set; }
         public DbSet<PhieuThuongPhat> PhieuThuongPhats { get; set; }
@@ -205,11 +206,20 @@ namespace CafebookApi.Data
                 if (userRole == "NhanVien" || userRole == "QuanLy")
                 {
                     string? idToParse = staffIdStr ?? genericIdStr;
-                    if (int.TryParse(idToParse, out int id) && id > 0)
+
+                    if (int.TryParse(idToParse, out int id) && id >= 0)
                     {
                         currentStaffId = id;
+
+                        if (id == 0)
+                        {
+                            currentRole = "System Admin (Setup)";
+                        }
+                        else
+                        {
+                            currentRole = userRole == "QuanLy" ? "Quản lý" : "Nhân viên";
+                        }
                     }
-                    currentRole = userRole == "QuanLy" ? "Quản lý" : "Nhân viên";
                 }
                 else if (userRole == "KhachHang")
                 {
@@ -243,7 +253,8 @@ namespace CafebookApi.Data
 
                 var audit = new CafebookModel.Model.ModelEntities.NhatKyHeThong
                 {
-                    IdNhanVien = currentStaffId,
+                    IdNhanVien = currentStaffId == 0 ? null : currentStaffId,
+
                     IdKhachHang = currentCustomerId,
                     VaiTro = currentRole,
                     BangBiAnhHuong = entry.Entity.GetType().Name,

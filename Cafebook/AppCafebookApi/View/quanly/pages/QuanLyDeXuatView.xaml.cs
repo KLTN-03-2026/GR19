@@ -33,7 +33,7 @@ namespace AppCafebookApi.View.quanly.pages
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
             }
 
-            bool hasQuyen = AuthService.CoQuyen("FULL_QL", "QL_DE_XUAT");
+            bool hasQuyen = AuthService.CoQuyen("FULL_ADMIN", "FULL_QL", "QL_DE_XUAT");
             if (!hasQuyen)
             {
                 MessageBox.Show("Bạn không có quyền truy cập module này!", "Từ chối");

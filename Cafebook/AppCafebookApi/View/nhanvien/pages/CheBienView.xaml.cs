@@ -38,7 +38,7 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (AuthService.CurrentUser != null && !string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_QL", "FULL_NV", "NV_CHE_BIEN"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "NV_CHE_BIEN"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập Màn hình chế biến!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (this.NavigationService != null && this.NavigationService.CanGoBack) this.NavigationService.GoBack();

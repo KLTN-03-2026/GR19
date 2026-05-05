@@ -13,14 +13,24 @@
 
 <div class="tqnv-container fade-in-up">
     <div class="row g-4">
+        <!-- Thông tin cá nhân -->
         <div class="col-lg-5 col-xl-4">
             <div class="tqnv-card tqnv-profile-card">
                 <div class="tqnv-profile-header">
-                    <div class="tqnv-avatar-wrapper">
+                    <!-- Khu vực thay đổi Avatar -->
+                    <div class="tqnv-avatar-wrapper position-relative" style="cursor: pointer;" onclick="document.getElementById('avatarInput').click();">
                         <img src="@(Model.DashboardData.ThongTin.AnhDaiDien ?? HinhAnhPaths.WebDefaultAvatar)"
                              alt="Avatar" class="tqnv-avatar-large"
                              onerror="this.onerror=null; this.src='@HinhAnhPaths.WebDefaultAvatar';">
+                        <div class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-1" style="transform: translate(20%, -20%);">
+                            <span class="material-symbols-outlined icon-small">photo_camera</span>
+                        </div>
                     </div>
+                    
+                    <form id="avatarForm" method="post" asp-page-handler="UploadAvatar" enctype="multipart/form-data" class="d-none">
+                        <input type="file" id="avatarInput" name="avatarFile" accept="image/jpeg, image/png" onchange="document.getElementById('avatarForm').submit();" />
+                    </form>
+
                     <h3 class="tqnv-profile-name">@(Model.DashboardData.ThongTin.HoTen ?? "Đang cập nhật")</h3>
                     
                     <div class="tqnv-badges-container">
@@ -70,14 +80,18 @@
                     </div>
                 </div>
                 
-                <div class="text-center mt-4">
-                    <a asp-page="/Employee/ThongTinCaNhanView" class="btn tqnv-btn-outline w-100 material-ripple">
-                        <span class="material-symbols-outlined me-2">edit_square</span> Cập nhật thông tin
-                    </a>
+                <div class="text-center mt-4 d-flex gap-2">
+                    <button class="btn tqnv-btn-outline w-100 material-ripple" data-bs-toggle="modal" data-bs-target="#editInfoModal">
+                        <span class="material-symbols-outlined me-2">edit_square</span> Cập nhật
+                    </button>
+                    <button class="btn btn-outline-danger w-100 material-ripple" data-bs-toggle="modal" data-bs-target="#changePassModal">
+                        <span class="material-symbols-outlined me-2">key</span> Đổi Pass
+                    </button>
                 </div>
             </div>
         </div>
 
+        <!-- Cột thông báo (giữ nguyên logic gốc) -->
         <div class="col-lg-7 col-xl-8">
             <div class="tqnv-card tqnv-notification-card">
                 <div class="tqnv-card-header">
@@ -130,16 +144,98 @@
     </div>
 </div>
 
+<!-- Modal Sửa thông tin -->
+<div class="modal fade" id="editInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="UpdateInfo">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cập nhật thông tin cá nhân</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Họ tên (*)</label>
+                        <input type="text" asp-for="UpdateModel.HoTen" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>Số điện thoại (*)</label>
+                        <input type="text" asp-for="UpdateModel.SoDienThoai" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" asp-for="UpdateModel.Email" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label>Địa chỉ</label>
+                        <input type="text" asp-for="UpdateModel.DiaChi" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Đổi mật khẩu -->
+<div class="modal fade" id="changePassModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="ChangePassword">
+                <div class="modal-header">
+                    <h5 class="modal-title">Đổi mật khẩu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Mật khẩu cũ (*)</label>
+                        <input type="password" asp-for="PasswordModel.MatKhauCu" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>Mật khẩu mới (*)</label>
+                        <input type="password" asp-for="PasswordModel.MatKhauMoi" class="form-control" minlength="6" required />
+                        <small class="text-muted">Ít nhất 6 ký tự</small>
+                    </div>
+                    <div class="mb-3">
+                        <label>Xác nhận mật khẩu mới (*)</label>
+                        <input type="password" asp-for="PasswordModel.XacNhanMatKhau" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger">Xác nhận đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var errorMsg = '@Html.Raw(Model.ErrorMessage?.Replace("'", "\\'"))';
+            $('.modal').appendTo('body');
+
+            var errorMsg = '@Html.Raw(TempData["ErrorMessage"]?.ToString()?.Replace("'", "\\'"))';
+            var successMsg = '@Html.Raw(TempData["SuccessMessage"]?.ToString()?.Replace("'", "\\'"))';
+            
             if (errorMsg && errorMsg.trim() !== '') {
                 Swal.fire({
                     icon: 'error',
                     title: 'Đã xảy ra lỗi',
                     text: errorMsg,
                     confirmButtonColor: '#D84315'
+                });
+            }
+
+            if (successMsg && successMsg.trim() !== '') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công',
+                    text: successMsg,
+                    confirmButtonColor: '#28a745'
                 });
             }
         });

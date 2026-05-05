@@ -30,7 +30,7 @@
         <SolidColorBrush x:Key="DangerRed" Color="#D32F2F"/>
         <SolidColorBrush x:Key="SuccessGreen" Color="#2E7D32"/>
         <SolidColorBrush x:Key="InfoBlue" Color="#1976D2"/>
-
+        <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
         <CollectionViewSource x:Key="ShippersSource" />
 
         <Style x:Key="MaterialTabStyle" TargetType="RadioButton">
@@ -96,7 +96,7 @@
         <Border Grid.Row="0" Background="White" Padding="25,15" BorderBrush="{StaticResource CoffeeLight}" BorderThickness="0,0,0,1">
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="ĐƠN GIAO HÀNG" FontSize="24" FontWeight="Black" Foreground="{StaticResource CoffeeDark}" VerticalAlignment="Center"/>
+                    <TextBlock Text="ĐƠN GIAO HÀNG" FontSize="24" FontWeight="Black" Foreground="{StaticResource PrimaryBrownBrush}" VerticalAlignment="Center"/>
                     <TextBlock Text=" | Giao hàng nội bộ" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" Margin="10,0,0,0"/>
                 </StackPanel>
 
@@ -273,7 +273,7 @@
             </DataGrid>
         </Border>
 
-        <Border x:Name="LoadingOverlay" Grid.RowSpan="4" Background="#AAFFFFFF" Visibility="Collapsed">
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="4" Background="#80FFFFFF" Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressBar IsIndeterminate="True" Width="150" Height="4" Foreground="{StaticResource AccentOrange}"/>
                 <TextBlock Text="Đang xử lý..." FontWeight="Bold" Foreground="{StaticResource CoffeeDark}" Margin="0,15,0,0" HorizontalAlignment="Center"/>
