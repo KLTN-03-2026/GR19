@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace WebCafebookApi.Pages.Account
 {
+    // Cấm trình duyệt lưu cache trang này
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public class DangNhapViewModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -50,17 +52,28 @@ namespace WebCafebookApi.Pages.Account
             ViewData["CaptchaCode"] = captcha;
         }
 
-        public async Task OnGetAsync(string? returnUrl = null)
+        public async Task<IActionResult> OnGetAsync(string? returnUrl = null)
         {
+            Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+            Response.Headers.Expires = "-1";
+            Response.Headers.Pragma = "no-cache";
+
             if (!string.IsNullOrEmpty(ErrorMessage))
             {
                 ModelState.AddModelError(string.Empty, ErrorMessage);
             }
             returnUrl ??= Url.Content("~/");
+
+            if (User.Identity != null && User.Identity.IsAuthenticated && User.IsInRole("KhachHang"))
+            {
+                return LocalRedirect(returnUrl);
+            }
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             ReturnUrl = returnUrl;
 
             GenerateCaptcha();
+
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
@@ -68,16 +81,15 @@ namespace WebCafebookApi.Pages.Account
             returnUrl ??= Url.Content("~/");
             if (!ModelState.IsValid)
             {
-                GenerateCaptcha(); 
-                return Page();
+                ErrorMessage = "Vui lòng nhập đầy đủ và hợp lệ các thông tin.";
+                return RedirectToPage(new { returnUrl }); 
             }
 
             var expectedCaptcha = HttpContext.Session.GetString("CaptchaCode");
             if (string.IsNullOrEmpty(expectedCaptcha) || !string.Equals(expectedCaptcha, Input.CaptchaResult, StringComparison.OrdinalIgnoreCase))
             {
-                ModelState.AddModelError("Input.CaptchaResult", "Mã xác thực không chính xác.");
-                GenerateCaptcha(); 
-                return Page();
+                ErrorMessage = "Mã xác thực không chính xác.";
+                return RedirectToPage(new { returnUrl });
             }
 
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
@@ -96,14 +108,14 @@ namespace WebCafebookApi.Pages.Account
                 {
                     var user = apiResponse.KhachHangData;
                     var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.NameIdentifier, user.IdKhachHang.ToString()),
-                        new Claim(ClaimTypes.Name, user.TenDangNhap ?? user.Email ?? ""),
-                        new Claim(ClaimTypes.GivenName, user.HoTen),
-                        new Claim(ClaimTypes.Email, user.Email ?? ""),
-                        new Claim(ClaimTypes.MobilePhone, user.SoDienThoai ?? ""),
-                        new Claim(ClaimTypes.Role, "KhachHang")
-                    };
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.IdKhachHang.ToString()),
+                new Claim(ClaimTypes.Name, user.TenDangNhap ?? user.Email ?? ""),
+                new Claim(ClaimTypes.GivenName, user.HoTen),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim(ClaimTypes.MobilePhone, user.SoDienThoai ?? ""),
+                new Claim(ClaimTypes.Role, "KhachHang")
+            };
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
@@ -117,15 +129,13 @@ namespace WebCafebookApi.Pages.Account
                 }
                 else
                 {
-                    ModelState.AddModelError(string.Empty, apiResponse?.Message ?? "Lỗi không xác định từ API.");
-                    GenerateCaptcha(); 
-                    return Page();
+                    ErrorMessage = apiResponse?.Message ?? "Lỗi không xác định từ API.";
+                    return RedirectToPage(new { returnUrl });
                 }
             }
 
-            ModelState.AddModelError(string.Empty, "Không thể kết nối đến máy chủ đăng nhập.");
-            GenerateCaptcha();
-            return Page();
+            ErrorMessage = "Tài khoản hoặc mật khẩu không chính xác.";
+            return RedirectToPage(new { returnUrl });
         }
     }
 }

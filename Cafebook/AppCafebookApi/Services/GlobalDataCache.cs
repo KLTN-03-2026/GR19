@@ -15,6 +15,11 @@ namespace AppCafebookApi.Services
         public static List<BanSoDoDto>? BanCache { get; set; }
         public static List<DanhMucDto>? DanhMucCache { get; set; }
         public static List<SanPhamDto>? SanPhamCache { get; set; }
+        public static ThongTinCaNhanViewDto? CaNhan_ThongTinCache { get; set; }
+        public static DonXinNghiDto[]? CaNhan_LichSuNghiCache { get; set; }
+        public static List<LichLamViec_CaNhanDto>? CaNhan_LichLamViecCache { get; set; }
+        public static LichLamViec_ConfigDto? CaNhan_LichConfigCache { get; set; }
+        public static PhieuLuongViewDto? CaNhan_PhieuLuongCache { get; set; }
 
         // --- 2. CACHE PHÂN HỆ QUẢN LÝ ---
         public static QuanLyTongQuanDto? QL_TongQuanCache { get; set; }
@@ -48,6 +53,12 @@ namespace AppCafebookApi.Services
             BanCache?.Clear(); BanCache = null;
             DanhMucCache?.Clear(); DanhMucCache = null;
             SanPhamCache?.Clear(); SanPhamCache = null;
+            CaNhan_ThongTinCache = null;
+            CaNhan_LichSuNghiCache = null;
+            CaNhan_LichLamViecCache?.Clear(); 
+            CaNhan_LichLamViecCache = null;
+            CaNhan_LichConfigCache = null;
+            CaNhan_PhieuLuongCache = null;
 
             // Xóa cache Quản Lý
             QL_TongQuanCache = null;

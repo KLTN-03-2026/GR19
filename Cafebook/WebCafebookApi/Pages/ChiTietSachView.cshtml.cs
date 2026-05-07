@@ -1,10 +1,10 @@
-// Thay vì using CafebookModel.Model.ModelWeb;
-using CafebookModel.Model.ModelWeb.KhachHang; // <-- TRỎ ĐÚNG DTO MỚI TẠO
+using CafebookModel.Model.ModelWeb.KhachHang; 
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using CafebookModel.Utils;
 
 namespace WebCafebookApi.Pages
 {
@@ -42,7 +42,7 @@ namespace WebCafebookApi.Pages
             int bookId;
             try
             {
-                bookId = int.Parse(_protectorSach.Unprotect(Token));
+                bookId = int.Parse(_protectorSach.UnprotectFromUrlSafe(Token)); // <-- Đổi hàm
             }
             catch
             {
@@ -53,7 +53,6 @@ namespace WebCafebookApi.Pages
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
             try
             {
-                // <-- GỌI VÀO API CONTROLLER MỚI (chitietsach)
                 Sach = await httpClient.GetFromJsonAsync<ChiTietSachDto>($"api/web/chitietsach/{bookId}");
                 if (Sach == null)
                 {
@@ -67,9 +66,9 @@ namespace WebCafebookApi.Pages
             return Page();
         }
 
-        public string EncryptId(int id) => _protectorSach.Protect(id.ToString());
-        public string EncryptTacGia(int id) => _protectorTacGia.Protect(id.ToString());
-        public string EncryptTheLoai(int id) => _protectorTheLoai.Protect(id.ToString());
-        public string EncryptNXB(int id) => _protectorNXB.Protect(id.ToString());
+        public string EncryptId(int id) => _protectorSach.ProtectToUrlSafe(id.ToString());
+        public string EncryptTacGia(int id) => _protectorTacGia.ProtectToUrlSafe(id.ToString());
+        public string EncryptTheLoai(int id) => _protectorTheLoai.ProtectToUrlSafe(id.ToString());
+        public string EncryptNXB(int id) => _protectorNXB.ProtectToUrlSafe(id.ToString());
     }
 }

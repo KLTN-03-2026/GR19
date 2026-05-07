@@ -6,8 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using WebCafebookApi.Services;
+using CafebookModel.Utils;
 using MySessionExt = WebCafebookApi.Services.SessionExtensions;
+using WebCafebookApi.Services;
 
 namespace WebCafebookApi.Pages
 {
@@ -39,7 +40,7 @@ namespace WebCafebookApi.Pages
             int productId;
             try
             {
-                productId = int.Parse(_protector.Unprotect(Token));
+                productId = int.Parse(_protector.UnprotectFromUrlSafe(Token)); // <-- Đổi hàm
                 EncryptedId = Token;
             }
             catch { ErrorMessage = "Đường dẫn không hợp lệ."; return Page(); }
@@ -79,7 +80,7 @@ namespace WebCafebookApi.Pages
             if (string.IsNullOrEmpty(EncryptedId)) return RedirectToPage("/ThucDonView");
 
             int idSanPham;
-            try { idSanPham = int.Parse(_protector.Unprotect(EncryptedId)); }
+            try { idSanPham = int.Parse(_protector.UnprotectFromUrlSafe(EncryptedId)); } // <-- Đổi hàm
             catch { return RedirectToPage("/ThucDonView"); }
 
             var cart = HttpContext.Session.Get<List<CartItemDto>>(MySessionExt.CartKey) ?? new List<CartItemDto>();
@@ -101,6 +102,6 @@ namespace WebCafebookApi.Pages
             return RedirectToPage("/ChiTietSanPhamView", new { Token = EncryptedId });
         }
 
-        public string EncryptId(int id) => _protector.Protect(id.ToString());
+        public string EncryptId(int id) => _protector.ProtectToUrlSafe(id.ToString()); // <-- Đổi hàm
     }
 }

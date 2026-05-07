@@ -10,6 +10,7 @@ using System.Text.Json;
 namespace WebCafebookApi.Pages.Employee
 {
     [IgnoreAntiforgeryToken]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public class DangNhapEmployeeModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -50,31 +51,44 @@ namespace WebCafebookApi.Pages.Employee
             ViewData["CaptchaCode"] = captcha;
         }
 
-        public async Task OnGetAsync(string? returnUrl = null)
+        public async Task<IActionResult> OnGetAsync(string? returnUrl = null)
         {
+            Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+            Response.Headers.Expires = "-1";
+            Response.Headers.Pragma = "no-cache";
+
+            returnUrl ??= Url.Content("~/Employee/TongQuanView");
+
+            if (User.Identity != null && User.Identity.IsAuthenticated &&
+                (User.IsInRole("NhanVien") || User.IsInRole("QuanLy")))
+            {
+                return LocalRedirect(returnUrl);
+            }
+
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             HttpContext.Session.Remove("JwtToken");
             HttpContext.Session.Remove("AvatarUrl");
 
-            ReturnUrl = returnUrl ?? Url.Content("~/Employee/TongQuanView");
+            ReturnUrl = returnUrl;
 
             GenerateCaptcha();
+
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
         {
             if (!ModelState.IsValid)
             {
-                GenerateCaptcha(); 
-                return Page();
+                ErrorMessage = "Vui lòng nhập đầy đủ thông tin.";
+                return RedirectToPage(new { returnUrl });
             }
 
             var expectedCaptcha = HttpContext.Session.GetString("CaptchaCode");
             if (string.IsNullOrEmpty(expectedCaptcha) || !string.Equals(expectedCaptcha, Input.CaptchaResult, StringComparison.OrdinalIgnoreCase))
             {
-                ModelState.AddModelError("Input.CaptchaResult", "Mã xác thực không chính xác.");
-                GenerateCaptcha(); 
-                return Page();
+                ErrorMessage = "Mã xác thực không chính xác.";
+                return RedirectToPage(new { returnUrl });
             }
 
             try
@@ -95,11 +109,11 @@ namespace WebCafebookApi.Pages.Employee
                     if (apiResponse != null && !string.IsNullOrEmpty(apiResponse.Token))
                     {
                         var claims = new List<Claim>
-                        {
-                            new Claim(ClaimTypes.NameIdentifier, apiResponse.IdNhanVien.ToString()),
-                            new Claim(ClaimTypes.Name, apiResponse.HoTen),
-                            new Claim(ClaimTypes.Role, apiResponse.TenVaiTro)
-                        };
+                {
+                    new Claim(ClaimTypes.NameIdentifier, apiResponse.IdNhanVien.ToString()),
+                    new Claim(ClaimTypes.Name, apiResponse.HoTen),
+                    new Claim(ClaimTypes.Role, apiResponse.TenVaiTro)
+                };
 
                         if (apiResponse.Quyen != null)
                         {
@@ -148,22 +162,19 @@ namespace WebCafebookApi.Pages.Employee
                         if (errorJson.TryGetProperty("message", out var msg))
                         {
                             ErrorMessage = msg.GetString();
-                            GenerateCaptcha(); 
-                            return Page();
+                            return RedirectToPage(new { returnUrl });
                         }
                     }
                     catch { }
                 }
 
                 ErrorMessage = "Tài khoản hoặc mật khẩu không chính xác.";
-                GenerateCaptcha();
-                return Page();
+                return RedirectToPage(new { returnUrl });
             }
             catch (Exception)
             {
                 ErrorMessage = "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.";
-                GenerateCaptcha();
-                return Page();
+                return RedirectToPage(new { returnUrl });
             }
         }
 

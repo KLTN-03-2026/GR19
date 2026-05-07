@@ -91,51 +91,70 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (AuthService.CurrentUser == null) return;
             int idNhanVien = AuthService.CurrentUser.IdNhanVien;
 
-            try
+            if (GlobalDataCache.CaNhan_ThongTinCache != null)
             {
-                var response = await ApiClient.Instance.GetFromJsonAsync<ThongTinCaNhanViewDto>($"api/app/nhanvien/thongtincanhan/me/{idNhanVien}");
-                if (response == null) return;
-
-                if (FindName("lblHoTen") is TextBlock txtHoTen) txtHoTen.Text = response.NhanVien.HoTen;
-                if (FindName("lblVaiTro") is TextBlock txtVaiTro) txtVaiTro.Text = response.NhanVien.TenVaiTro;
-                if (FindName("lblSoDienThoai") is TextBlock txtSdtShow) txtSdtShow.Text = response.NhanVien.SoDienThoai;
-                if (FindName("lblEmail") is TextBlock txtEmailShow) txtEmailShow.Text = string.IsNullOrEmpty(response.NhanVien.Email) ? "Chưa cập nhật" : response.NhanVien.Email;
-                if (FindName("lblDiaChi") is TextBlock txtDiaChiShow) txtDiaChiShow.Text = string.IsNullOrEmpty(response.NhanVien.DiaChi) ? "Chưa cập nhật" : response.NhanVien.DiaChi;
-
-                if (FindName("txtEditHoTen") is TextBox t1) t1.Text = response.NhanVien.HoTen;
-                if (FindName("txtEditSoDienThoai") is TextBox t2) t2.Text = response.NhanVien.SoDienThoai;
-                if (FindName("txtEditEmail") is TextBox t3) t3.Text = response.NhanVien.Email;
-                if (FindName("txtEditDiaChi") is TextBox t4) t4.Text = response.NhanVien.DiaChi;
-
-                if (FindName("lblThongBaoLich") is TextBlock tLich)
-                {
-                    if (response.LichLamViecHomNay != null)
-                    {
-                        tLich.Text = $"Hôm nay bạn có ca làm việc: {response.LichLamViecHomNay.TenCa}";
-                        if (FindName("lblThoiGianCa") is TextBlock tTime) tTime.Text = $"⏰ {response.LichLamViecHomNay.GioBatDau:hh\\:mm} - {response.LichLamViecHomNay.GioKetThuc:hh\\:mm}";
-                    }
-                    else
-                    {
-                        tLich.Text = "Hôm nay bạn không có lịch làm việc.";
-                        if (FindName("lblThoiGianCa") is TextBlock tTime) tTime.Text = "";
-                    }
-                }
-
-                if (FindName("lblSoLanNghi") is TextBlock txtNghi) txtNghi.Text = response.SoLanXinNghiThangNay.ToString();
-
-                if (FindName("imgAvatar") is System.Windows.Shapes.Ellipse ellipseAvatar && ellipseAvatar.Fill is ImageBrush imgBrush)
-                {
-                    string baseUrl = AppConfigManager.GetApiServerUrl() ?? "http://127.0.0.1:5166";
-                    string fullImgUrl = string.IsNullOrEmpty(response.NhanVien.AnhDaiDien)
-                                        ? ""
-                                        : $"{baseUrl}{response.NhanVien.AnhDaiDien}";
-
-                    imgBrush.ImageSource = HinhAnhHelper.LoadImage(fullImgUrl, HinhAnhPaths.DefaultAvatar);
-                }
-
-                if (FindName("dgLichLamViec") is DataGrid dg) dg.ItemsSource = response.LichLamViecThangNay;
+                UpdateProfileUI(GlobalDataCache.CaNhan_ThongTinCache);
             }
-            catch (Exception ex) { MessageBox.Show($"Lỗi tải dữ liệu: {ex.Message}"); }
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var response = await ApiClient.Instance.GetFromJsonAsync<ThongTinCaNhanViewDto>($"api/app/nhanvien/thongtincanhan/me/{idNhanVien}");
+                    if (response != null)
+                    {
+                        GlobalDataCache.CaNhan_ThongTinCache = response;
+
+                        Dispatcher.Invoke(() => UpdateProfileUI(response));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Cập nhật ngầm ThongTinCaNhan lỗi]: {ex.Message}");
+                }
+            });
+        }
+
+        private void UpdateProfileUI(ThongTinCaNhanViewDto response)
+        {
+            if (FindName("lblHoTen") is TextBlock txtHoTen) txtHoTen.Text = response.NhanVien.HoTen;
+            if (FindName("lblVaiTro") is TextBlock txtVaiTro) txtVaiTro.Text = response.NhanVien.TenVaiTro;
+            if (FindName("lblSoDienThoai") is TextBlock txtSdtShow) txtSdtShow.Text = response.NhanVien.SoDienThoai;
+            if (FindName("lblEmail") is TextBlock txtEmailShow) txtEmailShow.Text = string.IsNullOrEmpty(response.NhanVien.Email) ? "Chưa cập nhật" : response.NhanVien.Email;
+            if (FindName("lblDiaChi") is TextBlock txtDiaChiShow) txtDiaChiShow.Text = string.IsNullOrEmpty(response.NhanVien.DiaChi) ? "Chưa cập nhật" : response.NhanVien.DiaChi;
+
+            if (FindName("txtEditHoTen") is TextBox t1) t1.Text = response.NhanVien.HoTen;
+            if (FindName("txtEditSoDienThoai") is TextBox t2) t2.Text = response.NhanVien.SoDienThoai;
+            if (FindName("txtEditEmail") is TextBox t3) t3.Text = response.NhanVien.Email;
+            if (FindName("txtEditDiaChi") is TextBox t4) t4.Text = response.NhanVien.DiaChi;
+
+            if (FindName("lblThongBaoLich") is TextBlock tLich)
+            {
+                if (response.LichLamViecHomNay != null)
+                {
+                    tLich.Text = $"Hôm nay bạn có ca làm việc: {response.LichLamViecHomNay.TenCa}";
+                    if (FindName("lblThoiGianCa") is TextBlock tTime) tTime.Text = $"⏰ {response.LichLamViecHomNay.GioBatDau:hh\\:mm} - {response.LichLamViecHomNay.GioKetThuc:hh\\:mm}";
+                }
+                else
+                {
+                    tLich.Text = "Hôm nay bạn không có lịch làm việc.";
+                    if (FindName("lblThoiGianCa") is TextBlock tTime) tTime.Text = "";
+                }
+            }
+
+            if (FindName("lblSoLanNghi") is TextBlock txtNghi) txtNghi.Text = response.SoLanXinNghiThangNay.ToString();
+
+            if (FindName("imgAvatar") is System.Windows.Shapes.Ellipse ellipseAvatar && ellipseAvatar.Fill is ImageBrush imgBrush)
+            {
+                string baseUrl = AppConfigManager.GetApiServerUrl() ?? "http://127.0.0.1:5166";
+                string fullImgUrl = string.IsNullOrEmpty(response.NhanVien.AnhDaiDien)
+                                    ? ""
+                                    : $"{baseUrl}{response.NhanVien.AnhDaiDien}";
+
+                imgBrush.ImageSource = HinhAnhHelper.LoadImage(fullImgUrl, HinhAnhPaths.DefaultAvatar);
+            }
+
+            if (FindName("dgLichLamViec") is DataGrid dg) dg.ItemsSource = response.LichLamViecThangNay;
         }
 
         private async Task LoadLeaveHistoryAsync()
@@ -143,12 +162,32 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (AuthService.CurrentUser == null) return;
             int idNhanVien = AuthService.CurrentUser.IdNhanVien;
 
-            try
+            if (GlobalDataCache.CaNhan_LichSuNghiCache != null)
             {
-                var history = await ApiClient.Instance.GetFromJsonAsync<DonXinNghiDto[]>($"api/app/nhanvien/thongtincanhan/leave-history/{idNhanVien}");
-                if (FindName("dgLichSuNghi") is DataGrid dg) dg.ItemsSource = history;
+                UpdateLeaveHistoryUI(GlobalDataCache.CaNhan_LichSuNghiCache);
             }
-            catch { }
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var history = await ApiClient.Instance.GetFromJsonAsync<DonXinNghiDto[]>($"api/app/nhanvien/thongtincanhan/leave-history/{idNhanVien}");
+                    if (history != null)
+                    {
+                        GlobalDataCache.CaNhan_LichSuNghiCache = history;
+                        Dispatcher.Invoke(() => UpdateLeaveHistoryUI(history));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Cập nhật ngầm Lịch Sử Nghỉ lỗi]: {ex.Message}");
+                }
+            });
+        }
+
+        private void UpdateLeaveHistoryUI(DonXinNghiDto[] history)
+        {
+            if (FindName("dgLichSuNghi") is DataGrid dg) dg.ItemsSource = history;
         }
 
         private void BtnChonAnh_Click(object sender, RoutedEventArgs e)

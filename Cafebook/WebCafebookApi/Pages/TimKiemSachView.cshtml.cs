@@ -1,5 +1,3 @@
-// Tập tin: WebCafebookApi/Pages/TimKiemSachView.cshtml.cs
-// Tập tin: WebCafebookApi/Pages/TimKiemSachView.cshtml.cs
 using CafebookModel.Model.ModelWeb.KhachHang;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +6,7 @@ using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
+using CafebookModel.Utils;
 
 namespace WebCafebookApi.Pages
 {
@@ -37,7 +36,6 @@ namespace WebCafebookApi.Pages
         {
             _httpClientFactory = httpClientFactory;
 
-            // Phải khớp tên Purpose với bên ChiTietSach
             _protectorSach = provider.CreateProtector("Cafebook.Sach.Id");
             _protectorTacGia = provider.CreateProtector("Cafebook.TacGia.Id");
             _protectorTheLoai = provider.CreateProtector("Cafebook.TheLoai.Id");
@@ -48,30 +46,28 @@ namespace WebCafebookApi.Pages
         {
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
             var sb = new StringBuilder($"api/web/timkiemsach?pageNum={PageNum}");
-            //var sb = new StringBuilder("api/web/timkiemsach?");
             bool hasValidParam = false;
 
             try
             {
-                // Giải mã Token thành ID thật để gửi cho API
                 if (!string.IsNullOrEmpty(TokenTacGia))
                 {
-                    int idTacGia = int.Parse(_protectorTacGia.Unprotect(TokenTacGia));
-                    // THÊM DẤU & VÀO TRƯỚC idTacGia
+                    // Xóa dòng Replace
+                    int idTacGia = int.Parse(_protectorTacGia.UnprotectFromUrlSafe(TokenTacGia)); // <-- Đổi hàm
                     sb.Append($"&idTacGia={idTacGia}");
                     hasValidParam = true;
                 }
                 else if (!string.IsNullOrEmpty(TokenTheLoai))
                 {
-                    int idTheLoai = int.Parse(_protectorTheLoai.Unprotect(TokenTheLoai));
-                    // THÊM DẤU & VÀO TRƯỚC idTheLoai
+                    // Xóa dòng Replace
+                    int idTheLoai = int.Parse(_protectorTheLoai.UnprotectFromUrlSafe(TokenTheLoai)); // <-- Đổi hàm
                     sb.Append($"&idTheLoai={idTheLoai}");
                     hasValidParam = true;
                 }
                 else if (!string.IsNullOrEmpty(TokenNXB))
                 {
-                    int idNXB = int.Parse(_protectorNXB.Unprotect(TokenNXB));
-                    // THÊM DẤU & VÀO TRƯỚC idNXB
+                    // Xóa dòng Replace
+                    int idNXB = int.Parse(_protectorNXB.UnprotectFromUrlSafe(TokenNXB)); // <-- Đổi hàm
                     sb.Append($"&idNXB={idNXB}");
                     hasValidParam = true;
                 }
@@ -108,7 +104,7 @@ namespace WebCafebookApi.Pages
 
         public string EncryptId(int id)
         {
-            return _protectorSach.Protect(id.ToString());
+            return _protectorSach.ProtectToUrlSafe(id.ToString()); // <-- Đổi hàm
         }
     }
 }

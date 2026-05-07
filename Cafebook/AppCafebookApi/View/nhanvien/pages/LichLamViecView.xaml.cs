@@ -67,9 +67,18 @@ namespace AppCafebookApi.View.nhanvien.pages
 
         private async Task LoadConfigAsync()
         {
+            // 1. Tải nhanh Config từ RAM nếu có
+            if (GlobalDataCache.CaNhan_LichConfigCache != null)
+            {
+                _config = GlobalDataCache.CaNhan_LichConfigCache;
+                return;
+            }
+
+            // 2. Nếu RAM chưa có (ví dụ do lỗi mạng lúc đăng nhập), gọi API
             try
             {
                 _config = await ApiClient.Instance.GetFromJsonAsync<LichLamViec_ConfigDto>("api/app/nhanvien/lichlamviec/config");
+                GlobalDataCache.CaNhan_LichConfigCache = _config;
             }
             catch
             {
@@ -82,33 +91,61 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (AuthService.CurrentUser == null) return;
             int idNhanVien = AuthService.CurrentUser.IdNhanVien;
 
-            if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
+            var denNgay = _ngayBatDauHienThi.AddDays(_soNgayHienThi - 1);
 
-            try
+            if (FindName("txtKhungThoiGian") is TextBlock txtKhung)
             {
-                var denNgay = _ngayBatDauHienThi.AddDays(_soNgayHienThi - 1);
+                if (_soNgayHienThi == 1) txtKhung.Text = $"Ngày {_ngayBatDauHienThi:dd/MM/yyyy}";
+                else txtKhung.Text = $"Từ {_ngayBatDauHienThi:dd/MM} đến {denNgay:dd/MM/yyyy}";
+            }
 
-                if (FindName("txtKhungThoiGian") is TextBlock txtKhung)
-                {
-                    if (_soNgayHienThi == 1) txtKhung.Text = $"Ngày {_ngayBatDauHienThi:dd/MM/yyyy}";
-                    else txtKhung.Text = $"Từ {_ngayBatDauHienThi:dd/MM} đến {denNgay:dd/MM/yyyy}";
-                }
+            var url = $"api/app/nhanvien/lichlamviec/my-schedule/{idNhanVien}?tuNgay={_ngayBatDauHienThi:yyyy-MM-dd}&denNgay={denNgay:yyyy-MM-dd}";
 
-                var url = $"api/app/nhanvien/lichlamviec/my-schedule/{idNhanVien}?tuNgay={_ngayBatDauHienThi:yyyy-MM-dd}&denNgay={denNgay:yyyy-MM-dd}";
-                var data = await ApiClient.Instance.GetFromJsonAsync<List<LichLamViec_CaNhanDto>>(url);
+            // Xác định xem người dùng có đang xem lịch của Tuần hiện tại không
+            bool isCurrentWeek = _soNgayHienThi == 7 && _ngayBatDauHienThi == LayNgayDauTuan(DateTime.Today);
 
-                _currentData = data ?? new List<LichLamViec_CaNhanDto>();
-
+            // 1. Nếu là tuần hiện tại và có Cache, render luôn ra màn hình
+            if (isCurrentWeek && GlobalDataCache.CaNhan_LichLamViecCache != null)
+            {
+                _currentData = GlobalDataCache.CaNhan_LichLamViecCache;
                 VeBangLich();
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show($"Lỗi tải lịch: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Nếu xem ngày/tuần khác, hoặc chưa có cache thì mới hiện Loading
+                if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
             }
-            finally
+
+            // 2. Fetch ngầm kiểm tra cập nhật từ API
+            _ = Task.Run(async () =>
             {
-                if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed;
-            }
+                try
+                {
+                    var data = await ApiClient.Instance.GetFromJsonAsync<List<LichLamViec_CaNhanDto>>(url);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        _currentData = data ?? new List<LichLamViec_CaNhanDto>();
+
+                        // Nếu dữ liệu trả về thuộc tuần hiện tại, lưu đè lại vào Cache
+                        if (isCurrentWeek)
+                        {
+                            GlobalDataCache.CaNhan_LichLamViecCache = _currentData;
+                        }
+
+                        VeBangLich();
+                        if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed;
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Lịch Làm Việc - Lỗi cập nhật ngầm]: {ex.Message}");
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed;
+                    });
+                }
+            });
         }
 
         private void CanvasSchedule_SizeChanged(object sender, SizeChangedEventArgs e)

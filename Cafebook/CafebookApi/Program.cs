@@ -7,22 +7,40 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IO;
 using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================================================
-// 0. TỰ ĐỘNG TẠO/ĐỌC FILE CẤU HÌNH KHÓA ADMIN (TOTP)
+// 0. KHỞI TẠO ĐƯỜNG DẪN THƯ MỤC CHUNG (SettingCafebook)
 // ==========================================================
 string currentDir = Directory.GetCurrentDirectory();
 DirectoryInfo parentDir = Directory.GetParent(currentDir)!;
 string configDirPath = Path.Combine(parentDir.FullName, "SettingCafebook");
-string adminKeyFilePath = Path.Combine(configDirPath, "ApisecretKeyAdministrator.json");
 
 if (!Directory.Exists(configDirPath))
 {
     Directory.CreateDirectory(configDirPath);
 }
 
+// ==========================================================
+// 1. CẤU HÌNH DATA PROTECTION (DÙNG CHUNG KEY VỚI FRONTEND)
+// ==========================================================
+string dataProtectionDirPath = Path.Combine(configDirPath, "SharedKeys");
+if (!Directory.Exists(dataProtectionDirPath))
+{
+    Directory.CreateDirectory(dataProtectionDirPath);
+}
+
+var sharedKeyDir = new DirectoryInfo(dataProtectionDirPath);
+builder.Services.AddDataProtection()
+    .SetApplicationName("CafebookSystem") // Tên này phải y hệt bên Frontend
+    .PersistKeysToFileSystem(sharedKeyDir);
+
+// ==========================================================
+// 2. TỰ ĐỘNG TẠO/ĐỌC FILE CẤU HÌNH KHÓA ADMIN (TOTP)
+// ==========================================================
+string adminKeyFilePath = Path.Combine(configDirPath, "ApisecretKeyAdministrator.json");
 bool fileExists = File.Exists(adminKeyFilePath);
 bool fileIsEmpty = fileExists && new FileInfo(adminKeyFilePath).Length == 0;
 
@@ -40,31 +58,26 @@ if (!fileExists || fileIsEmpty)
             SecretKey = randomSecretKey
         }
     };
-    File.WriteAllText(adminKeyFilePath, System.Text.Json.JsonSerializer.Serialize(defaultAdminConfig, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    File.WriteAllText(adminKeyFilePath, JsonSerializer.Serialize(defaultAdminConfig, new JsonSerializerOptions { WriteIndented = true }));
 }
-
-// Nạp file cấu hình, tự động cập nhật khi file thay đổi
 builder.Configuration.AddJsonFile(adminKeyFilePath, optional: false, reloadOnChange: true);
 
 // ==========================================================
-// ĐĂNG KÝ CÁC DỊCH VỤ NỀN
+// ĐĂNG KÝ CÁC DỊCH VỤ NỀN VÀ DATABASE
 // ==========================================================
 builder.Services.AddMemoryCache();
-builder.Services.AddHostedService<CafebookApi.Services.DatabaseBackupService>();
-builder.Services.AddHostedService<CafebookApi.Services.AutoCancelOrderService>();
-builder.Services.AddHostedService<CafebookApi.Services.AutoUnlockAccountService>();
-builder.Services.AddHostedService<CafebookApi.Services.AutoCancelReservationService>();
-builder.Services.AddHostedService<CafebookApi.Services.DailyReminderBackgroundService>();
+builder.Services.AddHostedService<DatabaseBackupService>();
+builder.Services.AddHostedService<AutoCancelOrderService>();
+builder.Services.AddHostedService<AutoUnlockAccountService>();
+builder.Services.AddHostedService<AutoCancelReservationService>();
+builder.Services.AddHostedService<DailyReminderBackgroundService>();
 
-// ==========================================================
-// 1. KẾT NỐI DATABASE
-// ==========================================================
 var connectionString = builder.Configuration.GetConnectionString("CafeBookConnectionString");
 builder.Services.AddDbContext<CafebookDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // ==========================================================
-// 2. CẤU HÌNH CORS (ĐÃ SỬA LỖI SIGNALR)
+// CẤU HÌNH CORS, DI, VÀ SWAGGER
 // ==========================================================
 builder.Services.AddCors(options =>
 {
@@ -77,9 +90,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ==========================================================
-// 3. ĐĂNG KÝ CÁC DỊCH VỤ (DEPENDENCY INJECTION)
-// ==========================================================
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
@@ -93,7 +103,7 @@ builder.Services.AddScoped<AiService>();
 builder.Services.AddScoped<AiToolService>();
 
 // ==========================================================
-// 4. CẤU HÌNH BẢO MẬT JWT VÀ SIGNALR
+// CẤU HÌNH BẢO MẬT JWT VÀ SIGNALR
 // ==========================================================
 builder.Services.AddAuthentication(options =>
 {
@@ -133,17 +143,18 @@ builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 
 // ==========================================================
-// 5. CẤU HÌNH PIPELINE (MIDDLEWARE)
+// CẤU HÌNH PIPELINE (MIDDLEWARE)
 // ==========================================================
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Cafebook API v1");
+    // Cài đặt RoutePrefix = string.Empty để hiển thị Swagger ngay khi truy cập domain (vd: https://cafebookapi.shushushu.id.vn/)
+    options.RoutePrefix = string.Empty;
+});
 
 app.UseStaticFiles();
 app.UseRouting();
-
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();

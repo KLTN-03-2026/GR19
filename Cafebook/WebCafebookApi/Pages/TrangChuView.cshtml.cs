@@ -1,7 +1,8 @@
 ﻿using CafebookModel.Model.ModelWeb.KhachHang;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.DataProtection;
-using System.Net.Http; 
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Net.Http;
+using CafebookModel.Utils;
 
 namespace WebCafebookApi.Pages
 {
@@ -68,12 +69,12 @@ namespace WebCafebookApi.Pages
 
         public string EncryptSanPhamId(int id)
         {
-            return _sanPhamProtector.Protect(id.ToString());
+            return _sanPhamProtector.ProtectToUrlSafe(id.ToString());
         }
 
         public string EncryptSachId(int id)
         {
-            return _sachProtector.Protect(id.ToString());
+            return _sachProtector.ProtectToUrlSafe(id.ToString());
         }
     }
 }

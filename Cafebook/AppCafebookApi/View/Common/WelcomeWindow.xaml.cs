@@ -103,8 +103,11 @@ namespace AppCafebookApi.View.Common
                     ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
                 }
 
-                if (_workspace == "QuanLy") await PreloadQuanLyDataAsync();
-                else await PreloadNhanVienDataAsync();
+                await PreloadCaNhanDataAsync();
+                if (_workspace == "QuanLy")
+                    await PreloadQuanLyDataAsync();
+                else
+                    await PreloadNhanVienDataAsync();
 
                 ReportProgress(100, "Hoàn tất! Đang khởi động...");
             }
@@ -339,6 +342,48 @@ namespace AppCafebookApi.View.Common
                     GlobalDataCache.SanPhamCache = menuResult.SanPhams;
                 }
             }
+        }
+
+        // =======================================================
+        // LUỒNG TẢI DỮ LIỆU Ca NHÂN (THEO QUYỀN)
+        // =======================================================
+        private async Task PreloadCaNhanDataAsync()
+        {
+            if (AuthService.CurrentUser == null) return;
+            int idNhanVien = AuthService.CurrentUser.IdNhanVien;
+
+            ReportProgress(10, "Đang tải dữ liệu cá nhân...");
+
+            bool isFull = AuthService.CoQuyen("FULL_ADMIN", "FULL_NV", "FULL_QL");
+            var apiTasks = new List<Task>();
+
+            Task<ThongTinCaNhanViewDto?>? taskThongTin = null;
+            Task<PhieuLuongViewDto?>? taskPhieuLuong = null;
+            Task<LichLamViec_ConfigDto?>? taskLichConfig = null;
+
+            if (isFull || AuthService.CoQuyen("NV_THONG_TIN"))
+            {
+                taskThongTin = SafeGetAsync<ThongTinCaNhanViewDto>($"api/app/nhanvien/thongtincanhan/me/{idNhanVien}");
+                apiTasks.Add(taskThongTin);
+            }
+
+            if (isFull || AuthService.CoQuyen("NV_PHIEU_LUONG"))
+            {
+                taskPhieuLuong = SafeGetAsync<PhieuLuongViewDto>($"api/app/nhanvien/phieuluong/list/{idNhanVien}");
+                apiTasks.Add(taskPhieuLuong);
+            }
+
+            if (isFull || AuthService.CoQuyen("NV_LICH_LAM_VIEC"))
+            {
+                taskLichConfig = SafeGetAsync<LichLamViec_ConfigDto>("api/app/nhanvien/lichlamviec/config");
+                apiTasks.Add(taskLichConfig);
+            }
+
+            if (apiTasks.Count > 0) await Task.WhenAll(apiTasks);
+
+            if (taskThongTin != null) GlobalDataCache.CaNhan_ThongTinCache = await taskThongTin;
+            if (taskPhieuLuong != null) GlobalDataCache.CaNhan_PhieuLuongCache = await taskPhieuLuong;
+            if (taskLichConfig != null) GlobalDataCache.CaNhan_LichConfigCache = await taskLichConfig;
         }
 
         private async Task CacheImageToRamAsync(string url)

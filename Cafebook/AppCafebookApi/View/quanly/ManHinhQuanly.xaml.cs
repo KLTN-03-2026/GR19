@@ -395,9 +395,9 @@ namespace AppCafebookApi.View.quanly
                 hideStoryboard.Children.Add(fadeOut);
                 hideStoryboard.Begin();
             }
-            catch (TaskCanceledException)
+            catch (OperationCanceledException)
             {
-                // Có thông báo mới xen vào, tiến trình ẩn bị hủy -> Không làm gì cả, để Toast tiếp tục hiện
+                Debug.WriteLine("Toast cũ đã bị hủy để hiển thị toast mới.");
             }
         }
 
@@ -407,7 +407,9 @@ namespace AppCafebookApi.View.quanly
             {
                 bool isManualAdminNotice = tb.LoaiThongBao == "ThongBaoQuanLy" || tb.LoaiThongBao == "ThongBaoNhanVien" || tb.LoaiThongBao == "ThongBaoToanNhanVien";
 
-                if (!tb.DaXem && !isManualAdminNotice)
+                bool isSuCoBan = tb.LoaiThongBao == "SuCoBan";
+
+                if (!tb.DaXem && !isManualAdminNotice && !isSuCoBan)
                 {
                     try
                     {

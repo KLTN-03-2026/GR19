@@ -1,8 +1,4 @@
 ﻿@page "/san-pham"
-@inject Microsoft.AspNetCore.DataProtection.IDataProtectionProvider ProtectorProvider
-@{
-    var protector = ProtectorProvider.CreateProtector("Cafebook.SanPham.Id");
-}
 @model WebCafebookApi.Pages.ThucDonViewModel
 @using CafebookModel.Utils
 @{

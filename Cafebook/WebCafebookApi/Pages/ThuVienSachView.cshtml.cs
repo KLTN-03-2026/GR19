@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.DataProtection; 
+using Microsoft.AspNetCore.DataProtection;
+using CafebookModel.Utils;
 
 namespace WebCafebookApi.Pages
 {
@@ -68,7 +69,7 @@ namespace WebCafebookApi.Pages
 
         public string EncryptId(int id)
         {
-            return _protector.Protect(id.ToString());
+            return _protector.ProtectToUrlSafe(id.ToString());
         }
     }
 }

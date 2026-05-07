@@ -206,12 +206,24 @@ namespace AppCafebookApi.View.quanly.pages
                 bool hasVisibleQuyen = false;
                 foreach (var q in nhom.Quyens)
                 {
-                    // 1. Lọc theo Scope của Vai trò (Theo yêu cầu của bạn)
                     bool matchRoleScope = true;
-                    if (_currentRoleScope == "Nhân viên")
-                        matchRoleScope = q.IdQuyen.StartsWith("NV_") || q.IdQuyen.StartsWith("FULL_") || q.IdQuyen.StartsWith("CM_");
-                    else if (_currentRoleScope == "Quản lý")
-                        matchRoleScope = q.IdQuyen.StartsWith("QL_") || q.IdQuyen.StartsWith("FULL_") || q.IdQuyen.StartsWith("CM_");
+                    string currentRole = _currentRoleScope?.Trim().ToLower() ?? "";
+
+                    if (currentRole.Contains("nhân viên"))
+                    {
+                        // Nhân viên: Thấy toàn bộ NV_ (kể cả POS, Cá nhân, Chức năng web), FULL_, CM_
+                        matchRoleScope = q.IdQuyen.StartsWith("NV_") ||
+                                         q.IdQuyen.StartsWith("FULL_") ||
+                                         q.IdQuyen.StartsWith("CM_");
+                    }
+                    else if (currentRole.Contains("quản lý"))
+                    {
+                        // Quản lý: Thấy QL_, FULL_, CM_ VÀ chỉ thấy thêm nhóm "Chức năng web"
+                        matchRoleScope = q.IdQuyen.StartsWith("QL_") ||
+                                         q.IdQuyen.StartsWith("FULL_") ||
+                                         q.IdQuyen.StartsWith("CM_") ||
+                                         nhom.NhomName == "Chức năng web";
+                    }
 
                     // 2. Lọc theo từ khóa tìm kiếm
                     bool matchKeyword = string.IsNullOrEmpty(keyword) || q.TenQuyen.ToLower().Contains(keyword);
@@ -224,7 +236,10 @@ namespace AppCafebookApi.View.quanly.pages
                         q.Visibility = Visibility.Visible;
                         hasVisibleQuyen = true;
                     }
-                    else q.Visibility = Visibility.Collapsed;
+                    else
+                    {
+                        q.Visibility = Visibility.Collapsed;
+                    }
                 }
                 nhom.Visibility = hasVisibleQuyen ? Visibility.Visible : Visibility.Collapsed;
             }

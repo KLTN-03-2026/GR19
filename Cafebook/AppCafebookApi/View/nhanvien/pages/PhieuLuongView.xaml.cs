@@ -63,34 +63,67 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (AuthService.CurrentUser == null) return;
             int idNhanVien = AuthService.CurrentUser.IdNhanVien;
 
-            if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
-            try
+            // 1. Load nhanh từ RAM (nếu có)
+            if (GlobalDataCache.CaNhan_PhieuLuongCache != null)
             {
-                // SỬA URL: Gắn trực tiếp idNhanVien vào đường dẫn
-                var response = await ApiClient.Instance.GetFromJsonAsync<PhieuLuongViewDto>($"api/app/nhanvien/phieuluong/list/{idNhanVien}");
+                UpdatePhieuLuongUI(GlobalDataCache.CaNhan_PhieuLuongCache);
+            }
+            else
+            {
+                if (FindName("LoadingOverlay") is Border loading) loading.Visibility = Visibility.Visible;
+            }
 
-                if (response != null && response.DanhSachPhieuLuong.Any())
+            // 2. Chạy ngầm tiến trình gọi API
+            _ = Task.Run(async () =>
+            {
+                try
                 {
-                    if (FindName("lbPhieuLuong") is ListBox lb)
+                    var response = await ApiClient.Instance.GetFromJsonAsync<PhieuLuongViewDto>($"api/app/nhanvien/phieuluong/list/{idNhanVien}");
+
+                    if (response != null)
                     {
-                        lb.ItemsSource = response.DanhSachPhieuLuong;
-                        lb.SelectedIndex = 0; // Tự động load phiếu đầu tiên
+                        // Cập nhật lại Cache
+                        GlobalDataCache.CaNhan_PhieuLuongCache = response;
+
+                        // Đẩy lên UI Thread để render
+                        Dispatcher.Invoke(() =>
+                        {
+                            UpdatePhieuLuongUI(response);
+                            if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed;
+                        });
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    if (FindName("panelChonPhieu") is StackPanel pnlChon) pnlChon.Visibility = Visibility.Visible;
-                    if (FindName("panelChiTiet") is ScrollViewer pnlCT) pnlCT.Visibility = Visibility.Collapsed;
-                    if (FindName("txtChonPhieu") is TextBlock txtChon) txtChon.Text = "Bạn chưa có phiếu lương nào trong hệ thống.";
+                    Console.WriteLine($"[Cập nhật ngầm Phiếu Lương lỗi]: {ex.Message}");
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed;
+                    });
                 }
-            }
-            catch (Exception ex)
+            });
+        }
+
+        // Tách hàm Binding UI để tái sử dụng
+        private void UpdatePhieuLuongUI(PhieuLuongViewDto response)
+        {
+            if (response != null && response.DanhSachPhieuLuong.Any())
             {
-                Console.WriteLine($"[LoadDanhSachPhieuLuongAsync Error]: {ex.Message}");
+                if (FindName("lbPhieuLuong") is ListBox lb)
+                {
+                    lb.ItemsSource = response.DanhSachPhieuLuong;
+                    // Tự động load chi tiết phiếu đầu tiên nếu chưa chọn gì
+                    if (lb.SelectedIndex == -1) lb.SelectedIndex = 0;
+                }
+
+                if (FindName("panelChonPhieu") is StackPanel pnlChon) pnlChon.Visibility = Visibility.Collapsed;
+                if (FindName("panelChiTiet") is ScrollViewer pnlCT) pnlCT.Visibility = Visibility.Visible;
             }
-            finally
+            else
             {
-                if (FindName("LoadingOverlay") is Border loadingEnd) loadingEnd.Visibility = Visibility.Collapsed;
+                if (FindName("panelChonPhieu") is StackPanel pnlChon) pnlChon.Visibility = Visibility.Visible;
+                if (FindName("panelChiTiet") is ScrollViewer pnlCT) pnlCT.Visibility = Visibility.Collapsed;
+                if (FindName("txtChonPhieu") is TextBlock txtChon) txtChon.Text = "Bạn chưa có phiếu lương nào trong hệ thống.";
             }
         }
 

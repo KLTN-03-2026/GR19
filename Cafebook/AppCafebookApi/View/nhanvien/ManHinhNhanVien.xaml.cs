@@ -331,9 +331,9 @@ namespace AppCafebookApi.View.nhanvien
                 hideStoryboard.Children.Add(fadeOut);
                 hideStoryboard.Begin();
             }
-            catch (TaskCanceledException)
+            catch (OperationCanceledException)
             {
-                // Có thông báo mới xen vào, tiến trình ẩn bị hủy -> Không làm gì cả, để Toast tiếp tục hiện
+                Debug.WriteLine("Toast cũ đã bị hủy để hiển thị toast mới.");
             }
         }
 

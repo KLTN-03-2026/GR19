@@ -78,7 +78,7 @@ namespace CafebookApi.Controllers.Web.NhanVien
             if (ticket == null) return NotFound("Không tìm thấy phiếu hỗ trợ.");
 
             var rawChats = await _context.ChatLichSus
-                .Where(c => c.IdThongBaoHoTro == id)
+                .Where(c => c.GuestSessionId == ticket.GuestSessionId || c.IdThongBaoHoTro == id)
                 .OrderBy(c => c.ThoiGian)
                 .ToListAsync();
 

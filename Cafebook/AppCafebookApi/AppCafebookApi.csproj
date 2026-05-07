@@ -47,4 +47,8 @@
 		<Resource Include="logo.ico" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="View\Shared\" />
+	</ItemGroup>
+
 </Project>

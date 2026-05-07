@@ -183,9 +183,6 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
-    @* ==========================================
-       START: BÓNG CHAT NỔI & POPUP CHAT
-       ========================================== *@
     @{
         var currentPath = ViewContext.HttpContext.Request.Path.Value ?? "";
         bool isSupportPage = currentPath.Contains("/ho-tro", StringComparison.OrdinalIgnoreCase)
@@ -244,18 +241,15 @@
                 const apiBaseUrl = '@apiBaseUrl';
                 const guestSessionId = $('#PopupGuestSessionId').val();
                 
-                // BIẾN XÁC ĐỊNH ĐĂNG NHẬP ĐỂ CHỌN API
                 const isKhachHang = @isKhachHang.ToString().ToLower();
                 const jwtToken = '@(HttpContextAccessor.HttpContext?.Session.GetString("JwtToken") ?? "")';
                 const idKhach = '@(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "")';
 
-                // NẾU LÀ KHÁCH HÀNG: LẤY SESSION ĐANG MỞ TỪ LOCALSTORAGE
                 let currentSessionId = guestSessionId;
                 if (isKhachHang) {
                     currentSessionId = localStorage.getItem('cf_kh_session_' + idKhach) || guestSessionId;
                 }
 
-                // CẤU HÌNH API ĐỘNG TÙY TRẠNG THÁI LOGIN (ĐÍNH KÈM TOKEN NẾU LOGIN)
                 const chatHeaders = (isKhachHang && jwtToken)
                     ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwtToken }
                     : { 'Content-Type': 'application/json' };
@@ -268,7 +262,6 @@
                     ? `${apiBaseUrl}/api/web/khachhang/hotro/send`
                     : `${apiBaseUrl}/api/web/guest/hotro/send`;
 
-                // SIGNALR CHO POPUP (NẾU ĐÃ ĐĂNG NHẬP & CHAT VỚI NHÂN VIÊN)
                 let isRealtimeModePopup = false;
                 let currentIdThongBaoPopup = null;
                 let hubConnectionPopup = null;
@@ -296,7 +289,6 @@
                     localStorage.setItem('isChatPopupOpen', 'false');
                 });
 
-                // Vẽ tin nhắn UI
                 function drawPopupMessage(msg, isUser, isStaff = false) {
                     const type = isUser ? 'user' : (isStaff ? 'staff' : 'bot');
                     const icon = isUser ? 'person' : (isStaff ? 'support_agent' : 'local_cafe'); 
@@ -360,17 +352,16 @@
                     await hubConnectionPopup.invoke("JoinGroup", `khach_${idKhach}`);
                 }
 
-                // TẢI LỊCH SỬ VÀ HIỂN THỊ NÚT
                 async function loadPopupHistory() {
                     try {
                         const res = await fetch(historyUrl, { headers: chatHeaders });
                         const history = await res.json();
                         $('#popup-chat-history').empty();
 
-                        // LUÔN HIỆN NÚT NẾU ĐÃ ĐĂNG NHẬP HOẶC KHÁCH VÃNG LAI CÓ LỊCH SỬ
-                        if (history.length > 0 || isKhachHang) {
+                        // CHỈ HIỆN NÚT KHI ĐÃ CÓ LỊCH SỬ CHAT (Dùng chung cho cả Khách vãng lai và Khách hàng)
+                        if (history.length > 0) {
                             $floatingBtn.show(); 
-                            
+            
                             history.forEach(msg => {
                                 if (msg.idThongBaoHoTro > 0) currentIdThongBaoPopup = msg.idThongBaoHoTro;
                                 drawPopupMessage(msg, msg.loaiTinNhan === 'KhachHang', msg.loaiTinNhan === 'NhanVien');
@@ -393,7 +384,6 @@
                     } catch(e) { console.error("Lỗi tải chat", e); }
                 }
 
-                // GỬI TIN NHẮN TỪ POPUP
                 $('#popupChatForm').on('submit', async function(e) {
                     e.preventDefault();
                     const text = $('#popupChatMessageInput').val().trim();
@@ -453,6 +443,17 @@
             });
         </script>
     }
+
+        <script>
+        window.addEventListener("pageshow", function (event) {
+            var historyTraversal = event.persisted ||
+                                   (typeof window.performance != "undefined" &&
+                                        window.performance.navigation.type === 2);
+            if (historyTraversal) {
+                window.location.href = window.location.pathname + window.location.search;
+            }
+        });
+        </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

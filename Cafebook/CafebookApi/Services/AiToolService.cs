@@ -2,11 +2,13 @@
 using CafebookModel.Model.ModelEntities;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CafebookModel.Utils;
 
 namespace CafebookApi.Services
 {
@@ -17,403 +19,423 @@ namespace CafebookApi.Services
         private readonly IDataProtector _protectorSach;
         private readonly IDataProtector _protectorHoaDon;
 
+        private readonly IDataProtector _protectorTacGia;
+        private readonly IDataProtector _protectorTheLoai;
+        private readonly IDataProtector _protectorNXB;
+
+        private readonly IMemoryCache _cache;
+
         private const int SlotDurationHours = 2;
 
-        // ==========================================
-        // KHAI BÁO CÁC ĐƯỜNG DẪN CHUẨN
-        // ==========================================
-        private const string LinkTaiKhoan = "/tai-khoan/tong-quan";
-        private const string LinkThongTinCaNhan = "/tai-khoan/thong-tin-ca-nhan";
-        private const string LinkLichSuThue = "/tai-khoan/lich-su-thue-sach";
-        private const string LinkLichSuDatBan = "/tai-khoan/lich-su-dat-ban";
-        private const string LinkLichSuDonHang = "/tai-khoan/lich-su-don-hang";
-        private const string LinkDoiMatKhau = "/tai-khoan/doi-mat-khau";
-        private const string LinkThongTinSach = "/thu-vien-sach/tim-kiem";
-        private const string LinkLienHe = "/lien-he";
-        private const string LinkDangNhap = "/dang-nhap";
-        private const string LinkDatBan = "/dat-ban";
-        private const string LinkGioHang = "/gio-hang";
-        private const string LinkChinhSach = "/chinh-sach";
+        public const string LinkTaiKhoan = "/tai-khoan/tong-quan";
+        public const string LinkThongTinCaNhan = "/tai-khoan/thong-tin-ca-nhan";
+        public const string LinkLichSuThue = "/tai-khoan/lich-su-thue-sach";
+        public const string LinkLichSuDatBan = "/tai-khoan/lich-su-dat-ban";
+        public const string LinkLichSuDonHang = "/tai-khoan/lich-su-don-hang";
+        public const string LinkDoiMatKhau = "/tai-khoan/doi-mat-khau";
+        public const string LinkThongTinSach = "/thu-vien-sach/tim-kiem";
+        public const string LinkLienHe = "/lien-he";
+        public const string LinkDangNhap = "/dang-nhap";
+        public const string LinkDatBan = "/dat-ban";
+        public const string LinkGioHang = "/gio-hang";
+        public const string LinkThucDon = "/san-pham";
+        public const string LinkThuVienSach = "/thu-vien-sach";
+        public const string LinkChinhSach = "/chinh-sach-dieu-khoan";
 
-        // Đường dẫn cần ghép Token động
-        private const string LinkDetailSach = "/chi-tiet-sach/";
-        private const string LinkDetailSP = "/chi-tiet-san-pham/";
-        private const string LinkChiTietDonHang = "/tai-khoan/lich-su-don-hang/";
+        public const string LinkDetailSach = "/chi-tiet-sach/";
+        public const string LinkDetailSP = "/chi-tiet-san-pham/";
+        public const string LinkChiTietDonHang = "/tai-khoan/lich-su-don-hang/";
 
-        public AiToolService(CafebookDbContext context, IDataProtectionProvider provider)
+        public AiToolService(CafebookDbContext context, IDataProtectionProvider provider, IMemoryCache cache)
         {
             _context = context;
             _protectorSanPham = provider.CreateProtector("Cafebook.SanPham.Id");
             _protectorSach = provider.CreateProtector("Cafebook.Sach.Id");
             _protectorHoaDon = provider.CreateProtector("Cafebook.HoaDon.Id");
+
+            _protectorTacGia = provider.CreateProtector("Cafebook.TacGia.Id");
+            _protectorTheLoai = provider.CreateProtector("Cafebook.TheLoai.Id");
+            _protectorNXB = provider.CreateProtector("Cafebook.NXB.Id");
+
+            _cache = cache;
         }
 
-        // ==================================================================================
-        // NHÓM 1: THÔNG TIN CHUNG
-        // ==================================================================================
+        public Task<object> GetYeuCauDangNhapAsync(string tenTinhNang)
+        {
+            string msg = $"Bạn cần đăng nhập để sử dụng tính năng này.\n[BUTTON: Tới trang Đăng nhập | {LinkDangNhap}]";
+            return Task.FromResult<object>(new { Message = msg });
+        }
+
+        public Task<object> HuongDanDatBanAsync(int? idKhachHang)
+        {
+            string msg = "";
+            if (!idKhachHang.HasValue || idKhachHang == 0)
+            {
+                msg = $"Để đặt bàn, bạn vui lòng ấn vào nút bên dưới để vào trang Đặt Bàn -> Chọn ngày, khoảng giờ và số người muốn đặt -> Nhấn Kiểm tra bàn -> Chọn bàn theo ý thích -> Nhập thông tin (Tên, SĐT, Email) và xác nhận đặt bàn nhé.\n[BUTTON: Đặt bàn trực tuyến | {LinkDatBan}]";
+            }
+            else
+            {
+                msg = $"Để đặt bàn, bạn vui lòng ấn vào nút bên dưới để vào trang Đặt Bàn -> Chọn ngày, khoảng giờ và số người muốn đặt -> Nhấn Kiểm tra bàn -> Chọn bàn theo ý thích -> Nhập ghi chú (nếu bạn đặt hộ thì điền thông tin người nhận) và xác nhận đặt bàn nhé.\n[BUTTON: Đặt bàn trực tuyến | {LinkDatBan}]";
+            }
+            return Task.FromResult<object>(new { Message = msg });
+        }
+
+        public Task<object> GetHuongDanHeThongAsync(string chuDe)
+        {
+            string topic = chuDe.ToLower();
+            string hdResponse = "Tính năng này hiện có thể truy cập dễ dàng qua thanh Menu chính của trang web.";
+
+            if (topic.Contains("quên") || topic.Contains("lấy lại"))
+                hdResponse = $"Nếu quên mật khẩu, bạn hãy ra màn hình đăng nhập -> Chọn 'Quên mật khẩu' -> Nhập Email -> Nhận mã 6 số -> Nhập mật khẩu mới và lưu lại nhé.\n[BUTTON: Tới trang Đăng nhập | {LinkDangNhap}]";
+            else if (topic.Contains("mật khẩu") || topic.Contains("doimatkhau") || topic.Contains("đổi"))
+                hdResponse = $"Để đổi mật khẩu, bạn vui lòng truy cập vào phần Cài đặt Tài khoản -> Đổi mật khẩu.\n[BUTTON: Đổi mật khẩu | {LinkDoiMatKhau}]";
+            else if (topic.Contains("thông tin") || topic.Contains("thongtincanhan") || topic.Contains("cá nhân"))
+                hdResponse = $"Bạn có thể xem và cập nhật thông tin cá nhân (ảnh đại diện, SĐT, Email, Địa chỉ) tại trang Hồ sơ.\n[BUTTON: Hồ sơ của tôi | {LinkThongTinCaNhan}]";
+            else if (topic.Contains("góp ý") || topic.Contains("gopy") || topic.Contains("đánh giá") || topic.Contains("chính sách"))
+                hdResponse = $"Cafebook rất vui khi nhận được phản hồi từ bạn. Hãy gửi đánh giá hoặc đóng góp qua trang Liên hệ để quán ngày một tốt hơn nha.\n[BUTTON: Gửi góp ý | {LinkLienHe}]\n[BUTTON: Xem Chính sách | {LinkChinhSach}]";
+
+            return Task.FromResult<object>(new { Message = hdResponse });
+        }
+
+        public Task<object> KetNoiNhanVienAsync()
+        {
+            return Task.FromResult<object>(new { Message = "Đang kết nối nhân viên hỗ trợ... [NEEDS_SUPPORT]" });
+        }
 
         public async Task<object> GetThongTinChungAsync()
         {
-            var keys = new List<string> {
-                "ThongTin_TenQuan", "ThongTin_DiaChi", "ThongTin_SoDienThoai", "ThongTin_GioiThieu",
-                "ThongTin_GioMoCua", "ThongTin_GioDongCua", "ThongTin_ThuMoCua",
-                "Wifi_MatKhau",
-                "LienHe_Facebook", "LienHe_Zalo", "LienHe_Email", "LienHe_Website",
-                "DiemTichLuy_DoiVND", "DiemTichLuy_NhanVND",
-                "Sach_SoNgayMuonToiDa", "Sach_PhiThue", "Sach_PhiTraTreMoiNgay", "Sach_DiemPhieuThue", "Sach_PhatGiamDoMoi1Percent"
-            };
-
-            var settings = await _context.CaiDats.AsNoTracking()
-                .Where(c => keys.Contains(c.TenCaiDat))
-                .ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
-
-            string GetVal(string key) => settings.ContainsKey(key) ? settings[key] : "Chưa cập nhật";
-            string FormatMoney(string val) => double.TryParse(val, out double d) ? $"{d:N0}đ" : val;
-
-            return new
+            return await _cache.GetOrCreateAsync<object>("CACHE_THONG_TIN_CHUNG", async entry =>
             {
-                ThongTinCoBan = new
-                {
-                    TenQuan = GetVal("ThongTin_TenQuan"),
-                    DiaChi = GetVal("ThongTin_DiaChi"),
-                    Hotline = GetVal("ThongTin_SoDienThoai"),
-                    ThoiGianHoatDong = $"{GetVal("ThongTin_GioMoCua")} - {GetVal("ThongTin_GioDongCua")} (Mở cửa thứ: {GetVal("ThongTin_ThuMoCua")})",
-                    GioiThieu = GetVal("ThongTin_GioiThieu")
-                },
-                Wifi = new { MatKhau = GetVal("Wifi_MatKhau") },
-                QuyDinhSach = new
-                {
-                    HanMuon = $"{GetVal("Sach_SoNgayMuonToiDa")} ngày",
-                    PhiThue = $"{FormatMoney(GetVal("Sach_PhiThue"))} (trừ khi trả sách)",
-                    PhatQuaHan = $"{FormatMoney(GetVal("Sach_PhiTraTreMoiNgay"))}/ngày"
-                },
-                Actions = new List<object>
-                {
-                    new { Label = "Thông tin liên hệ", Link = LinkLienHe },
-                    new { Label = "Chính sách & Quy định", Link = LinkChinhSach }
-                }
-            };
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+
+                var keys = new List<string> {
+                    "ThongTin_DiaChi", "ThongTin_SoDienThoai", "ThongTin_GioMoCua", "ThongTin_GioDongCua", "Wifi_MatKhau", "ThongTin_ThuMoCua"
+                };
+
+                var settings = await _context.CaiDats.AsNoTracking().Where(c => keys.Contains(c.TenCaiDat)).ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
+                string GetVal(string key) => settings.ContainsKey(key) ? (settings[key] ?? "Chưa cập nhật") : "Chưa cập nhật";
+
+                // Xử lý chuỗi ngày mở cửa
+                string thuMoCua = GetVal("ThongTin_ThuMoCua");
+                if (thuMoCua == "2,3,4,5,6,7,8") thuMoCua = "Thứ 2 đến Chủ Nhật";
+                else thuMoCua = "Thứ " + thuMoCua.Replace("8", "Chủ Nhật");
+
+                string msg = $"Đây là thông tin cơ bản của Cafebook ạ:\n- Địa chỉ: {GetVal("ThongTin_DiaChi")}\n- SĐT: {GetVal("ThongTin_SoDienThoai")}\n- Các ngày hoạt động: {thuMoCua}\n- Giờ mở cửa: {GetVal("ThongTin_GioMoCua")} đến {GetVal("ThongTin_GioDongCua")}\n- Mật khẩu Wifi: {GetVal("Wifi_MatKhau")}\n\n[BUTTON: Xem Liên Hệ | {LinkLienHe}]\n[BUTTON: Chính sách & Quy định | {LinkChinhSach}]";
+                return new { Message = msg };
+            }) ?? new { };
         }
 
         public async Task<object> GetKhuyenMaiAsync()
         {
-            var now = DateTime.Now;
-            var listKM = await _context.KhuyenMais.AsNoTracking()
-                .Where(k => k.TrangThai == "Hoạt động" && k.NgayBatDau <= now && k.NgayKetThuc >= now)
-                .OrderByDescending(k => k.GiaTriGiam)
-                .Take(3)
-                .Select(k => new
-                {
-                    ChuongTrinh = k.TenChuongTrinh,
-                    Giam = k.LoaiGiamGia == "Phần trăm" ? $"{k.GiaTriGiam}%" : $"{k.GiaTriGiam:N0}đ",
-                    MoTa = k.MoTa,
-                    Han = k.NgayKetThuc.ToString("dd/MM/yyyy")
-                })
-                .ToListAsync();
+            return await _cache.GetOrCreateAsync<object>("CACHE_KHUYEN_MAI", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
 
-            if (!listKM.Any()) return "Hiện tại quán chưa có chương trình khuyến mãi nào đang diễn ra.";
-            return new { DanhSachKhuyenMai = listKM };
+                var now = DateTime.Now;
+                var listKM = await _context.KhuyenMais.AsNoTracking()
+                    .Where(k => k.TrangThai == "Hoạt động" && k.NgayBatDau <= now && k.NgayKetThuc >= now)
+                    .OrderByDescending(k => k.GiaTriGiam)
+                    .Take(3).ToListAsync();
+
+                if (!listKM.Any()) return new { Message = "Hiện tại quán chưa có chương trình khuyến mãi nào đang diễn ra, bạn theo dõi thêm nhé." };
+
+                string msg = "Cafebook đang có các chương trình khuyến mãi cực hot:\n" + string.Join("\n", listKM.Select(k => $"- {k.TenChuongTrinh}: Giảm {(k.LoaiGiamGia == "Phần trăm" ? k.GiaTriGiam + "%" : k.GiaTriGiam.ToString("N0") + "đ")} (Đến ngày {k.NgayKetThuc:dd/MM})"));
+                return new { Message = msg };
+            }) ?? new { };
         }
-
-        // ==================================================================================
-        // NHÓM 2: SẢN PHẨM (TỐI ƯU SQL TÌM KIẾM CẮT TỪ KHÓA)
-        // ==================================================================================
 
         public async Task<object> KiemTraSanPhamAsync(string keyword)
         {
-            if (string.IsNullOrWhiteSpace(keyword)) return new { Status = "NotFound", Message = "Vui lòng cung cấp tên món." };
+            if (string.IsNullOrWhiteSpace(keyword)) return new { Message = "Vui lòng cung cấp tên món để mình kiểm tra nhé." };
 
-            var keywords = keyword.Trim().ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var query = _context.SanPhams.AsNoTracking().Include(s => s.DanhMuc).AsQueryable();
-
-            foreach (var kw in keywords)
+            string cacheKey = $"KTSP_{keyword}";
+            return await _cache.GetOrCreateAsync<object>(cacheKey, async entry =>
             {
-                query = query.Where(s => s.TenSanPham.ToLower().Contains(kw));
-            }
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+                var keywords = keyword.Trim().ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var query = _context.SanPhams.AsNoTracking().Include(s => s.DanhMuc).AsQueryable();
 
-            var sp = await query.FirstOrDefaultAsync();
+                foreach (var kw in keywords) query = query.Where(s => s.TenSanPham.ToLower().Contains(kw));
+                var sp = await query.FirstOrDefaultAsync();
 
-            if (sp == null) return new { Status = "NotFound", Message = $"Không tìm thấy món nào khớp với '{keyword}' trong menu." };
+                if (sp == null) return new { Message = $"Hiện tại quán không có món '{keyword}' trong thực đơn. Mình mời bạn tham khảo các món ngon khác nhé.\n[BUTTON: Xem Thực đơn | {LinkThucDon}]" };
 
-            string token = _protectorSanPham.Protect(sp.IdSanPham.ToString());
+                bool isOutOfStock = !sp.TrangThaiKinhDoanh;
+                if (!isOutOfStock)
+                {
+                    var dlList = await _context.DinhLuongs.Include(d => d.NguyenLieu).Include(d => d.DonViSuDung).Where(d => d.IdSanPham == sp.IdSanPham).AsNoTracking().ToListAsync();
+                    foreach (var dl in dlList)
+                    {
+                        decimal heSo = (dl.DonViSuDung != null && dl.DonViSuDung.GiaTriQuyDoi > 0) ? dl.DonViSuDung.GiaTriQuyDoi : 1m;
+                        decimal luongDung = dl.DonViSuDung != null && dl.DonViSuDung.LaDonViCoBan ? dl.SoLuongSuDung : dl.SoLuongSuDung / heSo;
+                        if (dl.NguyenLieu.TonKho < luongDung) { isOutOfStock = true; break; }
+                    }
+                }
 
-            return new
-            {
-                Name = sp.TenSanPham,
-                Category = sp.DanhMuc?.TenDanhMuc ?? "Khác",
-                Price = sp.GiaBan,
-                Desc = sp.MoTa,
-                Status = sp.TrangThaiKinhDoanh ? "Đang kinh doanh" : "Ngừng kinh doanh",
-                Actions = new[] { new { Label = "Xem chi tiết món", Link = $"{LinkDetailSP}{token}" } }
-            };
+                string token = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString()); // <-- CODE MỚI
+                string stInfo = isOutOfStock ? "Nhưng tiếc quá, món này tạm ngưng kinh doanh hoặc hết nguyên liệu rồi." : "Sản phẩm hiện đang có sẵn sàng phục vụ.";
+                return new { Message = $"Món '{sp.TenSanPham}' có giá {sp.GiaBan:N0}đ. {stInfo}\n[BUTTON: Xem chi tiết món | {LinkDetailSP}?token={token}]" };
+            }) ?? new { };
         }
 
         public async Task<object> TimMonTheoLoaiAsync(string loaiMon)
         {
-            var list = await _context.SanPhams.AsNoTracking()
-                .Include(s => s.DanhMuc)
-                .Where(s => s.DanhMuc != null && s.DanhMuc.TenDanhMuc.Contains(loaiMon) && s.TrangThaiKinhDoanh)
-                .OrderBy(s => s.TenSanPham)
-                .Take(5)
-                .ToListAsync();
-
-            if (!list.Any()) return new { Message = $"Không tìm thấy loại món nào tên là '{loaiMon}'." };
-
-            var returnList = list.Select(s => new
+            return await _cache.GetOrCreateAsync<object>($"CACHE_LOAI_SP_{loaiMon}", async entry =>
             {
-                Ten = s.TenSanPham,
-                Gia = s.GiaBan,
-                Link = $"{LinkDetailSP}{_protectorSanPham.Protect(s.IdSanPham.ToString())}"
-            }).ToList();
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+                var list = await _context.SanPhams.AsNoTracking().Include(s => s.DanhMuc)
+                    .Where(s => s.DanhMuc != null && s.DanhMuc.TenDanhMuc.Contains(loaiMon) && s.TrangThaiKinhDoanh)
+                    .OrderBy(s => s.TenSanPham).Take(4).ToListAsync();
 
-            var actions = returnList.Select(s => new { Label = s.Ten, Link = s.Link }).ToList();
+                if (!list.Any()) return new { Message = $"Rất tiếc, không tìm thấy món nào thuộc danh mục '{loaiMon}' đang có sẵn lúc này." };
 
-            return new { Message = $"Tìm thấy {returnList.Count} món thuộc loại '{loaiMon}':", DanhSach = returnList, Actions = actions };
+                string msg = $"Mình đã tìm thấy một vài món cực ngon cho bạn:\n";
+                foreach (var sp in list)
+                {
+                    string tk = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString()); // <-- CODE MỚI
+                    msg += $"- {sp.TenSanPham} ({sp.GiaBan:N0}đ) \n[BUTTON: Chọn món {sp.TenSanPham} | {LinkDetailSP}?token={tk}]\n";
+                }
+                msg += $"\n[BUTTON: Xem toàn bộ Thực đơn | {LinkThucDon}]";
+                return new { Message = msg };
+            }) ?? new { };
         }
 
         public async Task<object> GetGoiYSanPhamAsync()
         {
-            var list = await _context.SanPhams.AsNoTracking()
-                .Where(s => s.TrangThaiKinhDoanh)
-                .OrderBy(r => Guid.NewGuid())
-                .Take(3)
-                .ToListAsync();
-
-            var returnList = list.Select(s => new
+            return await _cache.GetOrCreateAsync<object>("CACHE_GOI_Y_SP", async entry =>
             {
-                Ten = s.TenSanPham,
-                Gia = s.GiaBan,
-                Link = $"{LinkDetailSP}{_protectorSanPham.Protect(s.IdSanPham.ToString())}"
-            }).ToList();
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+                var list = await _context.SanPhams.AsNoTracking().Where(s => s.TrangThaiKinhDoanh)
+                    .OrderBy(r => Guid.NewGuid()).Take(3).ToListAsync();
 
-            var actions = returnList.Select(s => new { Label = s.Ten, Link = s.Link }).ToList();
-            return new { Message = "Một vài món ngon hôm nay:", DanhSach = returnList, Actions = actions };
+                string msg = "Đây là những món best-seller hôm nay bạn nên thử:\n";
+                foreach (var sp in list)
+                {
+                    string tk = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString()); // <-- CODE MỚI
+                    msg += $"- {sp.TenSanPham} ({sp.GiaBan:N0}đ) \n[BUTTON: Chọn món {sp.TenSanPham} | {LinkDetailSP}?token={tk}]\n";
+                }
+                return new { Message = msg };
+            }) ?? new { };
         }
-
-        // ==================================================================================
-        // NHÓM 3: SÁCH THƯ VIỆN (TỐI ƯU SQL TÌM KIẾM CẮT TỪ KHÓA)
-        // ==================================================================================
 
         public async Task<object> KiemTraSachAsync(string keyword)
         {
-            if (string.IsNullOrWhiteSpace(keyword)) return new { Status = "NotFound", Message = "Vui lòng cung cấp tên sách." };
+            if (string.IsNullOrWhiteSpace(keyword)) return new { Message = "Vui lòng cung cấp tên sách nhé." };
 
-            var keywords = keyword.Trim().ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var query = _context.Sachs.AsNoTracking().Include(s => s.SachTacGias).ThenInclude(st => st.TacGia).AsQueryable();
-
-            foreach (var kw in keywords)
+            string cacheKey = $"KTSACH_{keyword}";
+            return await _cache.GetOrCreateAsync<object>(cacheKey, async entry =>
             {
-                query = query.Where(s => s.TenSach.ToLower().Contains(kw));
-            }
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
 
-            var sach = await query.FirstOrDefaultAsync();
+                var keywords = keyword.Trim().ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var query = _context.Sachs.AsNoTracking().Include(s => s.SachTacGias).ThenInclude(st => st.TacGia).AsQueryable();
 
-            if (sach == null) return new { Status = "NotFound", Message = $"Không tìm thấy sách nào khớp với '{keyword}'." };
+                foreach (var kw in keywords) query = query.Where(s => s.TenSach.ToLower().Contains(kw));
 
-            string token = _protectorSach.Protect(sach.IdSach.ToString());
+                var sach = await query.FirstOrDefaultAsync();
+                if (sach == null) return new { Message = $"Không tìm thấy sách nào khớp với '{keyword}'. Bạn thử cuốn khác nhé!\n[BUTTON: Khám phá Thư viện | {LinkThuVienSach}]" };
 
-            return new
-            {
-                Name = sach.TenSach,
-                Author = string.Join(", ", sach.SachTacGias.Where(x => x.TacGia != null).Select(x => x.TacGia.TenTacGia)),
-                Location = sach.ViTri,
-                Stock = sach.SoLuongHienCo,
-                Status = sach.SoLuongHienCo > 0 ? "Có sẵn" : "Đã hết",
-                Actions = new[] { new { Label = "Xem thông tin sách", Link = $"{LinkDetailSach}{token}" } }
-            };
+                bool isAvailable = sach.SoLuongHienCo > 0;
+                string statusMessage = isAvailable ? $"Hiện còn {sach.SoLuongHienCo} cuốn trên kệ." : "Sách này hiện đã có khách mượn hết. Bạn có thể tham khảo các tác phẩm khác.";
+                string tacGia = string.Join(", ", sach.SachTacGias.Where(x => x.TacGia != null).Select(x => x.TacGia.TenTacGia));
+
+                string token = _protectorSach.ProtectToUrlSafe(sach.IdSach.ToString()); // <-- CODE MỚI
+
+                return new { Message = $"Cuốn '{sach.TenSach}' của tác giả {tacGia}. {statusMessage}\n[BUTTON: Xem thông tin sách | {LinkDetailSach}?token={token}]" };
+            }) ?? new { };
         }
 
-        public async Task<object> TimSachTheoTacGiaAsync(string tenTacGia)
+        public async Task<object> TimSachMoRongAsync(string loaiTimKiem, string tuKhoa)
         {
-            var list = await _context.Sachs.AsNoTracking()
-                .Include(s => s.SachTacGias).ThenInclude(st => st.TacGia)
-                .Where(s => s.SachTacGias.Any(t => t.TacGia != null && t.TacGia.TenTacGia.Contains(tenTacGia)))
-                .Take(5)
-                .ToListAsync();
+            if (string.IsNullOrWhiteSpace(tuKhoa)) return new { Message = "Vui lòng cung cấp từ khóa để tìm sách nhé." };
 
-            if (!list.Any()) return new { Message = $"Không tìm thấy sách nào của tác giả '{tenTacGia}'." };
-
-            var returnList = list.Select(s => new
+            return await _cache.GetOrCreateAsync<object>($"CACHE_SACH_MORONG_{loaiTimKiem}_{tuKhoa}", async entry =>
             {
-                Ten = s.TenSach,
-                ViTri = s.ViTri,
-                Link = $"{LinkDetailSach}{_protectorSach.Protect(s.IdSach.ToString())}"
-            }).ToList();
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
 
-            var actions = returnList.Select(s => new { Label = s.Ten, Link = s.Link }).ToList();
-            return new { Message = $"Sách của tác giả {tenTacGia}:", DanhSach = returnList, Actions = actions };
+                if (loaiTimKiem.Equals("TacGia", StringComparison.OrdinalIgnoreCase))
+                {
+                    var tg = await _context.TacGias.AsNoTracking().FirstOrDefaultAsync(t => t.TenTacGia.Contains(tuKhoa));
+                    if (tg != null)
+                    {
+                        string tk = _protectorTacGia.ProtectToUrlSafe(tg.IdTacGia.ToString());
+                        return new { Message = $"Mình đã tìm thấy Tác giả {tg.TenTacGia}. Mời bạn nhấp vào nút bên dưới để xem toàn bộ tác phẩm nhé:\n[BUTTON: Xem sách của {tg.TenTacGia} | {LinkThongTinSach}?TokenTacGia={tk}]" };
+                    }
+                }
+                else if (loaiTimKiem.Equals("TheLoai", StringComparison.OrdinalIgnoreCase))
+                {
+                    var tl = await _context.TheLoais.AsNoTracking().FirstOrDefaultAsync(t => t.TenTheLoai.Contains(tuKhoa));
+                    if (tl != null)
+                    {
+                        string tk = _protectorTheLoai.ProtectToUrlSafe(tl.IdTheLoai.ToString());
+                        return new { Message = $"Có ngay sách thể loại {tl.TenTheLoai}. Mời bạn khám phá:\n[BUTTON: Sách thể loại {tl.TenTheLoai} | {LinkThongTinSach}?TokenTheLoai={tk}]" };
+                    }
+                }
+                else if (loaiTimKiem.Equals("NhaXuatBan", StringComparison.OrdinalIgnoreCase))
+                {
+                    var nxb = await _context.NhaXuatBans.AsNoTracking().FirstOrDefaultAsync(t => t.TenNhaXuatBan.Contains(tuKhoa));
+                    if (nxb != null)
+                    {
+                        string tk = _protectorNXB.ProtectToUrlSafe(nxb.IdNhaXuatBan.ToString());
+
+                        return new { Message = $"Mình đã tìm thấy NXB {nxb.TenNhaXuatBan}. Mời bạn xem sách:\n[BUTTON: Sách của NXB {nxb.TenNhaXuatBan} | {LinkThongTinSach}?TokenNXB={tk}]" };
+                    }
+                }
+
+                return new { Message = $"Không tìm thấy sách nào khớp với '{tuKhoa}' cho phân loại này. Bạn thử tìm từ khóa khác nhé.\n[BUTTON: Khám phá Thư viện | {LinkThuVienSach}]" };
+            }) ?? new { };
         }
 
         public async Task<object> GetGoiYSachAsync()
         {
-            var list = await _context.Sachs.AsNoTracking()
-                .Include(s => s.SachTacGias).ThenInclude(st => st.TacGia)
-                .Where(s => s.SoLuongHienCo > 0)
-                .OrderBy(r => Guid.NewGuid())
-                .Take(3)
-                .ToListAsync();
-
-            var returnList = list.Select(s => new
+            return await _cache.GetOrCreateAsync<object>("CACHE_GOI_Y_SACH", async entry =>
             {
-                Ten = s.TenSach,
-                TacGia = string.Join(", ", s.SachTacGias.Where(st => st.TacGia != null).Select(st => st.TacGia.TenTacGia)),
-                Link = $"{LinkDetailSach}{_protectorSach.Protect(s.IdSach.ToString())}"
-            }).ToList();
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+                var list = await _context.Sachs.AsNoTracking()
+                    .Include(s => s.SachTacGias).ThenInclude(st => st.TacGia)
+                    .Where(s => s.SoLuongHienCo > 0).OrderBy(r => Guid.NewGuid()).Take(3).ToListAsync();
 
-            var actions = returnList.Select(s => new { Label = s.Ten, Link = s.Link }).ToList();
-            return new { Message = "Những cuốn sách thú vị:", DanhSach = returnList, Actions = actions };
-        }
-
-        // ==================================================================================
-        // NHÓM 4: ĐẶT BÀN
-        // ==================================================================================
-
-        public async Task<object> KiemTraBanTrongAsync(int soNguoi)
-        {
-            var bans = await _context.Bans.AsNoTracking()
-                .Include(b => b.KhuVuc)
-                .Where(b => b.SoGhe >= soNguoi && b.TrangThai != "Hỏng" && b.TrangThai != "Bảo trì" && b.TrangThai != "Đã Đặt")
-                .OrderBy(b => b.SoGhe)
-                .Take(6)
-                .Select(b => new
+                string msg = "Những cuốn sách thú vị đang có sẵn trên kệ:\n";
+                foreach (var s in list) // Đảm bảo biến 's' được khai báo ở đây
                 {
-                    TenBan = b.SoBan,
-                    SoGhe = b.SoGhe,
-                    KhuVuc = b.KhuVuc != null ? b.KhuVuc.TenKhuVuc : "Chung",
-                    Mota = $"Bàn {b.SoBan} ({b.SoGhe} ghế) - {(b.KhuVuc != null ? b.KhuVuc.TenKhuVuc : "Chung")}"
-                })
-                .ToListAsync();
-
-            if (!bans.Any()) return new { Message = "Rất tiếc, không tìm thấy bàn nào phù hợp với số lượng người này." };
-            return new { DanhSachBanTrong = bans, Note = "Vui lòng chọn một bàn từ danh sách trên." };
-        }
-
-        public async Task<object> DatBanThucSuAsync(string tenBan, int soNguoi, DateTime thoiGianDat, string hoTen, string sdt, string email, string ghiChu, int? idKhachHang)
-        {
-            if (thoiGianDat < DateTime.Now.AddMinutes(10))
-                return new { Error = "Vui lòng đặt trước ít nhất 15 phút so với hiện tại." };
-
-            var openingHours = await GetAndParseOpeningHours();
-            if (!IsTimeValid(thoiGianDat, openingHours))
-                return new { Error = $"Quán đóng cửa vào giờ đó. Giờ mở cửa: {openingHours.Open:hh\\:mm} - {openingHours.Close:hh\\:mm}" };
-
-            var ban = await _context.Bans.FirstOrDefaultAsync(b => b.SoBan == tenBan || b.SoBan.Contains(tenBan));
-            if (ban == null) return new { Error = $"Không tìm thấy bàn tên '{tenBan}'." };
-
-            DateTime thoiGianKetThuc = thoiGianDat.AddHours(SlotDurationHours);
-            bool isConflict = await _context.PhieuDatBans.AnyAsync(p =>
-                p.IdBan == ban.IdBan &&
-                p.TrangThai != "Đã Hủy" && p.TrangThai != "Hoàn thành" &&
-                (
-                    (thoiGianDat >= p.ThoiGianDat && thoiGianDat < p.ThoiGianDat.AddHours(SlotDurationHours)) ||
-                    (thoiGianKetThuc > p.ThoiGianDat && thoiGianKetThuc <= p.ThoiGianDat.AddHours(SlotDurationHours)) ||
-                    (thoiGianDat <= p.ThoiGianDat && thoiGianKetThuc >= p.ThoiGianDat.AddHours(SlotDurationHours))
-                )
-            );
-
-            if (isConflict) return new { Error = $"Rất tiếc, bàn {ban.SoBan} đã có người đặt trong khung giờ này." };
-
-            try
-            {
-                _context.IsAiOperation = true;
-                int finalIdKhach;
-                if (idKhachHang.HasValue && idKhachHang > 0)
-                {
-                    finalIdKhach = idKhachHang.Value;
-                    _context.AiCustomerId = finalIdKhach;
+                    string tk = _protectorSach.ProtectToUrlSafe(s.IdSach.ToString());
+                    msg += $"- {s.TenSach} \n[BUTTON: Xem sách | {LinkDetailSach}?token={tk}]\n";
                 }
-                else
-                {
-                    var guest = await _context.KhachHangs.FirstOrDefaultAsync(k => k.SoDienThoai == sdt);
-                    if (guest == null)
-                    {
-                        guest = new KhachHang { HoTen = hoTen, SoDienThoai = sdt, Email = email, TaiKhoanTam = true, TenDangNhap = sdt, MatKhau = Guid.NewGuid().ToString("N").Substring(0, 10), NgayTao = DateTime.Now, BiKhoa = false };
-                        _context.KhachHangs.Add(guest);
-                        await _context.SaveChangesAsync();
-                    }
-                    finalIdKhach = guest.IdKhachHang;
-                    _context.AiCustomerId = finalIdKhach;
-                }
-
-                var phieu = new PhieuDatBan { IdBan = ban.IdBan, IdKhachHang = finalIdKhach, SoLuongKhach = soNguoi, ThoiGianDat = thoiGianDat, GhiChu = ghiChu, TrangThai = "Chờ xác nhận", HoTenKhach = hoTen, SdtKhach = sdt };
-                _context.PhieuDatBans.Add(phieu);
-                var tb = new ThongBao { NoiDung = $"Khách {hoTen} ({sdt}) đặt {ban.SoBan} lúc {thoiGianDat:HH:mm dd/MM}", LoaiThongBao = "DatBan", ThoiGianTao = DateTime.Now, DaXem = false, IdLienQuan = phieu.IdPhieuDatBan };
-                _context.ThongBaos.Add(tb);
-                await _context.SaveChangesAsync();
-
-                return new { Status = "Success", Message = $"Đặt bàn {ban.SoBan} thành công! Mã phiếu: {phieu.IdPhieuDatBan}.", CanhBao = "Bàn sẽ tự động hủy nếu quý khách đến trễ 15 phút.", Actions = new[] { new { Label = "Quản lý đặt bàn", Link = LinkLichSuDatBan } } };
-            }
-            finally
-            {
-                _context.IsAiOperation = false;
-                _context.AiCustomerId = null;
-            }
+                return new { Message = msg };
+            }) ?? new { };
         }
 
-        private class OpeningHours { public TimeSpan Open { get; set; } = new TimeSpan(6, 0, 0); public TimeSpan Close { get; set; } = new TimeSpan(23, 0, 0); }
-        private async Task<OpeningHours> GetAndParseOpeningHours() { var setting = await _context.CaiDats.AsNoTracking().FirstOrDefaultAsync(cd => cd.TenCaiDat == "LienHe_GioMoCua"); string settingValue = (setting != null && !string.IsNullOrEmpty(setting.GiaTri)) ? setting.GiaTri : "06:00 - 23:00"; var hours = new OpeningHours(); try { var match = Regex.Match(settingValue, @"(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})"); if (match.Success) { if (TimeSpan.TryParse(match.Groups[1].Value, out TimeSpan open)) hours.Open = open; if (TimeSpan.TryParse(match.Groups[2].Value, out TimeSpan close)) hours.Close = close; } } catch { } return hours; }
-        private bool IsTimeValid(DateTime thoiGianDat, OpeningHours hours) { var timeOfDay = thoiGianDat.TimeOfDay; return timeOfDay >= hours.Open && timeOfDay <= hours.Close; }
-        private string MaskInfo(string input) { if (string.IsNullOrEmpty(input) || input.Length < 4) return "***"; return input.Substring(0, 3) + "***" + input.Substring(input.Length - 2); }
+        private string MaskPhone(string? phone)
+        {
+            if (string.IsNullOrEmpty(phone) || phone.Length < 7) return "—";
+            return phone.Substring(0, 5) + "xxxx" + phone.Substring(phone.Length - 2);
+        }
 
-        // ==================================================================================
-        // NHÓM 5: TÀI KHOẢN & LỊCH SỬ CÁ NHÂN
-        // ==================================================================================
+        private string MaskEmail(string? email)
+        {
+            if (string.IsNullOrEmpty(email) || !email.Contains("@")) return "—";
+            var parts = email.Split('@');
+            string name = parts[0];
+            if (name.Length <= 3) return "xxx@" + parts[1];
+            return name.Substring(0, 3) + new string('x', Math.Max(3, name.Length - 3)) + "@" + parts[1];
+        }
 
         public async Task<object> GetDiemTichLuyAsync(int idKhachHang)
         {
             var kh = await _context.KhachHangs.FindAsync(idKhachHang);
-            return kh == null ? "Lỗi." : new { Message = $"Tài khoản của bạn hiện có {kh.DiemTichLuy:N0} điểm.", DiemTichLuy = kh.DiemTichLuy, Actions = new[] { new { Label = "Quản lý điểm", Link = LinkTaiKhoan } } };
+            return kh == null ? new { Message = "Lỗi xác thực" } : new { Message = $"Tài khoản của bạn hiện có {kh.DiemTichLuy:N0} điểm. \n[BUTTON: Xem Tổng quan | {LinkTaiKhoan}]" };
         }
 
         public async Task<object> GetThongTinCaNhanAsync(int idKhachHang)
         {
             var kh = await _context.KhachHangs.FindAsync(idKhachHang);
-            return kh == null ? "Lỗi." : new { HoTen = kh.HoTen, SDT = MaskInfo(kh.SoDienThoai ?? ""), Email = MaskInfo(kh.Email ?? ""), Actions = new List<object> { new { Label = "Cập nhật hồ sơ", Link = LinkThongTinCaNhan } } };
+            return kh == null ? new { Message = "Lỗi xác thực" } : new { Message = $"Thông tin cá nhân của bạn:\n- Họ tên: {kh.HoTen}\n- SĐT: {MaskPhone(kh.SoDienThoai)}\n- Email: {MaskEmail(kh.Email)}\n\n[BUTTON: Cập nhật Hồ sơ | {LinkThongTinCaNhan}]" };
         }
 
         public async Task<object> GetTongQuanTaiKhoanAsync(int idKhachHang)
         {
             var kh = await _context.KhachHangs.FindAsync(idKhachHang);
-            return kh == null ? "Lỗi." : new { HoTen = kh.HoTen, Diem = kh.DiemTichLuy, Actions = new List<object> { new { Label = "Vào trang quản lý", Link = LinkTaiKhoan } } };
+            return kh == null ? new { Message = "Lỗi xác thực" } : new { Message = $"Xin chào {kh.HoTen}, điểm của bạn là {kh.DiemTichLuy:N0}.\n[BUTTON: Quản lý tài khoản | {LinkTaiKhoan}]" };
         }
 
         public async Task<object> GetLichSuDatBanAsync(int idKhachHang)
         {
-            return new { Message = "Để xem chi tiết các lịch đặt bàn của bạn, vui lòng truy cập đường dẫn bên dưới:", Actions = new[] { new { Label = "Lịch sử đặt bàn", Link = LinkLichSuDatBan } } };
+            var phieu = await _context.PhieuDatBans.Include(p => p.Ban).AsNoTracking()
+                .Where(p => p.IdKhachHang == idKhachHang)
+                .OrderByDescending(p => p.ThoiGianDat)
+                .FirstOrDefaultAsync();
+
+            if (phieu == null) return new { Message = "Bạn chưa có lịch sử đặt bàn nào trên hệ thống.\n[BUTTON: Đặt bàn ngay | {LinkDatBan}]" };
+
+            string msg = $"Phiếu đặt bàn gần nhất của bạn là: **Bàn {phieu.Ban?.SoBan ?? ""}** (dành cho {phieu.SoLuongKhach} người), thời gian: {phieu.ThoiGianDat:dd/MM/yyyy HH:mm}. Trạng thái hiện tại: **{phieu.TrangThai}**.\n\n[BUTTON: Xem toàn bộ lịch sử đặt bàn | {LinkLichSuDatBan}]";
+            return new { Message = msg };
         }
 
-        public async Task<object> HuyDatBanAsync(int idPhieuDat, string lyDo, int idKhachHang)
+        public Task<object> HuyDatBanAsync(int idPhieuDat, string lyDo, int idKhachHang)
         {
-            return "Đã gửi yêu cầu hủy. Để xem trạng thái mới nhất, bạn vui lòng truy cập Lịch sử đặt bàn nhé.";
+            return Task.FromResult<object>(new { Message = $"Đã tiếp nhận yêu cầu. Bạn có thể thực hiện hủy phiếu an toàn tại trang Lịch sử nhé.\n[BUTTON: Lịch sử đặt bàn | {LinkLichSuDatBan}]" });
         }
 
+        // ĐÃ NÂNG CẤP: Hiển thị ngày đến hạn / quá hạn
         public async Task<object> GetLichSuThueSachAsync(int idKhachHang)
         {
-            return new { Message = "Danh sách các quyển sách bạn đang mượn được lưu trong lịch sử thuê:", Actions = new[] { new { Label = "Sách đang mượn", Link = LinkLichSuThue } } };
+            var phieu = await _context.PhieuThueSachs.Include(p => p.ChiTietPhieuThues).ThenInclude(c => c.Sach).AsNoTracking()
+                .Where(p => p.IdKhachHang == idKhachHang && p.TrangThai == "Đang thuê")
+                .OrderByDescending(p => p.NgayThue)
+                .FirstOrDefaultAsync();
+
+            if (phieu == null) return new { Message = $"Hiện tại bạn không có cuốn sách nào đang mượn.\n[BUTTON: Xem lịch sử thuê sách | {LinkLichSuThue}]" };
+
+            string msg = $"Bạn đang có 1 phiếu mượn sách (Mã #{phieu.IdPhieuThueSach}). Các sách đang mượn:\n";
+            foreach (var ct in phieu.ChiTietPhieuThues)
+            {
+                var daysLeft = (ct.NgayHenTra.Date - DateTime.Now.Date).TotalDays;
+                string note = "";
+                if (daysLeft < 0) note = " (⚠️ ĐÃ QUÁ HẠN)";
+                else if (daysLeft <= 3) note = $" (⏳ Sắp đến hạn: còn {daysLeft} ngày)";
+
+                msg += $"- {ct.Sach?.TenSach ?? "Sách"} (Hẹn trả: {ct.NgayHenTra:dd/MM/yyyy}){note}\n";
+            }
+            msg += $"\n[BUTTON: Xem chi tiết lịch sử thuê | {LinkLichSuThue}]";
+            return new { Message = msg };
         }
 
         public async Task<object> GetLichSuDonHangAsync(int idKhachHang)
         {
-            return new { Message = "Tất cả các đơn hàng mua nước/bánh của bạn đều nằm ở đây nhé:", Actions = new[] { new { Label = "Lịch sử đơn hàng", Link = LinkLichSuDonHang } } };
+            var listDon = await _context.HoaDons.AsNoTracking().Where(h => h.IdKhachHang == idKhachHang && h.LoaiHoaDon == "Giao hàng").OrderByDescending(h => h.ThoiGianTao).Take(3).ToListAsync();
+
+            if (!listDon.Any()) return new { Message = "Tài khoản của bạn chưa có đơn hàng nào." };
+
+            string msg = "3 đơn hàng mua sắm gần đây nhất của bạn:\n";
+            foreach (var hd in listDon)
+            {
+                string token = Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(System.Text.Encoding.UTF8.GetBytes(hd.IdHoaDon.ToString()));
+                msg += $"- Đơn #{hd.IdHoaDon} (Trạng thái: {hd.TrangThai ?? hd.TrangThaiGiaoHang})\n[BUTTON: Chi tiết đơn #{hd.IdHoaDon} | {LinkChiTietDonHang}{token}]\n\n";
+            }
+            msg += $"[BUTTON: Xem tất cả lịch sử | {LinkLichSuDonHang}]";
+            return new { Message = msg };
+        }
+
+        public async Task<object> GetGoiYComboAsync()
+        {
+            return await _cache.GetOrCreateAsync<object>("CACHE_GOI_Y_COMBO", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+
+                // Lấy 1 đồ uống ngẫu nhiên đang kinh doanh
+                var sp = await _context.SanPhams.AsNoTracking()
+                    .Where(s => s.TrangThaiKinhDoanh)
+                    .OrderBy(r => Guid.NewGuid()).FirstOrDefaultAsync();
+
+                // Lấy 1 cuốn sách ngẫu nhiên đang có sẵn
+                var sach = await _context.Sachs.AsNoTracking()
+                    .Include(s => s.SachTacGias).ThenInclude(st => st.TacGia)
+                    .Where(s => s.SoLuongHienCo > 0).OrderBy(r => Guid.NewGuid()).FirstOrDefaultAsync();
+
+                if (sp == null || sach == null)
+                    return new { Message = "Xin lỗi bạn, hiện tại mình chưa thể gom được combo. Mời bạn ghé xem trực tiếp tại menu của quán nhé!" };
+
+                string tkSp = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString());
+                string tkSach = _protectorSach.ProtectToUrlSafe(sach.IdSach.ToString());
+
+                string msg = "Hôm nay là một ngày tuyệt vời! Mình gợi ý cho bạn một combo cực chill tại Cafebook nhé:\n\n" +
+                             $"🍵 **Nước uống:** {sp.TenSanPham} ({sp.GiaBan:N0}đ)\n" +
+                             $"[BUTTON: Chi tiết món | {LinkDetailSP}?token={tkSp}]\n\n" +
+                             $"📖 **Sách hay:** {sach.TenSach} \n" +
+                             $"[BUTTON: Xem sách | {LinkDetailSach}?token={tkSach}]\n\n" +
+                             $"Bạn thấy combo này thế nào? Ghé quán tìm một góc nhỏ màu nâu be ấm áp để thưởng thức ngay nhé!";
+
+                return new { Message = msg };
+            }) ?? new { };
         }
 
         public async Task<object> TheoDoiDonHangAsync(int idHoaDon, int idKhachHang)
         {
-            var hd = await _context.HoaDons.AsNoTracking()
-                .FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon && h.IdKhachHang == idKhachHang);
+            var hd = await _context.HoaDons.AsNoTracking().FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon && h.IdKhachHang == idKhachHang);
+            if (hd == null) return new { Message = $"Mình không tìm thấy đơn hàng mã #{idHoaDon} trong tài khoản của bạn. Bạn kiểm tra lại mã nha." };
 
-            if (hd == null)
-            {
-                return new { Message = $"Mình không tìm thấy đơn hàng mã #{idHoaDon} trong tài khoản của bạn. Bạn kiểm tra lại mã đơn giúp mình nhé!" };
-            }
-
-            string token = _protectorHoaDon.Protect(hd.IdHoaDon.ToString());
-
-            return new
-            {
-                Message = $"Đơn hàng **#{hd.IdHoaDon}** của bạn hiện đang ở trạng thái: **{hd.TrangThai ?? "Đang xử lý"}**.",
-                Actions = new[] { new { Label = "Xem chi tiết đơn", Link = $"{LinkChiTietDonHang}{token}" } }
-            };
+            string token = Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(System.Text.Encoding.UTF8.GetBytes(hd.IdHoaDon.ToString()));
+            return new { Message = $"Đơn hàng #{hd.IdHoaDon} của bạn đang ở trạng thái: **{hd.TrangThaiGiaoHang ?? hd.TrangThai ?? "Đang xử lý"}**.\n[BUTTON: Xem chi tiết đơn | {LinkChiTietDonHang}{token}]" };
         }
     }
 }

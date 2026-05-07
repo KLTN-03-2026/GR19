@@ -75,6 +75,7 @@
             <table class="table table-hover align-middle mb-0 bg-white">
                 <thead class="table-light">
                     <tr>
+                        <th scope="col">Mã phiếu</th>
                         <th scope="col">Số Bàn</th>
                         <th scope="col">Thời gian</th>
                         <th scope="col">Số khách</th>
@@ -87,6 +88,8 @@
                     @foreach (var item in Model.PagedData.Items)
                     {
                         <tr class="lsdb-row">
+                            <td data-label="Mã phiếu" class="fw-bold text-danger">#@item.IdPhieuDatBan</td>
+                    
                             <td data-label="Số Bàn" class="fw-bold text-primary">@item.TenBan</td>
                             <td data-label="Thời gian">
                                 <div>@(item.ThoiGianDat != default ? item.ThoiGianDat.ToString("HH:mm") : "N/A")</div>
@@ -183,11 +186,9 @@
 
 @section Scripts {
     <script>
-        // Hàm này sẽ đổ dữ liệu vào Modal khi click nút Hủy
         function openHuyModal(id, tenBan, thoiGian) {
             document.getElementById('modalIdPhieu').value = id;
-            document.getElementById('modalInfo').innerText = tenBan + " - " + thoiGian;
-            
+            document.getElementById('modalInfo').innerText = "#" + id + " | Bàn: " + tenBan + " - " + thoiGian;
             var myModal = new bootstrap.Modal(document.getElementById('huyBanModal'));
             myModal.show();
         }

@@ -400,7 +400,10 @@ namespace AppCafebookApi.View.nhanvien.pages
                 ClearForm();
                 return;
             }
-
+            if (txtMaPhieu != null)
+            {
+                txtMaPhieu.Text = $"- #{_selectedPhieu.IdPhieuDatBan}";
+            }
             _isUpdatingKhachText = true;
             txtTenKhach.Text = _selectedPhieu.TenKhachHang;
             txtSdtKH.Text = _selectedPhieu.SoDienThoai;
@@ -446,6 +449,10 @@ namespace AppCafebookApi.View.nhanvien.pages
         {
             _selectedPhieu = null;
 
+            if (txtMaPhieu != null)
+            {
+                txtMaPhieu.Text = string.Empty;
+            }
             _isUpdatingKhachText = true;
             txtTenKhach.Text = string.Empty;
             txtSdtKH.Text = string.Empty;

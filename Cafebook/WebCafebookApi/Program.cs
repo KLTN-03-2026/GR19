@@ -1,23 +1,41 @@
-﻿// Vị trí lưu: WebCafebookApi/Program.cs
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================================
-// 1. TỰ ĐỘNG TÌM/TẠO THƯ MỤC & FILE CONFIG
+// 1. TỰ ĐỘNG TÌM/TẠO THƯ MỤC CHUNG (SettingCafebook)
 // ==========================================
 string currentDir = Directory.GetCurrentDirectory();
 DirectoryInfo parentDir = Directory.GetParent(currentDir)!;
 string configDirPath = Path.Combine(parentDir.FullName, "SettingCafebook");
-string configFilePath = Path.Combine(configDirPath, "WebConfig.json");
 
 if (!Directory.Exists(configDirPath))
 {
     Directory.CreateDirectory(configDirPath);
 }
 
+// ==========================================
+// 2. CẤU HÌNH DATA PROTECTION (DÙNG CHUNG KEY VỚI BACKEND)
+// ==========================================
+string dataProtectionDirPath = Path.Combine(configDirPath, "SharedKeys");
+if (!Directory.Exists(dataProtectionDirPath))
+{
+    Directory.CreateDirectory(dataProtectionDirPath);
+}
+
+var sharedKeyDir = new DirectoryInfo(dataProtectionDirPath);
+builder.Services.AddDataProtection()
+    .SetApplicationName("CafebookSystem") // Tên này phải y hệt bên Backend
+    .PersistKeysToFileSystem(sharedKeyDir);
+
+// ==========================================
+// 3. TỰ ĐỘNG TẠO/ĐỌC FILE CẤU HÌNH WEB
+// ==========================================
+string configFilePath = Path.Combine(configDirPath, "WebConfig.json");
 if (!File.Exists(configFilePath))
 {
     var defaultConfig = new
@@ -33,8 +51,9 @@ builder.Configuration.AddJsonFile(configFilePath, optional: false, reloadOnChang
 string apiServerUrl = builder.Configuration.GetValue<string>("ApiSettings:BaseUrl") ?? "";
 
 builder.Services.AddHttpContextAccessor();
+
 // ==========================================
-// 2. CẤU HÌNH HTTP CLIENT ĐỘNG (ApiClient)
+// 4. CẤU HÌNH HTTP CLIENT ĐỘNG (ApiClient)
 // ==========================================
 builder.Services.AddHttpClient("ApiClient", (serviceProvider, client) =>
 {
@@ -61,6 +80,9 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+// ==========================================
+// 5. CẤU HÌNH AUTHENTICATION (COOKIES)
+// ==========================================
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -96,16 +118,18 @@ builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
+// ==========================================
+// 6. PIPELINE MIDDLEWARE
+// ==========================================
 app.UseExceptionHandler("/loi-he-thong?code=500");
 app.UseExceptionHandler("/loi-he-thong?code=400");
 app.UseStatusCodePagesWithReExecute("/loi-he-thong", "?code={0}");
 
 app.UseStaticFiles();
 app.UseRouting();
-
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapRazorPages();
+
 app.Run();
