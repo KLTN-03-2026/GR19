@@ -145,13 +145,11 @@ var app = builder.Build();
 // ==========================================================
 // CẤU HÌNH PIPELINE (MIDDLEWARE)
 // ==========================================================
-app.UseSwagger();
-app.UseSwaggerUI(options =>
+if (app.Environment.IsDevelopment())
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Cafebook API v1");
-    // Cài đặt RoutePrefix = string.Empty để hiển thị Swagger ngay khi truy cập domain (vd: https://cafebookapi.shushushu.id.vn/)
-    options.RoutePrefix = string.Empty;
-});
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseStaticFiles();
 app.UseRouting();

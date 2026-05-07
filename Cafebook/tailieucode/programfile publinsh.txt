@@ -7,22 +7,40 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IO;
 using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================================================
-// 0. TỰ ĐỘNG TẠO/ĐỌC FILE CẤU HÌNH KHÓA ADMIN (TOTP)
+// 0. KHỞI TẠO ĐƯỜNG DẪN THƯ MỤC CHUNG (SettingCafebook)
 // ==========================================================
 string currentDir = Directory.GetCurrentDirectory();
 DirectoryInfo parentDir = Directory.GetParent(currentDir)!;
 string configDirPath = Path.Combine(parentDir.FullName, "SettingCafebook");
-string adminKeyFilePath = Path.Combine(configDirPath, "ApisecretKeyAdministrator.json");
 
 if (!Directory.Exists(configDirPath))
 {
     Directory.CreateDirectory(configDirPath);
 }
 
+// ==========================================================
+// 1. CẤU HÌNH DATA PROTECTION (DÙNG CHUNG KEY VỚI FRONTEND)
+// ==========================================================
+string dataProtectionDirPath = Path.Combine(configDirPath, "SharedKeys");
+if (!Directory.Exists(dataProtectionDirPath))
+{
+    Directory.CreateDirectory(dataProtectionDirPath);
+}
+
+var sharedKeyDir = new DirectoryInfo(dataProtectionDirPath);
+builder.Services.AddDataProtection()
+    .SetApplicationName("CafebookSystem") // Tên này phải y hệt bên Frontend
+    .PersistKeysToFileSystem(sharedKeyDir);
+
+// ==========================================================
+// 2. TỰ ĐỘNG TẠO/ĐỌC FILE CẤU HÌNH KHÓA ADMIN (TOTP)
+// ==========================================================
+string adminKeyFilePath = Path.Combine(configDirPath, "ApisecretKeyAdministrator.json");
 bool fileExists = File.Exists(adminKeyFilePath);
 bool fileIsEmpty = fileExists && new FileInfo(adminKeyFilePath).Length == 0;
 
@@ -40,48 +58,38 @@ if (!fileExists || fileIsEmpty)
             SecretKey = randomSecretKey
         }
     };
-    File.WriteAllText(adminKeyFilePath, System.Text.Json.JsonSerializer.Serialize(defaultAdminConfig, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    File.WriteAllText(adminKeyFilePath, JsonSerializer.Serialize(defaultAdminConfig, new JsonSerializerOptions { WriteIndented = true }));
 }
-
-// Nạp file cấu hình, tự động cập nhật khi file thay đổi
 builder.Configuration.AddJsonFile(adminKeyFilePath, optional: false, reloadOnChange: true);
 
 // ==========================================================
-// ĐĂNG KÝ CÁC DỊCH VỤ NỀN
+// ĐĂNG KÝ CÁC DỊCH VỤ NỀN VÀ DATABASE
 // ==========================================================
 builder.Services.AddMemoryCache();
-builder.Services.AddHostedService<CafebookApi.Services.DatabaseBackupService>();
-builder.Services.AddHostedService<CafebookApi.Services.AutoCancelOrderService>();
-builder.Services.AddHostedService<CafebookApi.Services.AutoUnlockAccountService>();
-builder.Services.AddHostedService<CafebookApi.Services.AutoCancelReservationService>();
-builder.Services.AddHostedService<CafebookApi.Services.DailyReminderBackgroundService>();
+builder.Services.AddHostedService<DatabaseBackupService>();
+builder.Services.AddHostedService<AutoCancelOrderService>();
+builder.Services.AddHostedService<AutoUnlockAccountService>();
+builder.Services.AddHostedService<AutoCancelReservationService>();
+builder.Services.AddHostedService<DailyReminderBackgroundService>();
 
-
-// ==========================================================
-// 1. KẾT NỐI DATABASE
-// ==========================================================
 var connectionString = builder.Configuration.GetConnectionString("CafeBookConnectionString");
 builder.Services.AddDbContext<CafebookDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // ==========================================================
-// 2. CẤU HÌNH CORS (CHUẨN CHO SIGNALR KHI PUBLISH)
+// CẤU HÌNH CORS, DI, VÀ SWAGGER
 // ==========================================================
 builder.Services.AddCors(options =>
 {
-    // Cấu hình linh hoạt nhất, tránh lỗi chặn chéo khi Deploy
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.SetIsOriginAllowed(_ => true) // <--- Chấp nhận mọi domain
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials();           // <--- BẮT BUỘC để SignalR kết nối WebSockets thành công
+              .AllowCredentials();
     });
 });
 
-// ==========================================================
-// 3. ĐĂNG KÝ CÁC DỊCH VỤ (DEPENDENCY INJECTION)
-// ==========================================================
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
@@ -90,13 +98,12 @@ builder.Services.AddSwaggerGen(options =>
     options.CustomSchemaIds(type => type.FullName);
 });
 
-// Thêm SignalR cho chức năng Chat / Thông báo realtime
 builder.Services.AddSignalR();
 builder.Services.AddScoped<AiService>();
 builder.Services.AddScoped<AiToolService>();
 
 // ==========================================================
-// 4. CẤU HÌNH BẢO MẬT JWT VÀ SIGNALR
+// CẤU HÌNH BẢO MẬT JWT VÀ SIGNALR
 // ==========================================================
 builder.Services.AddAuthentication(options =>
 {
@@ -116,15 +123,11 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
 
-    // ======================================================
-    // BẮT TOKEN CHO SIGNALR (ĐỌC TỪ QUERY STRING)
-    // ======================================================
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
             var accessToken = context.Request.Query["access_token"];
-
             var path = context.HttpContext.Request.Path;
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
             {
@@ -140,11 +143,8 @@ builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 
 // ==========================================================
-// 5. CẤU HÌNH PIPELINE (MIDDLEWARE)
+// CẤU HÌNH PIPELINE (MIDDLEWARE)
 // ==========================================================
-
-// BỎ khối lệnh "if (app.Environment.IsDevelopment())"
-// ĐỂ HIỂN THỊ SWAGGER TRÊN MỌI MÔI TRƯỜNG (Bao gồm cả Production)
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
@@ -153,21 +153,12 @@ app.UseSwaggerUI(options =>
     options.RoutePrefix = string.Empty;
 });
 
-// Mở dòng này nếu bạn muốn ép API tự động chuyển từ http sang https (Rất tốt khi Publish)
-// app.UseHttpsRedirection(); 
-
 app.UseStaticFiles();
 app.UseRouting();
-
-// CỰC KỲ QUAN TRỌNG: Gọi CORS trước Authentication và Authorization
 app.UseCors("AllowAll");
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
-// Gắn Hub SignalR
 app.MapHub<ChatHub>("/chatHub");
 
 app.Run();
