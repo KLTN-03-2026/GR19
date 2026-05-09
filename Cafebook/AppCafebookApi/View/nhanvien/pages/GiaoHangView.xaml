@@ -33,6 +33,45 @@
         <SolidColorBrush x:Key="PrimaryBrownBrush" Color="#6F4E37"/>
         <CollectionViewSource x:Key="ShippersSource" />
 
+        <Style x:Key="ModernDatePickerStyle" TargetType="DatePicker">
+            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource CoffeeLight}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DatePicker">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <DatePickerTextBox x:Name="PART_TextBox" Grid.Column="0" Padding="{TemplateBinding Padding}" VerticalContentAlignment="Center" Background="Transparent" BorderThickness="0" BorderBrush="Transparent"/>
+                                <Button x:Name="PART_Button" Grid.Column="1" Width="36" Cursor="Hand" Focusable="False">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="Transparent">
+                                                <Path Data="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z"
+                                                      Fill="{StaticResource PrimaryBrownBrush}" Stretch="Uniform" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Bottom" PlacementTarget="{Binding ElementName=PART_TextBox}" StaysOpen="False" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PrimaryBrownBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="MaterialTabStyle" TargetType="RadioButton">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
@@ -102,7 +141,7 @@
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <TextBlock Text="Lọc ngày:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="SemiBold" Foreground="{StaticResource TextMain}"/>
-                    <DatePicker x:Name="dpNgayLoc" Width="140" Margin="0,0,20,0" SelectedDateChanged="DpNgayLoc_SelectedDateChanged"/>
+                    <DatePicker x:Name="dpNgayLoc" Width="140" Style="{StaticResource ModernDatePickerStyle}" Margin="0,0,20,0" SelectedDateChanged="DpNgayLoc_SelectedDateChanged"/>
 
                     <Button x:Name="btnConfirmAll" Content="✓ Duyệt tất cả" Style="{StaticResource MaterialButton}" Background="{StaticResource SuccessGreen}" Click="BtnConfirmAll_Click" Margin="0,0,10,0"/>
                     <Button x:Name="btnRefresh" Content="🔄 Làm mới" Style="{StaticResource MaterialButton}" Background="#ECEFF1" Foreground="{StaticResource CoffeeDark}" Click="BtnRefresh_Click"/>

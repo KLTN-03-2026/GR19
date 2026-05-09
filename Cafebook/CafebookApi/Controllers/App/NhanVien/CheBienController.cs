@@ -32,6 +32,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                 .Select(cb => new CheBienItemDto
                 {
                     IdTrangThaiCheBien = cb.IdTrangThaiCheBien,
+                    IdHoaDon = cb.IdHoaDon,
                     IdSanPham = cb.IdSanPham,
                     TenMon = cb.TenMon,
                     SoLuong = cb.SoLuong,
@@ -189,6 +190,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                     .Select(cb => new CheBienItemDto
                     {
                         IdTrangThaiCheBien = cb.IdTrangThaiCheBien,
+                        IdHoaDon = cb.IdHoaDon,
                         IdSanPham = cb.IdSanPham,
                         TenMon = cb.TenMon,
                         SoLuong = cb.SoLuong,

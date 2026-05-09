@@ -12,10 +12,12 @@ namespace AppCafebookApi.View.Common
         {
             InitializeComponent();
             _paymentUrl = paymentUrl;
-            InitializeAsync();
+
+            // Dời việc khởi tạo WebView vào sự kiện Loaded để đảm bảo Window đã được tạo xong hoàn toàn
+            this.Loaded += Window_Loaded;
         }
 
-        async void InitializeAsync()
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             await webView.EnsureCoreWebView2Async(null);
             webView.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
@@ -27,17 +29,20 @@ namespace AppCafebookApi.View.Common
             if (e.Uri.StartsWith("https://localhost/vnpay-app-return", StringComparison.OrdinalIgnoreCase))
             {
                 e.Cancel = true;
-                if (e.Uri.Contains("vnp_ResponseCode=00"))
-                {
-                    this.DialogResult = true; 
-                }
-                else
-                {
-                    MessageBox.Show("Khách hàng đã hủy hoặc giao dịch thất bại.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    this.DialogResult = false;
-                }
+                bool isSuccess = e.Uri.Contains("vnp_ResponseCode=00");
 
-                this.Close();
+                // Dùng Dispatcher để trì hoãn việc set DialogResult cho đến khi luồng UI rảnh rỗi
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (this.IsLoaded)
+                    {
+                        this.DialogResult = isSuccess;
+                    }
+                    else
+                    {
+                        this.Close();
+                    }
+                }));
             }
         }
     }

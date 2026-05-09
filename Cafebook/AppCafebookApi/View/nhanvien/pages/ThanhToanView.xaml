@@ -314,7 +314,7 @@
                             </Grid.ColumnDefinitions>
                             <RadioButton x:Name="rbTienMat" Grid.Row="0" Grid.Column="0" Content="Tiền mặt" IsChecked="True" GroupName="PaymentMethod" Checked="PaymentMethod_Changed" Margin="0,0,0,5"/>
                             <RadioButton x:Name="rbChuyenKhoan" Grid.Row="0" Grid.Column="1" Content="Chuyển khoản" GroupName="PaymentMethod" Checked="PaymentMethod_Changed" Margin="0,0,0,5"/>
-                            <RadioButton x:Name="rbThe" Grid.Row="1" Grid.Column="0" Content="Thẻ" GroupName="PaymentMethod" Checked="PaymentMethod_Changed"/>
+                            <RadioButton x:Name="rbThe" Grid.Row="1" Grid.Column="0" Content="Thẻ" GroupName="PaymentMethod" Checked="PaymentMethod_Changed" IsEnabled="False" ToolTip="Chức năng đang chờ phát triển"/>
                             <RadioButton x:Name="rbViDienTu" Grid.Row="1" Grid.Column="1" Content="Ví điện tử" GroupName="PaymentMethod" Checked="PaymentMethod_Changed"/>
                         </Grid>
 

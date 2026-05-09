@@ -3,16 +3,16 @@ using System.Collections.Generic; // Thêm
 
 namespace CafebookModel.Model.ModelApp.NhanVien
 {
-    // DTO cho một món ăn hiển thị trên màn hình bếp
     public class CheBienItemDto
     {
         public int IdTrangThaiCheBien { get; set; }
-        public int IdSanPham { get; set; } // <-- THÊM MỚI
+        public int IdHoaDon { get; set; } 
+        public int IdSanPham { get; set; } 
         public string TenMon { get; set; } = string.Empty;
         public int SoLuong { get; set; }
         public string SoBan { get; set; } = string.Empty;
         public string? GhiChu { get; set; }
-        public string TrangThai { get; set; } = string.Empty; // Chờ làm, Đang làm
+        public string TrangThai { get; set; } = string.Empty; 
         public DateTime ThoiGianGoi { get; set; }
         public string NhomIn { get; set; } = string.Empty;
 

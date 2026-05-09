@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CafebookModel.Utils;
+using System.Data.Common; // <-- DÙNG CHO TEXT TO SQL
 
 namespace CafebookApi.Services
 {
@@ -60,6 +61,165 @@ namespace CafebookApi.Services
             _cache = cache;
         }
 
+        public async Task<object> GetBanChayAsync()
+        {
+            // BƯỚC 1: LẤY TOP 3 SẢN PHẨM & TẠO NÚT BẤM
+            var topSanPhamIds = await _context.ChiTietHoaDons
+                .GroupBy(c => c.IdSanPham)
+                .OrderByDescending(g => g.Sum(c => c.SoLuong))
+                .Take(3)
+                .Select(g => g.Key)
+                .ToListAsync();
+
+            var topSanPham = await _context.SanPhams
+                .Where(s => topSanPhamIds.Contains(s.IdSanPham))
+                .ToListAsync();
+
+            string spMessage = "";
+            foreach (var sp in topSanPham)
+            {
+                // Mã hóa ID thành chuỗi an toàn cho URL
+                string token = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString());
+                spMessage += $"- {sp.TenSanPham} \n[BUTTON: Xem món này | {LinkDetailSP}?token={token}]\n";
+            }
+
+            // BƯỚC 2: LẤY TOP 3 SÁCH & TẠO NÚT BẤM
+            var topSachIds = await _context.ChiTietPhieuThues
+                .GroupBy(c => c.IdSach)
+                .OrderByDescending(g => g.Count())
+                .Take(3)
+                .Select(g => g.Key)
+                .ToListAsync();
+
+            var topSach = await _context.Sachs
+                .Where(s => topSachIds.Contains(s.IdSach))
+                .ToListAsync();
+
+            string sachMessage = "";
+            foreach (var sach in topSach)
+            {
+                string token = _protectorSach.ProtectToUrlSafe(sach.IdSach.ToString());
+                sachMessage += $"- {sach.TenSach} \n[BUTTON: Xem sách này | {LinkDetailSach}?token={token}]\n";
+            }
+
+            // Nếu không có dữ liệu (database trống)
+            if (string.IsNullOrEmpty(spMessage) && string.IsNullOrEmpty(sachMessage))
+            {
+                return new { Message = "Dạ hiện tại quán mới mở nên chưa có thống kê bán chạy. Mời bạn tham khảo qua thực đơn nha!\n[BUTTON: Xem Thực Đơn | /san-pham]" };
+            }
+
+            // BƯỚC 3: TRẢ VỀ DỮ LIỆU CÓ CHỨA CÚ PHÁP NÚT BẤM
+            return new
+            {
+                Message = $"Dạ đây là những món và sách đang cực hot, được mọi người yêu thích nhất tại Cafebook ạ:\n\n" +
+                          $"🍵 **Nước uống Best-seller:**\n{spMessage}\n" +
+                          $"📖 **Sách mượn nhiều nhất:**\n{sachMessage}\n" +
+                          $"Bạn ưng ý món nào thì click vào nút bên trên để xem chi tiết nhé!"
+            };
+        }
+
+        // 2. TỰ ĐỘNG TEXT TO SQL CHO AI (LỌC BẢO MẬT)
+        public async Task<object> QueryDatabaseAsync(string sqlQuery)
+        {
+            try
+            {
+                // Bảo mật: Chỉ cho phép câu lệnh SELECT, chặn DROP, DELETE, Cập nhật và chặn query bảng nhạy cảm
+                if (!sqlQuery.Trim().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("DROP", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("DELETE", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("UPDATE", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("INSERT", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("HoaDon", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("KhachHang", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("NhanVien", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new { Message = "Dạ, câu hỏi này nằm ngoài quyền hạn tra cứu của mình. Mình chỉ có thể hỗ trợ bạn tìm hiểu về thông tin công khai (Sách, Thức uống, Tác giả...). Bạn thông cảm nhé!" };
+                }
+
+                // Thực thi SQL trực tiếp
+                using var command = _context.Database.GetDbConnection().CreateCommand();
+                command.CommandText = sqlQuery;
+                command.CommandType = System.Data.CommandType.Text;
+
+                await _context.Database.OpenConnectionAsync();
+                using var reader = await command.ExecuteReaderAsync();
+
+                var results = new List<Dictionary<string, object>>();
+                while (await reader.ReadAsync())
+                {
+                    var row = new Dictionary<string, object>();
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        row.Add(reader.GetName(i), reader.GetValue(i));
+                    }
+                    results.Add(row);
+                }
+
+                if (!results.Any())
+                    return new { Message = "Dạ mình đã tìm kỹ nhưng không thấy dữ liệu nào phù hợp với yêu cầu của bạn ạ." };
+
+                // Gửi dữ liệu thô + System Guideline kèm theo cho AI tự Generate hành văn
+                return new
+                {
+                    Data = results,
+                    Message = "Dưới đây là dữ liệu thô từ Database. Hãy hành văn lại một cách ấm áp, thân thiện để trả lời khách hàng."
+                };
+            }
+            catch (Exception) // Đã xóa biến 'ex' dư thừa
+            {
+                return new { Message = $"Dạ hệ thống truy vấn tạm thời gặp chút khó khăn. Bạn có thể thử hỏi lại theo cách khác giúp mình nhé." };
+            }
+        }
+
+
+        public async Task<object> GetTrangThaiTaiKhoanAsync(int idKhachHang)
+        {
+            var kh = await _context.KhachHangs.AsNoTracking()
+                .FirstOrDefaultAsync(k => k.IdKhachHang == idKhachHang);
+
+            if (kh == null) return new { Message = "Dạ, mình không tìm thấy thông tin tài khoản của bạn trên hệ thống." };
+            if (kh.BiKhoa)
+            {
+                string lyDo = string.IsNullOrEmpty(kh.LyDoKhoa) ? "Vi phạm quy định của quán." : kh.LyDoKhoa;
+                string thoiGian = kh.ThoiGianMoKhoa.HasValue
+                    ? kh.ThoiGianMoKhoa.Value.ToString("dd/MM/yyyy HH:mm")
+                    : "Chưa xác định, vui lòng liên hệ Admin.";
+
+                return new
+                {
+                    Message = $"Dạ, tài khoản của bạn hiện đang trong trạng thái **Tạm khóa**. \n\n" +
+                              $"⚠️ **Lý do:** {lyDo} \n" +
+                              $"⏳ **Thời gian mở lại dự kiến:** {thoiGian} \n\n" +
+                              $"Bạn vui lòng liên hệ trực tiếp hotline hoặc fanpage để được hỗ trợ mở khóa sớm nhé! [BUTTON: Liên hệ hỗ trợ | {LinkLienHe}]"
+                };
+            }
+
+            return new { Message = "Tài khoản của bạn vẫn đang hoạt động bình thường trên hệ thống ạ. Bạn có cần mình hỗ trợ tra cứu thông tin gì khác không?" };
+        }
+
+        public async Task<object> KiemTraKhoaTaiKhoanNhanhAsync(string inputSearch)
+        {
+            var kh = await _context.KhachHangs.AsNoTracking()
+                .FirstOrDefaultAsync(k => k.SoDienThoai == inputSearch || k.Email == inputSearch || k.TenDangNhap == inputSearch);
+
+            if (kh == null) return new { Message = $"Dạ, mình không tìm thấy tài khoản nào khớp với '{inputSearch}'. Bạn kiểm tra lại SĐT hoặc Email nhé!" };
+
+            if (kh.BiKhoa)
+            {
+                string lyDo = string.IsNullOrEmpty(kh.LyDoKhoa) ? "Vi phạm quy định của quán." : kh.LyDoKhoa;
+                string thoiGian = kh.ThoiGianMoKhoa.HasValue ? kh.ThoiGianMoKhoa.Value.ToString("dd/MM/yyyy HH:mm") : "Chưa xác định";
+                return new
+                {
+                    Message = $"Tài khoản **{kh.HoTen}** hiện đang bị **Tạm khóa**.\n\n⚠️ Lý do: {lyDo}\n⏳ Thời gian mở lại: {thoiGian}\n\n[BUTTON: Liên hệ Admin | {LinkLienHe}]"
+                };
+            }
+
+            return new { Message = $"Tài khoản **{kh.HoTen}** hiện tại đang hoạt động bình thường, không bị khóa ạ!" };
+        }
+        // ==========================================
+        // CÁC HÀM CŨ GIỮ NGUYÊN
+        // ==========================================
+
         public Task<object> GetYeuCauDangNhapAsync(string tenTinhNang)
         {
             string msg = $"Bạn cần đăng nhập để sử dụng tính năng này.\n[BUTTON: Tới trang Đăng nhập | {LinkDangNhap}]";
@@ -102,23 +262,27 @@ namespace CafebookApi.Services
             return Task.FromResult<object>(new { Message = "Đang kết nối nhân viên hỗ trợ... [NEEDS_SUPPORT]" });
         }
 
-        public async Task<object> GetThongTinChungAsync()
+        public async Task<object> GetThongTinChungAsync(string chuDe = "")
         {
-            return await _cache.GetOrCreateAsync<object>("CACHE_THONG_TIN_CHUNG", async entry =>
+            string cacheKey = string.IsNullOrEmpty(chuDe) ? "CACHE_THONG_TIN_CHUNG" : $"CACHE_THONG_TIN_CHUNG_{chuDe}";
+            return await _cache.GetOrCreateAsync<object>(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
 
                 var keys = new List<string> {
-                    "ThongTin_DiaChi", "ThongTin_SoDienThoai", "ThongTin_GioMoCua", "ThongTin_GioDongCua", "Wifi_MatKhau", "ThongTin_ThuMoCua"
-                };
+            "ThongTin_DiaChi", "ThongTin_SoDienThoai", "ThongTin_GioMoCua", "ThongTin_GioDongCua", "Wifi_MatKhau", "ThongTin_ThuMoCua"
+        };
 
                 var settings = await _context.CaiDats.AsNoTracking().Where(c => keys.Contains(c.TenCaiDat)).ToDictionaryAsync(c => c.TenCaiDat, c => c.GiaTri);
                 string GetVal(string key) => settings.ContainsKey(key) ? (settings[key] ?? "Chưa cập nhật") : "Chưa cập nhật";
 
-                // Xử lý chuỗi ngày mở cửa
                 string thuMoCua = GetVal("ThongTin_ThuMoCua");
                 if (thuMoCua == "2,3,4,5,6,7,8") thuMoCua = "Thứ 2 đến Chủ Nhật";
                 else thuMoCua = "Thứ " + thuMoCua.Replace("8", "Chủ Nhật");
+
+                if (chuDe == "wifi") return new { Message = $"Dạ, mật khẩu Wifi của quán là: **{GetVal("Wifi_MatKhau")}**" };
+                if (chuDe == "diachi") return new { Message = $"Dạ, địa chỉ Cafebook tại: **{GetVal("ThongTin_DiaChi")}**\n[BUTTON: Xem Liên Hệ | {LinkLienHe}]" };
+                if (chuDe == "giogiac") return new { Message = $"Dạ, quán mở cửa từ **{GetVal("ThongTin_GioMoCua")} đến {GetVal("ThongTin_GioDongCua")}** ({thuMoCua})." };
 
                 string msg = $"Đây là thông tin cơ bản của Cafebook ạ:\n- Địa chỉ: {GetVal("ThongTin_DiaChi")}\n- SĐT: {GetVal("ThongTin_SoDienThoai")}\n- Các ngày hoạt động: {thuMoCua}\n- Giờ mở cửa: {GetVal("ThongTin_GioMoCua")} đến {GetVal("ThongTin_GioDongCua")}\n- Mật khẩu Wifi: {GetVal("Wifi_MatKhau")}\n\n[BUTTON: Xem Liên Hệ | {LinkLienHe}]\n[BUTTON: Chính sách & Quy định | {LinkChinhSach}]";
                 return new { Message = msg };
@@ -172,7 +336,7 @@ namespace CafebookApi.Services
                     }
                 }
 
-                string token = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString()); // <-- CODE MỚI
+                string token = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString());
                 string stInfo = isOutOfStock ? "Nhưng tiếc quá, món này tạm ngưng kinh doanh hoặc hết nguyên liệu rồi." : "Sản phẩm hiện đang có sẵn sàng phục vụ.";
                 return new { Message = $"Món '{sp.TenSanPham}' có giá {sp.GiaBan:N0}đ. {stInfo}\n[BUTTON: Xem chi tiết món | {LinkDetailSP}?token={token}]" };
             }) ?? new { };
@@ -192,7 +356,7 @@ namespace CafebookApi.Services
                 string msg = $"Mình đã tìm thấy một vài món cực ngon cho bạn:\n";
                 foreach (var sp in list)
                 {
-                    string tk = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString()); // <-- CODE MỚI
+                    string tk = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString());
                     msg += $"- {sp.TenSanPham} ({sp.GiaBan:N0}đ) \n[BUTTON: Chọn món {sp.TenSanPham} | {LinkDetailSP}?token={tk}]\n";
                 }
                 msg += $"\n[BUTTON: Xem toàn bộ Thực đơn | {LinkThucDon}]";
@@ -211,7 +375,7 @@ namespace CafebookApi.Services
                 string msg = "Đây là những món best-seller hôm nay bạn nên thử:\n";
                 foreach (var sp in list)
                 {
-                    string tk = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString()); // <-- CODE MỚI
+                    string tk = _protectorSanPham.ProtectToUrlSafe(sp.IdSanPham.ToString());
                     msg += $"- {sp.TenSanPham} ({sp.GiaBan:N0}đ) \n[BUTTON: Chọn món {sp.TenSanPham} | {LinkDetailSP}?token={tk}]\n";
                 }
                 return new { Message = msg };
@@ -239,7 +403,7 @@ namespace CafebookApi.Services
                 string statusMessage = isAvailable ? $"Hiện còn {sach.SoLuongHienCo} cuốn trên kệ." : "Sách này hiện đã có khách mượn hết. Bạn có thể tham khảo các tác phẩm khác.";
                 string tacGia = string.Join(", ", sach.SachTacGias.Where(x => x.TacGia != null).Select(x => x.TacGia.TenTacGia));
 
-                string token = _protectorSach.ProtectToUrlSafe(sach.IdSach.ToString()); // <-- CODE MỚI
+                string token = _protectorSach.ProtectToUrlSafe(sach.IdSach.ToString());
 
                 return new { Message = $"Cuốn '{sach.TenSach}' của tác giả {tacGia}. {statusMessage}\n[BUTTON: Xem thông tin sách | {LinkDetailSach}?token={token}]" };
             }) ?? new { };
@@ -296,7 +460,7 @@ namespace CafebookApi.Services
                     .Where(s => s.SoLuongHienCo > 0).OrderBy(r => Guid.NewGuid()).Take(3).ToListAsync();
 
                 string msg = "Những cuốn sách thú vị đang có sẵn trên kệ:\n";
-                foreach (var s in list) // Đảm bảo biến 's' được khai báo ở đây
+                foreach (var s in list)
                 {
                     string tk = _protectorSach.ProtectToUrlSafe(s.IdSach.ToString());
                     msg += $"- {s.TenSach} \n[BUTTON: Xem sách | {LinkDetailSach}?token={tk}]\n";
@@ -356,7 +520,6 @@ namespace CafebookApi.Services
             return Task.FromResult<object>(new { Message = $"Đã tiếp nhận yêu cầu. Bạn có thể thực hiện hủy phiếu an toàn tại trang Lịch sử nhé.\n[BUTTON: Lịch sử đặt bàn | {LinkLichSuDatBan}]" });
         }
 
-        // ĐÃ NÂNG CẤP: Hiển thị ngày đến hạn / quá hạn
         public async Task<object> GetLichSuThueSachAsync(int idKhachHang)
         {
             var phieu = await _context.PhieuThueSachs.Include(p => p.ChiTietPhieuThues).ThenInclude(c => c.Sach).AsNoTracking()
@@ -402,12 +565,10 @@ namespace CafebookApi.Services
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
 
-                // Lấy 1 đồ uống ngẫu nhiên đang kinh doanh
                 var sp = await _context.SanPhams.AsNoTracking()
                     .Where(s => s.TrangThaiKinhDoanh)
                     .OrderBy(r => Guid.NewGuid()).FirstOrDefaultAsync();
 
-                // Lấy 1 cuốn sách ngẫu nhiên đang có sẵn
                 var sach = await _context.Sachs.AsNoTracking()
                     .Include(s => s.SachTacGias).ThenInclude(st => st.TacGia)
                     .Where(s => s.SoLuongHienCo > 0).OrderBy(r => Guid.NewGuid()).FirstOrDefaultAsync();

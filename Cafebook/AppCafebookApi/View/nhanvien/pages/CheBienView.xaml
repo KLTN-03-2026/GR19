@@ -32,6 +32,7 @@
         <SolidColorBrush x:Key="CafeOrange" Color="#D27D2D"/>
         <SolidColorBrush x:Key="CafeCream" Color="#FFF8E1"/>
         <SolidColorBrush x:Key="TextGray" Color="#757575"/>
+        <SolidColorBrush x:Key="ActionGrayBrush" Color="#BDBDBD"/>
 
         <Style x:Key="KitchenCard" TargetType="Border">
             <Setter Property="Background" Value="White"/>
@@ -176,7 +177,11 @@
                                         <Button Content="Hoàn thành" Style="{StaticResource ActionButton}" Background="#66BB6A" Margin="0,10,0,0"
                                                 Click="BtnCompleteItem_Click"
                                                 Visibility="{Binding IsDangLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <Button Content="📄 In Lại Phiếu" Style="{StaticResource ActionButton}" 
+                                                Background="{StaticResource ActionGrayBrush}" Margin="0,10,0,0"
+                                                Click="BtnInLai_Click"/>
                                     </StackPanel>
+                                    
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

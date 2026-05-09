@@ -180,7 +180,6 @@ namespace CafebookApi.Controllers.Web.KhachHang
         {
             var idKhachHang = GetCurrentUserId();
             var responseDto = new SendChatKHResponseDto();
-
             var existingTicket = await _context.ThongBaoHoTros
                 .FirstOrDefaultAsync(t => t.IdKhachHang == idKhachHang
                                      && t.GuestSessionId == request.SessionId
@@ -192,7 +191,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 {
                     IdKhachHang = idKhachHang,
                     GuestSessionId = request.SessionId,
-                    NoiDungHoi = "Chat Realtime", 
+                    NoiDungHoi = "Chat Realtime",
                     NoiDungTraLoi = request.NoiDung,
                     ThoiGian = DateTime.Now,
                     LoaiChat = "Web_SignalR",
@@ -217,10 +216,14 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 return Ok(responseDto);
             }
 
+            // TỐI ƯU LM STUDIO: Chuyển Take(15) thành Take(3)
             var history = await _context.ChatLichSus
                 .AsNoTracking()
                 .Where(c => c.IdKhachHang == idKhachHang && c.GuestSessionId == request.SessionId)
-                .OrderByDescending(c => c.ThoiGian).Take(15).OrderBy(c => c.ThoiGian).ToListAsync();
+                .OrderByDescending(c => c.ThoiGian)
+                .Take(3)
+                .OrderBy(c => c.ThoiGian)
+                .ToListAsync();
 
             var chatHistory = new List<object>();
             foreach (var msg in history)

@@ -37,6 +37,17 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <SolidColorBrush x:Key="BackgroundHoverBrush" Color="#F5F5F5"/>
+        <SolidColorBrush x:Key="BorderGrayBrush" Color="#BDBDBD"/>
+        <SolidColorBrush x:Key="TextGrayBrush" Color="#757575"/>
+
+        <Style x:Key="MaterialInput" TargetType="Control">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource MaterialInput}"/>
     </Page.Resources>
     <Grid Margin="20">
         <Grid.RowDefinitions>

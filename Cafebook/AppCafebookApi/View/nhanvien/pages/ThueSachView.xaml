@@ -36,6 +36,80 @@
 
         <FontFamily x:Key="FontAwesomeSolid">/Fonts/Font Awesome 6 Free-Solid-900.otf#Font Awesome 6 Free Solid</FontFamily>
 
+        <Style x:Key="ModernDatePickerStyle" TargetType="DatePicker">
+            <Setter Property="Foreground" Value="{StaticResource DarkBrownBrush}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderGrayBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DatePicker">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <DatePickerTextBox x:Name="PART_TextBox" Grid.Column="0" Padding="{TemplateBinding Padding}" VerticalContentAlignment="Center" Background="Transparent" BorderThickness="0" BorderBrush="Transparent"/>
+                                <Button x:Name="PART_Button" Grid.Column="1" Width="35" Cursor="Hand" Focusable="False">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="Transparent">
+                                                <Path Data="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z"
+                                                      Fill="{StaticResource PrimaryBrownBrush}" Stretch="Uniform" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Bottom" PlacementTarget="{Binding ElementName=PART_TextBox}" StaysOpen="False" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentOrangeBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextGrayBrush}"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Border" 
+                                Background="{TemplateBinding Background}" 
+                                BorderThickness="0,0,0,3" 
+                                BorderBrush="Transparent" 
+                                Margin="0,0,20,0">
+                            <ContentPresenter x:Name="ContentSite" 
+                                              VerticalAlignment="Center" 
+                                              HorizontalAlignment="Center" 
+                                              ContentSource="Header" 
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource AccentOrangeBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentOrangeBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource AccentOrangeBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="ActionButton" TargetType="Button">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Padding" Value="15,8"/>
@@ -164,9 +238,9 @@
                                     <StackPanel Margin="0,0,20,10">
                                         <TextBlock Text="Ngày thuê (Từ - Đến)" FontSize="12" Foreground="{StaticResource TextGrayBrush}" Margin="0,0,0,5" FontWeight="SemiBold"/>
                                         <StackPanel Orientation="Horizontal">
-                                            <DatePicker x:Name="dpLocNgayThueTu" Width="110" Height="35" SelectedDateChanged="DpLocNgayThue_SelectedDateChanged"/>
+                                            <DatePicker x:Name="dpLocNgayThueTu" Width="110" Style="{StaticResource ModernDatePickerStyle}" SelectedDateChanged="DpLocNgayThue_SelectedDateChanged"/>
                                             <TextBlock Text="-" VerticalAlignment="Center" Margin="5,0"/>
-                                            <DatePicker x:Name="dpLocNgayThueDen" Width="110" Height="35" SelectedDateChanged="DpLocNgayThue_SelectedDateChanged"/>
+                                            <DatePicker x:Name="dpLocNgayThueDen" Width="110" Style="{StaticResource ModernDatePickerStyle}" SelectedDateChanged="DpLocNgayThue_SelectedDateChanged"/>
                                         </StackPanel>
                                     </StackPanel>
 
@@ -233,9 +307,9 @@
                                     <StackPanel Margin="0,0,20,10">
                                         <TextBlock Text="Ngày trả (Từ - Đến)" FontSize="12" Foreground="{StaticResource TextGrayBrush}" Margin="0,0,0,5" FontWeight="SemiBold"/>
                                         <StackPanel Orientation="Horizontal">
-                                            <DatePicker x:Name="dpLocNgayTraTu" Width="110" Height="35" SelectedDateChanged="DpLocNgayTra_SelectedDateChanged"/>
+                                            <DatePicker x:Name="dpLocNgayTraTu" Width="110" Style="{StaticResource ModernDatePickerStyle}" SelectedDateChanged="DpLocNgayTra_SelectedDateChanged"/>
                                             <TextBlock Text="-" VerticalAlignment="Center" Margin="5,0"/>
-                                            <DatePicker x:Name="dpLocNgayTraDen" Width="110" Height="35" SelectedDateChanged="DpLocNgayTra_SelectedDateChanged"/>
+                                            <DatePicker x:Name="dpLocNgayTraDen" Width="110" Style="{StaticResource ModernDatePickerStyle}" SelectedDateChanged="DpLocNgayTra_SelectedDateChanged"/>
                                         </StackPanel>
                                     </StackPanel>
                                     <Button Content="Xóa lọc" Style="{StaticResource ActionButton}" Background="{StaticResource TextGrayBrush}" Padding="15,0" Height="35" Margin="0,17,0,10" Click="BtnXoaLocTra_Click"/>

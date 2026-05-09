@@ -45,12 +45,28 @@ namespace CafebookApi.Controllers.App.NhanVien
 
                 var today = DateTime.Today;
                 var now = DateTime.Now;
+                var currentTs = now.TimeOfDay;
 
-                var lichCaSapToi = await _context.LichLamViecs
+                // Lấy các chấm công hôm nay để xác định ca nào đang mở/hoặc chưa xong
+                var chamCongsToday = await _context.BangChamCongs
+                    .Where(c => c.LichLamViec.IdNhanVien == idNhanVien && c.LichLamViec.NgayLam == today)
+                    .ToListAsync();
+
+                // FIX: Kéo danh sách lịch làm việc về RAM trước (Client Evaluation)
+                var cacCaHomNay = await _context.LichLamViecs
                     .Include(l => l.CaLamViec)
                     .Where(l => l.IdNhanVien == idNhanVien && l.NgayLam == today && l.TrangThai == "Đã duyệt")
                     .OrderBy(l => l.CaLamViec.GioBatDau)
-                    .FirstOrDefaultAsync(l => !_context.BangChamCongs.Any(c => c.IdLichLamViec == l.IdLichLamViec && c.GioVao.HasValue));
+                    .ToListAsync();
+
+                // Chạy truy vấn bằng FirstOrDefault trên List thay vì IQueryable của EF Core
+                var lichCaSapToi = cacCaHomNay.FirstOrDefault(l =>
+                    !chamCongsToday.Any(c => c.IdLichLamViec == l.IdLichLamViec && !c.GioRa.HasValue) // Không có phiên nào đang mở
+                    && (
+                        !chamCongsToday.Any(c => c.IdLichLamViec == l.IdLichLamViec) // Chưa từng vào
+                        || currentTs < l.CaLamViec.GioKetThuc // HOẶC đã ra nhưng ca vẫn chưa kết thúc (cho phép vào lại)
+                    )
+                );
 
                 if (lichCaSapToi == null)
                     return BadRequest("Bạn không có ca nào chờ vào làm lúc này hoặc đã hoàn thành tất cả các ca!");
@@ -112,7 +128,11 @@ namespace CafebookApi.Controllers.App.NhanVien
                     var shiftEnd = ca.NgayLam.Add(ca.CaLamViec.GioKetThuc);
                     var isLastShiftInChain = (ca == chuoiCa.Last());
 
-                    var bcc = await _context.BangChamCongs.FirstOrDefaultAsync(c => c.IdLichLamViec == ca.IdLichLamViec);
+                    // Thay đổi: Tìm phiên chấm công đang mở tương ứng của ca này (thay vì lấy cái cũ đã chốt)
+                    var bcc = await _context.BangChamCongs
+                        .OrderByDescending(c => c.GioVao)
+                        .FirstOrDefaultAsync(c => c.IdLichLamViec == ca.IdLichLamViec && !c.GioRa.HasValue);
+
                     if (bcc == null)
                     {
                         if (actualGioRa <= shiftStart) break;
@@ -126,19 +146,14 @@ namespace CafebookApi.Controllers.App.NhanVien
                         _context.BangChamCongs.Add(bcc);
                     }
 
-                    // Quyết định giờ ra
                     if (actualGioRa >= shiftEnd)
                     {
                         bcc.GioRa = isLastShiftInChain ? actualGioRa : shiftEnd;
-
-                        // [2] KIỂM TRA LÀM LỐ GIỜ (TĂNG CA) CHO CA CUỐI CÙNG
                         if (isLastShiftInChain)
                         {
                             var settingOT = await _context.CaiDats.FirstOrDefaultAsync(c => c.TenCaiDat == "HR_TinhTangCa_Phut");
                             int phutOTQuyDinh = (settingOT != null && int.TryParse(settingOT.GiaTri, out int ot)) ? ot : 60;
-
                             var phutLamLho = (int)(actualGioRa - shiftEnd).TotalMinutes;
-
                             if (phutLamLho >= phutOTQuyDinh)
                             {
                                 bcc.GhiChuSua = string.IsNullOrEmpty(bcc.GhiChuSua)
@@ -214,12 +229,21 @@ namespace CafebookApi.Controllers.App.NhanVien
             var listIdLich = lichHomNay.Select(l => l.IdLichLamViec).ToList();
             var chamCongs = await _context.BangChamCongs.Where(c => listIdLich.Contains(c.IdLichLamViec)).ToListAsync();
 
+            decimal pastHours = 0;
+            foreach (var c in chamCongs)
+            {
+                if (c.GioVao.HasValue && c.GioRa.HasValue)
+                {
+                    pastHours += (decimal)(c.GioRa.GetValueOrDefault() - c.GioVao.GetValueOrDefault()).TotalHours;
+                }
+            }
+
             var caDangLam = lichHomNay.FirstOrDefault(l => chamCongs.Any(c => c.IdLichLamViec == l.IdLichLamViec && c.GioVao.HasValue && !c.GioRa.HasValue));
 
             if (caDangLam != null)
             {
                 var chuoiCa = GetChuoiCaLienTiep(lichHomNay, caDangLam);
-                var chamCongHienTai = chamCongs.First(c => c.IdLichLamViec == caDangLam.IdLichLamViec && !c.GioRa.HasValue);
+                var chamCongHienTai = chamCongs.OrderByDescending(c => c.GioVao).First(c => c.IdLichLamViec == caDangLam.IdLichLamViec && !c.GioRa.HasValue);
 
                 dto.TrangThai = "DangTrongCa";
                 dto.DangTrongCa = true;
@@ -227,13 +251,18 @@ namespace CafebookApi.Controllers.App.NhanVien
                 dto.GioBatDauCa = caDangLam.CaLamViec.GioBatDau;
                 dto.GioKetThucCa = chuoiCa.Last().CaLamViec.GioKetThuc;
                 dto.LanVaoGanNhat = chamCongHienTai.GioVao;
-
-                if (dto.LanVaoGanNhat.HasValue)
-                    dto.TongGioLamHienTai = (decimal)(DateTime.Now - dto.LanVaoGanNhat.Value).TotalHours;
+                dto.TongGioLamHienTai = pastHours; // Trả về tổng giờ của các phiên cũ (FrontEnd sẽ tự cộng session hiện tại)
             }
             else
             {
-                var caTiepTheo = lichHomNay.FirstOrDefault(l => !chamCongs.Any(c => c.IdLichLamViec == l.IdLichLamViec && c.GioVao.HasValue));
+                var currentTs = DateTime.Now.TimeOfDay;
+                var caTiepTheo = lichHomNay.FirstOrDefault(l =>
+                    !chamCongs.Any(c => c.IdLichLamViec == l.IdLichLamViec && !c.GioRa.HasValue) &&
+                    (
+                        !chamCongs.Any(c => c.IdLichLamViec == l.IdLichLamViec) ||
+                        currentTs < l.CaLamViec.GioKetThuc // Cho phép lấy lại ca nếu nó chưa hết giờ
+                    )
+                );
 
                 if (caTiepTheo != null)
                 {
@@ -255,7 +284,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                     else
                     {
                         dto.TrangThai = "ChoVaoCa";
-                    }
+                    } 
                 }
                 else
                 {
@@ -343,7 +372,9 @@ namespace CafebookApi.Controllers.App.NhanVien
                     foreach (var c in g)
                     {
                         if (c.GioVao.HasValue && c.GioRa.HasValue)
-                            gioLamCa += (decimal)(c.GioRa.Value - c.GioVao.Value).TotalHours;
+                        {
+                            gioLamCa += (decimal)(c.GioRa.GetValueOrDefault() - c.GioVao.GetValueOrDefault()).TotalHours;
+                        }
                     }
                     tongGioThang += gioLamCa;
 

@@ -100,7 +100,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
             var reviews = reviews_raw.Select(r => new DanhGiaChiTietDto
             {
                 TenKhachHang = r.TenKhachHang,
-                AvatarKhachHang = GetFullImageUrl(r.AnhDaiDienTho),
+                AvatarKhachHang = GetFullImageUrl(string.IsNullOrEmpty(r.AnhDaiDienTho) ? HinhAnhPaths.WebDefaultAvatar : r.AnhDaiDienTho),
                 HinhAnhDanhGiaUrl = GetFullImageUrl(r.HinhAnhDanhGiaTho),
                 SoSao = r.SoSao,
                 NgayTao = r.NgayTao,

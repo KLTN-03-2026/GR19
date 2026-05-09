@@ -177,13 +177,12 @@
 @section Scripts {
     <script>
         $(function () {
-            // Logic "Đọc thêm / Thu gọn" mô tả
             const $wrapper = $('#description-wrapper');
             const $content = $wrapper.find('p');
             const $btn = $('#toggle-description');
 
             const lineHeight = parseFloat($content.css("line-height"));
-            const maxHeight = lineHeight * 4; // Cắt dòng thứ 4
+            const maxHeight = lineHeight * 4; 
 
             if ($content[0].scrollHeight > (maxHeight + 5)) {
                 $btn.show();

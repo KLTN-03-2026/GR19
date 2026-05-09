@@ -97,6 +97,38 @@
     background: var(--cf-beige);
 }
 
+/* HEADER CHO MOBILE */
+.htkh-mobile-header {
+    display: none; /* Mặc định ẩn trên PC */
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background: #2D2422;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.btn-back-mobile, .btn-new-mobile {
+    background: transparent;
+    border: none;
+    color: var(--cf-terra);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.htkh-mobile-title {
+    flex-grow: 1;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0 10px;
+    color: white;
+}
+
 /* BONG BÓNG CHAT */
 .htkh-history {
     flex-grow: 1;
@@ -308,5 +340,89 @@
     40% {
         transform: scale(1);
         opacity: 1;
+    }
+}
+
+/* =========================================
+   RESPONSIVE CHO TABLET & MOBILE (APP CHAT STYLE)
+   ========================================= */
+@media (max-width: 768px) {
+    .htkh-layout {
+        flex-direction: column;
+        height: 85vh; /* Khung cao hơn chút trên điện thoại */
+        border-radius: 12px;
+    }
+
+    /* TRẠNG THÁI 1: MẶC ĐỊNH HIỂN THỊ DANH SÁCH, ẨN KHUNG CHAT */
+    .htkh-sidebar {
+        width: 100%;
+        flex-grow: 1;
+        display: flex;
+    }
+
+    .htkh-sessions {
+        display: block; /* Sắp xếp dọc thành danh sách */
+        padding: 10px;
+    }
+
+    .htkh-session-item {
+        padding: 16px 14px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.05); /* Tách biệt các cuộc hội thoại */
+    }
+
+    .htkh-main {
+        width: 100%;
+        display: none; /* Ẩn đi chờ user click */
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .htkh-mobile-header {
+        display: flex; /* Bật Header Mobile khi ở trong đoạn chat */
+    }
+
+    /* TRẠNG THÁI 2: KHI USER BẤM VÀO ĐOẠN CHAT (.show-chat) */
+    .htkh-layout.show-chat .htkh-sidebar {
+        display: none; /* Ẩn danh sách bên trái đi */
+    }
+
+    .htkh-layout.show-chat .htkh-main {
+        display: flex; /* Hiển thị khung chat kín màn hình layout */
+        flex-grow: 1;
+    }
+
+    /* Căn chỉnh kích thước bong bóng chat gọn hơn */
+    .htkh-content {
+        max-width: 88%;
+    }
+
+    .htkh-form {
+        padding: 0.8rem 1rem;
+    }
+
+    .htkh-input {
+        padding: 10px 16px;
+    }
+
+    .htkh-btn {
+        width: 42px;
+        height: 42px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .htkh-content {
+        max-width: 92%;
+    }
+
+    .htkh-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .htkh-bubble {
+        font-size: 0.9rem;
+        padding: 12px 14px;
     }
 }

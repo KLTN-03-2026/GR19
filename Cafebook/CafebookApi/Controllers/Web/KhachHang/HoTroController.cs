@@ -60,9 +60,14 @@ namespace CafebookApi.Controllers.Web.KhachVangLai
         public async Task<IActionResult> SendMessage([FromBody] SendChatGuestRequestDto request)
         {
             var responseDto = new SendChatGuestResponseDto();
+
+            // TỐI ƯU LM STUDIO: Chuyển Take(15) thành Take(3) (Lấy 3 lượt tương tác gần nhất = 6 tin nhắn)
             var history = await _context.ChatLichSus
                 .Where(c => c.IdKhachHang == null && c.GuestSessionId == request.GuestSessionId)
-                .OrderByDescending(c => c.ThoiGian).Take(15).OrderBy(c => c.ThoiGian).ToListAsync();
+                .OrderByDescending(c => c.ThoiGian)
+                .Take(3)
+                .OrderBy(c => c.ThoiGian)
+                .ToListAsync();
 
             var chatHistory = new List<object>();
             foreach (var msg in history)

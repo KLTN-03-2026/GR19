@@ -1,0 +1,62 @@
+﻿<Window x:Class="AppCafebookApi.View.Common.TemDanPreviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="In Tem Dán" SizeToContent="Height" Width="220"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI"
+        Background="#FFF8E1">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBrown" Color="#6F4E37"/>
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrown}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border x:Name="PrintArea" Grid.Row="0" Background="White" Width="200" Padding="10" Margin="10">
+            <StackPanel>
+                <TextBlock x:Name="lblTenQuan" Text="..." FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" Foreground="{StaticResource PrimaryBrown}"/>
+                <Separator Margin="0,5"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" x:Name="lblSoBan" Text="Bàn: 01" FontWeight="Bold" FontSize="12"/>
+                    <TextBlock Grid.Column="1" x:Name="lblThoiGian" Text="10:30" FontSize="11" Foreground="Gray"/>
+                </Grid>
+
+                <TextBlock x:Name="lblTenMon" Text="Cà phê sữa đá" FontWeight="Bold" FontSize="16" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                <TextBlock x:Name="lblSoLuong" Text="Số lượng: 1" FontSize="12" Margin="0,2,0,0"/>
+
+                <TextBlock x:Name="lblGhiChu" Text="Ghi chú: Ít đá, nhiều sữa" FontSize="13" FontWeight="SemiBold" FontStyle="Italic" Foreground="Red" TextWrapping="Wrap" Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+            <Button x:Name="btnIn" Content="🖨️ In Tem" Style="{StaticResource ActionButton}" Margin="5" Click="BtnIn_Click" Width="80"/>
+            <Button x:Name="btnDong" Content="Đóng" Style="{StaticResource ActionButton}" Background="Gray" Margin="5" Click="BtnDong_Click" Width="80"/>
+        </StackPanel>
+    </Grid>
+</Window>

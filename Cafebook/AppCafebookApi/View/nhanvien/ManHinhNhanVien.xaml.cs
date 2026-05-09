@@ -77,11 +77,9 @@ namespace AppCafebookApi.View.nhanvien
 
         private async Task CheckChamCongStatusAsync()
         {
-            if (AuthService.CurrentUser == null) return;
-
-            if (AuthService.CurrentUser.IdNhanVien == 0)
+            if (AuthService.CurrentUser == null || AuthService.CurrentUser.IdNhanVien == 0)
             {
-                UpdateSidebarStatus("Tài khoản System Admin");
+                if (AuthService.CurrentUser?.IdNhanVien == 0) UpdateSidebarStatus("Tài khoản System Admin");
                 return;
             }
 
@@ -95,19 +93,34 @@ namespace AppCafebookApi.View.nhanvien
 
                 if (response != null)
                 {
-                    if (response.DangTrongCa)
+                    // TỰ ĐỘNG VÀO CA NẾU LÀ TRẠNG THÁI CHỜ
+                    if (response.TrangThai == "ChoVaoCa")
                     {
-                        if (response.LanVaoGanNhat.HasValue)
+                        UpdateSidebarStatus("Đang tự động vào ca...");
+                        var clockInRes = await ApiClient.Instance.PostAsync($"api/app/chamcong/clock-in/{AuthService.CurrentUser.IdNhanVien}", null);
+                        if (clockInRes.IsSuccessStatusCode)
                         {
-                            var totalSpan = TimeSpan.FromHours((double)response.TongGioLamHienTai) + (DateTime.Now - response.LanVaoGanNhat.Value);
-                            UpdateSidebarStatus($"Đang làm ({(int)totalSpan.TotalHours:D2}:{totalSpan.Minutes:D2})");
+                            // Update lại status sau khi tự động vào ca thành công
+                            response = await ApiClient.Instance.GetFromJsonAsync<ChamCongDashboardDto>(url);
                         }
-                        else UpdateSidebarStatus("Đang làm việc");
                     }
-                    else if (response.TrangThai == "KhongCoCa") UpdateSidebarStatus("Không có ca");
-                    else if (response.TrangThai == "ChuaDenGio") UpdateSidebarStatus("Sắp tới ca");
-                    else if (response.TrangThai == "ChoVaoCa") UpdateSidebarStatus("Chưa chấm công");
-                    else if (response.TrangThai == "DaHoanThanh") UpdateSidebarStatus("Hoàn thành ca");
+
+                    if (response != null)
+                    {
+                        if (response.DangTrongCa)
+                        {
+                            if (response.LanVaoGanNhat.HasValue)
+                            {
+                                var totalSpan = TimeSpan.FromHours((double)response.TongGioLamHienTai) + (DateTime.Now - response.LanVaoGanNhat.Value);
+                                UpdateSidebarStatus($"Đang làm ({(int)totalSpan.TotalHours:D2}:{totalSpan.Minutes:D2})");
+                            }
+                            else UpdateSidebarStatus("Đang làm việc");
+                        }
+                        else if (response.TrangThai == "KhongCoCa") UpdateSidebarStatus("Không có ca");
+                        else if (response.TrangThai == "ChuaDenGio") UpdateSidebarStatus("Sắp tới ca");
+                        else if (response.TrangThai == "ChoVaoCa") UpdateSidebarStatus("Chưa chấm công");
+                        else if (response.TrangThai == "DaHoanThanh") UpdateSidebarStatus("Hoàn thành ca");
+                    }
                 }
             }
             catch (Exception ex)
@@ -386,13 +399,22 @@ namespace AppCafebookApi.View.nhanvien
 
         private void BtnDetailClose_Click(object sender, RoutedEventArgs e) => DetailThongBaoOverlay.Visibility = Visibility.Collapsed;
 
-        private void BtnDangXuat_Click(object sender, RoutedEventArgs e)
+        private async void BtnDangXuat_Click(object sender, RoutedEventArgs e)
         {
             if (MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 _notificationTimer?.Stop();
-
                 _toastCts?.Cancel();
+
+                // TỰ ĐỘNG RA CA TRƯỚC KHI ĐĂNG XUẤT
+                if (AuthService.CurrentUser != null && AuthService.CurrentUser.IdNhanVien > 0)
+                {
+                    try
+                    {
+                        await ApiClient.Instance.PostAsync($"api/app/chamcong/clock-out/{AuthService.CurrentUser.IdNhanVien}", null);
+                    }
+                    catch { /* Im lặng cho qua nếu mạng lag khi đang tắt app */ }
+                }
 
                 if (MainFrame != null)
                 {
@@ -404,7 +426,6 @@ namespace AppCafebookApi.View.nhanvien
                 }
 
                 GlobalDataCache.ClearAll();
-
                 AuthService.Logout();
 
                 new ManHinhDangNhap().Show();

@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using AppCafebookApi.View.Common; 
 
 namespace AppCafebookApi.View.nhanvien.pages
 {
@@ -123,11 +124,12 @@ namespace AppCafebookApi.View.nhanvien.pages
             ShowLoading(true);
             try
             {
-                // SỬA LỖI: Dùng PutAsJsonAsync gửi {} thay vì PutAsync gửi null để tránh lỗi 415
                 var response = await ApiClient.Instance.PutAsJsonAsync($"api/app/nhanvien/chebien/start/{item.IdTrangThaiCheBien}", new { });
                 if (response.IsSuccessStatusCode)
                 {
                     await LoadDataAsync();
+                    var temWindow = new TemDanPreviewWindow(item);
+                    temWindow.ShowDialog();
                 }
                 else MessageBox.Show(await response.Content.ReadAsStringAsync(), "Lỗi");
             }
@@ -143,7 +145,6 @@ namespace AppCafebookApi.View.nhanvien.pages
             ShowLoading(true);
             try
             {
-                // SỬA LỖI: Dùng PutAsJsonAsync gửi {} thay vì PutAsync gửi null để tránh lỗi 415
                 var response = await ApiClient.Instance.PutAsJsonAsync($"api/app/nhanvien/chebien/complete/{item.IdTrangThaiCheBien}", new { });
                 if (response.IsSuccessStatusCode)
                 {
@@ -186,16 +187,12 @@ namespace AppCafebookApi.View.nhanvien.pages
             }
         }
 
-        // =========================================================================
-        // LOGIC XỬ LÝ LỊCH SỬ CHẾ BIẾN (Tuân thủ FindName Protection)
-        // =========================================================================
         private List<CheBienItemDto> _allLichSuItems = new List<CheBienItemDto>();
 
         private async void BtnLichSu_Click(object sender, RoutedEventArgs e)
         {
-            _refreshTimer.Stop(); // Dừng tải dữ liệu bếp liên tục
+            _refreshTimer.Stop(); 
 
-            // Dùng FindName để ẩn Tab và hiện Lịch Sử
             if (FindName("MainTabs") is TabControl tabs) tabs.Visibility = Visibility.Collapsed;
             if (FindName("panelLichSu") is Grid panel) panel.Visibility = Visibility.Visible;
 
@@ -206,7 +203,7 @@ namespace AppCafebookApi.View.nhanvien.pages
                 if (items != null)
                 {
                     _allLichSuItems = items;
-                    ApplyLichSuFilter(); // Gọi hàm lọc để hiển thị
+                    ApplyLichSuFilter(); 
                 }
             }
             catch (Exception ex)
@@ -219,19 +216,13 @@ namespace AppCafebookApi.View.nhanvien.pages
             }
         }
 
-        // ĐÃ SỬA: Thêm từ khóa 'async' vào hàm
         private async void BtnDongLichSu_Click(object sender, RoutedEventArgs e)
         {
-            // Dùng FindName để ẩn Lịch sử và hiện lại Tab Bếp
             if (FindName("panelLichSu") is Grid panel) panel.Visibility = Visibility.Collapsed;
             if (FindName("MainTabs") is TabControl tabs) tabs.Visibility = Visibility.Visible;
-
-            // Xóa ô tìm kiếm
             if (FindName("txtTimKiemLichSu") is TextBox txt) txt.Text = string.Empty;
 
-            _refreshTimer.Start(); // Tiếp tục tải dữ liệu bếp
-
-            // ĐÃ SỬA: Thêm từ khóa 'await' để xử lý triệt để cảnh báo CS4014
+            _refreshTimer.Start(); 
             await LoadDataAsync();
         }
 
@@ -252,7 +243,6 @@ namespace AppCafebookApi.View.nhanvien.pages
                 }
                 else
                 {
-                    // Lọc theo Tên món, Số bàn hoặc Khu vực
                     var filtered = _allLichSuItems.Where(i =>
                         (i.TenMon != null && i.TenMon.ToLowerInvariant().Contains(keyword)) ||
                         (i.SoBan != null && i.SoBan.ToLowerInvariant().Contains(keyword)) ||
@@ -270,6 +260,16 @@ namespace AppCafebookApi.View.nhanvien.pages
             if (FindName("lvCongThuc") is ListView lv) lv.ItemsSource = null;
 
             _refreshTimer.Start();
+        }
+
+        private void BtnInLai_Click(object sender, RoutedEventArgs e)
+        {
+            var item = (sender as Button)?.DataContext as CheBienItemDto;
+            if (item != null)
+            {
+                var temWindow = new TemDanPreviewWindow(item);
+                temWindow.ShowDialog();
+            }
         }
     }
 }

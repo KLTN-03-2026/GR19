@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers; 
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -699,18 +699,19 @@ namespace AppCafebookApi.View.nhanvien.pages
                     return;
                 }
             }
+
             // Kích hoạt VNPAY nếu chọn Ví điện tử
             if (_currentPhuongThuc == "Ví điện tử")
             {
                 var vnpReq = new VNPayUrlRequestDto { Amount = _currentThanhTienTach, IdHoaDonGoc = _idHoaDonGoc };
                 var vnpRes = await ApiClient.Instance.PostAsJsonAsync("api/app/nhanvien/thanhtoan/vnpay-url", vnpReq);
-                
+
                 if (!vnpRes.IsSuccessStatusCode)
                 {
                     MessageBox.Show(await vnpRes.Content.ReadAsStringAsync(), "Lỗi VNPAY", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-                
+
                 var vnpData = await vnpRes.Content.ReadFromJsonAsync<VNPayUrlResponseDto>();
                 if (vnpData != null && !string.IsNullOrEmpty(vnpData.PaymentUrl))
                 {
@@ -719,15 +720,22 @@ namespace AppCafebookApi.View.nhanvien.pages
                     {
                         Owner = Window.GetWindow(this)
                     };
-                    
+
                     bool? isPaid = vnpWindow.ShowDialog();
+
+                    // NÂNG CẤP: Xử lý khi tắt màn hình hoặc thanh toán thất bại
                     if (isPaid != true)
                     {
-                        // Nhân viên tắt hoặc khách hủy giao dịch
-                        return; 
+                        MessageBox.Show("Chưa thanh toán được VNPAY. Vui lòng chọn phương thức thanh toán khác!",
+                                        "Giao dịch bị hủy",
+                                        MessageBoxButton.OK,
+                                        MessageBoxImage.Warning);
+                        // Nhân viên tắt hoặc khách hủy giao dịch -> dừng lại
+                        return;
                     }
                 }
             }
+
             var request = new ThanhToanRequestDto
             {
                 IdHoaDonGoc = _idHoaDonGoc,
