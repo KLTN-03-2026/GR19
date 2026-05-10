@@ -8,7 +8,7 @@ using System.Text;
 using System.IO;
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
-
+Console.OutputEncoding = Encoding.UTF8;
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================================================
@@ -141,7 +141,15 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
-
+try
+{
+    await DataSeeder.InitializeAsync(app.Services);
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "Đã xảy ra lỗi trong quá trình Seeding dữ liệu cơ bản.");
+}
 // ==========================================================
 // CẤU HÌNH PIPELINE (MIDDLEWARE)
 // ==========================================================

@@ -92,18 +92,23 @@ namespace AppCafebookApi.View.nhanvien.pages
                 if (items != null)
                 {
                     if (FindName("lblLastUpdated") is TextBlock lblUpdate)
-                    {
                         lblUpdate.Text = $"(Cập nhật lúc {DateTime.Now:HH:mm:ss})";
-                    }
 
-                    var bepItems = items.Where(i => string.Equals(i.NhomIn, "Bếp", StringComparison.OrdinalIgnoreCase)).ToList();
-                    var phaCheItems = items.Where(i => string.Equals(i.NhomIn, "Pha chế", StringComparison.OrdinalIgnoreCase)).ToList();
+                    var groupedOrders = items
+                        .GroupBy(i => new { i.IdHoaDon, i.SoBan, i.LoaiHoaDon })
+                        .Select(g => new CheBienGroupDto
+                        {
+                            IdHoaDon = g.Key.IdHoaDon,
+                            SoBan = g.Key.SoBan,
+                            LoaiHoaDon = g.Key.LoaiHoaDon,
+                            ThoiGianGoiNhoNhat = g.Min(x => x.ThoiGianGoi),
+                            Items = g.OrderBy(x => x.ThoiGianGoi).ToList()
+                        })
+                        .OrderBy(g => g.ThoiGianGoiNhoNhat)
+                        .ToList();
 
-                    if (FindName("icBep") is ItemsControl icBep)
-                        icBep.ItemsSource = bepItems;
-
-                    if (FindName("icPhaChe") is ItemsControl icPhaChe)
-                        icPhaChe.ItemsSource = phaCheItems;
+                    if (FindName("icAllOrders") is ItemsControl icAll)
+                        icAll.ItemsSource = groupedOrders;
                 }
             }
             catch (Exception ex)

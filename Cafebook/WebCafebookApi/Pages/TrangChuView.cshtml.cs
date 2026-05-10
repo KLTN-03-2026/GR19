@@ -28,24 +28,23 @@ namespace WebCafebookApi.Pages
         {
             var httpClient = _httpClientFactory.CreateClient("ApiClient");
 
-            await Task.Delay(1000);
-
             int maxRetries = 3;
-            int delayMs = 1000;
+            int delayMs = 1500;
 
             for (int i = 0; i < maxRetries; i++)
             {
                 try
                 {
                     var response = await httpClient.GetFromJsonAsync<TrangChuDto>("api/web/trangchu/data");
+
                     if (response != null)
                     {
                         Info = response.Info;
-                        Promotions = response.Promotions;
-                        MonNoiBat = response.MonNoiBat;
-                        SachNoiBat = response.SachNoiBat;
+                        Promotions = response.Promotions ?? new List<KhuyenMaiDto>();
+                        MonNoiBat = response.MonNoiBat ?? new List<SanPhamDto>();
+                        SachNoiBat = response.SachNoiBat ?? new List<SachDto>();
 
-                        break; 
+                        return;
                     }
                 }
                 catch (HttpRequestException)

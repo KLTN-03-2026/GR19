@@ -55,13 +55,23 @@ namespace CafebookApi.Controllers.App.QuanLy
             double gioChuyenCan = double.TryParse(configs.GetValueOrDefault("HR_ChuyenCan_SoGio")?.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var p7) ? p7 : 120.0;
             decimal tienThuongChuyenCan = decimal.TryParse(configs.GetValueOrDefault("HR_ChuyenCan_TienThuong")?.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var p8) ? p8 : 500000m;
 
-
             var rawData = await (from l in _context.Set<LichLamViec>()
                                  join b in _context.Set<BangChamCong>() on l.IdLichLamViec equals b.IdLichLamViec
                                  join nv in _context.Set<NhanVienEntity>() on l.IdNhanVien equals nv.IdNhanVien
                                  join c in _context.Set<CaLamViec>() on l.IdCa equals c.IdCa
                                  where l.NgayLam >= tuNgay.Date && l.NgayLam <= denNgay.Date
-                                 select new { l.IdNhanVien, nv.HoTen, nv.LuongCoBan, b.GioVao, b.GioRa, c.GioBatDau, c.GioKetThuc, l.NgayLam }).ToListAsync();
+                                 select new
+                                 {
+                                     l.IdNhanVien,
+                                     nv.HoTen,
+                                     nv.LuongCoBan,
+                                     nv.TrangThaiLamViec, 
+                                     b.GioVao,
+                                     b.GioRa,
+                                     c.GioBatDau,
+                                     c.GioKetThuc,
+                                     l.NgayLam
+                                 }).ToListAsync();
 
             var thuongPhatThuCong = await _context.Set<PhieuThuongPhat>()
                 .Where(p => p.IdPhieuLuong == null
@@ -69,7 +79,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                          && p.NgayTao.Year == tuNgay.Year)
                 .ToListAsync();
 
-            var result = rawData.GroupBy(x => new { x.IdNhanVien, x.HoTen, x.LuongCoBan }).Select(g =>
+            var result = rawData.GroupBy(x => new { x.IdNhanVien, x.HoTen, x.LuongCoBan, x.TrangThaiLamViec }).Select(g =>
             {
                 double tongGioChuan = 0, tongGioOT = 0;
                 int soLanTre = 0, soLanSom = 0;
@@ -82,7 +92,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                     if (!item.GioRa.HasValue)
                     {
                         gioRaThucTe = item.NgayLam.Add(item.GioKetThuc);
-                        if (item.GioKetThuc < item.GioBatDau) gioRaThucTe = gioRaThucTe.AddDays(1); 
+                        if (item.GioKetThuc < item.GioBatDau) gioRaThucTe = gioRaThucTe.AddDays(1);
                     }
                     else
                     {
@@ -136,7 +146,7 @@ namespace CafebookApi.Controllers.App.QuanLy
                     }
                 }
 
-                return new QuanLyLuongBangKeDto
+                var dto = new QuanLyLuongBangKeDto
                 {
                     IdNhanVien = g.Key.IdNhanVien,
                     TenNhanVien = g.Key.HoTen,
@@ -151,9 +161,17 @@ namespace CafebookApi.Controllers.App.QuanLy
                     TienPhatTreSom = Math.Round(tienPhatTS, 0),
                     ThuongThuCong = thuongTC,
                     PhatThuCong = phatTC,
-                    DanhSachThuongPhat = chiTiet.OrderBy(c => c.IsAuto ? 0 : 1).ToList() 
+                    DanhSachThuongPhat = chiTiet.OrderBy(c => c.IsAuto ? 0 : 1).ToList()
                 };
-            }).Where(x => x.TongGioLamChuan > 0 || x.TongGioOT > 0).ToList();
+
+                return new { Dto = dto, TrangThai = g.Key.TrangThaiLamViec };
+            })
+            .Where(x =>
+                (x.Dto.TongGioLamChuan > 0 || x.Dto.TongGioOT > 0) ||
+                (x.TrangThai != "Nghỉ việc")
+            )
+            .Select(x => x.Dto)
+            .ToList();
 
             return Ok(result);
         }

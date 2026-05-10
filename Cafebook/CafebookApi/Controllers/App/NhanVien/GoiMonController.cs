@@ -1,5 +1,4 @@
-﻿// Tập tin: CafebookApi/Controllers/App/NhanVien/GoiMonController.cs
-using CafebookApi.Data;
+﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelApp.NhanVien;
 using CafebookModel.Model.ModelEntities;
 using Microsoft.AspNetCore.Authorization;
@@ -30,39 +29,36 @@ namespace CafebookApi.Controllers.App.NhanVien
 
         private string GetFullImageUrl(string? relativePath)
         {
-            if (string.IsNullOrEmpty(relativePath)) return $"{_baseUrl}/images/default-food-icon.png";
-            return $"{_baseUrl}{relativePath.Replace(Path.DirectorySeparatorChar, '/')}";
+            var request = HttpContext.Request;
+            var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+
+            if (string.IsNullOrEmpty(relativePath))
+                return $"{baseUrl}/images/default-food-icon.png";
+
+            return $"{baseUrl}/{relativePath.TrimStart('/').Replace('\\', '/')}";
         }
 
-        // ========================================================
-        // HÀM KIỂM TRA ĐỒNG BỘ BẾP (Quyết định mở khóa Thanh toán)
-        // ========================================================
         private async Task<bool> CheckChoPhepThanhToan(int idHoaDon)
         {
-            // Lấy danh sách món trong Hóa Đơn hiện tại (kèm theo Số lượng và Ghi chú)
             var chiTiets = await _context.ChiTietHoaDons.AsNoTracking()
                 .Where(c => c.IdHoaDon == idHoaDon)
                 .Select(c => new { c.IdChiTietHoaDon, c.SoLuong, c.GhiChu }).ToListAsync();
 
-            if (!chiTiets.Any()) return false; // Không có món nào thì chắc chắn không cho thanh toán
+            if (!chiTiets.Any()) return false; 
 
-            // Lấy danh sách món đang nằm dưới Bếp
             var cheBiens = await _context.TrangThaiCheBiens.AsNoTracking()
                 .Where(cb => cb.IdHoaDon == idHoaDon)
                 .Select(cb => new { cb.IdChiTietHoaDon, cb.SoLuong, cb.GhiChu }).ToListAsync();
 
-            // Nếu số món khác nhau (Vd: Bạn vừa Xóa 1 món ở màn hình Gọi Món nhưng Bếp chưa biết) -> Khóa
             if (chiTiets.Count != cheBiens.Count) return false;
 
-            // Kiểm tra từng món một
             foreach (var ct in chiTiets)
             {
                 var cb = cheBiens.FirstOrDefault(x => x.IdChiTietHoaDon == ct.IdChiTietHoaDon);
-                // Khóa thanh toán nếu: Món chưa gửi bếp, Sai số lượng, Sai ghi chú
                 if (cb == null || cb.SoLuong != ct.SoLuong || cb.GhiChu != ct.GhiChu) return false;
             }
 
-            return true; // Tất cả đã đồng bộ hoàn hảo 100%
+            return true; 
         }
 
         [HttpGet("load/{idHoaDon}")]
@@ -74,8 +70,12 @@ namespace CafebookApi.Controllers.App.NhanVien
                 if (hoaDon == null) return NotFound("Không tìm thấy hóa đơn.");
 
                 var currentPromotion = await _context.HoaDonKhuyenMais.AsNoTracking().FirstOrDefaultAsync(hk => hk.IdHoaDon == idHoaDon);
-
-                // GỌI HÀM KIỂM TRA ĐỂ LẤY TRẠNG THÁI MỞ KHÓA
+                string? tenKhuyenMai = null;
+                if (currentPromotion != null)
+                {
+                    var km = await _context.KhuyenMais.FindAsync(currentPromotion.IdKhuyenMai);
+                    tenKhuyenMai = km?.TenChuongTrinh;
+                }
                 bool choPhepThanhToan = await CheckChoPhepThanhToan(idHoaDon);
 
                 var hoaDonInfo = new HoaDonInfoDto
@@ -87,8 +87,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                     GiamGia = hoaDon.GiamGia,
                     ThanhTien = hoaDon.ThanhTien,
                     IdKhuyenMai = currentPromotion?.IdKhuyenMai,
-
-                    // SỬA LỖI CHÍNH Ở ĐÂY: Gán cờ mở khóa để gửi về WPF
+                    TenKhuyenMai = tenKhuyenMai,
                     ChoPhepThanhToan = choPhepThanhToan
                 };
 
@@ -119,8 +118,6 @@ namespace CafebookApi.Controllers.App.NhanVien
 
                 var danhMucs = await _context.DanhMucs.OrderBy(d => d.TenDanhMuc).AsNoTracking()
                     .Select(d => new DanhMucDto { IdDanhMuc = d.IdDanhMuc, TenLoaiSP = d.TenDanhMuc }).ToListAsync();
-
-                // Lấy danh sách rỗng cho khuyến mãi để tối ưu băng thông lúc load (WPF tự gọi riêng sau)
                 var dto = new GoiMonViewDto { HoaDonInfo = hoaDonInfo, ChiTietItems = chiTietItems, SanPhams = sanPhams, DanhMucs = danhMucs, KhuyenMais = new List<KhuyenMaiDto>() };
                 return Ok(dto);
             }
@@ -167,6 +164,7 @@ namespace CafebookApi.Controllers.App.NhanVien
                 if (hoaDon.TrangThai == "Đã thanh toán") return Conflict("Hóa đơn đã thanh toán.");
                 var sanPham = await _context.SanPhams.FindAsync(req.IdSanPham);
                 if (sanPham == null) return NotFound("Sản phẩm không tồn tại.");
+                if (!sanPham.TrangThaiKinhDoanh) return Conflict("Sản phẩm này đang tạm ngưng bán.");
 
                 var dinhLuongList = await _context.DinhLuongs.Include(d => d.NguyenLieu).Include(d => d.DonViSuDung).Where(d => d.IdSanPham == req.IdSanPham).ToListAsync();
                 if (dinhLuongList.Any())
@@ -175,23 +173,9 @@ namespace CafebookApi.Controllers.App.NhanVien
 
                     foreach (var dl in dinhLuongList)
                     {
-                        // ========================================================
-                        // LOGIC KIỂM TRA KHO CHUẨN XÁC (Đồng bộ với hàm TruKho)
-                        // ========================================================
-                        decimal heSoQuyDoi = (dl.DonViSuDung != null && dl.DonViSuDung.GiaTriQuyDoi > 0) ? dl.DonViSuDung.GiaTriQuyDoi : 1m;
-                        decimal luongCanDungMotSP = 0;
+                        if (dl.NguyenLieu == null) continue;
 
-                        if (dl.DonViSuDung != null && dl.DonViSuDung.LaDonViCoBan)
-                        {
-                            // Nếu là đơn vị cơ bản -> Lấy thẳng số lượng
-                            luongCanDungMotSP = dl.SoLuongSuDung;
-                        }
-                        else
-                        {
-                            // Nếu là đơn vị quy đổi -> Phải CHIA cho hệ số
-                            luongCanDungMotSP = dl.SoLuongSuDung / heSoQuyDoi;
-                        }
-
+                        decimal luongCanDungMotSP = TinhLuongQuyDoiVeCoBan(dl.SoLuongSuDung, dl.DonViSuDung);
                         decimal luongCanDungTong = luongCanDungMotSP * (existingItemQty + req.SoLuong);
 
                         if (dl.NguyenLieu.TonKho < luongCanDungTong)
@@ -232,28 +216,15 @@ namespace CafebookApi.Controllers.App.NhanVien
                 var hoaDon = item.HoaDon;
                 if (hoaDon.TrangThai == "Đã thanh toán") return Conflict("Hóa đơn đã thanh toán.");
 
-                // Chỉ kiểm tra kho khi người dùng TĂNG số lượng món
                 if (req.SoLuongMoi > item.SoLuong)
                 {
                     var dinhLuongList = await _context.DinhLuongs.Include(d => d.NguyenLieu).Include(d => d.DonViSuDung).Where(d => d.IdSanPham == item.IdSanPham).ToListAsync();
                     foreach (var dl in dinhLuongList)
                     {
-                        // ========================================================
-                        // LOGIC KIỂM TRA KHO CHUẨN XÁC
-                        // ========================================================
-                        decimal heSoQuyDoi = (dl.DonViSuDung != null && dl.DonViSuDung.GiaTriQuyDoi > 0) ? dl.DonViSuDung.GiaTriQuyDoi : 1m;
-                        decimal luongCanDungMotSP = 0;
+                        if (dl.NguyenLieu == null) continue;
 
-                        if (dl.DonViSuDung != null && dl.DonViSuDung.LaDonViCoBan)
-                        {
-                            luongCanDungMotSP = dl.SoLuongSuDung;
-                        }
-                        else
-                        {
-                            luongCanDungMotSP = dl.SoLuongSuDung / heSoQuyDoi;
-                        }
-
-                        decimal luongCanDungTong = luongCanDungMotSP * req.SoLuongMoi; // Check trên tổng SL mới
+                        decimal luongCanDungMotSP = TinhLuongQuyDoiVeCoBan(dl.SoLuongSuDung, dl.DonViSuDung);
+                        decimal luongCanDungTong = luongCanDungMotSP * req.SoLuongMoi;
 
                         if (dl.NguyenLieu.TonKho < luongCanDungTong)
                             return Conflict($"Hết hàng: '{dl.NguyenLieu.TenNguyenLieu}'. Không thể tăng số lượng.");
@@ -331,6 +302,14 @@ namespace CafebookApi.Controllers.App.NhanVien
             var updatedHoaDon = await _context.HoaDons.Include(h => h.Ban).AsNoTracking().FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon);
             if (updatedHoaDon == null) throw new Exception("Không thể tìm thấy hóa đơn sau khi cập nhật.");
             var currentPromotion = await _context.HoaDonKhuyenMais.AsNoTracking().FirstOrDefaultAsync(hk => hk.IdHoaDon == idHoaDon);
+            string? tenKhuyenMai = null;
+            if (currentPromotion != null)
+            {
+                var km = await _context.KhuyenMais.FindAsync(currentPromotion.IdKhuyenMai);
+                tenKhuyenMai = km?.TenChuongTrinh;
+            }
+            bool choPhepThanhToan = await CheckChoPhepThanhToan(idHoaDon);
+
             return new HoaDonInfoDto
             {
                 IdHoaDon = updatedHoaDon.IdHoaDon,
@@ -339,7 +318,9 @@ namespace CafebookApi.Controllers.App.NhanVien
                 TongTienGoc = updatedHoaDon.TongTienGoc,
                 GiamGia = updatedHoaDon.GiamGia,
                 ThanhTien = updatedHoaDon.ThanhTien,
-                IdKhuyenMai = currentPromotion?.IdKhuyenMai
+                IdKhuyenMai = currentPromotion?.IdKhuyenMai,
+                TenKhuyenMai = tenKhuyenMai,
+                ChoPhepThanhToan = choPhepThanhToan
             };
         }
 
@@ -347,8 +328,6 @@ namespace CafebookApi.Controllers.App.NhanVien
         {
             var hoaDon = await _context.HoaDons.Include(h => h.Ban).FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon);
             if (hoaDon == null) return 0;
-
-            // Đã có Include SanPham nên có thể lấy NhomIn từ đây
             var chiTietItems = await _context.ChiTietHoaDons.Include(c => c.SanPham)
                                 .Where(c => c.IdHoaDon == idHoaDon).ToListAsync();
 
@@ -424,10 +403,7 @@ namespace CafebookApi.Controllers.App.NhanVien
         {
             try
             {
-                // 1. Nhận kết quả xem có bao nhiêu món THỰC SỰ được thêm mới hoặc cập nhật
                 int itemsUpdated = await CreateOrUpdateCheBienItems(idHoaDon);
-
-                // 2. CHỈ tạo thông báo nếu có sự thay đổi đẩy xuống bếp
                 if (itemsUpdated > 0)
                 {
                     var hoaDon = await _context.HoaDons.Include(h => h.Ban).FirstOrDefaultAsync(h => h.IdHoaDon == idHoaDon);
@@ -446,8 +422,6 @@ namespace CafebookApi.Controllers.App.NhanVien
                     await _context.SaveChangesAsync();
                     return Ok(new { message = "Đã gửi phiếu gọi món và thông báo cho bếp." });
                 }
-
-                // 3. Nếu không có món nào mới (chỉ là in lại phiếu), trả về OK nhưng KHÔNG ghi thông báo
                 return Ok(new { message = "Đã in phiếu (Không có món mới cần thông báo bếp)." });
             }
             catch (Exception ex)
@@ -491,9 +465,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
-        // =========================================================================
-        // API ĐỘC LẬP: Lấy danh sách Khuyến Mãi (Dành riêng cho module Gọi Món)
-        // =========================================================================
         [HttpGet("khuyenmai-available/{idHoaDon}")]
         public async Task<IActionResult> GetAvailableKhuyenMai(int idHoaDon)
         {
@@ -543,7 +514,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             }
         }
 
-        // Hàm Helper: Kiểm tra điều kiện KM dùng chung
         private (bool IsEligible, string? Reason, decimal CalculatedDiscount) CheckEligibility(KhuyenMai km, HoaDon hoaDon, DateTime now)
         {
             decimal calculatedDiscount = 0m;
@@ -633,6 +603,17 @@ namespace CafebookApi.Controllers.App.NhanVien
                 return Ok(new { DanhMucs = danhMucs, SanPhams = sanPhams });
             }
             catch (Exception ex) { return StatusCode(500, ex.Message); }
+        }
+
+        private decimal TinhLuongQuyDoiVeCoBan(decimal soLuongSuDung, DonViChuyenDoi? donVi)
+        {
+            if (donVi == null || donVi.LaDonViCoBan)
+            {
+                return soLuongSuDung;
+            }
+
+            decimal heSo = donVi.GiaTriQuyDoi > 0 ? donVi.GiaTriQuyDoi : 1m;
+            return soLuongSuDung / heSo;
         }
     }
 }

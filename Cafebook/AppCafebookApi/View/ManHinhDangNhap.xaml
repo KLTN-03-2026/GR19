@@ -178,7 +178,6 @@
                             <DropShadowEffect ShadowDepth="1" BlurRadius="15" Opacity="0.2"/>
                         </Ellipse.Effect>
                         <Ellipse.Fill>
-                            <!-- Thay đổi "/Assets/logo.png" thành đường dẫn chính xác tới file của bạn -->
                             <ImageBrush ImageSource="/Assets/logo.png"/>
                         </Ellipse.Fill>
                     </Ellipse>

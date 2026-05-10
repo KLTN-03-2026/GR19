@@ -32,7 +32,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 
             var productIds = request.Items.Select(x => x.IdSanPham).ToList();
             var products = await _context.SanPhams.AsNoTracking()
-                .Where(p => productIds.Contains(p.IdSanPham))
+                .Where(p => productIds.Contains(p.IdSanPham) && p.TrangThaiKinhDoanh == true) // <-- ĐÃ THÊM ĐIỀU KIỆN
                 .ToListAsync();
 
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
@@ -82,23 +82,21 @@ namespace CafebookApi.Controllers.Web.KhachHang
 
                     foreach (var dl in dlOfItem)
                     {
-                        decimal heSoQuyDoi = (dl.DonViSuDung != null && dl.DonViSuDung.GiaTriQuyDoi > 0) ? dl.DonViSuDung.GiaTriQuyDoi : 1m;
-                        decimal luongCanDungMotSP = (dl.DonViSuDung != null && dl.DonViSuDung.LaDonViCoBan)
-                            ? dl.SoLuongSuDung
-                            : dl.SoLuongSuDung / heSoQuyDoi;
+                        if (dl.NguyenLieu == null) continue;
 
+                        decimal luongCanDungMotSP = TinhLuongQuyDoiVeCoBan(dl.SoLuongSuDung, dl.DonViSuDung);
                         decimal luongCanDungTong = luongCanDungMotSP * item.SoLuong;
 
                         if (tonKhoAo.ContainsKey(dl.IdNguyenLieu))
                         {
                             if (tonKhoAo[dl.IdNguyenLieu] < luongCanDungTong)
                             {
-                                item.IsOutOfStock = true; 
+                                item.IsOutOfStock = true;
                                 item.OutOfStockMessage = $"Hết nguyên liệu: {dl.NguyenLieu.TenNguyenLieu}";
 
-                                result.CanCheckout = false; 
+                                result.CanCheckout = false;
                                 result.CheckoutWarning = "Một số món trong giỏ đã hết nguyên liệu chế biến. Vui lòng giảm số lượng hoặc xóa để tiếp tục thanh toán.";
-                                break; 
+                                break;
                             }
                             else
                             {
@@ -207,6 +205,17 @@ namespace CafebookApi.Controllers.Web.KhachHang
             else { discount = km.GiaTriGiam; }
 
             return (true, null, discount);
+        }
+
+        private decimal TinhLuongQuyDoiVeCoBan(decimal soLuongSuDung, DonViChuyenDoi? donVi)
+        {
+            if (donVi == null || donVi.LaDonViCoBan)
+            {
+                return soLuongSuDung;
+            }
+
+            decimal heSo = donVi.GiaTriQuyDoi > 0 ? donVi.GiaTriQuyDoi : 1m;
+            return soLuongSuDung / heSo;
         }
     }
 }

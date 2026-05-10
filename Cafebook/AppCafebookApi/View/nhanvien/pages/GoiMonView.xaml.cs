@@ -188,12 +188,22 @@ namespace AppCafebookApi.View.nhanvien.pages
             _currentKhuyenMaiId = info.IdKhuyenMai;
             if (_currentKhuyenMaiId.HasValue && _currentKhuyenMaiId != 0)
             {
-                btnChonKhuyenMai.Content = "Đã chọn KM";
+                // Hiển thị tên KM, đổi viền và chữ sang màu xanh để nổi bật trạng thái "Đã áp dụng"
+                btnChonKhuyenMai.Content = string.IsNullOrEmpty(info.TenKhuyenMai) ? "Đã chọn KM" : info.TenKhuyenMai;
+                btnChonKhuyenMai.Foreground = (SolidColorBrush)FindResource("StatusGreenBrush");
+                btnChonKhuyenMai.BorderBrush = (SolidColorBrush)FindResource("StatusGreenBrush");
+                btnChonKhuyenMai.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E8F5E9")); // Nền xanh nhạt
+
                 btnHuyKhuyenMai.Visibility = Visibility.Visible;
             }
             else
             {
+                // Trả về giao diện mặc định
                 btnChonKhuyenMai.Content = "-- Chọn Khuyến mãi --";
+                btnChonKhuyenMai.Foreground = (SolidColorBrush)FindResource("AccentOrangeBrush");
+                btnChonKhuyenMai.BorderBrush = (SolidColorBrush)FindResource("AccentOrangeBrush");
+                btnChonKhuyenMai.Background = (SolidColorBrush)FindResource("LightCreamBrush");
+
                 btnHuyKhuyenMai.Visibility = Visibility.Collapsed;
             }
         }

@@ -225,6 +225,56 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="KhuyenMaiButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource LightCreamBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentOrangeBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource AccentOrangeBrush}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="6">
+                            <Border.Effect>
+                                <DropShadowEffect x:Name="shadow" ShadowDepth="1" BlurRadius="5" Opacity="0.05" Color="#000"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        <Setter Property="MaxWidth" Value="160"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="shadow" Storyboard.TargetProperty="Opacity" To="0.15" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="shadow" Storyboard.TargetProperty="Opacity" To="0.05" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
 
     <Grid>
@@ -289,13 +339,10 @@
                                         <RowDefinition Height="*"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
-                                    <Border Grid.Row="0" CornerRadius="8,8,0,0">
-                                        <Border.Background>
-                                            <!-- TỐI ƯU ẢNH: Tắt HighQuality (rất tốn CPU khi cuộn) và bật DecodePixelWidth -->
-                                            <ImageBrush ImageSource="{Binding HinhAnh}" 
-                                                        Stretch="UniformToFill" 
-                                                        RenderOptions.BitmapScalingMode="LowQuality"/>
-                                        </Border.Background>
+                                    <Border Grid.Row="0" CornerRadius="8,8,0,0" ClipToBounds="True">
+                                        <Image Source="{Binding HinhAnh}" 
+           Stretch="UniformToFill" 
+           RenderOptions.BitmapScalingMode="LowQuality"/>
                                     </Border>
                                     <StackPanel Grid.Row="1" Margin="8">
                                         <TextBlock Text="{Binding TenSanPham}" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center" Height="38" FontSize="14" Foreground="{StaticResource DarkBrownBrush}"/>
@@ -421,7 +468,8 @@
                                 Content="-- Chọn Khuyến mãi --" 
                                 Margin="5,5,0,5" 
                                 Click="BtnChonKhuyenMai_Click"
-                                FontWeight="SemiBold"/>
+                                Style="{StaticResource KhuyenMaiButtonStyle}"
+                                ToolTip="Nhấn để chọn mã giảm giá"/>
                         <Button Grid.Row="1" Grid.Column="2" x:Name="btnHuyKhuyenMai" 
                                 Content="X" 
                                 ToolTip="Gỡ bỏ khuyến mãi"

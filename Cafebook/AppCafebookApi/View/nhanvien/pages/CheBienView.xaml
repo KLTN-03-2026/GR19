@@ -24,7 +24,7 @@
             </BeginStoryboard>
         </EventTrigger>
     </Page.Triggers>
-    
+
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <SolidColorBrush x:Key="ActionGreenBrush" Color="#66BB6A"/>
@@ -60,7 +60,7 @@
                     </Setter>
                     <Setter Property="RenderTransform">
                         <Setter.Value>
-                            <ScaleTransform ScaleX="1.03" ScaleY="1.03"/>
+                            <ScaleTransform ScaleX="1.02" ScaleY="1.02"/>
                         </Setter.Value>
                     </Setter>
                 </Trigger>
@@ -69,16 +69,16 @@
 
         <Style x:Key="ActionButton" TargetType="Button">
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="20,8"/>
-            <Setter Property="MinHeight" Value="36"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="MinHeight" Value="48"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" CornerRadius="18"
+                        <Border x:Name="border" CornerRadius="8"
                                 Background="{TemplateBinding Background}"
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="True">
@@ -127,125 +127,101 @@
             </Grid>
         </Border>
 
-        <TabControl x:Name="MainTabs" Grid.Row="1" Margin="10" Background="Transparent" BorderThickness="0" SelectedIndex="0">
+        <ScrollViewer x:Name="MainTabs" Grid.Row="1" Margin="10" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="icAllOrders">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
 
-            <TabItem Header="🍹 Pha Chế (Đồ Uống)">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl x:Name="icPhaChe">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Style="{StaticResource KitchenCard}" Width="280"
-                                        MouseLeftButtonDown="Border_CongThuc_Click"
-                                        ToolTip="Click để xem công thức">
-                                    <StackPanel Margin="10">
-                                        <TextBlock Text="{Binding SoBan}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource CafeOrange}"/>
-                                        <TextBlock Margin="0,5,0,0">
-                                            <Run Text="{Binding TenMon}" FontSize="18" FontWeight="SemiBold"/>
-                                            <Run Text=" (x" FontSize="18" FontWeight="Bold"/>
-                                            <Run Text="{Binding SoLuong}" FontSize="18" FontWeight="Bold"/>
-                                            <Run Text=")" FontSize="18" FontWeight="Bold"/>
-                                        </TextBlock>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource KitchenCard}" Width="360" Margin="10" VerticalAlignment="Top">
+                            <StackPanel>
 
-                                        <TextBlock Text="{Binding GhiChu}" FontStyle="Italic" Foreground="Red" Margin="0,5,0,0" TextWrapping="Wrap">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <Trigger Property="Text" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </Trigger>
-                                                        <Trigger Property="Text" Value="">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
+                                <Grid Background="#FFF3E0" Margin="-10,-10,-10,10">
+                                    <Border Padding="12,10">
+                                        <StackPanel>
+                                            <Grid>
+                                                <TextBlock Text="{Binding LoaiDonHienThi}" FontWeight="Bold" FontSize="15" Foreground="{StaticResource CafeOrange}"/>
+                                                <TextBlock Text="{Binding IdHoaDon, StringFormat='ID: #\{0\}'}" HorizontalAlignment="Right" Foreground="{StaticResource TextGray}" FontSize="14" FontWeight="SemiBold"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding SoBan}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource CafeBrown}" Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
 
-                                        <TextBlock Margin="0,10,0,0" Foreground="{StaticResource TextGray}">
-                                            <Run Text="{Binding ThoiGianGoiDisplay, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                            <Run Text="{Binding ThoiGianCho, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold"/>
-                                        </TextBlock>
-                                        <Button Content="Bắt đầu làm" Style="{StaticResource ActionButton}" Background="#42A5F5" Margin="0,10,0,0"
-                                                Click="BtnStartItem_Click"
-                                                Visibility="{Binding IsChoLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                        <Button Content="Hoàn thành" Style="{StaticResource ActionButton}" Background="#66BB6A" Margin="0,10,0,0"
-                                                Click="BtnCompleteItem_Click"
-                                                Visibility="{Binding IsDangLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                        <Button Content="📄 In Lại Phiếu" Style="{StaticResource ActionButton}" 
-                                                Background="{StaticResource ActionGrayBrush}" Margin="0,10,0,0"
-                                                Click="BtnInLai_Click"/>
-                                    </StackPanel>
-                                    
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </TabItem>
+                                <ItemsControl ItemsSource="{Binding Items}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="#EEEEEE" BorderThickness="0,0,0,1" Padding="0,8"
+                                                    Background="Transparent" MouseLeftButtonDown="Border_CongThuc_Click" ToolTip="Click để xem công thức">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
 
-            <TabItem Header="🍳 Bếp (Món Ăn)">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl x:Name="icBep">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Style="{StaticResource KitchenCard}" Width="280"
-                                        MouseLeftButtonDown="Border_CongThuc_Click"
-                                        ToolTip="Click để xem công thức">
-                                    <StackPanel Margin="10">
-                                        <TextBlock Text="{Binding SoBan}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource CafeOrange}"/>
-                                        <TextBlock Margin="0,5,0,0">
-                                            <Run Text="{Binding TenMon}" FontSize="18" FontWeight="SemiBold"/>
-                                            <Run Text=" (x" FontSize="18" FontWeight="Bold"/>
-                                            <Run Text="{Binding SoLuong}" FontSize="18" FontWeight="Bold"/>
-                                            <Run Text=")" FontSize="18" FontWeight="Bold"/>
-                                        </TextBlock>
+                                                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                                        <TextBlock TextWrapping="Wrap">
+                                                            <Run Text="{Binding TenMon}" FontSize="18" FontWeight="SemiBold"/>
+                                                            <Run Text="{Binding SoLuong, StringFormat=' (x\{0\})'}" FontSize="18" FontWeight="Bold" Foreground="#42A5F5"/>
+                                                        </TextBlock>
 
-                                        <TextBlock Text="{Binding GhiChu}" FontStyle="Italic" Foreground="Red" Margin="0,5,0,0" TextWrapping="Wrap">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <Trigger Property="Text" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </Trigger>
-                                                        <Trigger Property="Text" Value="">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
+                                                        <Border Background="#E0E0E0" CornerRadius="4" HorizontalAlignment="Left" Padding="6,2" Margin="0,5,0,0">
+                                                            <TextBlock Text="{Binding NhomIn}" FontSize="11" FontWeight="Bold" Foreground="#616161"/>
+                                                        </Border>
 
-                                        <TextBlock Margin="0,10,0,0" Foreground="{StaticResource TextGray}">
-                                            <Run Text="{Binding ThoiGianGoiDisplay, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                            <Run Text="{Binding ThoiGianCho, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold"/>
-                                        </TextBlock>
-                                        <Button Content="Bắt đầu làm" Style="{StaticResource ActionButton}" Background="#42A5F5" Margin="0,10,0,0"
-                                                Click="BtnStartItem_Click"
-                                                Visibility="{Binding IsChoLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                        <Button Content="Hoàn thành" Style="{StaticResource ActionButton}" Background="#66BB6A" Margin="0,10,0,0"
-                                                Click="BtnCompleteItem_Click"
-                                                Visibility="{Binding IsDangLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </TabItem>
+                                                        <TextBlock Text="{Binding GhiChu}" FontStyle="Italic" Foreground="Red" Margin="0,5,0,0" TextWrapping="Wrap">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                    <Style.Triggers>
+                                                                        <Trigger Property="Text" Value="{x:Null}">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </Trigger>
+                                                                        <Trigger Property="Text" Value="">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </Trigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
 
-        </TabControl>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <Button Content="BẮT ĐẦU" Style="{StaticResource ActionButton}" Background="#42A5F5" MinWidth="110" Margin="0,0,0,8"
+                                                                Click="BtnStartItem_Click" Visibility="{Binding IsChoLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                                        <Button Content="XONG MÓN" Style="{StaticResource ActionButton}" Background="#66BB6A" MinWidth="110" Margin="0,0,0,8"
+                                                                Click="BtnCompleteItem_Click" Visibility="{Binding IsDangLam, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                                        <Button Content="📄 IN LẠI" Style="{StaticResource ActionButton}" Background="{StaticResource ActionGrayBrush}" MinWidth="110"
+                                                                Click="BtnInLai_Click"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Separator Margin="0,10,0,10" Background="#EEEEEE"/>
+
+                                <Grid>
+                                    <TextBlock Foreground="{StaticResource TextGray}" FontSize="13">
+                                        <Run Text="Lúc: "/>
+                                        <Run Text="{Binding Items[0].ThoiGianGoiDisplay, Mode=OneWay}"/>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding ThoiGianCho, Mode=OneWay}" HorizontalAlignment="Right" Foreground="Red" FontWeight="Bold" FontSize="14"/>
+                                </Grid>
+
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
 
         <Grid x:Name="panelLichSu" Grid.Row="1" Margin="10" Visibility="Collapsed" Background="White">
             <Grid.RowDefinitions>

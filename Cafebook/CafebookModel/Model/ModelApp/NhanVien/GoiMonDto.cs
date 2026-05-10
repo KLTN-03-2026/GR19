@@ -22,6 +22,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public decimal GiamGia { get; set; }
         public decimal ThanhTien { get; set; }
         public int? IdKhuyenMai { get; set; }
+        public string? TenKhuyenMai { get; set; } 
         public bool ChoPhepThanhToan { get; set; }
     }
 

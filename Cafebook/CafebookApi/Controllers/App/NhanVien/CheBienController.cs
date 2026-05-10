@@ -1,5 +1,4 @@
-﻿// Tệp: CafebookApi/Controllers/App/NhanVien/CheBienController.cs
-using CafebookApi.Data;
+﻿using CafebookApi.Data;
 using CafebookModel.Model.ModelApp.NhanVien;
 using CafebookModel.Model.ModelEntities;
 using Microsoft.AspNetCore.Mvc;
@@ -97,20 +96,11 @@ namespace CafebookApi.Controllers.App.NhanVien
 
             foreach (var dl in dinhLuongList)
             {
-                if (dl.NguyenLieu != null && dl.DonViSuDung != null)
+                if (dl.NguyenLieu != null)
                 {
                     var nguyenLieu = dl.NguyenLieu;
-                    decimal luongTru1SP = 0;
 
-                    if (dl.DonViSuDung.LaDonViCoBan)
-                    {
-                        luongTru1SP = dl.SoLuongSuDung;
-                    }
-                    else
-                    {
-                        decimal heSoQuyDoi = dl.DonViSuDung.GiaTriQuyDoi > 0 ? dl.DonViSuDung.GiaTriQuyDoi : 1m;
-                        luongTru1SP = dl.SoLuongSuDung / heSoQuyDoi;
-                    }
+                    decimal luongTru1SP = TinhLuongQuyDoiVeCoBan(dl.SoLuongSuDung, dl.DonViSuDung);
 
                     decimal luongCanTruTong = luongTru1SP * soLuong;
                     nguyenLieu.TonKho -= luongCanTruTong;
@@ -208,6 +198,17 @@ namespace CafebookApi.Controllers.App.NhanVien
             {
                 return StatusCode(500, ex.Message);
             }
+        }
+
+        private decimal TinhLuongQuyDoiVeCoBan(decimal soLuongSuDung, DonViChuyenDoi? donVi)
+        {
+            if (donVi == null || donVi.LaDonViCoBan)
+            {
+                return soLuongSuDung;
+            }
+
+            decimal heSo = donVi.GiaTriQuyDoi > 0 ? donVi.GiaTriQuyDoi : 1m;
+            return soLuongSuDung / heSo;
         }
     }
 }

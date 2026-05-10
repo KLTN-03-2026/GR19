@@ -41,7 +41,6 @@ namespace CafebookModel.Model.ModelEntities
         [ForeignKey("IdVaiTro")]
         public virtual VaiTro VaiTro { get; set; } = null!;
 
-        // --- ĐÃ FIX LỖI KHÓA NGOẠI ---
         [InverseProperty("NhanVienTao")]
         public virtual ICollection<HoaDon> HoaDonsTao { get; set; } = new List<HoaDon>();
 
@@ -71,7 +70,6 @@ namespace CafebookModel.Model.ModelEntities
         public virtual ICollection<PhieuTraSach> PhieuTraSachs { get; set; } = new List<PhieuTraSach>();
         [NotMapped]
         public virtual ICollection<PhieuThuongPhat> PhieuThuongPhatNguoiTaos { get; set; } = new List<PhieuThuongPhat>();
-        // Thêm property này vào class NhanVien
         public virtual ICollection<NhanVien_Quyen> NhanVienQuyens { get; set; } = new List<NhanVien_Quyen>();
     }
 }

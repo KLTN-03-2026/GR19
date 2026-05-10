@@ -39,7 +39,7 @@ namespace AppCafebookApi.View.quanly.pages
             if (!string.IsNullOrEmpty(AuthService.AuthToken))
                 ApiClient.Instance.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthService.AuthToken);
 
-            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL") && !AuthService.CoQuyen("QL_CAI_DAT"))
+            if (!AuthService.CoQuyen("FULL_ADMIN", "FULL_QL") && !AuthService.CoQuyen("CM_CAI_DAT"))
             {
                 MessageBox.Show("Bạn không có quyền truy cập trang Cài đặt!", "Từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
                 this.NavigationService?.GoBack();

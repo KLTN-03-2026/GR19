@@ -15,7 +15,7 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public string TrangThai { get; set; } = string.Empty; 
         public DateTime ThoiGianGoi { get; set; }
         public string NhomIn { get; set; } = string.Empty;
-
+        public string LoaiHoaDon { get; set; } = string.Empty; 
         public string ThoiGianGoiDisplay
         {
             get { return ThoiGianGoi.ToString("HH:mm:ss"); }
@@ -47,5 +47,28 @@ namespace CafebookModel.Model.ModelApp.NhanVien
         public string TenNguyenLieu { get; set; } = string.Empty;
         public decimal SoLuongSuDung { get; set; }
         public string TenDonVi { get; set; } = string.Empty;
+    }
+
+    public class CheBienGroupDto
+    {
+        public int IdHoaDon { get; set; }
+        public string SoBan { get; set; } = string.Empty;
+        public string LoaiHoaDon { get; set; } = string.Empty; // Thêm cái này
+        public DateTime ThoiGianGoiNhoNhat { get; set; }
+
+        public string ThoiGianCho => $"({Math.Floor((DateTime.Now - ThoiGianGoiNhoNhat).TotalMinutes)} phút)";
+
+        public string LoaiDonHienThi
+        {
+            get
+            {
+                if (LoaiHoaDon == "Giao hàng") return "🚚 GIAO HÀNG";
+                if (LoaiHoaDon == "Tại quán" && (string.IsNullOrEmpty(SoBan) || SoBan.Contains("Mang về")))
+                    return "🛍️ MANG VỀ";
+                return "☕ TẠI QUÁN";
+            }
+        }
+
+        public List<CheBienItemDto> Items { get; set; } = new List<CheBienItemDto>();
     }
 }

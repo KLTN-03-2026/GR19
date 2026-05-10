@@ -119,7 +119,23 @@ namespace CafebookApi.Controllers.Web.NhanVien
 
             var sanPham = await _context.SanPhams.FindAsync(req.IdSanPham);
             if (sanPham == null) return NotFound(new { message = "Sản phẩm không tồn tại." });
+            if (!sanPham.TrangThaiKinhDoanh) return Conflict(new { message = "Sản phẩm này đang tạm ngưng bán." });
+            // --- THÊM BLOCK KIỂM TRA KHO ---
+            var dinhLuongList = await _context.DinhLuongs.Include(d => d.NguyenLieu).Include(d => d.DonViSuDung).Where(d => d.IdSanPham == req.IdSanPham).ToListAsync();
+            if (dinhLuongList.Any())
+            {
+                var existingItemQty = (await _context.ChiTietHoaDons.FirstOrDefaultAsync(c => c.IdHoaDon == req.IdHoaDon && c.IdSanPham == req.IdSanPham && c.GhiChu == req.GhiChu))?.SoLuong ?? 0;
+                foreach (var dl in dinhLuongList)
+                {
+                    if (dl.NguyenLieu == null) continue;
+                    decimal luongCanDungMotSP = TinhLuongQuyDoiVeCoBan(dl.SoLuongSuDung, dl.DonViSuDung);
+                    decimal luongCanDungTong = luongCanDungMotSP * (existingItemQty + req.SoLuong);
 
+                    if (dl.NguyenLieu.TonKho < luongCanDungTong)
+                        return Conflict(new { message = $"Hết hàng: '{dl.NguyenLieu.TenNguyenLieu}'. Không đủ nguyên liệu để thêm." });
+                }
+            }
+            // ------------------------------
             var existingItemDb = await _context.ChiTietHoaDons.FirstOrDefaultAsync(c =>
                 c.IdHoaDon == req.IdHoaDon && c.IdSanPham == req.IdSanPham && c.GhiChu == req.GhiChu);
 
@@ -152,7 +168,21 @@ namespace CafebookApi.Controllers.Web.NhanVien
 
             if (req.SoLuongMoi <= 0) _context.ChiTietHoaDons.Remove(item);
             else item.SoLuong = req.SoLuongMoi;
+            // --- THÊM BLOCK KIỂM TRA KHO ---
+            if (req.SoLuongMoi > item.SoLuong)
+            {
+                var dinhLuongList = await _context.DinhLuongs.Include(d => d.NguyenLieu).Include(d => d.DonViSuDung).Where(d => d.IdSanPham == item.IdSanPham).ToListAsync();
+                foreach (var dl in dinhLuongList)
+                {
+                    if (dl.NguyenLieu == null) continue;
+                    decimal luongCanDungMotSP = TinhLuongQuyDoiVeCoBan(dl.SoLuongSuDung, dl.DonViSuDung);
+                    decimal luongCanDungTong = luongCanDungMotSP * req.SoLuongMoi;
 
+                    if (dl.NguyenLieu.TonKho < luongCanDungTong)
+                        return Conflict(new { message = $"Hết hàng: '{dl.NguyenLieu.TenNguyenLieu}'. Không thể tăng số lượng." });
+                }
+            }
+            // ------------------------------
             await _context.SaveChangesAsync();
             await UpdateHoaDonTotals(item.HoaDon);
             return Ok(await GetHoaDonInfo(item.HoaDon.IdHoaDon));
@@ -520,6 +550,17 @@ namespace CafebookApi.Controllers.Web.NhanVien
             else { calculatedDiscount = km.GiaTriGiam; }
 
             return (true, null, calculatedDiscount);
+        }
+
+        private decimal TinhLuongQuyDoiVeCoBan(decimal soLuongSuDung, DonViChuyenDoi? donVi)
+        {
+            if (donVi == null || donVi.LaDonViCoBan)
+            {
+                return soLuongSuDung;
+            }
+
+            decimal heSo = donVi.GiaTriQuyDoi > 0 ? donVi.GiaTriQuyDoi : 1m;
+            return soLuongSuDung / heSo;
         }
     }
 }
