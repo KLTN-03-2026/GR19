@@ -34,7 +34,7 @@ if (!Directory.Exists(dataProtectionDirPath))
 
 var sharedKeyDir = new DirectoryInfo(dataProtectionDirPath);
 builder.Services.AddDataProtection()
-    .SetApplicationName("CafebookSystem") // Tên này phải y hệt bên Frontend
+    .SetApplicationName("CafebookSystem") 
     .PersistKeysToFileSystem(sharedKeyDir);
 
 // ==========================================================
@@ -61,6 +61,26 @@ if (!fileExists || fileIsEmpty)
     File.WriteAllText(adminKeyFilePath, JsonSerializer.Serialize(defaultAdminConfig, new JsonSerializerOptions { WriteIndented = true }));
 }
 builder.Configuration.AddJsonFile(adminKeyFilePath, optional: false, reloadOnChange: true);
+
+// ==========================================================
+// TỰ ĐỘNG TẠO/ĐỌC FILE CẤU HÌNH KẾT NỐI DATABASE
+// ==========================================================
+string dbConfigFilePath = Path.Combine(configDirPath, "ApiConnectionString.json");
+bool dbFileExists = File.Exists(dbConfigFilePath);
+bool dbFileIsEmpty = dbFileExists && new FileInfo(dbConfigFilePath).Length == 0;
+
+if (!dbFileExists || dbFileIsEmpty)
+{
+    var defaultDbConfig = new
+    {
+        ConnectionStrings = new
+        {
+            CafeBookConnectionString = "Server=localhost\\SQLEXPRESS;Database=CAFEBOOKDB;Integrated Security=True;Encrypt=False;"
+        }
+    };
+    File.WriteAllText(dbConfigFilePath, JsonSerializer.Serialize(defaultDbConfig, new JsonSerializerOptions { WriteIndented = true }));
+}
+builder.Configuration.AddJsonFile(dbConfigFilePath, optional: false, reloadOnChange: true);
 
 // ==========================================================
 // ĐĂNG KÝ CÁC DỊCH VỤ NỀN VÀ DATABASE
