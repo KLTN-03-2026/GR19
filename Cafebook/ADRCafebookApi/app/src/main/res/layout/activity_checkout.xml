@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/checkout_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF8E1">
+    android:background="?attr/android:windowBackground">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
+        app:elevation="0dp">
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/cafe_brown"
             app:title="Thanh toán"
-            app:titleTextColor="@android:color/white"
-            app:navigationIcon="@drawable/ic_back_arrow" />
+            app:titleTextColor="?attr/colorPrimary"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:navigationIconTint="?attr/colorPrimary" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -34,10 +37,10 @@
                 android:id="@+id/tvStoreStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#FFE082"
+                android:background="?attr/colorSurfaceVariant"
                 android:padding="12dp"
                 android:text="Cửa hàng đang mở cửa"
-                android:textColor="@color/cafe_brown"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:visibility="gone"
                 android:layout_marginBottom="16dp"/>
 
@@ -47,31 +50,45 @@
                 android:layout_height="wrap_content"
                 android:text="Thông tin giao hàng"
                 android:textStyle="bold"
-                android:textColor="@color/cafe_brown"
+                android:textColor="?attr/colorPrimary"
                 android:layout_marginBottom="8dp"/>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="8dp"
+                app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
+                style="?attr/materialCardViewStyle"
                 android:layout_marginBottom="16dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
-                    <TextView
-                        android:id="@+id/tvCustomerName"
+                    <EditText
+                        android:id="@+id/etName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Tên khách hàng"
-                        android:textStyle="bold"/>
+                        android:hint="Họ và tên"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?attr/colorOnSurfaceVariant"
+                        android:inputType="textPersonName"/>
+                    <EditText
+                        android:id="@+id/etEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Email (tùy chọn)"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?attr/colorOnSurfaceVariant"
+                        android:inputType="textEmailAddress"
+                        android:layout_marginTop="8dp"/>
                     <EditText
                         android:id="@+id/etPhone"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Số điện thoại"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?attr/colorOnSurfaceVariant"
                         android:inputType="phone"
                         android:layout_marginTop="8dp"/>
                     <EditText
@@ -79,12 +96,16 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Địa chỉ giao hàng"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?attr/colorOnSurfaceVariant"
                         android:inputType="textPostalAddress"
                         android:layout_marginTop="8dp"/>
                     <EditText
                         android:id="@+id/etNote"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?attr/colorOnSurfaceVariant"
                         android:hint="Ghi chú (Ví dụ: Giao ở cổng số 1)"
                         android:layout_marginTop="8dp"/>
                 </LinearLayout>
@@ -96,32 +117,56 @@
                 android:layout_height="wrap_content"
                 android:text="Điểm tích lũy"
                 android:textStyle="bold"
-                android:textColor="@color/cafe_brown"
+                android:textColor="?attr/colorPrimary"
                 android:layout_marginBottom="8dp"/>
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardPoints"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="8dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
-                android:layout_marginBottom="16dp">
+                app:cardBackgroundColor="?attr/colorSurfaceVariant"
+                app:strokeColor="?attr/colorOutline"
+                app:strokeWidth="1dp"
+                android:layout_marginBottom="24dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="16dp"
-                    android:gravity="center_vertical">
-                    <CheckBox
-                        android:id="@+id/cbUsePoints"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Dùng điểm tích lũy"/>
-                    <TextView
-                        android:id="@+id/tvAvailablePoints"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Dùng điểm Cafebook"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorSecondary"/>
+                        <TextView
+                            android:id="@+id/tvAvailablePoints"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="Bạn có: 0 điểm"
+                            android:textColor="?attr/colorOnSurfaceVariant"/>
+                    </RelativeLayout>
+                    <SeekBar
+                        android:id="@+id/sbPoints"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="(Đang có: 0 điểm)"
-                        android:gravity="end"
-                        android:textColor="#757575"/>
+                        android:layout_marginTop="16dp"
+                        android:progressTint="?attr/colorSecondary"
+                        android:thumbTint="?attr/colorSecondary"/>
+                    <TextView
+                        android:id="@+id/tvPointUsageInfo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Sử dụng 0 điểm (Giảm 0đ)"
+                        android:layout_marginTop="8dp"
+                        android:textStyle="italic"
+                        android:textColor="?attr/colorOnSurface"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -131,7 +176,7 @@
                 android:layout_height="wrap_content"
                 android:text="Phương thức thanh toán"
                 android:textStyle="bold"
-                android:textColor="@color/cafe_brown"
+                android:textColor="?attr/colorPrimary"
                 android:layout_marginBottom="8dp"/>
             <RadioGroup
                 android:id="@+id/rgPaymentMethod"
@@ -143,13 +188,63 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Tiền mặt khi nhận hàng (COD)"
+                    android:textColor="?attr/colorOnSurface"
                     android:checked="true"/>
                 <RadioButton
                     android:id="@+id/rbVNPAY"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
                     android:text="Thanh toán qua VNPAY"/>
             </RadioGroup>
+
+            <!-- Promotion Selection -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Khuyến mãi"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary"
+                android:layout_marginBottom="8dp"/>
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardPromo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                style="?attr/materialCardViewStyle"
+                android:layout_marginBottom="24dp">
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+                    <ImageView
+                        android:id="@+id/ivPromoIcon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_badge"
+                        app:tint="?attr/colorSecondary"
+                        android:layout_centerVertical="true"/>
+                    <TextView
+                        android:id="@+id/tvSelectedPromo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toEndOf="@id/ivPromoIcon"
+                        android:layout_marginStart="12dp"
+                        android:text="Chọn hoặc nhập mã giảm giá"
+                        android:textColor="?attr/colorOnSurface"
+                        android:layout_centerVertical="true"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSelectPromo"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="CHỌN"
+                        android:textColor="?attr/colorSecondary"
+                        android:textStyle="bold"/>
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Order Summary -->
             <TextView
@@ -157,13 +252,14 @@
                 android:layout_height="wrap_content"
                 android:text="Tóm tắt đơn hàng"
                 android:textStyle="bold"
-                android:textColor="@color/cafe_brown"
+                android:textColor="?attr/colorPrimary"
                 android:layout_marginBottom="8dp"/>
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="8dp"
+                app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
+                style="?attr/materialCardViewStyle"
                 android:layout_marginBottom="80dp">
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -174,8 +270,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Tiền hàng"/>
-                        <TextView android:id="@+id/tvSubtotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 đ"/>
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Tiền hàng" android:textColor="?attr/colorOnSurfaceVariant"/>
+                        <TextView android:id="@+id/tvSubtotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 đ" android:textColor="?attr/colorOnSurface"/>
                     </LinearLayout>
                     <LinearLayout
                         android:id="@+id/layoutPromo"
@@ -183,8 +279,8 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginTop="4dp">
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Khuyến mãi"/>
-                        <TextView android:id="@+id/tvPromoDiscount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-0 đ" android:textColor="@android:color/holo_red_dark"/>
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Khuyến mãi" android:textColor="?attr/colorOnSurfaceVariant"/>
+                        <TextView android:id="@+id/tvPromoDiscount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-0 đ" android:textColor="?attr/colorError"/>
                     </LinearLayout>
                     <LinearLayout
                         android:id="@+id/layoutPoints"
@@ -193,24 +289,24 @@
                         android:orientation="horizontal"
                         android:layout_marginTop="4dp"
                         android:visibility="gone">
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Dùng điểm"/>
-                        <TextView android:id="@+id/tvPointDiscount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-0 đ" android:textColor="@android:color/holo_red_dark"/>
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Dùng điểm" android:textColor="?attr/colorOnSurfaceVariant"/>
+                        <TextView android:id="@+id/tvPointDiscount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-0 đ" android:textColor="?attr/colorError"/>
                     </LinearLayout>
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginTop="4dp">
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Phí giao hàng"/>
-                        <TextView android:id="@+id/tvShipping" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 đ"/>
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Phí giao hàng" android:textColor="?attr/colorOnSurfaceVariant"/>
+                        <TextView android:id="@+id/tvShipping" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 đ" android:textColor="?attr/colorOnSurface"/>
                     </LinearLayout>
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#DDDDDD" android:layout_marginVertical="8dp"/>
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutline" android:layout_marginVertical="8dp"/>
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
-                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Tổng thanh toán" android:textStyle="bold" android:textSize="16sp"/>
-                        <TextView android:id="@+id/tvTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 đ" android:textStyle="bold" android:textSize="18sp" android:textColor="@color/cafe_orange"/>
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Tổng thanh toán" android:textStyle="bold" android:textSize="16sp" android:textColor="?attr/colorPrimary"/>
+                        <TextView android:id="@+id/tvTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 đ" android:textStyle="bold" android:textSize="18sp" android:textColor="?attr/colorSecondary"/>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -228,7 +324,8 @@
         android:textSize="16sp"
         android:textStyle="bold"
         app:cornerRadius="30dp"
-        app:backgroundTint="@color/cafe_brown"/>
+        app:backgroundTint="?attr/colorPrimary"
+        android:textColor="@android:color/white"/>
 
     <ProgressBar
         android:id="@+id/progressBar"

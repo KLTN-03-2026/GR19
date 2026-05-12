@@ -11,6 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.example.cafebook.MainActivity;
 import com.example.cafebook.R;
 import com.example.cafebook.models.TableBookingModels;
 import com.example.cafebook.network.ApiClient;
@@ -59,7 +60,7 @@ public class BookingConfirmDialogFragment extends BottomSheetDialogFragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_booking_confirm, container, false);
-        api = ApiClient.getClient().create(CafebookApi.class);
+        api = ApiClient.getClient(requireContext()).create(CafebookApi.class);
         initViews(view);
         return view;
     }
@@ -74,8 +75,41 @@ public class BookingConfirmDialogFragment extends BottomSheetDialogFragment {
         edtNote = view.findViewById(R.id.edtBookingNote);
         switchOrderForOther = view.findViewById(R.id.switchOrderForOther);
 
+        // Kiểm tra đăng nhập để pre-fill
+        android.content.SharedPreferences prefs = requireActivity().getSharedPreferences("CafebookAuth", android.content.Context.MODE_PRIVATE);
+        String savedPhone = prefs.getString("USER_PHONE", "");
+        String savedName = prefs.getString("USER_NAME", "");
+        String savedEmail = prefs.getString("USER_EMAIL", "");
+
+        if (!savedPhone.isEmpty()) {
+            edtPhone.setText(savedPhone);
+            edtName.setText(savedName);
+            edtEmail.setText(savedEmail);
+
+            // Khóa form, hiện switch đặt hộ
+            setFormEnabled(false);
+            switchOrderForOther.setVisibility(View.VISIBLE);
+            switchOrderForOther.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) {
+                    setFormEnabled(true);
+                    edtPhone.setText("");
+                    edtName.setText("");
+                    edtEmail.setText("");
+                } else {
+                    setFormEnabled(false);
+                    edtPhone.setText(savedPhone);
+                    edtName.setText(savedName);
+                    edtEmail.setText(savedEmail);
+                }
+            });
+        } else {
+            // Khách vãng lai
+            switchOrderForOther.setVisibility(View.GONE);
+            setFormEnabled(true);
+        }
+
         edtPhone.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus && !switchOrderForOther.isChecked()) {
+            if (!hasFocus && (savedPhone.isEmpty() || switchOrderForOther.isChecked())) {
                 String phone = edtPhone.getText().toString().trim();
                 if (phone.length() >= 10) {
                     fetchCustomerInfo(phone);
@@ -84,6 +118,12 @@ public class BookingConfirmDialogFragment extends BottomSheetDialogFragment {
         });
 
         view.findViewById(R.id.btnConfirmBooking).setOnClickListener(v -> submitBooking());
+    }
+
+    private void setFormEnabled(boolean enabled) {
+        edtPhone.setEnabled(enabled);
+        edtName.setEnabled(enabled);
+        edtEmail.setEnabled(enabled);
     }
 
     private void fetchCustomerInfo(String phone) {
@@ -121,11 +161,13 @@ public class BookingConfirmDialogFragment extends BottomSheetDialogFragment {
                 if (response.isSuccessful()) {
                     Toast.makeText(getContext(), "Đặt bàn thành công!", Toast.LENGTH_LONG).show();
                     dismiss();
-                    if (getActivity() instanceof MainActivity) {
-                        // Refresh or go home? For now just dismiss
-                    }
                 } else {
-                    Toast.makeText(getContext(), "Lỗi: " + response.code(), Toast.LENGTH_SHORT).show();
+                    try {
+                        String errorMsg = response.errorBody() != null ? response.errorBody().string() : "Lỗi: " + response.code();
+                        Toast.makeText(getContext(), errorMsg, Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Toast.makeText(getContext(), "Lỗi: " + response.code(), Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 

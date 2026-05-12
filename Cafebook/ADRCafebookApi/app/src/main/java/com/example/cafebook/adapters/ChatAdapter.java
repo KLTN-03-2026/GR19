@@ -44,7 +44,17 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             return;
         }
 
-        String timeStr = msg.thoiGian != null ? timeFormat.format(msg.thoiGian) : "";
+        // Xử lý thời gian từ chuỗi ISO (VD: 2024-05-10T20:58:49)
+        String timeStr = "";
+        if (msg.thoiGian != null && msg.thoiGian.contains("T")) {
+            try {
+                timeStr = msg.thoiGian.split("T")[1].substring(0, 5);
+            } catch (Exception e) {
+                timeStr = msg.thoiGian;
+            }
+        } else {
+            timeStr = msg.thoiGian != null ? msg.thoiGian : "";
+        }
 
         if ("KhachHang".equals(msg.loaiTinNhan)) {
             holder.layoutBot.setVisibility(View.GONE);

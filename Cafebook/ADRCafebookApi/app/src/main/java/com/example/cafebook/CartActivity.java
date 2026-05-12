@@ -1,5 +1,8 @@
 package com.example.cafebook;
 
+import android.content.Intent;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -7,14 +10,20 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cafebook.adapters.CartAdapter;
+import com.example.cafebook.fragments.PromotionSelectionFragment;
 import com.example.cafebook.models.GioHangItemDto;
+import com.example.cafebook.models.GioHangKhuyenMaiDto;
 import com.example.cafebook.models.GioHangResponseDto;
 import com.example.cafebook.models.GioHangSyncRequestDto;
 import com.example.cafebook.network.ApiClient;
@@ -39,11 +48,19 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
     private ProgressBar progressBar;
     private CartManager cartManager;
     private CartApiService apiService;
+    private List<GioHangKhuyenMaiDto> availablePromotions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cart);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.cart_main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         cartManager = CartManager.getInstance(this);
         apiService = ApiClient.getClient(this).create(CartApiService.class);
@@ -77,13 +94,29 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
         rvCartItems.setAdapter(adapter);
 
         findViewById(R.id.btnApplyPromo).setOnClickListener(v -> {
-            String promo = etPromoCode.getText().toString().trim();
-            cartManager.setPromoCode(promo);
-            syncCart();
+            if (availablePromotions != null && !availablePromotions.isEmpty()) {
+                PromotionSelectionFragment fragment = PromotionSelectionFragment.newInstance(availablePromotions);
+                getSupportFragmentManager().beginTransaction()
+                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                        .add(android.R.id.content, fragment)
+                        .addToBackStack(null)
+                        .commit();
+
+                getSupportFragmentManager().setFragmentResultListener("PROMO_REQUEST_KEY", this, (requestKey, bundle) -> {
+                    String code = bundle.getString("SELECTED_PROMO_CODE");
+                    etPromoCode.setText(code);
+                    cartManager.setPromoCode(code);
+                    syncCart();
+                });
+            } else {
+                String promo = etPromoCode.getText().toString().trim();
+                cartManager.setPromoCode(promo);
+                syncCart();
+            }
         });
 
         findViewById(R.id.btnCheckout).setOnClickListener(v -> {
-            Toast.makeText(this, "Chức năng thanh toán đang phát triển", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, CheckoutActivity.class));
         });
     }
 
@@ -99,6 +132,19 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
         GioHangSyncRequestDto request = new GioHangSyncRequestDto();
         request.setItems(localItems);
         request.setMaKhuyenMaiApDung(cartManager.getPromoCode());
+
+        // Fetch promotions first
+        apiService.getAvailablePromotions(localItems).enqueue(new Callback<List<GioHangKhuyenMaiDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<GioHangKhuyenMaiDto>> call, @NonNull Response<List<GioHangKhuyenMaiDto>> response) {
+                if (response.isSuccessful()) {
+                    availablePromotions = response.body();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<GioHangKhuyenMaiDto>> call, @NonNull Throwable t) {}
+        });
 
         apiService.syncCart(request).enqueue(new Callback<GioHangResponseDto>() {
             @Override

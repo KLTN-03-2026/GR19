@@ -109,7 +109,7 @@
         }
 
         async function loadSessions() {
-        const res = await fetch(`${apiBaseUrl}/api/web/khachhang/hotro/sessions?guestSessionId=${initGuestSessionId}`, { headers });
+        const res = await fetch(`${apiBaseUrl}/api/web/khachhang/hotro/sessions?guestSessionId=${currentSessionId}`, { headers });
         const sessions = await res.json();
         $('#sessionList').empty();
                         
@@ -119,7 +119,6 @@
         const badge = s.idThongBao > 0 ? `<span class="htkh-badge">Nhân viên</span>` : '';
         const item = $(`<div class="htkh-session-item ${s.sessionId === currentSessionId ? 'active' : ''}" data-id="${s.sessionId}">${s.title} ${badge}</div>`);
                     
-        // Truyền thêm title và cờ isUserClick = true
         item.on('click', () => switchSession(s.sessionId, s.title, true));
         $('#sessionList').append(item);
         });

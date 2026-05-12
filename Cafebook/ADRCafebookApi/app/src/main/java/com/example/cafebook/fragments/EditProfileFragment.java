@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -21,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.bumptech.glide.Glide;
 import com.example.cafebook.R;
+import com.example.cafebook.models.DoiMatKhauDto;
 import com.example.cafebook.models.ProfileDto;
 import com.example.cafebook.network.ApiClient;
 import com.example.cafebook.network.ProfileApiService;
@@ -43,6 +45,10 @@ public class EditProfileFragment extends Fragment {
     private TextInputLayout tilFullName, tilUsername, tilPhone, tilEmail;
     private TextInputEditText edtFullName, edtUsername, edtPhone, edtEmail, edtAddress;
     private MaterialButton btnSave;
+
+    private LinearLayout llPasswordSection;
+    private TextInputEditText edtOldPass, edtNewPass, edtConfirmPass;
+    private MaterialButton btnToggleSection, btnUpdatePass;
     
     private ProfileApiService apiService;
     private int userId;
@@ -89,7 +95,87 @@ public class EditProfileFragment extends Fragment {
         view.findViewById(R.id.flAvatarContainer).setOnClickListener(v -> openGallery());
         btnSave.setOnClickListener(v -> submitProfile(view));
 
+        setupChangePasswordLogic(view);
+        
+        // Hide password section in this fragment as it's now separate in Settings
+        View cardSecurity = view.findViewById(R.id.cardSecurity);
+        if (cardSecurity != null) cardSecurity.setVisibility(View.GONE);
+
         loadCurrentProfile();
+    }
+
+    private void setupChangePasswordLogic(View view) {
+        llPasswordSection = view.findViewById(R.id.llPasswordSection);
+        btnToggleSection = view.findViewById(R.id.btnTogglePasswordSection);
+        btnUpdatePass = view.findViewById(R.id.btnUpdatePassword);
+
+        edtOldPass = view.findViewById(R.id.edtOldPassword);
+        edtNewPass = view.findViewById(R.id.edtNewPassword);
+        edtConfirmPass = view.findViewById(R.id.edtConfirmNewPassword);
+
+        // Hiệu ứng ẩn/hiện mượt mà
+        btnToggleSection.setOnClickListener(v -> {
+            if (llPasswordSection.getVisibility() == View.GONE) {
+                llPasswordSection.setVisibility(View.VISIBLE);
+                btnToggleSection.setText("Hủy bỏ");
+            } else {
+                llPasswordSection.setVisibility(View.GONE);
+                btnToggleSection.setText("Thay đổi");
+                clearPasswordFields();
+            }
+        });
+
+        btnUpdatePass.setOnClickListener(v -> handleUpdatePassword(view));
+    }
+
+    private void handleUpdatePassword(View view) {
+        String oldPass = edtOldPass.getText().toString();
+        String newPass = edtNewPass.getText().toString();
+        String confirmPass = edtConfirmPass.getText().toString();
+
+        // 1. Validate Client-side
+        if (oldPass.isEmpty()) { edtOldPass.setError("Nhập mật khẩu cũ"); return; }
+        if (newPass.length() < 6) { edtNewPass.setError("Mật khẩu mới từ 6 ký tự"); return; }
+        if (!newPass.equals(confirmPass)) { edtConfirmPass.setError("Mật khẩu xác nhận không khớp"); return; }
+
+        // 2. Chặn tương tác khi đang gửi
+        btnUpdatePass.setEnabled(false);
+        btnUpdatePass.setText("ĐANG XỬ LÝ...");
+
+        DoiMatKhauDto dto = new DoiMatKhauDto();
+        dto.setMatKhauCu(oldPass);
+        dto.setMatKhauMoi(newPass);
+        dto.setXacNhanMatKhauMoi(confirmPass);
+
+        apiService.changePassword(userId, dto).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                btnUpdatePass.setEnabled(true);
+                btnUpdatePass.setText("CẬP NHẬT MẬT KHẨU");
+
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Đổi mật khẩu thành công!", Toast.LENGTH_SHORT).show();
+                    llPasswordSection.setVisibility(View.GONE);
+                    btnToggleSection.setText("Thay đổi");
+                    clearPasswordFields();
+                } else {
+                    Snackbar.make(view, "Cập nhật thất bại. Vui lòng kiểm tra lại mật khẩu cũ.", Snackbar.LENGTH_LONG)
+                            .setBackgroundTint(getResources().getColor(R.color.cf_orange)).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                btnUpdatePass.setEnabled(true);
+                btnUpdatePass.setText("CẬP NHẬT MẬT KHẨU");
+                Toast.makeText(getContext(), "Lỗi kết nối máy chủ", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void clearPasswordFields() {
+        edtOldPass.setText(""); edtNewPass.setText(""); edtConfirmPass.setText("");
+        edtOldPass.setError(null); edtNewPass.setError(null); edtConfirmPass.setError(null);
     }
 
     private void openGallery() {

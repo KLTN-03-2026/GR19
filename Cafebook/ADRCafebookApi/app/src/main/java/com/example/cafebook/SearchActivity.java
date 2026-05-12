@@ -43,7 +43,7 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        api = ApiClient.getClient().create(CafebookApi.class);
+        api = ApiClient.getClient(this).create(CafebookApi.class);
         initViews();
     }
 
@@ -79,7 +79,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void performSearch(String keyword) {
-        api.searchBooksStandalone(keyword, 1).enqueue(new Callback<TimKiemSachResultDto>() {
+        api.searchBooksStandalone(keyword, null, null, null, 1).enqueue(new Callback<TimKiemSachResultDto>() {
             @Override
             public void onResponse(@NonNull Call<TimKiemSachResultDto> call, @NonNull Response<TimKiemSachResultDto> response) {
                 if (response.isSuccessful() && response.body() != null) {

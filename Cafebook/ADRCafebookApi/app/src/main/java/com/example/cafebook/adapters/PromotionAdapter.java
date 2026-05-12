@@ -44,12 +44,12 @@ public class PromotionAdapter extends RecyclerView.Adapter<PromotionAdapter.View
         if (promo.isEligible()) {
             holder.tvIneligible.setVisibility(View.GONE);
             holder.btnSelect.setEnabled(true);
-            holder.btnSelect.setAlpha(1.0f);
+            holder.itemView.setAlpha(1.0f);
         } else {
             holder.tvIneligible.setVisibility(View.VISIBLE);
             holder.tvIneligible.setText(promo.getIneligibilityReason());
             holder.btnSelect.setEnabled(false);
-            holder.btnSelect.setAlpha(0.5f);
+            holder.itemView.setAlpha(0.6f);
         }
 
         holder.btnSelect.setOnClickListener(v -> listener.onSelected(promo));

@@ -117,10 +117,21 @@
                     </StackPanel>
                 </StackPanel>
 
-                <Button x:Name="btnSave" Grid.Row="2" Content="LƯU VÀ KẾT NỐI" 
-                        Style="{StaticResource MaterialButton}" 
-                        Height="45" Margin="0,15,0,0"
-                        Click="BtnSave_Click"/>
+                <Grid Grid.Row="2" Margin="0,15,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="15"/>
+                        <ColumnDefinition Width="1.5*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button x:Name="btnExit" Grid.Column="0" Content="THOÁT" 
+                            Style="{StaticResource MaterialButton}" Background="#A1887F"
+                            Height="45" Click="BtnExit_Click"/>
+
+                    <Button x:Name="btnSave" Grid.Column="2" Content="LƯU VÀ KẾT NỐI" 
+                            Style="{StaticResource MaterialButton}" 
+                            Height="45" Click="BtnSave_Click"/>
+                </Grid>
             </Grid>
         </Border>
     </Grid>

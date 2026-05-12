@@ -1,49 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="200dp"
     android:height="200dp"
-    android:viewportWidth="100"
-    android:viewportHeight="100">
+    android:viewportWidth="108"
+    android:viewportHeight="108">
 
-    <!-- Background Circle -->
+    <!-- Circular Background -->
     <path
         android:fillColor="#FFF8E1"
-        android:pathData="M50,50m-45,0a45,45 0,1 1,90 0a45,45 0,1 1,-90 0" />
+        android:pathData="M54,54m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0" />
 
-    <!-- Open Book -->
+    <!-- Open Book (Back) -->
     <path
-        android:fillColor="#FFCC80"
-        android:pathData="M35,40 L35,65 C35,67 37,68 40,68 L50,65 L60,68 C63,68 65,67 65,65 L65,40 C65,38 63,37 60,37 L50,40 L40,37 C37,37 35,38 35,40" />
-    <path
-        android:strokeColor="#4E342E"
-        android:strokeWidth="1.5"
-        android:pathData="M35,40 L35,65 C35,67 37,68 40,68 L50,65 L60,68 C63,68 65,67 65,65 L65,40 M50,40 L50,65" />
+        android:fillColor="#D84315"
+        android:pathData="M22,70 C34,78 48,70 54,64 C60,70 74,78 86,70 L86,40 C74,48 60,40 54,34 C48,40 34,48 22,40 Z" />
 
-    <!-- Coffee Cup -->
+    <!-- Open Book Pages (Left) -->
     <path
         android:fillColor="#FFFFFF"
-        android:strokeColor="#4E342E"
-        android:strokeWidth="2"
-        android:pathData="M40,45 C40,45 40,58 50,58 C60,58 60,45 60,45 L40,45 Z" />
-    <!-- Handle -->
-    <path
-        android:strokeColor="#4E342E"
-        android:strokeWidth="2"
-        android:pathData="M60,48 C63,48 65,50 65,52 C65,54 63,56 60,56" />
-    <!-- Coffee Surface -->
-    <path
-        android:fillColor="#795548"
-        android:pathData="M42,46 L58,46 C58,46 58,54 50,54 C42,54 42,46 42,46 Z" />
+        android:pathData="M25,67 C35,73 48,66 53,60 L53,38 C48,44 35,51 25,43 Z" />
 
-    <!-- Steam -->
+    <!-- Open Book Pages (Right) -->
     <path
-        android:strokeColor="#795548"
-        android:strokeWidth="1.2"
-        android:pathData="M46,38 C46,38 47,35 46,33 M50,37 C50,37 51,34 50,31 M54,38 C54,38 55,35 54,33" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M83,67 C73,73 60,66 55,60 L55,38 C60,44 73,51 83,43 Z" />
 
-    <!-- Text: Cafe (Simplified as icons or dots if too small, but here we use paths for stylized look) -->
-    <!-- Simplified CafeBook branding below -->
+    <!-- Coffee Cup Handle -->
     <path
-        android:fillColor="#E64A19"
-        android:pathData="M32,75 L35,75 L35,82 L32,82 Z M37,75 L42,75 L42,77 L37,77 L37,82 L42,82 Z" /> <!-- Stylized 'CB' -->
+        android:strokeColor="#4E342E"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M70,52 C84,52 84,66 68,66" />
+
+    <!-- Coffee Cup Body -->
+    <path
+        android:fillColor="#4E342E"
+        android:pathData="M36,46 L72,46 C72,66 62,76 54,76 C46,76 36,66 36,46 Z" />
+
+    <!-- Coffee Liquid -->
+    <path
+        android:fillColor="#6F4E37"
+        android:pathData="M38,48 L70,48 C70,62 60,70 54,70 C48,70 38,62 38,48 Z" />
+
+    <!-- Steam (Left) -->
+    <path
+        android:strokeColor="#E64A19"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M48,36 C44,28 52,24 48,16" />
+
+    <!-- Steam (Right) -->
+    <path
+        android:strokeColor="#E64A19"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M60,36 C64,28 56,24 60,16" />
 
 </vector>

@@ -22,7 +22,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cafebook.R;
-import com.example.cafebook.adapters.BookGridAdapter;
+import com.example.cafebook.adapters.BookAdapter;
 import com.example.cafebook.models.SachCardDto;
 import com.example.cafebook.models.SachFiltersDto;
 import com.example.cafebook.models.SachPhanTrangDto;
@@ -43,7 +43,7 @@ public class LibraryFragment extends Fragment {
     private EditText edtSearch;
     private Spinner spinnerCategory, spinnerSort;
     
-    private BookGridAdapter bookAdapter;
+    private BookAdapter bookAdapter;
     private List<SachCardDto> bookList = new ArrayList<>();
     
     private CafebookApi api;
@@ -67,12 +67,15 @@ public class LibraryFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_library, container, false);
         
-        api = ApiClient.getClient().create(CafebookApi.class);
+        api = ApiClient.getClient(requireContext()).create(CafebookApi.class);
         
         initViews(view);
         setupRecyclerView();
         loadFilters();
         setupSearchDebounce();
+        
+        // Load data for the first time
+        fetchBooks();
         
         return view;
     }
@@ -109,7 +112,7 @@ public class LibraryFragment extends Fragment {
         GridLayoutManager layoutManager = new GridLayoutManager(getContext(), spanCount);
         recyclerBooks.setLayoutManager(layoutManager);
         
-        bookAdapter = new BookGridAdapter(bookList, getContext());
+        bookAdapter = new BookAdapter(bookList, getContext());
         recyclerBooks.setAdapter(bookAdapter);
 
         recyclerBooks.addOnScrollListener(new RecyclerView.OnScrollListener() {

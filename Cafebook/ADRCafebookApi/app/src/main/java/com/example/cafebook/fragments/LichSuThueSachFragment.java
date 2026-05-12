@@ -32,6 +32,7 @@ public class LichSuThueSachFragment extends Fragment {
     private RentalHistoryApiService apiService;
     private int currentPage = 1;
     private int totalPages = 1;
+    private double fineRate = 0;
     private boolean isLoading = false;
 
     @Nullable
@@ -63,8 +64,10 @@ public class LichSuThueSachFragment extends Fragment {
         rvRentals.setLayoutManager(layoutManager);
         
         adapter = new RentalHistoryAdapter(rentalList, item -> {
-            // TODO: Hiển thị BottomSheet chi tiết
-            Toast.makeText(getContext(), "Xem chi tiết #" + item.idPhieuThueSach, Toast.LENGTH_SHORT).show();
+            RentalDetailFragment detailFragment = RentalDetailFragment.newInstance(item, fineRate);
+            if (getActivity() instanceof com.example.cafebook.MainActivity) {
+                ((com.example.cafebook.MainActivity) getActivity()).loadFragment(detailFragment);
+            }
         });
         rvRentals.setAdapter(adapter);
 
@@ -72,11 +75,7 @@ public class LichSuThueSachFragment extends Fragment {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 if (dy > 0 && !isLoading && currentPage < totalPages) {
-                    int visibleItemCount = layoutManager.getChildCount();
-                    int totalItemCount = layoutManager.getItemCount();
-                    int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
-
-                    if ((visibleItemCount + firstVisibleItemPosition) >= (totalItemCount - 2)) {
+                    if (!recyclerView.canScrollVertically(1)) {
                         currentPage++;
                         loadData(false);
                     }
@@ -95,10 +94,17 @@ public class LichSuThueSachFragment extends Fragment {
                 isLoading = false;
                 swipeRefresh.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    if (isRefresh) rentalList.clear();
-                    rentalList.addAll(response.body().items);
+                    if (isRefresh) {
+                        rentalList.clear();
+                        rentalList.addAll(response.body().items);
+                        adapter.notifyDataSetChanged();
+                    } else {
+                        int start = rentalList.size();
+                        rentalList.addAll(response.body().items);
+                        adapter.notifyItemRangeInserted(start, response.body().items.size());
+                    }
                     totalPages = response.body().totalPages;
-                    adapter.notifyDataSetChanged();
+                    fineRate = response.body().phatGiamDoMoi1Percent;
                 } else {
                     Log.e("API_ERROR", "Failed to load rental history: " + response.code());
                 }

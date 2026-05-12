@@ -13,27 +13,16 @@
         android:padding="24dp"
         android:gravity="center_horizontal">
 
-        <LinearLayout
-            android:id="@+id/btnBackToLogin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="24dp"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true">
-            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_arrow_back" app:tint="@color/cf_dark_brown"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" Về đăng nhập" android:textStyle="bold" android:textColor="@color/cf_dark_brown"/>
-        </LinearLayout>
-
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:src="@drawable/ic_logo_cafebook"
-            android:background="@drawable/bg_circle_white"
+            android:src="@drawable/favicon"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/RoundedImage12"
+            app:strokeColor="@color/cafe_orange"
+            app:strokeWidth="2dp"
             android:elevation="4dp"
-            android:padding="4dp"
+            android:layout_marginTop="40dp"
             android:layout_marginBottom="16dp"/>
 
         <TextView
@@ -147,5 +136,17 @@
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBackToLogin"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Quay lại đăng nhập"
+            android:textColor="@color/cf_brown"
+            android:layout_marginTop="24dp"
+            app:icon="@drawable/ic_arrow_back"
+            app:iconTint="@color/cf_brown"/>
+
     </LinearLayout>
 </ScrollView>

@@ -25,9 +25,12 @@
                     Mã đơn hàng của bạn là <strong class="text-dark fs-5">#@Model.HoaDon.IdHoaDonMoi</strong>.
                 </p>
                 
-                <div class="alert bg-light border-0 d-inline-block text-start text-muted mb-4 px-4 py-3" style="border-radius: 12px;">
-                    <i class="material-symbols-outlined align-middle text-primary me-1">call</i> 
-                    Nhân viên sẽ gọi xác nhận qua SĐT <strong class="text-dark">@Model.HoaDon.SoDienThoai</strong> trong chốc lát.
+                <div class="alert bg-light border-0 d-inline-block text-start text-muted mb-4 px-4 py-3" style="border-radius: 12px; border-left: 4px solid var(--cf-brown) !important;">
+                    <i class="material-symbols-outlined align-middle text-primary me-2">mail</i> 
+                    Hệ thống đã gửi thông tin xác nhận đơn hàng đến Email: 
+                    <strong class="text-dark">@Model.HoaDon.Email</strong>. 
+                    <br/>
+                    <small class="ms-4 ps-2">Vui lòng kiểm tra hộp thư (bao gồm cả thư rác) để theo dõi đơn hàng.</small>
                 </div>
 
                 <hr class="my-4 mx-auto" style="max-width: 600px; border-color: #eee;" />
@@ -112,7 +115,6 @@
             --cf-brown: #6F4E37;
         }
         
-        /* SỬA LỖI CS0103: Dùng @@keyframes để Razor bỏ qua không biên dịch C# */
         @@keyframes fadeIn {
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
@@ -139,6 +141,15 @@
         
         .border-light {
             border-color: #e9ecef !important;
+        }
+        
+        .alert-email-check {
+            animation: slideInRight 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @@keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
     </style>
 }

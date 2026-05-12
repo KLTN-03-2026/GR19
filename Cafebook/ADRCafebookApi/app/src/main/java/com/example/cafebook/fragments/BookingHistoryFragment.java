@@ -72,11 +72,8 @@ public class BookingHistoryFragment extends Fragment {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 if (dy > 0 && !isLoading && currentPage < totalPages) {
-                    int visibleItemCount = layoutManager.getChildCount();
-                    int totalItemCount = layoutManager.getItemCount();
-                    int pastVisiblesItems = layoutManager.findFirstVisibleItemPosition();
-
-                    if ((visibleItemCount + pastVisiblesItems) >= totalItemCount) {
+                    if (!recyclerView.canScrollVertically(1)) {
+                        Log.d("LOAD_MORE", "Loading page: " + (currentPage + 1));
                         currentPage++;
                         loadData(false);
                     }
@@ -95,10 +92,16 @@ public class BookingHistoryFragment extends Fragment {
                 isLoading = false;
                 swipeRefresh.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    if (isRefresh) historyList.clear();
-                    historyList.addAll(response.body().items);
+                    if (isRefresh) {
+                        historyList.clear();
+                        historyList.addAll(response.body().items);
+                        adapter.notifyDataSetChanged();
+                    } else {
+                        int start = historyList.size();
+                        historyList.addAll(response.body().items);
+                        adapter.notifyItemRangeInserted(start, response.body().items.size());
+                    }
                     totalPages = response.body().totalPages;
-                    adapter.notifyDataSetChanged();
                 } else {
                     Log.e("API_ERROR", "Failed to load history: " + response.code());
                 }

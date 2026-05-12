@@ -11,6 +11,9 @@ public class ChiTietSanPhamDto {
     @SerializedName("hinhAnhUrl") private String hinhAnhUrl;
     @SerializedName("moTa") private String moTa;
     @SerializedName("goiY") private List<SanPhamGoiYDto> goiY;
+    @SerializedName("danhSachDanhGia") private List<DanhGiaChiTietDto> danhSachDanhGia;
+    @SerializedName("saoTrungBinh") private float saoTrungBinh;
+    @SerializedName("tongSoDanhGia") private int tongSoDanhGia;
 
     public int getIdSanPham() { return idSanPham; }
     public String getTenSanPham() { return tenSanPham; }
@@ -19,4 +22,7 @@ public class ChiTietSanPhamDto {
     public String getHinhAnhUrl() { return hinhAnhUrl; }
     public String getMoTa() { return moTa; }
     public List<SanPhamGoiYDto> getGoiY() { return goiY; }
+    public List<DanhGiaChiTietDto> getDanhSachDanhGia() { return danhSachDanhGia; }
+    public float getSaoTrungBinh() { return saoTrungBinh; }
+    public int getTongSoDanhGia() { return tongSoDanhGia; }
 }

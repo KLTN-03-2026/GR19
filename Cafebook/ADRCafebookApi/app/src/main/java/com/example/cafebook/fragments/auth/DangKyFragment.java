@@ -1,6 +1,7 @@
 package com.example.cafebook.fragments.auth;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,10 +46,13 @@ public class DangKyFragment extends Fragment {
         btnRegister = view.findViewById(R.id.btnRegister);
         
         view.findViewById(R.id.tvGoToLogin).setOnClickListener(v -> {
-            // TODO: Navigate sang màn hình Đăng Nhập
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new DangNhapFragment())
+                    .addToBackStack(null)
+                    .commit();
         });
 
-        apiService = ApiClient.getClient().create(AuthApiService.class);
+        apiService = ApiClient.getClient(requireContext()).create(AuthApiService.class);
 
         btnRegister.setOnClickListener(v -> performRegistration(view));
 
@@ -103,8 +107,18 @@ public class DangKyFragment extends Fragment {
 
                     if (data.success && data.requireOtp) {
                         // CHUYỂN SANG MÀN HÌNH XÁC MINH OTP
-                        Snackbar.make(view, data.message != null ? data.message : "Vui lòng kiểm tra Email để lấy OTP", Snackbar.LENGTH_LONG)
-                                .setBackgroundTint(getResources().getColor(R.color.cf_orange)).show();
+                        XacMinhOtpFragment otpFragment = new XacMinhOtpFragment();
+                        Bundle args = new Bundle();
+                        args.putInt("TempId", data.tempId);
+                        args.putString("TempEmail", data.tempEmail);
+                        args.putString("TempPhone", data.tempPhone);
+                        args.putString("TempPassword", password);
+                        otpFragment.setArguments(args);
+
+                        getParentFragmentManager().beginTransaction()
+                                .replace(R.id.fragment_container, otpFragment)
+                                .addToBackStack(null)
+                                .commit();
                                 
                     } else if (data.isOfficialAccount) {
                         // TÀI KHOẢN ĐÃ TỒN TẠI -> Chuyển về Đăng Nhập
@@ -115,7 +129,14 @@ public class DangKyFragment extends Fragment {
                         Snackbar.make(view, data.message != null ? data.message : "Lỗi đăng ký", Snackbar.LENGTH_LONG).show();
                     }
                 } else {
-                    Snackbar.make(view, "Lỗi server: " + response.code(), Snackbar.LENGTH_LONG).show();
+                    try {
+                        String realError = response.errorBody() != null ? response.errorBody().string() : "Lỗi không xác định";
+                        Log.e("API_ERROR", "Mã lỗi: " + response.code() + " | Chi tiết: " + realError);
+                        Snackbar.make(view, "Lỗi server " + response.code() + ": Kiểm tra Logcat", Snackbar.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Snackbar.make(view, "Lỗi server: " + response.code(), Snackbar.LENGTH_LONG).show();
+                    }
                 }
             }
 

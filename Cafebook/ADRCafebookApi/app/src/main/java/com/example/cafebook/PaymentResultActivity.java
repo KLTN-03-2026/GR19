@@ -17,6 +17,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.cafebook.adapters.PaymentProductAdapter;
 import com.example.cafebook.models.PaymentResultDto;
 import com.example.cafebook.network.ApiClient;
 import com.example.cafebook.network.CheckoutApiService;
@@ -24,6 +28,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import retrofit2.Call;
@@ -34,7 +39,9 @@ public class PaymentResultActivity extends AppCompatActivity {
 
     private ProgressBar pbLoading;
     private ImageView imgStatusIcon;
-    private TextView tvStatusTitle, tvStatusMessage, tvOrderId, tvPaymentMethod, tvTotalAmount;
+    private TextView tvStatusTitle, tvStatusMessage, tvOrderId, tvOrderTime, tvPaymentMethod, tvTotalAmount;
+    private TextView tvShippingName, tvShippingPhone, tvShippingAddress, tvSubtotal, tvDiscount, tvShippingFee;
+    private RecyclerView rvItems;
     private MaterialCardView cardOrderSummary;
     private MaterialButton btnTrackOrder, btnContinueShopping;
 
@@ -65,8 +72,21 @@ public class PaymentResultActivity extends AppCompatActivity {
         tvStatusMessage = findViewById(R.id.tvStatusMessage);
         cardOrderSummary = findViewById(R.id.cardOrderSummary);
         tvOrderId = findViewById(R.id.tvOrderId);
+        tvOrderTime = findViewById(R.id.tvOrderTime);
         tvPaymentMethod = findViewById(R.id.tvPaymentMethod);
         tvTotalAmount = findViewById(R.id.tvTotalAmount);
+
+        tvShippingName = findViewById(R.id.tvShippingName);
+        tvShippingPhone = findViewById(R.id.tvShippingPhone);
+        tvShippingAddress = findViewById(R.id.tvShippingAddress);
+
+        tvSubtotal = findViewById(R.id.tvSubtotal);
+        tvDiscount = findViewById(R.id.tvDiscount);
+        tvShippingFee = findViewById(R.id.tvShippingFee);
+
+        rvItems = findViewById(R.id.rvPaymentItems);
+        rvItems.setLayoutManager(new LinearLayoutManager(this));
+
         btnTrackOrder = findViewById(R.id.btnTrackOrder);
         btnContinueShopping = findViewById(R.id.btnContinueShopping);
 
@@ -78,8 +98,11 @@ public class PaymentResultActivity extends AppCompatActivity {
         });
 
         btnTrackOrder.setOnClickListener(v -> {
-            // TODO: Open order details
-            Toast.makeText(this, "Chức năng theo dõi đơn hàng đang phát triển", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.putExtra("OPEN_ORDER_ID", idHoaDonToLoad);
+            startActivity(intent);
+            finish();
         });
     }
 
@@ -174,8 +197,28 @@ public class PaymentResultActivity extends AppCompatActivity {
         btnTrackOrder.setVisibility(View.VISIBLE);
 
         tvOrderId.setText("#" + order.getIdHoaDonMoi());
+        
+        String timeStr = order.getThoiGianTao();
+        if (timeStr != null && timeStr.length() >= 16) {
+            tvOrderTime.setText(timeStr.replace("T", " ").substring(0, 16));
+        } else {
+            tvOrderTime.setText(timeStr);
+        }
+
         tvPaymentMethod.setText(order.getPhuongThucThanhToan());
-        tvTotalAmount.setText(String.format("%,.0f đ", order.getThanhTien()));
+        
+        tvShippingName.setText(order.getHoTen() != null ? order.getHoTen() : "N/A");
+        tvShippingPhone.setText(order.getSoDienThoai());
+        tvShippingAddress.setText(order.getDiaChiGiaoHang());
+
+        tvSubtotal.setText(String.format(Locale.getDefault(), "%,.0fđ", order.getTongTienHang()));
+        tvDiscount.setText(String.format(Locale.getDefault(), "-%,.0fđ", order.getGiamGia()));
+        tvShippingFee.setText(String.format(Locale.getDefault(), "%,.0fđ", order.getPhiGiaoHang()));
+        tvTotalAmount.setText(String.format(Locale.getDefault(), "%,.0fđ", order.getThanhTien()));
+
+        if (order.getItems() != null) {
+            rvItems.setAdapter(new PaymentProductAdapter(order.getItems()));
+        }
     }
 
     private void showError(String errorMsg) {

@@ -339,6 +339,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 
             var hoaDon = await _context.HoaDons
                 .Include(h => h.ChiTietHoaDons).ThenInclude(ct => ct.SanPham)
+                .Include(h => h.KhachHang) // Thêm Include KhachHang để lấy Email
                 .AsNoTracking()
                 .FirstOrDefaultAsync(h => h.IdHoaDon == id && h.IdKhachHang == idKhachHang);
 
@@ -358,7 +359,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 PhuongThucThanhToan = hoaDon.PhuongThucThanhToan ?? "N/A",
                 DiaChiGiaoHang = hoaDon.DiaChiGiaoHang ?? "N/A",
                 SoDienThoai = hoaDon.SoDienThoaiGiaoHang ?? "N/A",
-
+                Email = hoaDon.KhachHang?.Email ?? "N/A", 
                 Items = hoaDon.ChiTietHoaDons.Select(ct => new GioHangItemDto
                 {
                     IdSanPham = ct.IdSanPham,

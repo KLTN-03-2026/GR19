@@ -11,6 +11,7 @@ namespace WebCafebookApi.Pages
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IDataProtector _sanPhamProtector;
         private readonly IDataProtector _sachProtector;
+        public List<DanhGiaDto> DanhGiaNoiBat { get; set; } = new();
 
         public TrangChuViewModel(IHttpClientFactory httpClientFactory, IDataProtectionProvider provider)
         {
@@ -43,7 +44,7 @@ namespace WebCafebookApi.Pages
                         Promotions = response.Promotions ?? new List<KhuyenMaiDto>();
                         MonNoiBat = response.MonNoiBat ?? new List<SanPhamDto>();
                         SachNoiBat = response.SachNoiBat ?? new List<SachDto>();
-
+                        DanhGiaNoiBat = response.DanhGiaNoiBat ?? new List<DanhGiaDto>();
                         return;
                     }
                 }

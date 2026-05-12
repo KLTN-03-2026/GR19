@@ -1,0 +1,222 @@
+Project: CafebookApi
+├── CafebookApi.csproj
+├── CafebookApi.csproj.user
+├── CafebookApi.http
+├── Controllers
+│   ├── App
+│   │   ├── NhanVien
+│   │   │   ├── ChamCongController.cs
+│   │   │   ├── CheBienController.cs
+│   │   │   ├── DatBanController.cs
+│   │   │   ├── GiaoHangController.cs
+│   │   │   ├── GoiMonController.cs
+│   │   │   ├── LichLamViecController.cs
+│   │   │   ├── PhieuLuongController.cs
+│   │   │   ├── SoDoBanController.cs
+│   │   │   ├── ThanhToanController.cs
+│   │   │   ├── ThongTinCaNhanController.cs
+│   │   │   └── ThueSachController.cs
+│   │   └── QuanLy
+│   │       ├── QuanLyBanController.cs
+│   │       ├── QuanLyBaoCaoDoanhThuController.cs
+│   │       ├── QuanLyBaoCaoHieuSuatController.cs
+│   │       ├── QuanLyBaoCaoNhanSuController.cs
+│   │       ├── QuanLyBaoCaoTonKhoNguyenLieuController.cs
+│   │       ├── QuanLyBaoCaoTonKhoSachController.cs
+│   │       ├── QuanLyCaiDatController.cs
+│   │       ├── QuanLyChamCongController.cs
+│   │       ├── QuanLyDanhMucController.cs
+│   │       ├── QuanLyDanhMucSachController.cs
+│   │       ├── QuanLyDeXuatController.cs
+│   │       ├── QuanLyDinhLuongController.cs
+│   │       ├── QuanLyDonHangController.cs
+│   │       ├── QuanLyDonViChuyenDoiController.cs
+│   │       ├── QuanLyDonViVanChuyenController.cs
+│   │       ├── QuanLyDonXinNghiController.cs
+│   │       ├── QuanLyKhachHangController.cs
+│   │       ├── QuanLyKhoController.cs
+│   │       ├── QuanLyKhuVucController.cs
+│   │       ├── QuanLyKhuyenMaiController.cs
+│   │       ├── QuanLyKiemKhoController.cs
+│   │       ├── QuanLyLichLamViecController.cs
+│   │       ├── QuanLyLichSuThueSachController.cs
+│   │       ├── QuanLyLuongController.cs
+│   │       ├── QuanLyNguyenLieuController.cs
+│   │       ├── QuanLyNhaCungCapController.cs
+│   │       ├── QuanLyNhanVienController.cs
+│   │       ├── QuanLyNhapKhoController.cs
+│   │       ├── QuanLyNhatKyController.cs
+│   │       ├── QuanLyPhanQuyenController.cs
+│   │       ├── QuanLyPhatLuongController.cs
+│   │       ├── QuanLyPhuThuController.cs
+│   │       ├── QuanLySachController.cs
+│   │       ├── QuanLySanPhamController.cs
+│   │       ├── QuanLySuCoBanController.cs
+│   │       ├── QuanLyThongBaoController.cs
+│   │       ├── QuanLyThuongPhatController.cs
+│   │       ├── QuanLyTongQuanController.cs
+│   │       └── QuanLyXuatHuyController.cs
+│   ├── Shared
+│   │   ├── AuthController.cs
+│   │   └── SharedThongBaoController.cs
+│   └── Web
+│       ├── KhachHang
+│       │   ├── ChiTietSachController.cs
+│       │   ├── ChiTietSanPhamController.cs
+│       │   ├── ChinhSachController.cs
+│       │   ├── DangKyController.cs
+│       │   ├── DangNhapController.cs
+│       │   ├── DatBanController.cs
+│       │   ├── DoiMatKhauController.cs
+│       │   ├── GioHangController.cs
+│       │   ├── HoTroController.cs
+│       │   ├── HoTroKHController.cs
+│       │   ├── LichSuDatBanController.cs
+│       │   ├── LichSuDonHangWebController.cs
+│       │   ├── LichSuThueSachController.cs
+│       │   ├── LienHeController.cs
+│       │   ├── QuenMatKhauController.cs
+│       │   ├── TaiKhoanTongQuanController.cs
+│       │   ├── ThanhToanController.cs
+│       │   ├── ThongTinCaNhanController.cs
+│       │   ├── ThuVienSachController.cs
+│       │   ├── ThucDonController.cs
+│       │   ├── TimKiemSachController.cs
+│       │   └── TrangChuController.cs
+│       └── NhanVien
+│           ├── DangKyLichWebController.cs
+│           ├── DonXinNghiWebController.cs
+│           ├── GiaoHangWebController.cs
+│           ├── GoiMonWebController.cs
+│           ├── HoTroKhachHangController.cs
+│           ├── PhanHoiKhachHangWebController.cs
+│           ├── SoDoBanWebController.cs
+│           └── TongQuanController.cs
+├── Data
+│   ├── CafebookDbContext.cs
+│   └── DataSeeder.cs
+├── DatabaseCafebook
+│   ├── CafebookDBbackup_20260505_0000.bak
+│   └── CafebookDBbackup_20260507_0000.bak
+├── Hubs
+│   └── ChatHub.cs
+├── Program.cs
+├── Properties
+│   ├── PublishProfiles
+│   │   ├── lamchubaotoan-001-site1 - FTP.pubxml
+│   │   ├── lamchubaotoan-001-site1 - FTP.pubxml.user
+│   │   ├── lamchubaotoan-001-site1 - Web Deploy.pubxml
+│   │   ├── lamchubaotoan-001-site1 - Web Deploy.pubxml.user
+│   │   ├── site65125-WebDeploy.pubxml
+│   │   └── site65125-WebDeploy.pubxml.user
+│   └── launchSettings.json
+├── Services
+│   ├── AiService.cs
+│   ├── AiToolService.cs
+│   ├── AutoCancelOrderService.cs
+│   ├── AutoCancelReservationService.cs
+│   ├── AutoUnlockAccountService.cs
+│   ├── DailyReminderBackgroundService.cs
+│   └── DatabaseBackupService.cs
+├── appsettings.Development.json
+├── appsettings.json
+├── dotnet-tools.json
+└── wwwroot
+    └── images
+        ├── BuildNhapKho
+        │   ├── 20260412003310_6d85_phieunhapkho20260412000949.png
+        │   ├── 20260412003742_e9f0_phieunhapkho20260412000949.png
+        │   ├── 20260412012825_b258_phieunhapkho20260412000949.png
+        │   ├── 20260418142443_d410_phieunhapkho20260412000949.png
+        │   └── 20260420165041_5ef8_phieunhapkho20260412000949.png
+        ├── anhgiaohang
+        │   ├── GH_19_20260428073657.ico
+        │   ├── GH_24_20260428073707.ico
+        │   ├── GH_266_20260505073812.jpg
+        │   ├── GH_268_20260505080858.jpg
+        │   ├── GH_274_20260508145946.ico
+        │   ├── GH_28_20260428073715.ico
+        │   ├── GH_33_20260425003653.ico
+        │   ├── GH_34_20260425003710.ico
+        │   ├── GH_36_20260425000413.jpg
+        │   └── GH_46_20260428073722.ico
+        ├── anhmacdinh
+        │   ├── default-avatar.png
+        │   ├── default-book-cover.png
+        │   ├── default-food-icon.png
+        │   ├── logo.ico
+        │   └── logo.png
+        ├── avatars
+        │   ├── avatarKH
+        │   │   └── 1_lam-chu-bao-toan.jpg
+        │   └── avatarNV
+        │       ├── 20260412034104_lam-chu-bao-toan.jpg
+        │       ├── 20260412201542_lam-phuc-vu.jpg
+        │       ├── 20260412201631_shushune.jpg
+        │       ├── 20260412201642_tran-thi-nhan-vien.jpg
+        │       ├── 20260412205521_lam-nhan-vien.jpg
+        │       ├── 20260419212150_tran-thi-nhan-vien.jpg
+        │       └── 20260503134722_lam-bep.jpg
+        ├── books
+        │   ├── 101_ac-nhan-tam.jpg
+        │   ├── 102_nha-lanh-ao-khong-chuc-danh.jpg
+        │   ├── 104_mat-biec.jpg
+        │   ├── 105_cho-toi-xin-mot-ve-i-tuoi-tho.jpg
+        │   ├── 106_nha-gia-kim.jpg
+        │   ├── 107_sapiens-luoc-su-loai-nguoi.jpg
+        │   ├── 108_cha-giau-cha-ngheo.jpg
+        │   ├── 109_harry-potter-va-hon-a-phu-thuy.jpg
+        │   ├── 110_chi-pheo.jpg
+        │   ├── 141c7cb0-93ac-4b88-a918-55c377c2fdbd_1_toi-thay-hoa-vang-tren-co-xanh.jpg
+        │   ├── 1947d497-5b75-49c8-882a-fda98e36f787_4_sapiens-luoc-su-loai-nguoi.jpg
+        │   ├── 334_au-sach-ngau-nhien-so-52569-134.jpg
+        │   ├── 3_ac-nhan-tam-ten-tieng-anh-how-to-win-friends-and-influence-people.jpg
+        │   └── 4_harry-potter-va-hon-a-phu-thuy-harry-potter-and-the-philosophers-stone.jpg
+        ├── danhgia
+        │   └── dg_1_639126951926231868.jpg
+        └── foods
+            ├── americano-a-639133835176340824.jpg
+            ├── americano-nong-639133834944665443.jpg
+            ├── bac-xiu-a-639133837159534318.webp
+            ├── banh-mi-bo-toi-nuong-gion-639133845782641522.jpg
+            ├── banh-quy-hanh-nhan-639133847121470645.jpg
+            ├── ca-phe-en-a-639133836630565449.webp
+            ├── ca-phe-mo-mang-639133842732437325.jpg
+            ├── ca-phe-muoi-639133837348071436.jpg
+            ├── ca-phe-sua-a-639133836893292129.jpg
+            ├── cafe-en-639115174391118843.jpg
+            ├── cappuccino-nong-639133835839539125.jpg
+            ├── caramel-macchiato-639133836359539465.jpg
+            ├── chocolate-en-70-cacao-639133846025650639.jpg
+            ├── espresso-nong-639133834756285361.jpg
+            ├── hat-ieu-rang-nguyen-vi-639133846913532709.jpg
+            ├── hat-macca-uc-639133846722893775.webp
+            ├── latte-a-639133835571828805.jpg
+            ├── latte-nong-639133835373937515.jpg
+            ├── matcha-a-xay-639133841442341524.jpg
+            ├── mocha-nong-639133836194485565.webp
+            ├── nuoc-ep-ca-rot-cam-639133840245676816.jpg
+            ├── nuoc-ep-cam-tuoi-639133839699143108.webp
+            ├── nuoc-ep-tao-639133840045693942.jpg
+            ├── nuoc-ep-thom-639133839880449193.webp
+            ├── salad-trai-cay-sua-chua-639133844026442478.jpg
+            ├── sandwich-bo-au-phong-mut-639133844346415722.jpg
+            ├── sandwich-ga-xong-khoi-639133845511104353.jpg
+            ├── sandwich-pho-mai-nuong-639133844685647487.jpg
+            ├── sinh-to-bo-639133840469640596.jpg
+            ├── sinh-to-dau-tay-639133840707066809.webp
+            ├── sinh-to-viet-quat-639133840923197834.jpg
+            ├── sinh-to-xoai-639133841134152841.jpg
+            ├── tra-ao-cam-sa-639133838772091451.webp
+            ├── tra-dau-tay-nhiet-oi-639133839199033384.jpeg
+            ├── tra-dau-tay-nhiet-oi-639133843918640028.jpg
+            ├── tra-en-macchiato-639133839521114923.jpg
+            ├── tra-hoa-cuc-mat-ong-639133837616887698.jpg
+            ├── tra-hoa-hong-tao-o-639133841768686561.webp
+            ├── tra-lavender-nong-639133837864438409.jpg
+            ├── tra-oolong-sen-639133838565554173.jpg
+            ├── tra-sua-639115178005448401.jpg
+            ├── tra-vai-639133838960340175.jpg
+            ├── tra-xanh-lai-nong-639133838299161488.jpg
+            ├── trai-cay-say-deo-639133846488388592.png
+            └── trai-cay-say-gion-639133846230891887.jpg

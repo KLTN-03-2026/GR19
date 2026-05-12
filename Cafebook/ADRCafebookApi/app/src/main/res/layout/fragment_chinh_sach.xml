@@ -1,138 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/cafe_cream"
-    android:padding="16dp">
+    android:background="@color/cf_background">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingBottom="80dp">
+        android:background="@color/cafe_brown">
 
-        <com.google.android.material.card.MaterialCardView
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/policyToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="Về Cafebook &amp; Điều khoản"
+            app:titleTextColor="@color/white"
+            app:navigationIcon="@drawable/ic_back_arrow" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:cardBackgroundColor="#F9F6EE"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:strokeColor="#F0EBE1"
-            app:strokeWidth="1dp">
+            android:orientation="vertical"
+            android:padding="20dp">
 
-            <LinearLayout
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="24dp">
+                android:text="Về Cafe Sách Bookshuheheee &amp; Điều khoản"
+                android:textColor="@color/cafe_brown"
+                android:textSize="22sp"
+                android:textStyle="bold" />
 
-                <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:layout_marginBottom="12dp"
-                    android:src="@drawable/ic_policy"
-                    app:tint="@color/cafe_orange"
-                    android:contentDescription="Policy Icon" />
-
-                <TextView
-                    android:id="@+id/tvHeaderTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Về Chúng Tôi"
-                    android:textColor="@color/cafe_brown"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="GIỚI THIỆU"
-            android:textColor="@color/cafe_orange"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvGioiThieu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:lineSpacingExtra="6dp"
-            android:textColor="#5D4037" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:text="ĐIỀU KHOẢN DỊCH VỤ"
-            android:textColor="@color/cafe_orange"
-            android:textStyle="bold" />
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="24dp"
+                android:text="Những giá trị cốt lõi và quy định chung tại không gian của chúng tôi."
+                android:textColor="@color/cf_text_secondary"
+                android:textSize="14sp" />
+
+            <!-- About Us -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="VỀ CHÚNG TÔI"
+                android:textColor="@color/cafe_orange"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:text="1. Quy định chung"
-                    android:textColor="@color/cafe_brown"
-                    android:textStyle="bold" />
-
-                <TextView
+                    android:id="@+id/tvAboutContent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:lineSpacingExtra="4dp"
-                    android:text="• Giữ không gian yên tĩnh.\n• Không mang đồ ăn uống từ bên ngoài.\n• Cửa hàng không chịu trách nhiệm về tài sản cá nhân."
-                    android:textColor="#5D4037" />
+                    android:padding="16dp"
+                    android:lineSpacingExtra="5dp"
+                    android:textColor="@color/cf_text_main"
+                    android:textSize="14sp"
+                    android:text="Cafe Sách Bookshuheheee được sinh ra từ niềm đam mê bất tận với hai thứ: hương vị đậm đà của cà phê nguyên chất và giá trị vĩnh cửu của những trang sách. Cafebook là không gian lý tưởng, kết hợp giữa niềm đam mê cà phê và tình yêu sách. Chúng tôi mang đến những hạt cà phê chất lượng cùng hàng ngàn đầu sách chọn lọc, tạo nên một ốc đảo bình yên cho tâm hồn bạn." />
+            </com.google.android.material.card.MaterialCardView>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:text="2. Dịch vụ Đặt bàn"
-                    android:textColor="@color/cafe_brown"
-                    android:textStyle="bold" />
+            <!-- Contact & Activity -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="THÔNG TIN LIÊN HỆ &amp; HOẠT ĐỘNG"
+                android:textColor="@color/cafe_orange"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
 
-                <TextView
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:lineSpacingExtra="4dp"
-                    android:text="• Đặt trước ít nhất 1 giờ.\n• Giữ bàn trong vòng 15 phút."
-                    android:textColor="#5D4037" />
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:text="3. Chính sách Thành viên"
-                    android:textColor="@color/cafe_brown"
-                    android:textStyle="bold" />
+                    <TextView android:id="@+id/tvPolicyAddress" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="• Địa chỉ: 08 Hà Văn Tín, P. Hòa Khánh Nam, Q. Liên Chiểu, TP. Đà Nẵng" android:textColor="@color/cf_text_main" android:layout_marginBottom="8dp"/>
+                    <TextView android:id="@+id/tvPolicyPhone" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="• Hotline: 0376512695" android:textColor="@color/cf_text_main" android:layout_marginBottom="8dp"/>
+                    <TextView android:id="@+id/tvPolicyEmail" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="• Email: cafebook.hotro@gmail.com" android:textColor="@color/cf_text_main" android:layout_marginBottom="8dp"/>
+                    <TextView android:id="@+id/tvPolicyHours" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="• Giờ mở cửa: 07:00 - 22:00 (Hàng ngày)" android:textColor="@color/cf_text_main" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-                <TextView
-                    android:id="@+id/tvChinhSachDiem"
+            <!-- Terms -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="ĐIỀU KHOẢN DỊCH VỤ"
+                android:textColor="@color/cafe_orange"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="40dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:lineSpacingExtra="4dp"
-                    android:textColor="#5D4037" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:text="Bằng việc sử dụng các dịch vụ của chúng tôi (bao gồm gọi món, đặt bàn, và thuê sách), bạn đồng ý tuân thủ các điều khoản và điều kiện dưới đây:"
+                        android:textColor="@color/cf_text_main"
+                        android:textStyle="italic"
+                        android:textSize="13sp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1. Quy định chung tại cửa hàng" android:textStyle="bold" android:textColor="@color/cafe_brown" android:layout_marginBottom="4dp"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="• Vui lòng giữ gìn không gian yên tĩnh.\n• Không mang đồ ăn, thức uống từ bên ngoài.\n• Cửa hàng không chịu trách nhiệm về tài sản cá nhân." android:textColor="@color/cf_text_main" android:textSize="13sp" android:layout_marginBottom="12dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="2. Dịch vụ Đặt bàn" android:textStyle="bold" android:textColor="@color/cafe_brown" android:layout_marginBottom="4dp"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="• Đặt bàn trước ít nhất 1 giờ.\n• Giữ bàn trong vòng 15 phút từ giờ hẹn." android:textColor="@color/cf_text_main" android:textSize="13sp" android:layout_marginBottom="12dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="3. Dịch vụ Thuê sách" android:textStyle="bold" android:textColor="@color/cafe_brown" android:layout_marginBottom="4dp"/>
+                    <TextView android:id="@+id/tvPolicyRent" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="• Phí dịch vụ: 10.000đ/lượt.\n• Thời gian thuê tối đa: 15 ngày.\n• Phí phạt trễ hạn: 5.000đ/ngày.\n• Tích lũy 1 điểm thưởng mỗi lượt thuê thành công.\n• Phụ thu hư hại dựa trên % độ mới hao hụt." android:textColor="@color/cf_text_main" android:textSize="13sp" android:layout_marginBottom="12dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="4. Chính sách thành viên &amp; Tích điểm" android:textStyle="bold" android:textColor="@color/cafe_brown" android:layout_marginBottom="4dp"/>
+                    <TextView android:id="@+id/tvPolicyPoints" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="• Tích 1 điểm cho mỗi 50.000đ hóa đơn.\n• 1 điểm = 1.000đ khi thanh toán (tối đa 50% hóa đơn).\n• Không áp dụng tích điểm khi dùng điểm thanh toán." android:textColor="@color/cf_text_main" android:textSize="13sp" android:layout_marginBottom="12dp" />
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="5. Miễn trừ trách nhiệm" android:textStyle="bold" android:textColor="@color/cafe_brown" android:layout_marginBottom="4dp"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Cửa hàng có quyền thay đổi điều khoản và giá cả dịch vụ mà không cần báo trước." android:textColor="@color/cf_text_main" android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

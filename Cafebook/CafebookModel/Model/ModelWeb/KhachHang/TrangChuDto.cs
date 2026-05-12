@@ -7,6 +7,7 @@ namespace CafebookModel.Model.ModelWeb.KhachHang
         public List<KhuyenMaiDto> Promotions { get; set; } = new();
         public List<SanPhamDto> MonNoiBat { get; set; } = new();
         public List<SachDto> SachNoiBat { get; set; } = new();
+        public List<DanhGiaDto> DanhGiaNoiBat { get; set; } = new();
     }
 
     public class ThongTinChungDto
@@ -50,5 +51,14 @@ namespace CafebookModel.Model.ModelWeb.KhachHang
         public string TieuDe { get; set; } = string.Empty;
         public string? TacGia { get; set; }
         public string? AnhBiaUrl { get; set; }
+    }
+
+    public class DanhGiaDto
+    {
+        public string TenKhachHang { get; set; } = string.Empty;
+        public string? AvatarUrl { get; set; }
+        public int SoSao { get; set; }
+        public string? BinhLuan { get; set; }
+        public DateTime NgayTao { get; set; }
     }
 }

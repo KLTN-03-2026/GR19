@@ -20,12 +20,17 @@ namespace AppCafebookApi.View.Common
                 return;
             }
 
-            // Lưu vào file AppConfig.json cục bộ
             AppConfigManager.SaveApiServerUrl(url);
 
             MessageBox.Show("Thiết lập thành công! Ứng dụng sẽ bắt đầu kết nối.", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            this.DialogResult = true; // Đánh dấu là đã cài đặt xong để App.xaml.cs biết
+            this.DialogResult = true;
+            this.Close();
+        }
+
+        private void BtnExit_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = false;
             this.Close();
         }
     }

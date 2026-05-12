@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:fitsSystemWindows="true"
     android:background="?android:attr/windowBackground">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -13,7 +14,7 @@
         android:background="?attr/colorPrimary"
         app:title="Thanh toán VNPAY"
         app:titleTextColor="?attr/colorOnPrimary"
-        app:navigationIcon="@drawable/ic_back"
+        app:navigationIcon="@drawable/ic_back_arrow"
         app:navigationIconTint="?attr/colorOnPrimary" />
 
     <ProgressBar

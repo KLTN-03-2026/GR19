@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.bumptech.glide.Glide;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -50,6 +51,8 @@ public class OrderDetailFragment extends Fragment {
     private TextView tvSubtotal, tvShipping, tvDiscount, tvTotal;
     private RecyclerView rvTracking, rvItems;
     private MaterialButton btnCancel, btnRepay;
+    private View layoutDeliveryPhoto;
+    private ShapeableImageView imgDeliveryPhoto;
 
     private Uri selectedImageUri;
     private ShapeableImageView imgRatingSelected;
@@ -100,6 +103,8 @@ public class OrderDetailFragment extends Fragment {
         rvItems = view.findViewById(R.id.rvOrderItems);
         btnCancel = view.findViewById(R.id.btnCancelOrder);
         btnRepay = view.findViewById(R.id.btnRepay);
+        layoutDeliveryPhoto = view.findViewById(R.id.layoutDeliveryPhoto);
+        imgDeliveryPhoto = view.findViewById(R.id.imgDeliveryPhoto);
 
         rvTracking.setLayoutManager(new LinearLayoutManager(getContext()));
         rvItems.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -125,7 +130,22 @@ public class OrderDetailFragment extends Fragment {
 
     private void bindData(OrderDto.Detail detail) {
         tvMaDon.setText(detail.maDonHang);
-        tvStatus.setText(detail.trangThaiGiaoHang);
+        
+        String displayStatus = detail.trangThaiGiaoHang;
+        if ("Đã hủy".equalsIgnoreCase(detail.trangThaiThanhToan)) {
+            displayStatus = "Đã hủy";
+        }
+        tvStatus.setText(displayStatus);
+
+        // Badge colors based on status (matching OrderHistoryAdapter)
+        if ("Hoàn thành".equalsIgnoreCase(displayStatus)) {
+            tvStatus.setTextColor(getResources().getColor(R.color.cf_green, null));
+        } else if ("Đã hủy".equalsIgnoreCase(displayStatus)) {
+            tvStatus.setTextColor(getResources().getColor(R.color.cf_red, null));
+        } else {
+            tvStatus.setTextColor(getResources().getColor(R.color.cf_orange, null));
+        }
+
         tvTime.setText(detail.thoiGianTao != null ? detail.thoiGianTao.replace("T", " ").substring(0, 16) : "");
         tvNamePhone.setText(detail.hoTen + " | " + detail.soDienThoai);
         tvAddress.setText(detail.diaChiGiaoHang);
@@ -136,19 +156,36 @@ public class OrderDetailFragment extends Fragment {
         tvTotal.setText(String.format("%,.0fđ", detail.thanhTien));
 
         rvTracking.setAdapter(new TrackingAdapter(detail.trackingEvents));
+
+        // Delivery Photo
+        if (detail.anhXacNhanGiaoHangUrl != null && !detail.anhXacNhanGiaoHangUrl.isEmpty()) {
+            layoutDeliveryPhoto.setVisibility(View.VISIBLE);
+            Glide.with(this)
+                    .load(detail.anhXacNhanGiaoHangUrl)
+                    .placeholder(R.color.gray_200)
+                    .error(R.color.gray_200)
+                    .into(imgDeliveryPhoto);
+        } else {
+            layoutDeliveryPhoto.setVisibility(View.GONE);
+        }
         
         boolean isCompleted = "Hoàn thành".equalsIgnoreCase(detail.trangThaiGiaoHang);
         rvItems.setAdapter(new OrderProductAdapter(detail.items, isCompleted, this::showRatingDialog));
 
         // Action buttons
-        if ("Chờ xác nhận".equalsIgnoreCase(detail.trangThaiGiaoHang)) {
+        // 1. Logic nút Hủy: Chỉ hiện ở "Chờ xác nhận" hoặc "Chờ thanh toán"
+        if (("Chờ xác nhận".equalsIgnoreCase(detail.trangThaiGiaoHang) ||
+                "Chờ thanh toán".equalsIgnoreCase(detail.trangThaiThanhToan)) &&
+                !"Đã hủy".equalsIgnoreCase(detail.trangThaiThanhToan)) {
             btnCancel.setVisibility(View.VISIBLE);
             btnCancel.setOnClickListener(v -> showCancelDialog());
         } else {
             btnCancel.setVisibility(View.GONE);
         }
 
-        if ("Chờ thanh toán".equalsIgnoreCase(detail.trangThaiThanhToan)) {
+        // 2. Logic nút Thanh toán lại (VNPay): Chỉ khi đang chờ thanh toán
+        if ("Chờ thanh toán".equalsIgnoreCase(detail.trangThaiThanhToan) &&
+                "VNPay".equalsIgnoreCase(detail.phuongThucThanhToan)) {
             btnRepay.setVisibility(View.VISIBLE);
             btnRepay.setOnClickListener(v -> handleRepay());
         } else {

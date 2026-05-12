@@ -10,9 +10,10 @@ public class TableBookingModels {
     }
 
     public static class TimBanRequest {
-        public String ngayDat;
-        public String gioDat;
-        public int soNguoi;
+        @SerializedName("NgayDat") public String ngayDat;
+        @SerializedName("GioDat") public String gioDat;
+        @SerializedName("SoNguoi") public int soNguoi;
+        
         public TimBanRequest(String ngay, String gio, int ng) {
             this.ngayDat = ngay;
             this.gioDat = gio;
@@ -25,6 +26,7 @@ public class TableBookingModels {
         @SerializedName("soBan") public String soBan;
         @SerializedName("soGhe") public int soGhe;
         @SerializedName("khuVuc") public String khuVuc;
+        @SerializedName("moTa") public String moTa;
     }
 
     public static class KhuVucBan {
@@ -34,14 +36,14 @@ public class TableBookingModels {
     }
 
     public static class DatBanWebRequest {
-        public String hoTen;
-        public String soDienThoai;
-        public String email;
-        public String ghiChu;
-        public int idBan;
-        public int soLuongKhach;
-        public String ngayDat;
-        public String gioDat;
+        @SerializedName("HoTen") public String hoTen;
+        @SerializedName("SoDienThoai") public String soDienThoai;
+        @SerializedName("Email") public String email;
+        @SerializedName("GhiChu") public String ghiChu;
+        @SerializedName("IdBan") public int idBan;
+        @SerializedName("SoLuongKhach") public int soLuongKhach;
+        @SerializedName("NgayDat") public String ngayDat;
+        @SerializedName("GioDat") public String gioDat;
     }
 
     public static class CustomerInfoResponse {

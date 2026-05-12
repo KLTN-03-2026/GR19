@@ -2,6 +2,7 @@ package com.example.cafebook.fragments.auth;
 
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,8 +31,7 @@ public class XacMinhOtpFragment extends Fragment {
     private CountDownTimer countDownTimer;
 
     // Các biến nhận từ màn hình Đăng ký
-    private int tempId;
-    private String email, phone, password;
+    private String email;
 
     @Nullable
     @Override
@@ -40,10 +40,7 @@ public class XacMinhOtpFragment extends Fragment {
 
         // Nhận dữ liệu truyền sang
         if (getArguments() != null) {
-            tempId = getArguments().getInt("TempId");
             email = getArguments().getString("TempEmail");
-            phone = getArguments().getString("TempPhone");
-            password = getArguments().getString("TempPassword");
         }
 
         edtOtpCode = view.findViewById(R.id.edtOtpCode);
@@ -51,7 +48,7 @@ public class XacMinhOtpFragment extends Fragment {
         btnResend = view.findViewById(R.id.btnResend);
         tvCountdown = view.findViewById(R.id.tvCountdown);
 
-        apiService = ApiClient.getClient().create(AuthApiService.class);
+        apiService = ApiClient.getClient(requireContext()).create(AuthApiService.class);
 
         startCountdown();
 
@@ -87,7 +84,8 @@ public class XacMinhOtpFragment extends Fragment {
         btnVerify.setEnabled(false);
         btnVerify.setText("ĐANG XÁC THỰC...");
 
-        XacMinhOtpDto.Request request = new XacMinhOtpDto.Request(tempId, email, phone, password, otp);
+        // Tối ưu API: Server đã lưu dữ liệu tạm trong Cache, chỉ cần gửi Email và OTP
+        XacMinhOtpDto.Request request = new XacMinhOtpDto.Request(email, otp);
         apiService.verifyOtp(request).enqueue(new Callback<DangKyDto.Response>() {
             @Override
             public void onResponse(@NonNull Call<DangKyDto.Response> call, @NonNull Response<DangKyDto.Response> response) {
@@ -97,11 +95,21 @@ public class XacMinhOtpFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     if (response.body().success) {
                         Toast.makeText(getContext(), "Kích hoạt thành công! Mời bạn đăng nhập.", Toast.LENGTH_LONG).show();
+                        // Chuyển sang màn hình Đăng nhập
                         getParentFragmentManager().beginTransaction()
                                 .replace(R.id.fragment_container, new DangNhapFragment())
                                 .commit();
                     } else {
                         Toast.makeText(getContext(), response.body().message, Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    try {
+                        String realError = response.errorBody() != null ? response.errorBody().string() : "Lỗi không xác định";
+                        Log.e("API_ERROR", "Mã lỗi: " + response.code() + " | Chi tiết: " + realError);
+                        Toast.makeText(getContext(), "Lỗi server " + response.code() + ": Kiểm tra Logcat", Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Toast.makeText(getContext(), "Lỗi server: " + response.code(), Toast.LENGTH_SHORT).show();
                     }
                 }
             }

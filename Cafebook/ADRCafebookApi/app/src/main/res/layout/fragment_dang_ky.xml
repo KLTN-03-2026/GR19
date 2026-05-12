@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@color/cf_bg_cream">
+    android:background="?attr/android:windowBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,13 +13,16 @@
         android:padding="24dp"
         android:gravity="center_horizontal">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imgLogo"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:src="@drawable/ic_launcher_foreground"
+            android:src="@drawable/favicon"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/RoundedImage12"
+            app:strokeColor="?attr/colorSecondary"
+            app:strokeWidth="2dp"
             android:layout_marginTop="20dp"
-            android:background="@drawable/bg_circle_white"
             android:elevation="4dp"
             android:contentDescription="App Logo"/>
 
@@ -29,7 +32,7 @@
             android:text="Đăng Ký Tài Khoản"
             android:textSize="26sp"
             android:textStyle="bold"
-            android:textColor="@color/cf_dark_brown"
+            android:textColor="?attr/colorPrimary"
             android:layout_marginTop="16dp"/>
 
         <TextView
@@ -37,17 +40,17 @@
             android:layout_height="wrap_content"
             android:text="Tạo tài khoản mới để đặt bàn và thuê sách"
             android:textSize="14sp"
-            android:textColor="@color/cf_text_hint"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:layout_marginBottom="32dp"/>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            style="?attr/materialCardViewStyle"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/cf_white"
-            app:strokeColor="#F0EBE1"
-            app:strokeWidth="1dp">
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorOutline">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -57,72 +60,72 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilPhone"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    style="?attr/textInputStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Số điện thoại"
                     app:startIconDrawable="@drawable/ic_phone"
-                    app:startIconTint="@color/cf_text_hint"
-                    app:boxStrokeColor="@color/cf_orange"
+                    app:startIconTint="?attr/colorPrimary"
                     android:layout_marginBottom="12dp">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtPhone"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="phone"
+                        android:textColor="?attr/colorOnSurface"
                         android:maxLength="10"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilEmail"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    style="?attr/textInputStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Email"
                     app:startIconDrawable="@drawable/ic_mail"
-                    app:startIconTint="@color/cf_text_hint"
-                    app:boxStrokeColor="@color/cf_orange"
+                    app:startIconTint="?attr/colorPrimary"
                     android:layout_marginBottom="12dp">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtEmail"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textColor="?attr/colorOnSurface"
                         android:inputType="textEmailAddress"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilPassword"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    style="?attr/textInputStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Mật khẩu"
                     app:startIconDrawable="@drawable/ic_lock"
-                    app:startIconTint="@color/cf_text_hint"
+                    app:startIconTint="?attr/colorPrimary"
                     app:endIconMode="password_toggle"
-                    app:boxStrokeColor="@color/cf_orange"
                     android:layout_marginBottom="12dp">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtPassword"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textColor="?attr/colorOnSurface"
                         android:inputType="textPassword"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilConfirmPassword"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    style="?attr/textInputStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Xác nhận mật khẩu"
                     app:startIconDrawable="@drawable/ic_lock"
-                    app:startIconTint="@color/cf_text_hint"
+                    app:startIconTint="?attr/colorPrimary"
                     app:endIconMode="password_toggle"
-                    app:boxStrokeColor="@color/cf_orange"
                     android:layout_marginBottom="24dp">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtConfirmPassword"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textColor="?attr/colorOnSurface"
                         android:inputType="textPassword"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -131,10 +134,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:text="ĐĂNG KÝ"
+                    android:textColor="@color/white"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     app:cornerRadius="12dp"
-                    app:backgroundTint="@color/cf_brown"/>
+                    app:backgroundTint="?attr/colorPrimary"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -148,13 +152,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Đã có tài khoản? "
-                android:textColor="@color/cf_text_hint"/>
+                android:textColor="?attr/colorOnSurfaceVariant"/>
             <TextView
                 android:id="@+id/tvGoToLogin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Đăng nhập ngay"
-                android:textColor="@color/cf_orange"
+                android:textColor="?attr/colorSecondary"
                 android:textStyle="bold"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"

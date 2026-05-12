@@ -138,11 +138,40 @@
         <h2 class="text-center mb-4 pb-2 section-header-alt">
             Khách Hàng Nói Gì Về Chúng Tôi
         </h2>
-        <div class="col-12 text-center">
-            <p class="text-muted">
-                <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1.1rem;">spark</span>
-                Chức năng hiển thị đánh giá của khách hàng đang được phát triển.
-            </p>
-        </div>
+    
+        @if (Model.DanhGiaNoiBat != null && Model.DanhGiaNoiBat.Any())
+        {
+            <div class="row justify-content-center">
+                @foreach (var dg in Model.DanhGiaNoiBat)
+                {
+                    <div class="col-md-4 mb-4">
+                        <div class="review-card card shadow-sm h-100">
+                            <div class="card-body text-center d-flex flex-column">
+                                <img src="@(string.IsNullOrEmpty(dg.AvatarUrl) ? "/images/default-avatar.png" : dg.AvatarUrl)"
+                                     alt="Avatar" class="review-avatar mb-3" />
+                            
+                                <div class="stars mb-2">
+                                    @for (int i = 0; i < dg.SoSao; i++)
+                                    {
+                                        <span class="material-symbols-outlined text-warning" style="font-variation-settings: 'FILL' 1;">star</span>
+                                    }
+                                </div>
+                            
+                                <p class="review-text flex-grow-1 fst-italic">"@dg.BinhLuan"</p>
+                                <h6 class="review-author mt-3 fw-bold">- @dg.TenKhachHang -</h6>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="col-12 text-center">
+                <p class="text-muted">
+                    <span class="material-symbols-outlined align-middle">spark</span> Chưa có đánh giá nào được hiển thị.
+                </p>
+            </div>
+        }
     </div>
 </div>

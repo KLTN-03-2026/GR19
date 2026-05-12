@@ -1,6 +1,8 @@
 package com.example.cafebook.adapters;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.example.cafebook.BookDetailActivity;
 import com.example.cafebook.R;
 import com.example.cafebook.models.SachCardDto;
 
@@ -41,13 +44,18 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> {
         holder.tvAuthor.setText(book.getTacGia() != null ? book.getTacGia() : "Không rõ tác giả");
         holder.tvStock.setText("Sẵn có: " + book.getSoLuongCoSan());
 
-        if (book.getAnhBiaUrl() != null && !book.getAnhBiaUrl().isEmpty()) {
-            Glide.with(context)
-                 .load(book.getAnhBiaUrl())
-                 .transition(DrawableTransitionOptions.withCrossFade())
-                 .placeholder(R.drawable.ic_launcher_background)
-                 .into(holder.imgCover);
-        }
+        Glide.with(context)
+             .load(book.getAnhBiaUrl())
+             .transition(DrawableTransitionOptions.withCrossFade())
+             .placeholder(R.drawable.default_book_cover)
+             .error(R.drawable.default_book_cover)
+             .into(holder.imgCover);
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, BookDetailActivity.class);
+            intent.putExtra("BOOK_ID", book.getIdSach());
+            context.startActivity(intent);
+        });
     }
 
     @Override

@@ -66,6 +66,7 @@ namespace CafebookModel.Model.ModelWeb.KhachHang
         public string PhuongThucThanhToan { get; set; } = string.Empty;
         public string DiaChiGiaoHang { get; set; } = string.Empty;
         public string SoDienThoai { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty; 
         public decimal TongTienHang { get; set; }
         public decimal GiamGia { get; set; }
         public decimal PhiGiaoHang { get; set; }

@@ -1,5 +1,7 @@
 package com.example.cafebook.adapters;
 
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.cafebook.ProductDetailActivity;
 import com.example.cafebook.R;
 import com.example.cafebook.models.SanPhamDto;
 
@@ -35,12 +38,17 @@ public class SanPhamAdapter extends RecyclerView.Adapter<SanPhamAdapter.ViewHold
         holder.tvName.setText(sp.getTenSanPham());
         holder.tvPrice.setText(String.format("%,.0f đ", sp.getDonGia()));
         
-        if (sp.getAnhSanPhamUrl() != null && !sp.getAnhSanPhamUrl().isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                .load(sp.getAnhSanPhamUrl())
-                .placeholder(R.drawable.ic_launcher_background)
-                .into(holder.img);
-        }
+        Glide.with(holder.itemView.getContext())
+            .load(sp.getAnhSanPhamUrl())
+            .placeholder(R.drawable.default_food_icon)
+            .error(R.drawable.default_food_icon)
+            .into(holder.img);
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), ProductDetailActivity.class);
+            intent.putExtra("PRODUCT_ID", sp.getIdSanPham());
+            v.getContext().startActivity(intent);
+        });
     }
 
     @Override

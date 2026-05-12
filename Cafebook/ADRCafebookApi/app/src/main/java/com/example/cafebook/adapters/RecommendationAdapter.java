@@ -44,12 +44,12 @@ public class RecommendationAdapter extends RecyclerView.Adapter<RecommendationAd
         RecommendationItem item = list.get(position);
         holder.tvTitle.setText(item.getTitle());
 
-        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                .load(item.getImageUrl())
-                .placeholder(R.drawable.ic_launcher_background)
-                .into(holder.imgThumb);
-        }
+        int placeholder = item.isBook() ? R.drawable.default_book_cover : R.drawable.default_food_icon;
+        Glide.with(holder.itemView.getContext())
+            .load(item.getImageUrl())
+            .placeholder(placeholder)
+            .error(placeholder)
+            .into(holder.imgThumb);
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent;

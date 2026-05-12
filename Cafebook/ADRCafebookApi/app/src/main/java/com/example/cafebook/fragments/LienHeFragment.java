@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -12,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.cafebook.MainActivity;
 import com.example.cafebook.R;
 import com.example.cafebook.models.LienHeDto;
 import com.example.cafebook.models.PhanHoiInputModel;
@@ -27,9 +29,10 @@ import retrofit2.Response;
 
 public class LienHeFragment extends Fragment {
 
-    private TextView tvDiaChi, tvSoDienThoai, tvGioHoatDong;
+    private TextView tvDiaChi, tvSoDienThoai, tvEmail, tvGioHoatDong;
     private TextInputEditText edtTen, edtEmail, edtNoiDung;
     private MaterialButton btnSubmitGopY;
+    private View btnOpenPolicy;
     private CafebookApi api;
 
     @Nullable
@@ -37,7 +40,7 @@ public class LienHeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_lien_he, container, false);
         
-        api = ApiClient.getClient().create(CafebookApi.class);
+        api = ApiClient.getClient(requireContext()).create(CafebookApi.class);
         initViews(view);
         loadContactInfo();
         
@@ -45,15 +48,38 @@ public class LienHeFragment extends Fragment {
     }
 
     private void initViews(View view) {
-        tvDiaChi = view.findViewById(R.id.tvDiaChi);
-        tvSoDienThoai = view.findViewById(R.id.tvSoDienThoai);
-        tvGioHoatDong = view.findViewById(R.id.tvGioHoatDong);
+        btnOpenPolicy = view.findViewById(R.id.btnOpenPolicy);
+        
+        // Find views from included layouts
+        View layoutDiaChi = view.findViewById(R.id.layoutDiaChi);
+        tvDiaChi = layoutDiaChi.findViewById(R.id.tvValue);
+        ((ImageView)layoutDiaChi.findViewById(R.id.ivIcon)).setImageResource(R.drawable.ic_location);
+
+        View layoutDienThoai = view.findViewById(R.id.layoutDienThoai);
+        tvSoDienThoai = layoutDienThoai.findViewById(R.id.tvValue);
+        ((ImageView)layoutDienThoai.findViewById(R.id.ivIcon)).setImageResource(R.drawable.ic_phone);
+
+        View layoutEmail = view.findViewById(R.id.layoutEmail);
+        tvEmail = layoutEmail.findViewById(R.id.tvValue);
+        ((ImageView)layoutEmail.findViewById(R.id.ivIcon)).setImageResource(R.drawable.ic_mail);
+
+        View layoutGioHoatDong = view.findViewById(R.id.layoutGioHoatDong);
+        tvGioHoatDong = layoutGioHoatDong.findViewById(R.id.tvValue);
+        ((ImageView)layoutGioHoatDong.findViewById(R.id.ivIcon)).setImageResource(R.drawable.ic_schedule);
+
+        // Form
         edtTen = view.findViewById(R.id.edtTen);
         edtEmail = view.findViewById(R.id.edtEmail);
         edtNoiDung = view.findViewById(R.id.edtNoiDung);
         btnSubmitGopY = view.findViewById(R.id.btnSubmitGopY);
 
         btnSubmitGopY.setOnClickListener(v -> submitGopY(view));
+        
+        btnOpenPolicy.setOnClickListener(v -> {
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).loadFragment(new ChinhSachFragment());
+            }
+        });
     }
 
     private void loadContactInfo() {
@@ -62,16 +88,20 @@ public class LienHeFragment extends Fragment {
             public void onResponse(@NonNull Call<LienHeDto> call, @NonNull Response<LienHeDto> response) {
                 if (response.isSuccessful() && response.body() != null && isAdded()) {
                     LienHeDto info = response.body();
-                    tvDiaChi.setText(info.diaChi != null ? info.diaChi : "Chưa cập nhật");
-                    tvSoDienThoai.setText(info.soDienThoai != null ? info.soDienThoai : "Chưa cập nhật");
-                    tvGioHoatDong.setText(info.gioHoatDong != null ? info.gioHoatDong : "Chưa cập nhật");
+                    tvDiaChi.setText(info.diaChi != null ? info.diaChi : "08 Hà Văn Tín, Đà Nẵng");
+                    tvSoDienThoai.setText(info.soDienThoai != null ? info.soDienThoai : "0376512695");
+                    tvEmail.setText("cafebook.hotro@gmail.com"); // Static/Fallback as per request
+                    tvGioHoatDong.setText(info.gioHoatDong != null ? info.gioHoatDong : "07:00 - 22:00 (Thứ 2 - CN)");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<LienHeDto> call, @NonNull Throwable t) {
                 if (isAdded()) {
-                    Toast.makeText(getContext(), "Lỗi tải thông tin liên hệ", Toast.LENGTH_SHORT).show();
+                    tvDiaChi.setText("08 Hà Văn Tín, Đà Nẵng");
+                    tvSoDienThoai.setText("0376512695");
+                    tvEmail.setText("cafebook.hotro@gmail.com");
+                    tvGioHoatDong.setText("07:00 - 22:00 (Thứ 2 - CN)");
                 }
             }
         });
@@ -101,10 +131,8 @@ public class LienHeFragment extends Fragment {
                     if (response.isSuccessful()) {
                         Snackbar.make(view, "Cảm ơn bạn! Chúng tôi đã nhận được góp ý.", Snackbar.LENGTH_LONG).show();
                         edtTen.setText(""); edtEmail.setText(""); edtNoiDung.setText("");
-                    } else if (response.code() == 429) {
-                        Snackbar.make(view, "Bạn gửi quá nhanh! Vui lòng đợi 1 phút.", Snackbar.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(getContext(), "Có lỗi xảy ra: " + response.code(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Lỗi: " + response.code(), Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -114,7 +142,6 @@ public class LienHeFragment extends Fragment {
                 if (isAdded()) {
                     btnSubmitGopY.setEnabled(true);
                     btnSubmitGopY.setText("GỬI PHẢN HỒI");
-                    Log.e("API_ERROR", "Submit failed", t);
                     Toast.makeText(getContext(), "Lỗi kết nối máy chủ!", Toast.LENGTH_SHORT).show();
                 }
             }

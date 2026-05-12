@@ -34,17 +34,16 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DanhGiaChiTietDto review = list.get(position);
         holder.tvName.setText(review.getTenKhachHang());
-        holder.tvDate.setText(review.getNgayDanhGia());
-        holder.tvContent.setText(review.getNoiDung());
+        holder.tvDate.setText(review.getNgayTao());
+        holder.tvContent.setText(review.getBinhLuan());
         holder.ratingBar.setRating(review.getSoSao());
 
-        if (review.getAvatarUrl() != null && !review.getAvatarUrl().isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                .load(review.getAvatarUrl())
-                .placeholder(R.drawable.ic_person)
-                .circleCrop()
-                .into(holder.imgAvatar);
-        }
+        Glide.with(holder.itemView.getContext())
+            .load(review.getAvatarKhachHang())
+            .placeholder(R.drawable.default_avatar)
+            .error(R.drawable.default_avatar)
+            .circleCrop()
+            .into(holder.imgAvatar);
     }
 
     @Override

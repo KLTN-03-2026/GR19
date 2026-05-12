@@ -58,9 +58,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
         {
             var idKhachHang = GetCurrentUserId();
 
-            // ========================================================
-            // ĐỒNG BỘ LIỀN MẠCH: CHUYỂN CHỦ SỞ HỮU ĐOẠN CHAT VÃNG LAI
-            // ========================================================
+            // 1. ĐỒNG BỘ LIỀN MẠCH: CHUYỂN CHỦ SỞ HỮU ĐOẠN CHAT VÃNG LAI
             if (!string.IsNullOrEmpty(guestSessionId))
             {
                 var unlinkedChats = await _context.ChatLichSus
@@ -69,27 +67,20 @@ namespace CafebookApi.Controllers.Web.KhachHang
                     .Where(t => t.GuestSessionId == guestSessionId && t.IdKhachHang == null).ToListAsync();
 
                 bool hasChanges = false;
-                if (unlinkedChats.Any())
-                {
-                    foreach (var c in unlinkedChats) c.IdKhachHang = idKhachHang;
-                    hasChanges = true;
-                }
-                if (unlinkedTickets.Any())
-                {
-                    foreach (var t in unlinkedTickets) t.IdKhachHang = idKhachHang;
-                    hasChanges = true;
-                }
+                if (unlinkedChats.Any()) { foreach (var c in unlinkedChats) c.IdKhachHang = idKhachHang; hasChanges = true; }
+                if (unlinkedTickets.Any()) { foreach (var t in unlinkedTickets) t.IdKhachHang = idKhachHang; hasChanges = true; }
                 if (hasChanges) await _context.SaveChangesAsync();
             }
 
-            // Lấy danh sách các session đang mở
+            // 2. LẤY CÁC SESSION ĐANG MỞ (CÓ TICKET)
             var validSessionIds = await _context.ThongBaoHoTros
                 .AsNoTracking()
-                .Where(t => t.IdKhachHang == idKhachHang && t.TrangThai != "Đã xử lý")
-                .Select(t => t.GuestSessionId)
+                .Where(t => t.IdKhachHang == idKhachHang && t.TrangThai != "Đã xử lý" && t.GuestSessionId != null)
+                .Select(t => t.GuestSessionId!) // Fix warning null
                 .Distinct()
                 .ToListAsync();
 
+            // 3. GIỮ LẠI SESSION AI HIỆN TẠI (NẾU CÓ CHAT)
             if (!string.IsNullOrEmpty(guestSessionId) && !validSessionIds.Contains(guestSessionId))
             {
                 bool hasHistory = await _context.ChatLichSus.AnyAsync(c => c.GuestSessionId == guestSessionId && c.IdKhachHang == idKhachHang);
@@ -98,9 +89,10 @@ namespace CafebookApi.Controllers.Web.KhachHang
 
             if (!validSessionIds.Any()) return Ok(new List<ChatSessionKHDto>());
 
+            // 4. LẤY DATA HIỂN THỊ SIDEBAR
             var sessionData = await _context.ChatLichSus
                 .AsNoTracking()
-                .Where(c => validSessionIds.Contains(c.GuestSessionId))
+                .Where(c => c.GuestSessionId != null && validSessionIds.Contains(c.GuestSessionId)) // Fix warning null
                 .GroupBy(c => c.GuestSessionId)
                 .Select(g => new {
                     SessionId = g.Key!,
@@ -216,7 +208,6 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 return Ok(responseDto);
             }
 
-            // TỐI ƯU LM STUDIO: Chuyển Take(15) thành Take(3)
             var history = await _context.ChatLichSus
                 .AsNoTracking()
                 .Where(c => c.IdKhachHang == idKhachHang && c.GuestSessionId == request.SessionId)

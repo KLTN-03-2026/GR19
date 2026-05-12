@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cart_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF8E1">
+    android:background="?attr/android:windowBackground">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/cafe_brown"
-        app:navigationIcon="@drawable/ic_back_arrow"
+        android:background="?attr/colorSurface"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:navigationIconTint="?attr/colorPrimary"
         app:title="Giỏ hàng"
-        app:titleTextColor="@android:color/white" />
+        app:titleTextColor="?attr/colorPrimary" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCartItems"
@@ -28,8 +30,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@android:color/white"
-        android:elevation="8dp"
+        android:background="?attr/colorSurface"
+        android:elevation="16dp"
         android:orientation="vertical"
         android:padding="16dp">
 
@@ -37,26 +39,29 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="12dp">
 
             <EditText
                 android:id="@+id/etPromoCode"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:layout_weight="1"
                 android:hint="Mã khuyến mãi"
                 android:background="@drawable/bg_search_bar"
-                android:padding="12dp"
+                android:paddingHorizontal="16dp"
+                android:textColor="?attr/colorOnSurface"
+                android:textColorHint="?attr/colorOnSurfaceVariant"
                 android:textSize="14sp"/>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnApplyPromo"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:layout_marginStart="8dp"
                 android:text="Áp dụng"
-                android:backgroundTint="@color/cafe_orange"
-                android:textColor="@android:color/white"/>
+                app:backgroundTint="?attr/colorSecondary"
+                android:textColor="@color/white"
+                app:cornerRadius="24dp"/>
         </LinearLayout>
 
         <LinearLayout
@@ -67,12 +72,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Tạm tính:"/>
+                android:text="Tạm tính:"
+                android:textColor="?attr/colorOnSurfaceVariant"/>
             <TextView
                 android:id="@+id/tvSubtotal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0 đ"
+                android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold"/>
         </LinearLayout>
 
@@ -87,13 +94,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Giảm giá:"/>
+                android:text="Giảm giá:"
+                android:textColor="?attr/colorOnSurfaceVariant"/>
             <TextView
                 android:id="@+id/tvDiscount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="-0 đ"
-                android:textColor="@android:color/holo_red_dark"/>
+                android:textColor="?attr/colorError"/>
         </LinearLayout>
 
         <LinearLayout
@@ -105,19 +113,21 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Phí giao hàng:"/>
+                android:text="Phí giao hàng:"
+                android:textColor="?attr/colorOnSurfaceVariant"/>
             <TextView
                 android:id="@+id/tvShipping"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
                 android:text="0 đ"/>
         </LinearLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#DDDDDD"
-            android:layout_marginVertical="8dp"/>
+            android:background="?attr/colorOutline"
+            android:layout_marginVertical="12dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -130,7 +140,7 @@
                 android:text="Tổng thanh toán:"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="@color/cafe_brown"/>
+                android:textColor="?attr/colorPrimary"/>
             <TextView
                 android:id="@+id/tvTotal"
                 android:layout_width="wrap_content"
@@ -138,10 +148,10 @@
                 android:text="0 đ"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="@color/cafe_orange"/>
+                android:textColor="?attr/colorSecondary"/>
         </LinearLayout>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCheckout"
             android:layout_width="match_parent"
             android:layout_height="56dp"
@@ -149,8 +159,8 @@
             android:text="THANH TOÁN"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:backgroundTint="@color/cafe_brown"
-            app:cornerRadius="28dp"/>
+            app:backgroundTint="?attr/colorPrimary"
+            app:cornerRadius="12dp"/>
     </LinearLayout>
 
     <ProgressBar

@@ -1,5 +1,5 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:id="@+id/action_contact" android:icon="@drawable/ic_contact" android:title="Liên hệ" app:showAsAction="ifRoom" />
-    <item android:id="@+id/action_support" android:icon="@drawable/ic_support" android:title="Hỗ trợ" app:showAsAction="ifRoom" />
+    <item android:id="@+id/action_support" android:icon="@drawable/ic_robot" android:title="Hỗ trợ AI" app:showAsAction="ifRoom" />
     <item android:id="@+id/action_cart" android:icon="@drawable/ic_cart" android:title="Giỏ hàng" app:showAsAction="ifRoom" />
 </menu>

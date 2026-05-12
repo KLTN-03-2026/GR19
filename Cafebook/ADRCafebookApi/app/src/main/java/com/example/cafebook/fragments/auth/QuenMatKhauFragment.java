@@ -40,7 +40,7 @@ public class QuenMatKhauFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_quen_mat_khau, container, false);
 
-        apiService = ApiClient.getClient().create(QuenMatKhauApiService.class);
+        apiService = ApiClient.getClient(requireContext()).create(QuenMatKhauApiService.class);
 
         // Ánh xạ
         llStep1Email = view.findViewById(R.id.llStep1Email);

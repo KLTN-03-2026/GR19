@@ -1,7 +1,30 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.Cafebook" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <!-- Main colors using semantic mapping -->
+        <item name="colorPrimary">@color/cf_primary</item>
+        <item name="colorOnPrimary">@color/cf_on_primary</item>
+        <item name="colorPrimaryContainer">@color/cafe_brown_dark</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+
+        <item name="colorSecondary">@color/cf_secondary</item>
+        <item name="colorOnSecondary">@color/cf_on_secondary</item>
+
+        <item name="android:windowBackground">@color/cf_background</item>
+        <item name="colorSurface">@color/cf_surface</item>
+        <item name="colorOnSurface">@color/cf_on_surface</item>
+        <item name="colorSurfaceVariant">@color/cafe_cream_dark</item>
+        <item name="colorOnSurfaceVariant">@color/cf_text_secondary</item>
+
+        <item name="colorOutline">@color/cf_divider</item>
+
+        <!-- Status Bar -->
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- Components Style -->
+        <item name="materialCardViewStyle">@style/Widget.Cafebook.Card</item>
+        <item name="bottomNavigationStyle">@style/Widget.Cafebook.BottomNavigation</item>
+        <item name="textInputStyle">@style/Widget.Cafebook.TextInputLayout</item>
     </style>
 </resources>

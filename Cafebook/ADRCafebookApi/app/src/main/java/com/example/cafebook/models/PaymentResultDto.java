@@ -18,6 +18,7 @@ public class PaymentResultDto {
     public static class OrderSummary {
         @SerializedName("idHoaDonMoi") private int idHoaDonMoi;
         @SerializedName("thoiGianTao") private String thoiGianTao;
+        @SerializedName("hoTen") private String hoTen;
         @SerializedName("trangThai") private String trangThai;
         @SerializedName("phuongThucThanhToan") private String phuongThucThanhToan;
         @SerializedName("diaChiGiaoHang") private String diaChiGiaoHang;
@@ -30,6 +31,7 @@ public class PaymentResultDto {
 
         public int getIdHoaDonMoi() { return idHoaDonMoi; }
         public String getThoiGianTao() { return thoiGianTao; }
+        public String getHoTen() { return hoTen; }
         public String getTrangThai() { return trangThai; }
         public String getPhuongThucThanhToan() { return phuongThucThanhToan; }
         public String getDiaChiGiaoHang() { return diaChiGiaoHang; }

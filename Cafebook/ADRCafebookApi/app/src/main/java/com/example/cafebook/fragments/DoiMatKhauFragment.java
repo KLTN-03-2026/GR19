@@ -13,7 +13,6 @@ import com.example.cafebook.R;
 import com.example.cafebook.models.DoiMatKhauDto;
 import com.example.cafebook.network.ApiClient;
 import com.example.cafebook.network.ProfileApiService;
-import com.example.cafebook.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
@@ -67,7 +66,17 @@ public class DoiMatKhauFragment extends Fragment {
         model.setMatKhauMoi(newPass);
         model.setXacNhanMatKhauMoi(confirmPass);
 
-        int userId = SessionManager.getUserId();
+        int userId = 0;
+        if (getActivity() != null) {
+            android.content.SharedPreferences prefs = getActivity().getSharedPreferences("CafebookAuth", android.content.Context.MODE_PRIVATE);
+            userId = prefs.getInt("USER_ID", 0);
+        }
+
+        if (userId == 0) {
+            Toast.makeText(getContext(), "Không tìm thấy thông tin người dùng", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         ProfileApiService service = ApiClient.getClient(getContext()).create(ProfileApiService.class);
         service.changePassword(userId, model).enqueue(new Callback<Void>() {
             @Override

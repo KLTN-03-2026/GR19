@@ -1,5 +1,6 @@
 package com.example.cafebook.adapters;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.cafebook.BookDetailActivity;
 import com.example.cafebook.R;
 import com.example.cafebook.models.SachDto;
 
@@ -35,12 +37,17 @@ public class SachAdapter extends RecyclerView.Adapter<SachAdapter.ViewHolder> {
         holder.tvTitle.setText(sach.getTieuDe());
         holder.tvAuthor.setText(sach.getTacGia());
 
-        if (sach.getAnhBiaUrl() != null && !sach.getAnhBiaUrl().isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                .load(sach.getAnhBiaUrl())
-                .placeholder(R.drawable.ic_launcher_background)
-                .into(holder.img);
-        }
+        Glide.with(holder.itemView.getContext())
+            .load(sach.getAnhBiaUrl())
+            .placeholder(R.drawable.default_book_cover)
+            .error(R.drawable.default_book_cover)
+            .into(holder.img);
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), BookDetailActivity.class);
+            intent.putExtra("BOOK_ID", sach.getIdSach());
+            v.getContext().startActivity(intent);
+        });
     }
 
     @Override

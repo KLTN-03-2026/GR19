@@ -4,17 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/cafe_cream">
+    android:background="?attr/android:windowBackground">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbarSettings"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/white"
-        app:elevation="2dp"
+        android:background="?attr/colorSurface"
+        app:elevation="0dp"
         app:navigationIcon="@drawable/ic_arrow_back"
+        app:navigationIconTint="?attr/colorPrimary"
         app:title="Cài đặt"
-        app:titleTextColor="@color/cafe_brown"/>
+        app:titleTextColor="?attr/colorPrimary"/>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -31,13 +32,14 @@
                 android:layout_height="wrap_content"
                 android:text="Tài khoản"
                 android:textStyle="bold"
-                android:textColor="@color/cafe_orange"
+                android:textColor="?attr/colorSecondary"
                 android:layout_marginBottom="8dp"/>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
+                style="?attr/materialCardViewStyle"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
 
@@ -57,22 +59,22 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@drawable/ic_edit"
-                            app:tint="@color/cafe_brown"/>
+                            app:tint="?attr/colorPrimary"/>
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Chỉnh sửa thông tin cá nhân"
                             android:layout_marginStart="16dp"
-                            android:textColor="@color/cafe_brown"/>
+                            android:textColor="?attr/colorOnSurface"/>
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_forward"
-                            app:tint="@color/cafe_beige"/>
+                            app:tint="?attr/colorOnSurfaceVariant"/>
                     </LinearLayout>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" android:layout_marginHorizontal="16dp"/>
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp"/>
 
                     <LinearLayout
                         android:id="@+id/btnChangePassword"
@@ -85,19 +87,47 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@drawable/ic_lock"
-                            app:tint="@color/cafe_brown"/>
+                            app:tint="?attr/colorPrimary"/>
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Đổi mật khẩu"
                             android:layout_marginStart="16dp"
-                            android:textColor="@color/cafe_brown"/>
+                            android:textColor="?attr/colorOnSurface"/>
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_forward"
-                            app:tint="@color/cafe_beige"/>
+                            app:tint="?attr/colorOnSurfaceVariant"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/btnForgotPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_person"
+                            app:tint="?attr/colorPrimary"/>
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Quên mật khẩu"
+                            android:layout_marginStart="16dp"
+                            android:textColor="?attr/colorOnSurface"/>
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="?attr/colorOnSurfaceVariant"/>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -107,14 +137,15 @@
                 android:layout_height="wrap_content"
                 android:text="Ứng dụng"
                 android:textStyle="bold"
-                android:textColor="@color/cafe_orange"
+                android:textColor="?attr/colorSecondary"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="8dp"/>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
+                style="?attr/materialCardViewStyle"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
 
@@ -132,21 +163,23 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@drawable/ic_dark_mode"
-                            app:tint="@color/cafe_brown"/>
+                            app:tint="?attr/colorPrimary"/>
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Chế độ tối"
                             android:layout_marginStart="16dp"
-                            android:textColor="@color/cafe_brown"/>
+                            android:textColor="?attr/colorOnSurface"/>
                         <com.google.android.material.switchmaterial.SwitchMaterial
                             android:id="@+id/switchDarkMode"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
+                            android:layout_height="wrap_content"
+                            app:thumbTint="?attr/colorSecondary"
+                            app:trackTint="?attr/colorSecondaryVariant"/>
                     </LinearLayout>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" android:layout_marginHorizontal="16dp"/>
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp"/>
 
                     <LinearLayout
                         android:id="@+id/btnLanguage"
@@ -166,36 +199,35 @@
                             android:layout_weight="1"
                             android:text="Ngôn ngữ"
                             android:layout_marginStart="16dp"
-                            android:textColor="@color/cafe_brown"/>
+                            android:textColor="?attr/colorOnSurface"/>
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Tiếng Việt"
                             android:textSize="12sp"
-                            android:textColor="@color/cafe_beige"
+                            android:textColor="?attr/colorOnSurfaceVariant"
                             android:layout_marginEnd="8dp"/>
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_forward"
-                            app:tint="@color/cafe_beige"/>
+                            app:tint="?attr/colorOnSurfaceVariant"/>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLogout"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="32dp"
                 android:text="ĐĂNG XUẤT"
-                android:textColor="#D32F2F"
+                android:textColor="?attr/colorError"
                 android:textStyle="bold"
                 app:icon="@drawable/ic_logout"
-                app:iconTint="#D32F2F"
-                app:cornerRadius="12dp"
-                android:backgroundTint="#FFEBEE"/>
+                app:iconTint="?attr/colorError"
+                app:cornerRadius="12dp"/>
 
             <TextView
                 android:layout_width="match_parent"
@@ -203,7 +235,7 @@
                 android:text="Phiên bản 1.0.4 (Stable)"
                 android:gravity="center"
                 android:textSize="12sp"
-                android:textColor="@color/cafe_beige"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="32dp"/>
 

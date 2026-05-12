@@ -3,8 +3,8 @@ import com.google.gson.annotations.SerializedName;
 
 public class HoTroDto {
     public static class SendRequest {
-        public String noiDung;
-        public String guestSessionId;
+        @SerializedName("noiDung") public String noiDung;
+        @SerializedName("guestSessionId") public String guestSessionId;
         public SendRequest(String noiDung, String guestSessionId) {
             this.noiDung = noiDung; this.guestSessionId = guestSessionId;
         }

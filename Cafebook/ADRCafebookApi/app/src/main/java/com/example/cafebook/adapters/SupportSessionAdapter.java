@@ -1,5 +1,6 @@
 package com.example.cafebook.adapters;
 
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,12 +9,14 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.cafebook.R;
 import com.example.cafebook.models.SupportDto;
+import com.google.android.material.card.MaterialCardView;
 import java.util.List;
 
 public class SupportSessionAdapter extends RecyclerView.Adapter<SupportSessionAdapter.SessionViewHolder> {
 
     private List<SupportDto.ChatSession> sessionList;
     private OnSessionClickListener listener;
+    private String currentSelectedSessionId = "";
 
     public interface OnSessionClickListener {
         void onSessionClick(SupportDto.ChatSession session);
@@ -22,6 +25,11 @@ public class SupportSessionAdapter extends RecyclerView.Adapter<SupportSessionAd
     public SupportSessionAdapter(List<SupportDto.ChatSession> sessionList, OnSessionClickListener listener) {
         this.sessionList = sessionList;
         this.listener = listener;
+    }
+
+    public void setCurrentSelectedSessionId(String sessionId) {
+        this.currentSelectedSessionId = sessionId;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -39,17 +47,35 @@ public class SupportSessionAdapter extends RecyclerView.Adapter<SupportSessionAd
         String lastActive = session.lastActive;
         if (lastActive != null && lastActive.contains("T")) {
             lastActive = lastActive.replace("T", " ").substring(0, 16);
+        } else if (lastActive == null) {
+            lastActive = "Vừa xong";
         }
-        holder.tvLastActive.setText("Hoạt động: " + lastActive);
+        holder.tvLastActive.setText(lastActive);
 
-        holder.itemView.setOnClickListener(v -> listener.onSessionClick(session));
-        
-        // Nếu có IdThongBao > 0 thì đổi màu indicator (Đang có nhân viên)
-        if (session.idThongBao != null && session.idThongBao > 0) {
-            holder.indicatorStatus.setBackgroundTintList(holder.itemView.getContext().getResources().getColorStateList(R.color.cf_orange));
+        // KIỂM TRA TRẠNG THÁI: Nếu là phiên chat đang mở
+        if (session.sessionId != null && session.sessionId.equals(currentSelectedSessionId)) {
+            TypedValue typedValue = new TypedValue();
+            holder.itemView.getContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimaryContainer, typedValue, true);
+            holder.cardSession.setCardBackgroundColor(typedValue.data);
+
+            holder.itemView.getContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorSecondary, typedValue, true);
+            holder.cardSession.setStrokeColor(typedValue.data);
+            holder.cardSession.setStrokeWidth(3); // Viền dày lên
         } else {
-            holder.indicatorStatus.setBackgroundTintList(holder.itemView.getContext().getResources().getColorStateList(R.color.cf_dark_brown));
+            TypedValue typedValue = new TypedValue();
+            holder.itemView.getContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorSurface, typedValue, true);
+            holder.cardSession.setCardBackgroundColor(typedValue.data);
+
+            holder.itemView.getContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorOutline, typedValue, true);
+            holder.cardSession.setStrokeColor(typedValue.data);
+            holder.cardSession.setStrokeWidth(1);
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            currentSelectedSessionId = session.sessionId;
+            notifyDataSetChanged();
+            listener.onSessionClick(session);
+        });
     }
 
     @Override
@@ -59,13 +85,13 @@ public class SupportSessionAdapter extends RecyclerView.Adapter<SupportSessionAd
 
     static class SessionViewHolder extends RecyclerView.ViewHolder {
         TextView tvSessionTitle, tvLastActive;
-        View indicatorStatus;
+        MaterialCardView cardSession;
 
         public SessionViewHolder(@NonNull View itemView) {
             super(itemView);
             tvSessionTitle = itemView.findViewById(R.id.tvSessionTitle);
             tvLastActive = itemView.findViewById(R.id.tvLastActive);
-            indicatorStatus = itemView.findViewById(R.id.indicatorStatus);
+            cardSession = itemView.findViewById(R.id.cardSession);
         }
     }
 }

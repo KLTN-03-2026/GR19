@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/cafe_cream"
-    android:fitsSystemWindows="true">
+    android:background="?attr/android:windowBackground">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -24,7 +23,7 @@
                 android:layout_marginBottom="24dp"
                 android:gravity="center"
                 android:text="Đặt Bàn Trực Tuyến"
-                android:textColor="@color/cafe_brown"
+                android:textColor="?attr/colorPrimary"
                 android:textSize="26sp"
                 android:textStyle="bold" />
 
@@ -32,7 +31,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="6dp"
                 app:strokeWidth="0dp">
@@ -51,15 +50,14 @@
                         android:weightSum="2">
 
                         <com.google.android.material.textfield.TextInputLayout
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            style="?attr/textInputStyle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="8dp"
                             android:layout_weight="1"
                             android:hint="Ngày đến"
-                            app:boxStrokeColor="@color/cf_orange"
                             app:startIconDrawable="@drawable/ic_calendar"
-                            app:startIconTint="@color/cafe_brown">
+                            app:startIconTint="?attr/colorPrimary">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/edtDate"
@@ -67,19 +65,18 @@
                                 android:layout_height="wrap_content"
                                 android:focusable="false"
                                 android:inputType="none"
-                                android:textColor="@color/cafe_brown" />
+                                android:textColor="?attr/colorOnSurface" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <com.google.android.material.textfield.TextInputLayout
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            style="?attr/textInputStyle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_weight="1"
                             android:hint="Giờ đến"
-                            app:boxStrokeColor="@color/cf_orange"
                             app:startIconDrawable="@drawable/ic_schedule"
-                            app:startIconTint="@color/cafe_brown">
+                            app:startIconTint="?attr/colorPrimary">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/edtTime"
@@ -87,19 +84,18 @@
                                 android:layout_height="wrap_content"
                                 android:focusable="false"
                                 android:inputType="none"
-                                android:textColor="@color/cafe_brown" />
+                                android:textColor="?attr/colorOnSurface" />
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        style="?attr/textInputStyle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:hint="Số người"
-                        app:boxStrokeColor="@color/cf_orange"
                         app:startIconDrawable="@drawable/ic_group"
-                        app:startIconTint="@color/cafe_brown">
+                        app:startIconTint="?attr/colorPrimary">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/edtPeople"
@@ -107,7 +103,7 @@
                             android:layout_height="wrap_content"
                             android:inputType="number"
                             android:text="2"
-                            android:textColor="@color/cafe_brown" />
+                            android:textColor="?attr/colorOnSurface" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.button.MaterialButton
@@ -118,7 +114,7 @@
                         android:text="KIỂM TRA BÀN TRỐNG"
                         android:textColor="@color/white"
                         android:textStyle="bold"
-                        app:backgroundTint="@color/cf_orange"
+                        app:backgroundTint="?attr/colorSecondary"
                         app:cornerRadius="12dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

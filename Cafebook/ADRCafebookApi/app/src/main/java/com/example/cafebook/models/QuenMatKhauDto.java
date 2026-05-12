@@ -4,8 +4,8 @@ import com.google.gson.annotations.SerializedName;
 
 public class QuenMatKhauDto {
     public static class GuiMaRequest {
-        @SerializedName("Email") public String email;
-        @SerializedName("MaXacNhan") public String maXacNhan;
+        @SerializedName("email") public String email;
+        @SerializedName("maXacNhan") public String maXacNhan;
 
         public GuiMaRequest(String email, String maXacNhan) {
             this.email = email;
@@ -14,8 +14,8 @@ public class QuenMatKhauDto {
     }
 
     public static class ResetRequest {
-        @SerializedName("Email") public String email;
-        @SerializedName("NewPassword") public String newPassword;
+        @SerializedName("email") public String email;
+        @SerializedName("newPassword") public String newPassword;
 
         public ResetRequest(String email, String newPassword) {
             this.email = email;

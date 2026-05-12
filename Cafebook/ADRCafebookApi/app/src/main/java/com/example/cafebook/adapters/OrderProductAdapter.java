@@ -46,15 +46,22 @@ public class OrderProductAdapter extends RecyclerView.Adapter<OrderProductAdapte
 
         Glide.with(holder.itemView.getContext())
                 .load(item.hinhAnhUrl)
-                .placeholder(R.drawable.ic_menu)
-                .error(R.drawable.ic_menu)
+                .placeholder(R.drawable.default_food_icon)
+                .error(R.drawable.default_food_icon)
                 .into(holder.imgProduct);
 
-        if (isCompleted && !item.daDanhGia) {
-            holder.btnRate.setVisibility(View.VISIBLE);
-            holder.btnRate.setOnClickListener(v -> rateListener.onRateClick(item));
+        if (isCompleted) {
+            if (item.daDanhGia) {
+                holder.btnRate.setVisibility(View.GONE);
+                holder.tvRatedLabel.setVisibility(View.VISIBLE);
+            } else {
+                holder.btnRate.setVisibility(View.VISIBLE);
+                holder.tvRatedLabel.setVisibility(View.GONE);
+                holder.btnRate.setOnClickListener(v -> rateListener.onRateClick(item));
+            }
         } else {
             holder.btnRate.setVisibility(View.GONE);
+            holder.tvRatedLabel.setVisibility(View.GONE);
         }
     }
 
@@ -64,7 +71,7 @@ public class OrderProductAdapter extends RecyclerView.Adapter<OrderProductAdapte
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvProductName, tvProductQuantity, tvProductPrice;
+        TextView tvProductName, tvProductQuantity, tvProductPrice, tvRatedLabel;
         ShapeableImageView imgProduct;
         MaterialButton btnRate;
 
@@ -73,6 +80,7 @@ public class OrderProductAdapter extends RecyclerView.Adapter<OrderProductAdapte
             tvProductName = itemView.findViewById(R.id.tvProductName);
             tvProductQuantity = itemView.findViewById(R.id.tvProductQuantity);
             tvProductPrice = itemView.findViewById(R.id.tvProductPrice);
+            tvRatedLabel = itemView.findViewById(R.id.tvRatedLabel);
             imgProduct = itemView.findViewById(R.id.imgProduct);
             btnRate = itemView.findViewById(R.id.btnRate);
         }

@@ -50,14 +50,19 @@ public class OrderHistoryAdapter extends RecyclerView.Adapter<OrderHistoryAdapte
 
         holder.tvTotalAmount.setText(String.format("%,.0fđ", item.thanhTien));
         holder.tvPaymentMethod.setText("Thanh toán: " + item.phuongThucThanhToan);
-        holder.tvOrderStatus.setText(item.trangThaiGiaoHang);
+        
+        String displayStatus = item.trangThaiGiaoHang;
+        if ("Đã hủy".equalsIgnoreCase(item.trangThaiThanhToan)) {
+            displayStatus = "Đã hủy";
+        }
+        holder.tvOrderStatus.setText(displayStatus);
 
         // Badge colors based on status
-        if ("Hoàn thành".equalsIgnoreCase(item.trangThaiGiaoHang)) {
+        if ("Hoàn thành".equalsIgnoreCase(displayStatus)) {
             holder.tvOrderStatus.setBackgroundResource(R.drawable.bg_badge_green);
-        } else if ("Đã hủy".equalsIgnoreCase(item.trangThaiGiaoHang)) {
+        } else if ("Đã hủy".equalsIgnoreCase(displayStatus)) {
             holder.tvOrderStatus.setBackgroundResource(R.drawable.bg_badge_red);
-        } else if ("Đang giao".equalsIgnoreCase(item.trangThaiGiaoHang)) {
+        } else if ("Đang giao".equalsIgnoreCase(displayStatus)) {
             holder.tvOrderStatus.setBackgroundResource(R.drawable.bg_badge_orange);
         } else {
             holder.tvOrderStatus.setBackgroundResource(R.drawable.bg_badge_gray);

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/white"
+    android:background="?attr/colorSurface"
     android:orientation="vertical"
     android:padding="24dp">
 
@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Xác nhận đặt bàn"
-        android:textColor="@color/cafe_brown"
+        android:textColor="?attr/colorPrimary"
         android:textSize="22sp"
         android:textStyle="bold" />
 
@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="Bàn B01 - 20/05/2024 lúc 18:00"
-        android:textColor="#757575"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="14sp" />
 
     <com.google.android.material.materialswitch.MaterialSwitch
@@ -30,65 +30,67 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Đặt hộ người khác"
-        android:textColor="@color/cafe_brown" />
+        android:textColor="?attr/colorOnSurface"
+        app:thumbTint="?attr/colorSecondary"
+        app:trackTint="?attr/colorSecondaryVariant"/>
 
     <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        style="?attr/textInputStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="Số điện thoại"
-        app:boxStrokeColor="@color/cf_orange">
+        android:hint="Số điện thoại">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edtBookingPhone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnSurface"
             android:inputType="phone" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        style="?attr/textInputStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="Họ và tên"
-        app:boxStrokeColor="@color/cf_orange">
+        android:hint="Họ và tên">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edtBookingName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnSurface"
             android:inputType="textPersonName" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        style="?attr/textInputStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="Email (không bắt buộc)"
-        app:boxStrokeColor="@color/cf_orange">
+        android:hint="Email (không bắt buộc)">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edtBookingEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnSurface"
             android:inputType="textEmailAddress" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        style="?attr/textInputStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="Ghi chú thêm"
-        app:boxStrokeColor="@color/cf_orange">
+        android:hint="Ghi chú thêm">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edtBookingNote"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnSurface"
             android:gravity="top"
             android:lines="2" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -101,7 +103,7 @@
         android:text="XÁC NHẬN ĐẶT BÀN"
         android:textColor="@color/white"
         android:textStyle="bold"
-        app:backgroundTint="@color/cf_orange"
+        app:backgroundTint="?attr/colorSecondary"
         app:cornerRadius="12dp" />
 
 </LinearLayout>

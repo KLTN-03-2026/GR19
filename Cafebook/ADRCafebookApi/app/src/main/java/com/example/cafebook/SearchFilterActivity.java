@@ -57,7 +57,7 @@ public class SearchFilterActivity extends AppCompatActivity {
         if (idTheLoai != null && idTheLoai == 0) idTheLoai = null;
         if (idNXB != null && idNXB == 0) idNXB = null;
 
-        api = ApiClient.getClient().create(CafebookApi.class);
+        api = ApiClient.getClient(this).create(CafebookApi.class);
         initViews();
         setupRecyclerView();
         setupDescriptionToggle();

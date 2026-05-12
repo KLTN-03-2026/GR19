@@ -23,7 +23,7 @@ public interface OrderApiService {
     Call<OrderDto.Detail> getOrderDetail(@Path("id") int id);
 
     @PUT("api/web/khachhang/LichSuDonHangWeb/cancel/{id}")
-    Call<Void> cancelOrder(@Path("id") int id, @retrofit2.http.Body RequestBody body);
+    Call<Void> cancelOrder(@Path("id") int id, @retrofit2.http.Body OrderDto.CancelOrderRequest body);
 
     @POST("api/web/khachhang/LichSuDonHangWeb/repay/{id}")
     Call<OrderDto.RepayResponse> repayOrder(@Path("id") int id, @Query("returnUrl") String returnUrl);

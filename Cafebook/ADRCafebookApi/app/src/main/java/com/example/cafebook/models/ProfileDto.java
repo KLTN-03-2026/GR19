@@ -5,21 +5,20 @@ import com.google.gson.annotations.SerializedName;
 public class ProfileDto {
     // Dữ liệu Tổng quan (Overview)
     public static class Overview {
-        @SerializedName("DiemTichLuy") public int diemTichLuy;
-        @SerializedName("GiaTriQuyDoiVND") public double giaTriQuyDoiVND;
-        @SerializedName("TongChiTieu") public double tongChiTieu;
-        @SerializedName("TongHoaDon") public int tongHoaDon;
+        @SerializedName("diemTichLuy") public int diemTichLuy;
+        @SerializedName("giaTriQuyDoiVND") public double giaTriQuyDoiVND;
+        @SerializedName("tongChiTieu") public double tongChiTieu;
+        @SerializedName("tongHoaDon") public int tongHoaDon;
     }
 
     // Dữ liệu Thông tin cá nhân
     public static class Info {
-        @SerializedName("IdKhachHang") public int idKhachHang;
-        @SerializedName("HoTen") public String hoTen;
-        @SerializedName("SoDienThoai") public String soDienThoai;
-        @SerializedName("Email") public String email;
-        @SerializedName("DiaChi") public String diaChi;
-        @SerializedName("TenDangNhap") public String tenDangNhap;
-        @SerializedName("AnhDaiDien") public String anhDaiDien;
-        @SerializedName("AnhDaiDienUrl") public String anhDaiDienUrl;
+        @SerializedName("idKhachHang") public int idKhachHang;
+        @SerializedName("hoTen") public String hoTen;
+        @SerializedName("soDienThoai") public String soDienThoai;
+        @SerializedName("email") public String email;
+        @SerializedName("diaChi") public String diaChi;
+        @SerializedName("tenDangNhap") public String tenDangNhap;
+        @SerializedName("anhDaiDienUrl") public String anhDaiDienUrl;
     }
 }

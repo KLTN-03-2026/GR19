@@ -1,6 +1,7 @@
 package com.example.cafebook.models;
 
 import com.google.gson.annotations.SerializedName;
+import java.io.Serializable;
 import java.util.List;
 
 public class LichSuThueSachDto {
@@ -9,9 +10,10 @@ public class LichSuThueSachDto {
         @SerializedName("items") public List<Item> items;
         @SerializedName("totalPages") public int totalPages;
         @SerializedName("currentPage") public int currentPage;
+        @SerializedName("phatGiamDoMoi1Percent") public double phatGiamDoMoi1Percent;
     }
 
-    public static class Item {
+    public static class Item implements Serializable {
         @SerializedName("idPhieuThueSach") public int idPhieuThueSach;
         @SerializedName("ngayThue") public String ngayThue;
         @SerializedName("ngayHenTra") public String ngayHenTra;
@@ -26,7 +28,7 @@ public class LichSuThueSachDto {
         @SerializedName("chiTietSachs") public List<Detail> chiTietSachs;
     }
 
-    public static class Detail {
+    public static class Detail implements Serializable {
         @SerializedName("tenSach") public String tenSach;
         @SerializedName("doMoiKhiThue") public int doMoiKhiThue;
         @SerializedName("ghiChuKhiThue") public String ghiChuKhiThue;

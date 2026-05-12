@@ -236,7 +236,7 @@
             </form>
         </div>
 
-        <script>
+<script>
             $(document).ready(function () {
                 const apiBaseUrl = '@apiBaseUrl';
                 const guestSessionId = $('#PopupGuestSessionId').val();
@@ -245,18 +245,11 @@
                 const jwtToken = '@(HttpContextAccessor.HttpContext?.Session.GetString("JwtToken") ?? "")';
                 const idKhach = '@(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "")';
 
-                let currentSessionId = guestSessionId;
-                if (isKhachHang) {
-                    currentSessionId = localStorage.getItem('cf_kh_session_' + idKhach) || guestSessionId;
-                }
+                let currentSessionId = guestSessionId; // Mặc định là guest
 
                 const chatHeaders = (isKhachHang && jwtToken)
                     ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwtToken }
                     : { 'Content-Type': 'application/json' };
-
-                const historyUrl = isKhachHang
-                    ? `${apiBaseUrl}/api/web/khachhang/hotro/history?sessionId=${currentSessionId}`
-                    : `${apiBaseUrl}/api/web/guest/hotro/history?guestSessionId=${currentSessionId}`;
 
                 const sendUrl = isKhachHang
                     ? `${apiBaseUrl}/api/web/khachhang/hotro/send`
@@ -291,7 +284,7 @@
 
                 function drawPopupMessage(msg, isUser, isStaff = false) {
                     const type = isUser ? 'user' : (isStaff ? 'staff' : 'bot');
-                    const icon = isUser ? 'person' : (isStaff ? 'support_agent' : 'local_cafe'); 
+                    const icon = isUser ? 'person' : (isStaff ? 'support_agent' : 'local_cafe');
                     let rawText = msg.noiDung || '';
                     let actionButtonsHtml = '';
                     
@@ -307,7 +300,6 @@
                     let msgTime = msg.thoiGian ? new Date(msg.thoiGian) : new Date();
                     const time = msgTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
                     let actionContainer = actionButtonsHtml !== '' ? `<div class="mt-1">${actionButtonsHtml}</div>` : '';
-
                     $('#popup-chat-history').append(`
                         <div class="popup-msg-row ${type}">
                             <div class="popup-avatar ${type}"><span class="material-symbols-outlined">${icon}</span></div>
@@ -338,7 +330,6 @@
                     if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
                 }
 
-                // KHỞI ĐỘNG SIGNALR NẾU ĐƯỢC CHUYỂN TỚI NHÂN VIÊN TRONG POPUP
                 async function startSignalRPopup() {
                     if (hubConnectionPopup) return;
                     hubConnectionPopup = new signalR.HubConnectionBuilder().withUrl(apiBaseUrl + "/chatHub").build();
@@ -354,20 +345,43 @@
 
                 async function loadPopupHistory() {
                     try {
-                        const res = await fetch(historyUrl, { headers: chatHeaders });
+                        // SỬA Ở ĐÂY: XỬ LÝ ƯU TIÊN SESSION AI TRƯỚC
+                        if (isKhachHang) {
+                            const sessionRes = await fetch(`${apiBaseUrl}/api/web/khachhang/hotro/sessions?guestSessionId=${guestSessionId}`, { headers: chatHeaders });
+                            if (sessionRes.ok) {
+                                const sessions = await sessionRes.json();
+                                if (sessions && sessions.length > 0) {
+                                    // Ưu tiên tìm phiên chat AI (không có idThongBao)
+                                    const aiSession = sessions.find(s => !s.idThongBao);
+                                    if (aiSession) {
+                                        currentSessionId = aiSession.sessionId;
+                                    } else {
+                                        // Nếu không có chat AI -> Lấy lịch sử mới nhất
+                                        currentSessionId = sessions[0].sessionId;
+                                    }
+                                }
+                            }
+                            // Cập nhật lại localStorage để trang Hỗ Trợ full screen cũng tự mở đúng đoạn chat này
+                            localStorage.setItem('cf_kh_session_' + idKhach, currentSessionId);
+                        }
+
+                        // Sau khi xác định xong currentSessionId, mới gọi API tải lịch sử
+                        const historyUrlFinal = isKhachHang
+                            ? `${apiBaseUrl}/api/web/khachhang/hotro/history?sessionId=${currentSessionId}`
+                            : `${apiBaseUrl}/api/web/guest/hotro/history?guestSessionId=${currentSessionId}`;
+
+                        const res = await fetch(historyUrlFinal, { headers: chatHeaders });
                         const history = await res.json();
                         $('#popup-chat-history').empty();
 
-                        // CHỈ HIỆN NÚT KHI ĐÃ CÓ LỊCH SỬ CHAT (Dùng chung cho cả Khách vãng lai và Khách hàng)
+                        // CHỈ HIỆN NÚT KHI ĐÃ CÓ LỊCH SỬ CHAT
                         if (history.length > 0) {
-                            $floatingBtn.show(); 
-            
+                            $floatingBtn.show();
                             history.forEach(msg => {
                                 if (msg.idThongBaoHoTro > 0) currentIdThongBaoPopup = msg.idThongBaoHoTro;
                                 drawPopupMessage(msg, msg.loaiTinNhan === 'KhachHang', msg.loaiTinNhan === 'NhanVien');
                             });
 
-                            // Nếu đang có ticket nhân viên -> Bật realtime trên popup luôn
                             if (isKhachHang && currentIdThongBaoPopup) {
                                 isRealtimeModePopup = true;
                                 startSignalRPopup();
@@ -395,20 +409,17 @@
                     drawPopupMessage({ noiDung: text, thoiGian: new Date() }, true);
                     showPopupTyping();
 
-                    // NHÁNH 1: KHÁCH ĐÃ LOGIN VÀ ĐANG CHAT REALTIME TRONG POPUP
                     if (isKhachHang && isRealtimeModePopup && hubConnectionPopup) {
                         await hubConnectionPopup.invoke("SendMessageFromClient", `khach_${idKhach}`, text, parseInt(idKhach), currentSessionId, parseInt(currentIdThongBaoPopup));
                         $('#popup-typing-row').remove();
                         $('#popupChatMessageInput').prop('disabled', false).focus();
                         $('#popupSendButton').prop('disabled', false);
-                    } 
-                    // NHÁNH 2: GỬI LÊN API AI (CHUNG CHO CẢ GUEST LẪN KHÁCH ĐÃ LOGIN)
-                    else {
+                    } else {
                         try {
                             const bodyData = isKhachHang 
                                 ? JSON.stringify({ noiDung: text, sessionId: currentSessionId })
                                 : JSON.stringify({ noiDung: text, guestSessionId: guestSessionId });
-
+                            
                             const res = await fetch(sendUrl, {
                                 method: 'POST',
                                 headers: chatHeaders,

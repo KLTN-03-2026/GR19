@@ -51,7 +51,7 @@ public class BookingFragment extends Fragment implements TableAdapter.OnTableCli
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_booking, container, false);
-        api = ApiClient.getClient().create(CafebookApi.class);
+        api = ApiClient.getClient(requireContext()).create(CafebookApi.class);
         initViews(view);
         setupUI();
         return view;
@@ -73,7 +73,10 @@ public class BookingFragment extends Fragment implements TableAdapter.OnTableCli
         rvTables.setAdapter(adapter);
 
         Calendar cal = Calendar.getInstance();
-        edtDate.setText(String.format(Locale.getDefault(), "%d-%02d-%d", cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)));
+        edtDate.setText(String.format(Locale.getDefault(), "%d-%02d-%02d", cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)));
+        
+        // Mặc định giờ đặt là 30 phút sau để tránh lỗi validation "10 phút" của server
+        cal.add(Calendar.MINUTE, 30);
         edtTime.setText(String.format(Locale.getDefault(), "%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)));
 
         edtDate.setOnClickListener(v -> showDatePicker());
@@ -98,7 +101,14 @@ public class BookingFragment extends Fragment implements TableAdapter.OnTableCli
     private void handleSearchTable() {
         String date = edtDate.getText().toString();
         String time = edtTime.getText().toString() + ":00";
-        int people = Integer.parseInt(edtPeople.getText().toString());
+        String peopleStr = edtPeople.getText().toString();
+        
+        if (peopleStr.isEmpty()) {
+            edtPeople.setError("Vui lòng nhập số người");
+            return;
+        }
+        
+        int people = Integer.parseInt(peopleStr);
 
         btnSearchTable.setEnabled(false);
         btnSearchTable.setText("ĐANG TÌM...");
@@ -113,6 +123,13 @@ public class BookingFragment extends Fragment implements TableAdapter.OnTableCli
                     updateRecyclerViewAndChips();
                     if (allAvailableTables.isEmpty()) {
                         Snackbar.make(getView(), "Hết bàn phù hợp giờ này!", Snackbar.LENGTH_LONG).show();
+                    }
+                } else if (!response.isSuccessful() && isAdded()) {
+                    try {
+                        String errorMsg = response.errorBody() != null ? response.errorBody().string() : "Lỗi máy chủ";
+                        Toast.makeText(getContext(), errorMsg, Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Toast.makeText(getContext(), "Lỗi: " + response.code(), Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -161,9 +178,17 @@ public class BookingFragment extends Fragment implements TableAdapter.OnTableCli
 
     @Override
     public void onTableClick(TableBookingModels.BanTrong table) {
+        String peopleStr = edtPeople.getText().toString();
+        int peopleCount = 1;
+        try {
+            if (!peopleStr.isEmpty()) peopleCount = Integer.parseInt(peopleStr);
+        } catch (NumberFormatException e) {
+            Log.e("BOOKING_DEBUG", "Invalid people count", e);
+        }
+
         BookingConfirmDialogFragment dialog = BookingConfirmDialogFragment.newInstance(
                 table.idBan, table.soBan, edtDate.getText().toString(), edtTime.getText().toString(),
-                Integer.parseInt(edtPeople.getText().toString()));
-        dialog.show(getParentFragmentManager(), "BookingConfirm");
+                peopleCount);
+        dialog.show(getChildFragmentManager(), "BookingConfirm");
     }
 }

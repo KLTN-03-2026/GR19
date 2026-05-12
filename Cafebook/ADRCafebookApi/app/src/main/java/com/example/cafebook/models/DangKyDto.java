@@ -3,9 +3,9 @@ import com.google.gson.annotations.SerializedName;
 
 public class DangKyDto {
     public static class Request {
-        public String email;
-        public String soDienThoai;
-        public String password;
+        @SerializedName("email") public String email;
+        @SerializedName("soDienThoai") public String soDienThoai;
+        @SerializedName("password") public String password;
 
         public Request(String email, String soDienThoai, String password) {
             this.email = email;

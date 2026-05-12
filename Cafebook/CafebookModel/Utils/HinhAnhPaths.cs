@@ -10,12 +10,12 @@ namespace CafebookModel.Utils
         public const string DefaultBookCover = "/Assets/images/default-book-cover.png";
         public const string DefaultFoodIcon = "/Assets/images/default-food-icon.png";
 
-        // --- WEB Pack URIs ---
+        // --- WEB Pack URIs( nằm ở máy chủ API) ---
         public const string WebDefaultAvatar = "/images/anhmacdinh/default-avatar.png";
         public const string WebDefaultBookCover = "/images/anhmacdinh/default-book-cover.png";
-        public const string WebDefaultFoodIcon = "/images/anhmacdinh/default-food-icon.png"; 
+        public const string WebDefaultFoodIcon = "/images/anhmacdinh/default-food-icon.png";
 
-        // --- Server Relative URL Paths ---
+        // --- Server Relative URL Paths ( nằm ở máy chủ API) ---
         public const string UrlAvatarNV = "/images/avatars/avatarNV";
         public const string UrlAvatarKH = "/images/avatars/avatarKH";
         public const string UrlBooks = "/images/books";

@@ -137,11 +137,22 @@ public class OrderHistoryFragment extends Fragment {
     private void filterOrders() {
         filteredOrders.clear();
         for (OrderDto.HistoryItem order : allOrders) {
-            boolean matchStatus = currentStatus.equals("Tất cả") || order.trangThaiGiaoHang.equalsIgnoreCase(currentStatus);
-            boolean matchSearch = currentSearch.isEmpty() || 
-                    order.maDonHang.toLowerCase().contains(currentSearch) || 
+            // Logic lọc khớp với Web
+            boolean matchStatus;
+            if (currentStatus.equals("Tất cả")) {
+                matchStatus = true;
+            } else if (currentStatus.equals("Đã hủy")) {
+                matchStatus = "Đã hủy".equalsIgnoreCase(order.trangThaiThanhToan);
+            } else {
+                // Các trạng thái khác dựa trên trạng thái giao hàng và phải chưa bị hủy
+                matchStatus = currentStatus.equalsIgnoreCase(order.trangThaiGiaoHang)
+                        && !"Đã hủy".equalsIgnoreCase(order.trangThaiThanhToan);
+            }
+
+            boolean matchSearch = currentSearch.isEmpty() ||
+                    order.maDonHang.toLowerCase().contains(currentSearch) ||
                     order.tenSanPham.toLowerCase().contains(currentSearch);
-            
+
             if (matchStatus && matchSearch) {
                 filteredOrders.add(order);
             }

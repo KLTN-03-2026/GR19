@@ -4,21 +4,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/cf_bg_cream">
+    android:background="?attr/android:windowBackground">
 
     <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        style="?attr/textInputStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
         android:hint="Tìm mã đơn hoặc tên món..."
         app:startIconDrawable="@drawable/ic_search"
-        app:boxStrokeColor="@color/cf_orange"
-        app:hintTextColor="@color/cf_orange">
+        app:startIconTint="?attr/colorPrimary">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edtSearchOrder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnSurface"
             android:maxLines="1"
             android:inputType="text"/>
     </com.google.android.material.textfield.TextInputLayout>
@@ -28,11 +28,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:tabMode="scrollable"
-        app:tabSelectedTextColor="@color/cf_orange"
-        app:tabIndicatorColor="@color/cf_orange"
-        app:tabTextColor="@color/cf_dark_brown"
-        android:background="@color/cf_white"
-        app:tabRippleColor="@color/cafe_beige"/>
+        app:tabSelectedTextColor="?attr/colorSecondary"
+        app:tabIndicatorColor="?attr/colorSecondary"
+        app:tabTextColor="?attr/colorOnSurface"
+        android:background="?attr/colorSurface"
+        app:tabRippleColor="?attr/colorSecondaryVariant"/>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshOrders"

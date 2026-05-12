@@ -1,9 +1,71 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.Cafebook" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Main colors using semantic mapping -->
+        <item name="colorPrimary">@color/cf_primary</item>
+        <item name="colorOnPrimary">@color/cf_on_primary</item>
+        <item name="colorPrimaryContainer">@color/cafe_orange_light</item>
+        <item name="colorOnPrimaryContainer">@color/cafe_brown</item>
+
+        <item name="colorSecondary">@color/cf_secondary</item>
+        <item name="colorOnSecondary">@color/cf_on_secondary</item>
+
+        <item name="android:windowBackground">@color/cf_background</item>
+        <item name="colorSurface">@color/cf_surface</item>
+        <item name="colorOnSurface">@color/cf_on_surface</item>
+        <item name="colorSurfaceVariant">@color/cafe_cream_dark</item>
+        <item name="colorOnSurfaceVariant">@color/cf_text_secondary</item>
+
+        <item name="colorOutline">@color/cf_divider</item>
+
+        <!-- Status Bar -->
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <!-- Components Style -->
+        <item name="materialCardViewStyle">@style/Widget.Cafebook.Card</item>
+        <item name="bottomNavigationStyle">@style/Widget.Cafebook.BottomNavigation</item>
+        <item name="textInputStyle">@style/Widget.Cafebook.TextInputLayout</item>
     </style>
 
     <style name="Theme.Cafebook" parent="Base.Theme.Cafebook" />
+
+    <!-- Custom Component Styles -->
+    <style name="Widget.Cafebook.Card" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurface</item>
+    </style>
+
+    <style name="Widget.Cafebook.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
+        <item name="backgroundTint">?attr/colorSurface</item>
+        <item name="itemIconTint">@color/nav_item_color</item>
+        <item name="itemTextColor">@color/nav_item_color</item>
+        <item name="itemRippleColor">@color/cafe_orange_light</item>
+    </style>
+
+    <style name="Widget.Cafebook.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/cafe_orange</item>
+        <item name="hintTextColor">@color/cafe_orange</item>
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+    </style>
+
+    <!-- Splash Screen Theme -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/favicon</item>
+        <item name="windowSplashScreenBackground">@color/cf_background</item>
+        <item name="postSplashScreenTheme">@style/Theme.Cafebook</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
+    <style name="CircleImage" parent="">
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="RoundedImage12" parent="">
+        <item name="cornerSize">12dp</item>
+    </style>
 </resources>

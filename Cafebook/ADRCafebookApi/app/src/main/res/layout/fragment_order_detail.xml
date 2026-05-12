@@ -47,6 +47,27 @@
             android:nestedScrollingEnabled="false"
             android:layout_marginBottom="16dp"/>
 
+        <LinearLayout
+            android:id="@+id/layoutDeliveryPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ẢNH XÁC NHẬN GIAO HÀNG" android:textStyle="bold" android:textColor="@color/cf_text_hint" android:layout_marginBottom="8dp" android:textSize="12sp"/>
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                android:layout_marginBottom="16dp">
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/imgDeliveryPhoto"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:scaleType="centerCrop"
+                    android:background="@color/gray_200" />
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SẢN PHẨM" android:textStyle="bold" android:textColor="@color/cf_text_hint" android:layout_marginBottom="8dp" android:textSize="12sp"/>
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvOrderItems"
@@ -62,20 +83,20 @@
             android:layout_marginBottom="24dp">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:orientation="vertical">
                 <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content">
-                    <TextView android:text="Tổng tiền hàng" android:textColor="@color/cf_text_hint"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tổng tiền hàng" android:textColor="@color/cf_text_hint"/>
                     <TextView android:id="@+id/tvDetailSubtotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentEnd="true" android:text="100,000đ"/>
                 </RelativeLayout>
                 <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp">
-                    <TextView android:text="Phí vận chuyển" android:textColor="@color/cf_text_hint"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Phí vận chuyển" android:textColor="@color/cf_text_hint"/>
                     <TextView android:id="@+id/tvDetailShipping" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentEnd="true" android:text="15,000đ"/>
                 </RelativeLayout>
                 <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp">
-                    <TextView android:text="Giảm giá" android:textColor="@color/cf_text_hint"/>
-                    <TextView android:id="@+id/tvDetailDiscount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_parentEnd="true" android:textColor="#D32F2F" android:text="-10,000đ"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Giảm giá" android:textColor="@color/cf_text_hint"/>
+                    <TextView android:id="@+id/tvDetailDiscount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentEnd="true" android:textColor="#D32F2F" android:text="-10,000đ"/>
                 </RelativeLayout>
                 <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0EBE1" android:layout_marginVertical="12dp"/>
                 <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content">
-                    <TextView android:text="Thành tiền" android:textStyle="bold" android:textColor="@color/cf_dark_brown" android:textSize="16sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Thành tiền" android:textStyle="bold" android:textColor="@color/cf_dark_brown" android:textSize="16sp"/>
                     <TextView android:id="@+id/tvDetailTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentEnd="true" android:textStyle="bold" android:textColor="@color/cf_orange" android:textSize="18sp" android:text="105,000đ"/>
                 </RelativeLayout>
             </LinearLayout>

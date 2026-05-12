@@ -35,6 +35,7 @@ public class OrderDto {
         @SerializedName("trackingEvents") public List<TrackingEvent> trackingEvents;
         @SerializedName("items") public List<OrderItem> items;
         @SerializedName("anhXacNhanGiaoHangUrl") public String anhXacNhanGiaoHangUrl;
+        @SerializedName("phuongThucThanhToan") public String phuongThucThanhToan;
         @SerializedName("isStoreOpen") public boolean isStoreOpen;
     }
 
@@ -57,5 +58,13 @@ public class OrderDto {
 
     public static class RepayResponse {
         @SerializedName("paymentUrl") public String paymentUrl;
+    }
+
+    public static class CancelOrderRequest {
+        @SerializedName("lyDoHuy") public String lyDoHuy;
+
+        public CancelOrderRequest(String lyDoHuy) {
+            this.lyDoHuy = lyDoHuy;
+        }
     }
 }

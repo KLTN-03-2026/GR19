@@ -10,8 +10,9 @@ import retrofit2.http.POST;
 import retrofit2.http.Query;
 
 public interface SupportApiService {
+    // THÊM Query "guestSessionId" để Backend tự động chuyển chủ sở hữu
     @GET("api/web/khachhang/hotro/sessions")
-    Call<List<SupportDto.ChatSession>> getSessions();
+    Call<List<SupportDto.ChatSession>> getSessions(@Query("guestSessionId") String guestSessionId);
 
     @GET("api/web/khachhang/hotro/history")
     Call<List<ChatMessageDto>> getHistory(@Query("sessionId") String sessionId);

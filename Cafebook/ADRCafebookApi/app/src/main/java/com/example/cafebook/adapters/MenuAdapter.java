@@ -21,6 +21,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.cafebook.ProductDetailActivity;
 import com.example.cafebook.R;
 import com.example.cafebook.models.SanPhamThucDonDto;
+import com.example.cafebook.utils.CartManager;
 
 import java.util.List;
 import java.util.Locale;
@@ -48,14 +49,13 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
         holder.tvCategory.setText(product.getTenLoaiSP());
         holder.tvPrice.setText(String.format(Locale.getDefault(), "%,.0f đ", product.getDonGia()));
 
-        if (product.getAnhSanPhamUrl() != null && !product.getAnhSanPhamUrl().isEmpty()) {
-            Glide.with(context)
-                 .load(product.getAnhSanPhamUrl())
-                 .diskCacheStrategy(DiskCacheStrategy.ALL)
-                 .transition(DrawableTransitionOptions.withCrossFade(400))
-                 .placeholder(R.drawable.ic_launcher_background)
-                 .into(holder.imgProduct);
-        }
+        Glide.with(context)
+             .load(product.getAnhSanPhamUrl())
+             .diskCacheStrategy(DiskCacheStrategy.ALL)
+             .transition(DrawableTransitionOptions.withCrossFade(400))
+             .placeholder(R.drawable.default_food_icon)
+             .error(R.drawable.default_food_icon)
+             .into(holder.imgProduct);
 
         Animation animation = AnimationUtils.loadAnimation(context, android.R.anim.fade_in);
         holder.itemView.startAnimation(animation);
@@ -69,9 +69,16 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
             }
         });
 
-        holder.btnQuickAdd.setOnClickListener(v -> 
-            Toast.makeText(context, "Chức năng thêm nhanh vào giỏ hàng đang phát triển", Toast.LENGTH_SHORT).show()
-        );
+        holder.btnQuickAdd.setOnClickListener(v -> {
+            android.content.SharedPreferences prefs = context.getSharedPreferences("CafebookAuth", Context.MODE_PRIVATE);
+            String token = prefs.getString("JWT_TOKEN", "");
+            if (!token.isEmpty()) {
+                CartManager.getInstance(context).addToCart(product.getIdSanPham(), 1);
+                Toast.makeText(context, "Đã thêm vào giỏ hàng", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(context, "Vui lòng đăng nhập để sử dụng tính năng này", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

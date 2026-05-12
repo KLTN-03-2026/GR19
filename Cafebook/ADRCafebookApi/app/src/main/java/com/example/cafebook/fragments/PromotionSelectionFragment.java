@@ -8,6 +8,9 @@ import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -46,6 +49,12 @@ public class PromotionSelectionFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.promo_selection_root), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
         rvPromotions = view.findViewById(R.id.rvPromotions);
         edtPromoCode = view.findViewById(R.id.edtPromoCode);
         btnApplyManual = view.findViewById(R.id.btnApplyManual);
@@ -56,7 +65,7 @@ public class PromotionSelectionFragment extends Fragment {
 
         setupRecyclerView();
 
-        view.findViewById(R.id.btnBack).setOnClickListener(v -> requireActivity().onBackPressed());
+        view.findViewById(R.id.btnBack).setOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
         btnApplyManual.setOnClickListener(v -> {
             String manualCode = edtPromoCode.getText().toString().trim();
@@ -76,6 +85,6 @@ public class PromotionSelectionFragment extends Fragment {
         Bundle result = new Bundle();
         result.putString("SELECTED_PROMO_CODE", code);
         getParentFragmentManager().setFragmentResult("PROMO_REQUEST_KEY", result);
-        requireActivity().onBackPressed();
+        requireActivity().getOnBackPressedDispatcher().onBackPressed();
     }
 }

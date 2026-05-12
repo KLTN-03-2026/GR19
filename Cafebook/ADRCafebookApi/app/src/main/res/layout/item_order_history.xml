@@ -56,7 +56,7 @@
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:scaleType="centerCrop"
-                app:shapeAppearanceOverlay="@style/RoundedImage8"
+                app:shapeAppearanceOverlay="@style/RoundedImage12"
                 android:src="@drawable/ic_menu" />
 
             <LinearLayout

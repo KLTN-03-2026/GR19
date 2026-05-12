@@ -197,3 +197,38 @@
         padding-top: 2rem;
     }
 }
+/* --- 6. ĐÁNH GIÁ KHÁCH HÀNG --- */
+.review-card {
+    border-radius: 15px;
+    background-color: var(--cf-white, #FFF8E1);
+    border: 1px solid rgba(111, 78, 55, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .review-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(111, 78, 55, 0.15);
+    }
+
+.review-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--cf-orange, #e67e22);
+    margin: 0 auto;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.review-text {
+    color: var(--cf-dark-brown, #4a3b32);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.review-author {
+    color: var(--cf-orange, #e67e22);
+    font-size: 1.1rem;
+    text-transform: capitalize;
+}

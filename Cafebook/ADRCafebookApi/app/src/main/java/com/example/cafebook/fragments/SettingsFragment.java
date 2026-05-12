@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 import com.example.cafebook.R;
 import com.example.cafebook.network.ApiClient;
 import com.example.cafebook.utils.SessionManager;
+import com.example.cafebook.fragments.auth.QuenMatKhauFragment;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -47,11 +48,29 @@ public class SettingsFragment extends Fragment {
             } else {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             }
+            // Chờ một chút để UI cập nhật
+            if (getActivity() != null) {
+                getActivity().recreate();
+            }
         });
 
         view.findViewById(R.id.btnEditProfile).setOnClickListener(v -> {
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new EditProfileFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
+
+        view.findViewById(R.id.btnChangePassword).setOnClickListener(v -> {
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new DoiMatKhauFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
+
+        view.findViewById(R.id.btnForgotPassword).setOnClickListener(v -> {
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new QuenMatKhauFragment())
                     .addToBackStack(null)
                     .commit();
         });

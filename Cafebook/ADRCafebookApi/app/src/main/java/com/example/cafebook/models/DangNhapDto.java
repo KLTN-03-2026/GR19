@@ -15,18 +15,18 @@ public class DangNhapDto {
     }
 
     public static class Response {
-        @SerializedName("Success") public boolean success;
-        @SerializedName("Message") public String message;
-        @SerializedName("KhachHangData") public KhachHangData khachHangData;
-        @SerializedName("Token") public String token;
+        @SerializedName("success") public boolean success;
+        @SerializedName("message") public String message;
+        @SerializedName("khachHangData") public KhachHangData khachHangData;
+        @SerializedName("token") public String token;
     }
 
     public static class KhachHangData {
-        @SerializedName("IdKhachHang") public int idKhachHang;
-        @SerializedName("HoTen") public String hoTen;
-        @SerializedName("Email") public String email;
-        @SerializedName("SoDienThoai") public String soDienThoai;
-        @SerializedName("TenDangNhap") public String tenDangNhap;
-        @SerializedName("AnhDaiDienUrl") public String anhDaiDienUrl;
+        @SerializedName("idKhachHang") public int idKhachHang;
+        @SerializedName("hoTen") public String hoTen;
+        @SerializedName("email") public String email;
+        @SerializedName("soDienThoai") public String soDienThoai;
+        @SerializedName("tenDangNhap") public String tenDangNhap;
+        @SerializedName("anhDaiDienUrl") public String anhDaiDienUrl;
     }
 }
