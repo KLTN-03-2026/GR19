@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/cf_bg_cream">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:elevation="2dp"
+        android:background="@color/cf_white">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbarChat"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize">
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center_vertical">
+                <ImageView android:layout_width="36dp" android:layout_height="36dp" android:src="@drawable/ic_robot" app:tint="@color/cf_orange"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Trợ lý AI Cafebook" android:textStyle="bold" android:textSize="18sp" android:textColor="@color/cf_dark_brown" android:layout_marginStart="8dp"/>
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvChat"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp"
+        android:clipToPadding="false"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cf_white"
+        android:elevation="8dp"
+        android:padding="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <EditText
+            android:id="@+id/edtMessage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_chat_input"
+            android:hint="Nhập câu hỏi..."
+            android:textColorHint="@color/cf_text_hint"
+            android:textColor="@color/cf_dark_brown"
+            android:padding="14dp"
+            android:maxLines="4"
+            android:inputType="textMultiLine"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnSend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            app:backgroundTint="@color/cf_orange"
+            app:tint="@color/cf_white"
+            app:elevation="2dp"
+            app:fabSize="mini"
+            android:src="@drawable/ic_send"/>
+    </LinearLayout>
+</LinearLayout>

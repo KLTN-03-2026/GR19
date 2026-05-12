@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/cf_bg_cream">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
+
+        <LinearLayout
+            android:id="@+id/btnBackToLogin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_arrow_back" app:tint="@color/cf_dark_brown"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" Về đăng nhập" android:textStyle="bold" android:textColor="@color/cf_dark_brown"/>
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/ic_logo_cafebook"
+            android:background="@drawable/bg_circle_white"
+            android:elevation="4dp"
+            android:padding="4dp"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tvMainTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Khôi Phục Tài Khoản"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/cf_dark_brown"
+            android:layout_marginBottom="32dp"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/cf_white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:animateLayoutChanges="true">
+
+                <LinearLayout
+                    android:id="@+id/llStep1Email"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="visible">
+
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Nhập địa chỉ email của bạn để nhận mã xác thực." android:textColor="@color/cf_text_hint" android:layout_marginBottom="16dp"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:hint="Địa chỉ Email" app:startIconDrawable="@drawable/ic_mail" app:boxStrokeColor="@color/cf_orange">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtEmail"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:inputType="textEmailAddress"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSendCode"
+                        android:layout_width="match_parent" android:layout_height="56dp" android:text="GỬI MÃ XÁC NHẬN"
+                        app:cornerRadius="12dp" app:backgroundTint="@color/cf_brown" android:layout_marginTop="20dp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llStep2Otp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView android:id="@+id/tvOtpDesc" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Nhập mã 6 số đã được gửi tới Email của bạn." android:textColor="@color/cf_text_hint" android:layout_marginBottom="16dp"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:hint="Mã OTP (6 số)" app:startIconDrawable="@drawable/ic_lock" app:boxStrokeColor="@color/cf_orange">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtOtp"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:inputType="number" android:maxLength="6"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnVerifyOtp"
+                        android:layout_width="match_parent" android:layout_height="56dp" android:text="XÁC NHẬN"
+                        app:cornerRadius="12dp" app:backgroundTint="@color/cf_orange" android:layout_marginTop="20dp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llStep3Reset"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Tạo mật khẩu mới an toàn cho tài khoản của bạn." android:textColor="@color/cf_text_hint" android:layout_marginBottom="16dp"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp"
+                        android:hint="Mật khẩu mới" app:startIconDrawable="@drawable/ic_lock" app:endIconMode="password_toggle" app:boxStrokeColor="@color/cf_orange">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtNewPassword"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:inputType="textPassword"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:hint="Xác nhận mật khẩu" app:startIconDrawable="@drawable/ic_lock" app:endIconMode="password_toggle" app:boxStrokeColor="@color/cf_orange">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtConfirmPassword"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:inputType="textPassword"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnResetPassword"
+                        android:layout_width="match_parent" android:layout_height="56dp" android:text="LƯU MẬT KHẨU MỚI"
+                        app:cornerRadius="12dp" app:backgroundTint="@color/cf_brown" android:layout_marginTop="20dp"/>
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</ScrollView>

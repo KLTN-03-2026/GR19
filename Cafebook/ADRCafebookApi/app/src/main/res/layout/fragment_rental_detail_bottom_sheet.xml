@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet_white"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tvDetailTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Chi tiết thuê sách"
+                android:textColor="@color/cafe_brown"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvStatusBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:background="@drawable/bg_badge_brown"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
+                android:text="Đang thuê"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <!-- Rental Info -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#F0EBE1"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2">
+
+                    <TextView android:text="Mã phiếu:" android:textColor="@color/cf_text_hint" android:textSize="14sp" />
+                    <TextView android:id="@+id/tvIdPhieu" android:text="#123" android:textColor="@color/cafe_brown" android:gravity="end" android:textStyle="bold" />
+
+                    <TextView android:text="Ngày thuê:" android:textColor="@color/cf_text_hint" android:textSize="14sp" android:layout_marginTop="8dp"/>
+                    <TextView android:id="@+id/tvNgayThue" android:text="10/05/2026" android:textColor="@color/cafe_brown" android:gravity="end" android:layout_marginTop="8dp"/>
+
+                    <TextView android:text="Hạn trả:" android:textColor="@color/cf_text_hint" android:textSize="14sp" android:layout_marginTop="8dp"/>
+                    <TextView android:id="@+id/tvHanTra" android:text="17/05/2026" android:textColor="@color/cafe_brown" android:gravity="end" android:layout_marginTop="8dp"/>
+
+                    <TextView android:id="@+id/lblNgayTra" android:text="Ngày trả thực tế:" android:textColor="@color/cf_text_hint" android:textSize="14sp" android:layout_marginTop="8dp" android:visibility="gone"/>
+                    <TextView android:id="@+id/tvNgayTra" android:text="-" android:textColor="@color/cafe_brown" android:gravity="end" android:layout_marginTop="8dp" android:visibility="gone"/>
+                </GridLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Books Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="8dp"
+            android:text="Danh sách sách thuê"
+            android:textColor="@color/cafe_brown"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/llBooksContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <!-- Financial Summary -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="8dp"
+            android:text="Chi tiết thanh toán"
+            android:textColor="@color/cafe_brown"
+            android:textStyle="bold" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#F0EBE1"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2">
+
+                    <TextView android:text="Tổng tiền cọc:" android:textColor="@color/cf_text_hint" />
+                    <TextView android:id="@+id/tvTienCoc" android:text="150,000đ" android:textColor="@color/cafe_brown" android:gravity="end" />
+
+                    <TextView android:text="Phí thuê sách:" android:textColor="@color/cf_text_hint" android:layout_marginTop="8dp"/>
+                    <TextView android:id="@+id/tvPhiThue" android:text="45,000đ" android:textColor="@color/cafe_brown" android:gravity="end" android:layout_marginTop="8dp"/>
+
+                    <TextView android:text="Tổng tiền phạt:" android:textColor="@color/cf_text_hint" android:layout_marginTop="8dp"/>
+                    <TextView android:id="@+id/tvTienPhat" android:text="0đ" android:textColor="@color/cafe_orange" android:gravity="end" android:layout_marginTop="8dp"/>
+                </GridLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="#EEEEEE" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/lblCocHoan"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tiền cọc hoàn trả:"
+                        android:textColor="@color/cafe_brown"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvCocHoan"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="105,000đ"
+                        android:textColor="@color/cafe_orange"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvNoteEstimate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/lblCocHoan"
+                        android:layout_marginTop="4dp"
+                        android:text="(*Số tiền tạm tính đến hiện tại)"
+                        android:textColor="@color/cf_text_hint"
+                        android:textSize="11sp"
+                        android:visibility="gone"/>
+                </RelativeLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClose"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Đóng"
+            android:textColor="@color/cf_text_hint" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

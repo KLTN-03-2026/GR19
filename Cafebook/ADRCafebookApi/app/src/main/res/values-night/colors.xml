@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand Colors for Night Mode -->
+    <color name="cafe_brown">#D7CCC8</color> <!-- Lighten brown for text in dark mode -->
+    <color name="cafe_brown_dark">#121212</color>
+    <color name="cafe_brown_light">#BCAAA4</color>
+
+    <color name="cafe_orange">#FF9800</color>
+    <color name="cafe_orange_earth">#D2691E</color>
+    <color name="cafe_orange_light">#FFE0B2</color>
+
+    <color name="cafe_beige">#4E342E</color>
+    <color name="cafe_cream">#1A1A1A</color> <!-- Dark background -->
+    <color name="cafe_cream_dark">#242424</color>
+    <color name="cafe_cream_extra_light">#2C2C2C</color>
+
+    <color name="white">#1E1E1E</color> <!-- Surface color -->
+    <color name="black">#FFFFFF</color>
+
+    <!-- UI Semantic Colors Mapping -->
+    <color name="cf_background">@color/cafe_cream</color>
+    <color name="cf_surface">#2D2D2D</color>
+    <color name="cf_on_surface">#E0E0E0</color>
+</resources>

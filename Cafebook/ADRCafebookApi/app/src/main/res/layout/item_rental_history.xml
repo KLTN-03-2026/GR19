@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="3dp"
+    app:strokeColor="#F0EBE1"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/tvIdPhieu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mã phiếu: #12"
+                android:textColor="@color/cafe_brown"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvStatusBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:background="@drawable/bg_badge_brown"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Đang mượn"
+                android:textColor="@color/white"
+                android:textSize="11sp" />
+        </RelativeLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0EBE1" android:layout_marginVertical="12dp"/>
+
+        <GridLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:columnCount="2">
+            <TextView android:text="Ngày thuê:" android:textColor="@color/cf_text_hint" android:textSize="13sp"/>
+            <TextView android:id="@+id/tvNgayThue" android:text="10/05/2026" android:textColor="@color/cafe_brown" android:gravity="end" android:textSize="13sp"/>
+
+            <TextView android:text="Số lượng sách:" android:textColor="@color/cf_text_hint" android:textSize="13sp" android:layout_marginTop="4dp"/>
+            <TextView android:id="@+id/tvSoLuong" android:text="3 cuốn" android:textColor="@color/cafe_brown" android:gravity="end" android:layout_marginTop="4dp" android:textSize="13sp"/>
+        </GridLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:background="#FFF3E0"
+            android:padding="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tổng tiền cọc:"
+                android:textColor="@color/cafe_orange"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvTongCoc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="150,000đ"
+                android:textColor="@color/cafe_orange"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnViewDetails"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Xem chi tiết các sách &amp; Phí phạt"
+            app:icon="@drawable/ic_arrow_forward"
+            app:iconGravity="textEnd"
+            android:textColor="@color/cafe_brown" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
