@@ -1,14 +1,15 @@
 ﻿using CafebookApi.Data;
+using CafebookApi.Services;
 using CafebookModel.Model.ModelEntities;
 using CafebookModel.Model.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OtpNet;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using OtpNet;
 
 namespace CafebookApi.Controllers.Shared
 {
@@ -19,11 +20,13 @@ namespace CafebookApi.Controllers.Shared
     {
         private readonly CafebookDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IPasswordService _passwordService;
 
-        public AuthController(CafebookDbContext context, IConfiguration configuration)
+        public AuthController(CafebookDbContext context, IConfiguration configuration, IPasswordService passwordService)
         {
             _context = context;
             _configuration = configuration;
+            _passwordService = passwordService;
         }
 
         [HttpPost("login-nhan-vien")]
@@ -83,10 +86,10 @@ namespace CafebookApi.Controllers.Shared
                 .FirstOrDefaultAsync(x =>
                     (x.TenDangNhap == request.Username ||
                      x.SoDienThoai == request.Username ||
-                     x.Email == request.Username)
-                    && x.MatKhau == request.Password);
+                     x.Email == request.Username));
 
-            if (nv == null)
+            // KIỂM TRA MẬT KHẨU BẰNG SERVICE
+            if (nv == null || !_passwordService.VerifyPassword(nv.MatKhau, request.Password))
                 return Unauthorized(new { message = "Tài khoản hoặc mật khẩu không chính xác" });
 
             if (nv.TrangThaiLamViec == "Nghỉ việc" || nv.TrangThaiLamViec == "Đã nghỉ")

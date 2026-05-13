@@ -1,0 +1,125 @@
+﻿/* Tệp CSS tuân thủ Quy tắc 4: UI Isolation cho Layout Account */
+
+.cb-account-card {
+    background-color: #ffffff;
+    border: 1px solid #F0EBE1;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.cb-account-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 600px; /* Đảm bảo form luôn có độ cao thẩm mỹ */
+}
+/* Sidebar Menu */
+
+.cb-account-sidebar {
+    width: 100%;
+    background-color: #F9F6EE; /* Màu kem đồng bộ phong cách Cafebook */
+    padding: 1.5rem;
+    border-bottom: 1px solid #F0EBE1;
+}
+
+.cb-sidebar-title {
+    color: var(--cf-dark-brown, #4E342E);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-left: 0.5rem;
+}
+/* Các link điều hướng */
+
+.cb-account-nav .cb-nav-link {
+    display: flex;
+    align-items: center;
+    color: var(--cf-text, #4E342E);
+    font-weight: 500;
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    margin-bottom: 0.35rem;
+    transition: all 0.2s ease;
+}
+
+.cb-account-nav .cb-nav-icon {
+    margin-right: 12px;
+    font-size: 1.3rem;
+    color: #8C7B73;
+    transition: color 0.2s ease;
+}
+/* Hiệu ứng Hover Material */
+
+.cb-account-nav .cb-nav-link:hover {
+    background-color: #F0EBE1;
+    color: var(--cf-orange, #D27D2D);
+}
+
+    .cb-account-nav .cb-nav-link:hover .cb-nav-icon {
+        color: var(--cf-orange, #D27D2D);
+    }
+/* Hiệu ứng Active (Trang hiện tại) */
+
+.cb-account-nav .cb-nav-link.active {
+    background-color: var(--cf-orange, #D27D2D) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 8px rgba(210, 125, 45, 0.25);
+}
+
+    .cb-account-nav .cb-nav-link.active .cb-nav-icon {
+        color: #ffffff !important;
+    }
+/* Đường phân cách chia nhóm */
+
+.cb-nav-divider {
+    border-color: #D6CBB8;
+    margin: 1rem 0;
+    opacity: 0.5;
+}
+/* Vùng nội dung chính (Form, Lịch sử...) */
+
+.cb-account-content {
+    flex-grow: 1;
+    padding: 2rem;
+    background-color: #ffffff;
+    width: 100%;
+}
+/* ------------------------------------------------ */ /* RESPONSIVE MÀN HÌNH MÁY TÍNH (Tablet & Desktop) */ /* ------------------------------------------------ */
+
+@media (min-width: 768px) {
+    .cb-account-layout {
+        flex-direction: row; /* Chuyển thành bố cục 2 cột */
+    }
+
+    .cb-account-sidebar {
+        width: 280px; /* Độ rộng cố định cho Sidebar */
+        flex-shrink: 0;
+        border-right: 1px solid #F0EBE1;
+        border-bottom: none;
+    }
+
+    .cb-account-content {
+        padding: 3rem; /* Rộng rãi hơn trên PC */
+    }
+}
+/* ------------------------------------------------ */ /* RESPONSIVE MÀN HÌNH ĐIỆN THOẠI                  */ /* ------------------------------------------------ */
+
+@media (max-width: 767px) {
+    .cb-account-content {
+        padding: 1.5rem 1rem;
+    }
+
+    /* Biến menu dọc thành thanh trượt ngang trên mobile */
+    .cb-account-nav {
+        flex-direction: row !important;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+
+        .cb-account-nav .cb-nav-link {
+            white-space: nowrap;
+            margin-bottom: 0;
+            margin-right: 0.5rem;
+        }
+}
+
+

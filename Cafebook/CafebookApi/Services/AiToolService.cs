@@ -158,14 +158,13 @@ namespace CafebookApi.Services
                 if (!results.Any())
                     return new { Message = "Dạ mình đã tìm kỹ nhưng không thấy dữ liệu nào phù hợp với yêu cầu của bạn ạ." };
 
-                // Gửi dữ liệu thô + System Guideline kèm theo cho AI tự Generate hành văn
                 return new
                 {
                     Data = results,
                     Message = "Dưới đây là dữ liệu thô từ Database. Hãy hành văn lại một cách ấm áp, thân thiện để trả lời khách hàng."
                 };
             }
-            catch (Exception) // Đã xóa biến 'ex' dư thừa
+            catch (Exception)
             {
                 return new { Message = $"Dạ hệ thống truy vấn tạm thời gặp chút khó khăn. Bạn có thể thử hỏi lại theo cách khác giúp mình nhé." };
             }

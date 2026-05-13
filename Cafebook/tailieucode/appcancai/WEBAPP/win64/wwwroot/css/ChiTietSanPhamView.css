@@ -1,0 +1,147 @@
+﻿/* Tập tin: WebCafebookApi/wwwroot/css/ChiTietSanPhamView.css */
+
+.product-detail-wrapper {
+    background: var(--cf-white);
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 24px rgba(78, 52, 46, 0.08);
+    border: 1px solid rgba(0,0,0,0.03);
+}
+
+.product-detail-img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.4s ease;
+}
+
+    .product-detail-img:hover {
+        transform: scale(1.02);
+    }
+
+.qty-box {
+    display: inline-flex;
+    align-items: center;
+    background: var(--cf-light-gray);
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.qty-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: var(--cf-white);
+    font-size: 20px;
+    color: var(--cf-dark-brown);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+    .qty-btn:hover {
+        background: var(--cf-cream);
+        transform: translateY(-2px);
+    }
+
+.qty-input {
+    width: 60px;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--cf-dark-brown);
+}
+
+    .qty-input:focus {
+        outline: none;
+    }
+
+.tabs-cafe .nav-link {
+    color: var(--cf-text);
+    font-weight: 600;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 1rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+    .tabs-cafe .nav-link.active, .tabs-cafe .nav-link:hover {
+        color: var(--cf-orange);
+        background-color: rgba(229, 122, 59, 0.05);
+        border-bottom-color: var(--cf-orange);
+    }
+
+.review-reply {
+    background-color: var(--cf-cream);
+    border-left: 4px solid var(--cf-orange);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+/* ... (Các code CSS cũ của bạn giữ nguyên ở trên) ... */
+
+/* =========================================
+   RESPONSIVE CHO TABLET & MOBILE
+   ========================================= */
+
+/* --- TABLET (Màn hình dưới 992px) --- */
+@media (max-width: 991.98px) {
+    .product-detail-wrapper {
+        padding: 1.5rem; /* Giảm padding để tiết kiệm không gian */
+    }
+}
+
+/* --- MOBILE (Màn hình dưới 768px) --- */
+@media (max-width: 767.98px) {
+    .product-detail-wrapper {
+        padding: 1.25rem;
+        border-radius: 12px; /* Bo góc nhỏ lại cho hợp với điện thoại */
+    }
+
+    /* Xử lý Tabs: Cho phép vuốt ngang trên Mobile thay vì bị rớt dòng xấu xí */
+    .tabs-cafe {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch; /* Hỗ trợ vuốt mượt trên iOS */
+        border-bottom: 1px solid var(--cf-light-gray);
+        margin-bottom: 1rem;
+    }
+
+        .tabs-cafe .nav-link {
+            white-space: nowrap; /* Ép chữ trên tab nằm trên 1 dòng */
+            padding: 0.8rem 1rem;
+        }
+
+        /* Ẩn thanh cuộn ngang (scrollbar) cho đẹp trên điện thoại */
+        .tabs-cafe::-webkit-scrollbar {
+            display: none;
+        }
+}
+
+/* --- MOBILE NHỎ (Màn hình dưới 576px) --- */
+@media (max-width: 575.98px) {
+    .product-detail-wrapper {
+        padding: 1rem;
+    }
+
+    /* Giãn đều bộ nút tăng giảm số lượng trên màn hình điện thoại nhỏ để dễ bấm */
+    .qty-box {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .qty-btn {
+        width: 45px; /* Nút to ra một chút để ngón tay dễ chạm */
+        height: 45px;
+    }
+
+    .qty-input {
+        width: auto;
+        flex-grow: 1; /* Ô nhập liệu tự động giãn chiếm phần trống ở giữa */
+    }
+}

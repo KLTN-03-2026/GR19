@@ -83,6 +83,26 @@ if (!dbFileExists || dbFileIsEmpty)
 builder.Configuration.AddJsonFile(dbConfigFilePath, optional: false, reloadOnChange: true);
 
 // ==========================================================
+// TỰ ĐỘNG TẠO/ĐỌC FILE CẤU HÌNH MÃ HÓA MẬT KHẨU
+// ==========================================================
+string passwordConfigFilePath = Path.Combine(configDirPath, "EnablePasswordEncryption.json");
+bool pwdFileExists = File.Exists(passwordConfigFilePath);
+bool pwdFileIsEmpty = pwdFileExists && new FileInfo(passwordConfigFilePath).Length == 0;
+
+if (!pwdFileExists || pwdFileIsEmpty)
+{
+    var defaultPwdConfig = new
+    {
+        PasswordSettings = new
+        {
+            EnableEncryption = false // Mặc định là false để chạy demo như cũ
+        }
+    };
+    File.WriteAllText(passwordConfigFilePath, JsonSerializer.Serialize(defaultPwdConfig, new JsonSerializerOptions { WriteIndented = true }));
+}
+builder.Configuration.AddJsonFile(passwordConfigFilePath, optional: false, reloadOnChange: true);
+
+// ==========================================================
 // ĐĂNG KÝ CÁC DỊCH VỤ NỀN VÀ DATABASE
 // ==========================================================
 builder.Services.AddMemoryCache();
@@ -91,6 +111,7 @@ builder.Services.AddHostedService<AutoCancelOrderService>();
 builder.Services.AddHostedService<AutoUnlockAccountService>();
 builder.Services.AddHostedService<AutoCancelReservationService>();
 builder.Services.AddHostedService<DailyReminderBackgroundService>();
+builder.Services.AddScoped<CafebookApi.Services.IPasswordService, CafebookApi.Services.PasswordService>();
 
 var connectionString = builder.Configuration.GetConnectionString("CafeBookConnectionString");
 builder.Services.AddDbContext<CafebookDbContext>(options =>

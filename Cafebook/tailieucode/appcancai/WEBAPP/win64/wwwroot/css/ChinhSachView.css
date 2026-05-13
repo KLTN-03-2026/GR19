@@ -1,0 +1,94 @@
+﻿/* Xóa nền trắng, dùng trong suốt để ăn theo background gốc của trang */
+.cb-policy-container {
+    background-color: transparent;
+}
+
+/* Kiểu dáng Banner Header đồng bộ với các trang khác */
+.cb-policy-header {
+    background-color: #F9F6EE; /* Màu nền kem nhạt giống hình */
+    border: 1px solid #F0EBE1;
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 3rem;
+}
+
+    .cb-policy-header h1 {
+        color: var(--cf-dark-brown, #4E342E);
+        font-weight: 800;
+        font-size: 2.2rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .cb-policy-header p {
+        color: #8C7B73;
+        font-size: 1.1rem;
+        margin-bottom: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Icon chìm (Watermark) bên phải - Dùng icon cuốn sách (fa-book) */
+    .cb-policy-header::after {
+        content: "\f02d";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        position: absolute;
+        right: 5%;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 8rem;
+        color: #EBE4D5; /* Màu icon chìm nhẹ */
+        opacity: 0.4;
+        z-index: 1;
+    }
+
+/* Các phần nội dung */
+.cb-policy-title {
+    color: var(--cf-dark-brown, #4E342E);
+    font-weight: 700;
+    margin-top: 2.5rem;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px dashed #E0D5C1; /* Viền đứt khúc mềm mại hơn */
+}
+
+.cb-policy-subtitle {
+    color: var(--cf-brown, #6F4E37);
+    font-weight: 700;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.cb-policy-text,
+.cb-policy-list li {
+    line-height: 1.8;
+    color: var(--cf-text, #4E342E);
+    font-size: 1.05rem;
+}
+
+.cb-policy-list {
+    padding-left: 1.5rem;
+}
+
+/* Box thông tin liên hệ */
+.cb-info-box {
+    background-color: #F9F6EE; /* Đổi sang màu kem nhạt thay vì trắng/xám */
+    border-left: 4px solid var(--cf-orange, #D27D2D);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+    .cb-info-box h3 {
+        margin-top: 0;
+    }
+
+    .cb-info-box li {
+        margin-bottom: 0.75rem;
+        font-size: 1.05rem;
+        color: var(--cf-text, #4E342E);
+    }

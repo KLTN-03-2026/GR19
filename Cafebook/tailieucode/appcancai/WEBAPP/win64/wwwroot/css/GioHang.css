@@ -1,0 +1,224 @@
+﻿/* ==========================================================
+   Tập tin: WebCafebookApi/wwwroot/css/GioHang.css
+   Đồng bộ DNA Thiết kế với Thực Đơn & Thư Viện Sách
+========================================================== */
+
+:root {
+    --cf-brown: #6F4E37;
+    --cf-dark-brown: #4E342E;
+    --cf-light-cream: #FFF8E1;
+}
+
+.text-brown {
+    color: var(--cf-brown);
+}
+
+.btn-brown {
+    background-color: var(--cf-brown);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+    .btn-brown:hover {
+        background-color: var(--cf-dark-brown);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(78, 52, 46, 0.2);
+    }
+
+.gh-wrapper {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* --- 1. HEADER GIỎ HÀNG --- */
+.gh-header-section {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 3rem 1.5rem;
+    background: linear-gradient(135deg, var(--cf-light-cream) 0%, #EFEBE5 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(111, 78, 55, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+    .gh-header-section::after {
+        content: "shopping_basket";
+        font-family: 'Material Symbols Outlined';
+        position: absolute;
+        font-size: 12rem;
+        color: rgba(111, 78, 55, 0.04);
+        bottom: -40px;
+        right: -20px;
+        transform: rotate(-15deg);
+    }
+
+/* --- 2. THẺ SẢN PHẨM & TỔNG KẾT --- */
+.gh-card, .gh-summary {
+    border-radius: 16px !important;
+    transition: all 0.3s ease;
+}
+
+    .gh-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+        border-color: rgba(210, 125, 45, 0.3) !important;
+    }
+
+/* --- 3. HÌNH ẢNH SẢN PHẨM --- */
+.gh-img-container {
+    width: 100%;
+    min-height: 120px;
+    background-color: #f8f9fa;
+    border-radius: 16px 0 0 16px;
+    overflow: hidden;
+    position: relative;
+}
+
+    .gh-img-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transition: transform 0.6s ease;
+    }
+
+.gh-card:hover .gh-img-container img {
+    transform: scale(1.1);
+}
+
+/* --- 4. NÚT ĐIỀU CHỈNH SỐ LƯỢNG --- */
+.gh-qty-control {
+    border: 1px solid #dee2e6;
+    padding: 2px;
+}
+
+.btn-qty {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #495057;
+    border-radius: 50% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: 0.2s ease;
+}
+
+    .btn-qty:hover {
+        background: var(--cf-brown);
+        color: #fff;
+    }
+
+.btn-remove {
+    transition: 0.2s;
+    color: #adb5bd;
+}
+
+    .btn-remove:hover {
+        color: #D32F2F !important;
+        transform: scale(1.1);
+    }
+
+.gh-total-price {
+    color: var(--cf-brown);
+    font-size: 1.15rem;
+}
+
+/* --- 5. COUPON TICKET --- */
+.border-dashed {
+    border-style: dashed !important;
+    border-width: 2px !important;
+}
+
+.coupon-card {
+    display: flex;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #eee;
+}
+
+.coupon-left {
+    background: var(--cf-brown);
+    color: white;
+    width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 2px dashed #fff;
+    position: relative;
+}
+
+    .coupon-left::before, .coupon-left::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: #f8f9fa;
+        border-radius: 50%;
+        right: -11px;
+    }
+
+    .coupon-left::before {
+        top: -10px;
+    }
+
+    .coupon-left::after {
+        bottom: -10px;
+    }
+
+.coupon-card.ineligible .coupon-left {
+    background: #adb5bd;
+}
+
+.coupon-card.ineligible {
+    opacity: 0.75;
+}
+
+.coupon-right {
+    padding: 15px;
+    flex-grow: 1;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- 6. RESPONSIVE MOBILE --- */
+@media (max-width: 575.98px) {
+    .gh-header-section {
+        padding: 2rem 1rem;
+    }
+
+        .gh-header-section::after {
+            font-size: 8rem;
+            bottom: -20px;
+        }
+
+    .gh-img-container {
+        min-height: 140px; /* Đảm bảo ảnh không bị dẹt trên điện thoại nhỏ */
+    }
+
+    .gh-product-title {
+        font-size: 1rem;
+    }
+
+    .gh-total-price {
+        font-size: 1rem;
+    }
+}

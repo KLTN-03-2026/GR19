@@ -1,0 +1,112 @@
+﻿/* Tập tin: WebCafebookApi/wwwroot/css/LienHeView.css */
+
+/* --- HEADER SECTION --- */
+.contact-header-section {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 3rem 1.5rem;
+    background: linear-gradient(135deg, var(--cf-cream) 0%, #EFEBE5 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(111, 78, 55, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+    .contact-header-section::after {
+        content: "support_agent";
+        font-family: 'Material Symbols Outlined';
+        position: absolute;
+        font-size: 10rem;
+        color: rgba(111, 78, 55, 0.04);
+        bottom: -30px;
+        right: -10px;
+        transform: rotate(-10deg);
+    }
+
+/* --- CONTACT INFO ITEMS --- */
+.contact-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background-color: rgba(229, 122, 59, 0.1); /* cf-orange nhạt */
+    color: var(--cf-orange);
+    border-radius: 12px; /* Chuyển sang bo góc vuông mềm */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+li:hover .contact-icon-wrapper {
+    background-color: var(--cf-orange);
+    color: var(--cf-white);
+    transform: scale(1.05);
+}
+
+/* --- SOCIAL ICONS --- */
+.social-icon {
+    font-size: 2.2rem;
+    color: var(--cf-brown);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: inline-block;
+    text-decoration: none;
+}
+
+    .social-icon:hover {
+        color: var(--cf-orange);
+        transform: translateY(-5px);
+    }
+
+/* --- MAP & CARDS --- */
+.map-container {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.contact-card {
+    background-color: var(--cf-white);
+    border-radius: 20px !important;
+    border: none !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+/* --- RESPONSIVE LOGIC --- */
+
+/* Tablet & Mobile (< 992px) */
+@media (max-width: 991.98px) {
+    .contact-header-section {
+        padding: 2.5rem 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+        .contact-header-section::after {
+            font-size: 7rem;
+        }
+
+    .contact-icon-wrapper {
+        width: 40px;
+        height: 40px;
+    }
+
+    .social-icon {
+        font-size: 2.5rem; /* Tăng kích thước trên mobile để dễ bấm */
+    }
+}
+
+/* Mobile (< 576px) */
+@media (max-width: 575.98px) {
+    .contact-header-section h1 {
+        font-size: 1.8rem;
+    }
+
+    .social-group {
+        justify-content: center; /* Căn giữa icon mạng xã hội trên mobile */
+    }
+
+    .form-control-lg {
+        font-size: 1rem;
+    }
+}

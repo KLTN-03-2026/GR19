@@ -1,13 +1,14 @@
 ﻿using CafebookApi.Data;
-using EntityKhachHang = CafebookModel.Model.ModelEntities.KhachHang;
+using CafebookApi.Services;
 using CafebookModel.Model.ModelWeb.KhachHang;
 using CafebookModel.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Net;
 using System.Net.Mail;
-using Microsoft.AspNetCore.Authorization;
+using EntityKhachHang = CafebookModel.Model.ModelEntities.KhachHang;
 
 namespace CafebookApi.Controllers.Web.KhachHang
 {
@@ -18,11 +19,13 @@ namespace CafebookApi.Controllers.Web.KhachHang
     {
         private readonly CafebookDbContext _context;
         private readonly IMemoryCache _cache;
+        private readonly IPasswordService _passwordService;
 
-        public DangKyController(CafebookDbContext context, IMemoryCache cache)
+        public DangKyController(CafebookDbContext context, IMemoryCache cache, IPasswordService passwordService)
         {
             _context = context;
             _cache = cache;
+            _passwordService = passwordService;
         }
 
         // Đổi string thành string?
@@ -209,7 +212,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 
                 khachHang.Email = savedSession.Email;
                 khachHang.SoDienThoai = savedSession.SoDienThoai;
-                khachHang.MatKhau = savedSession.Password;
+                khachHang.MatKhau = _passwordService.HashPassword(savedSession.Password);
                 if (khachHang.HoTen == khachHang.Email || string.IsNullOrEmpty(khachHang.HoTen)) khachHang.HoTen = savedSession.Email;
 
                 khachHang.TaiKhoanTam = false;
@@ -225,7 +228,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
                     Email = savedSession?.Email ?? string.Empty,
                     SoDienThoai = savedSession?.SoDienThoai ?? string.Empty,
                     TenDangNhap = savedSession?.Email ?? string.Empty,
-                    MatKhau = savedSession?.Password ?? string.Empty,
+                    MatKhau = _passwordService.HashPassword(savedSession?.Password ?? string.Empty),
                     NgayTao = DateTime.Now,
                     TaiKhoanTam = false,
                     BiKhoa = false,

@@ -1,4 +1,5 @@
 ﻿using CafebookApi.Data;
+using CafebookApi.Services;
 using CafebookModel.Model.ModelWeb.KhachHang;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -20,11 +21,13 @@ namespace CafebookApi.Controllers.Web.KhachHang
     {
         private readonly CafebookDbContext _context;
         private readonly IMemoryCache _cache; // KHAI BÁO CACHE
+        private readonly IPasswordService _passwordService;
 
-        public QuenMatKhauController(CafebookDbContext context, IMemoryCache cache) // BƠM CACHE VÀO ĐÂY
+        public QuenMatKhauController(CafebookDbContext context, IMemoryCache cache, IPasswordService passwordService)
         {
             _context = context;
             _cache = cache;
+            _passwordService = passwordService;
         }
 
         [HttpPost("gui-ma")]
@@ -174,7 +177,8 @@ namespace CafebookApi.Controllers.Web.KhachHang
                 return BadRequest("Không tìm thấy tài khoản.");
             }
 
-            khachHang.MatKhau = req.NewPassword;
+            // MÃ HÓA MẬT KHẨU MỚI
+            khachHang.MatKhau = _passwordService.HashPassword(req.NewPassword);
 
             _context.KhachHangs.Update(khachHang);
             await _context.SaveChangesAsync();

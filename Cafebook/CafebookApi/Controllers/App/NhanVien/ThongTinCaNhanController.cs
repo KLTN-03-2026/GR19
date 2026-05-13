@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using CafebookApi.Services;
 
 namespace CafebookApi.Controllers.App.NhanVien
 {
@@ -20,11 +21,13 @@ namespace CafebookApi.Controllers.App.NhanVien
     {
         private readonly CafebookDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IPasswordService _passwordService; // <-- Thêm vào
 
-        public ThongTinCaNhanController(CafebookDbContext context, IWebHostEnvironment env)
+        public ThongTinCaNhanController(CafebookDbContext context, IWebHostEnvironment env, IPasswordService passwordService)
         {
             _context = context;
             _env = env;
+            _passwordService = passwordService;
         }
 
         [HttpGet("me/{idNhanVien}")]
@@ -207,7 +210,6 @@ namespace CafebookApi.Controllers.App.NhanVien
             if (string.IsNullOrEmpty(req.MatKhauCu) || string.IsNullOrEmpty(req.MatKhauMoi))
                 return BadRequest("Mật khẩu không được để trống.");
 
-            // Validation Backend
             if (req.MatKhauMoi.Length < 6)
                 return BadRequest("Mật khẩu mới phải có ít nhất 6 ký tự.");
 
@@ -217,9 +219,11 @@ namespace CafebookApi.Controllers.App.NhanVien
             var nhanVien = await _context.NhanViens.FindAsync(idNhanVien);
             if (nhanVien == null) return NotFound();
 
-            if (nhanVien.MatKhau != req.MatKhauCu) return BadRequest("Mật khẩu cũ không chính xác.");
+            if (!_passwordService.VerifyPassword(nhanVien.MatKhau, req.MatKhauCu))
+                return BadRequest("Mật khẩu cũ không chính xác.");
 
-            nhanVien.MatKhau = req.MatKhauMoi;
+            nhanVien.MatKhau = _passwordService.HashPassword(req.MatKhauMoi);
+
             await _context.SaveChangesAsync();
             return Ok(new { message = "Đổi mật khẩu thành công." });
         }

@@ -1,0 +1,110 @@
+﻿/* Tập tin: WebCafebookApi/wwwroot/css/components.css */
+
+.btn {
+    border-radius: 21px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 2px 4px var(--cf-shadow);
+}
+
+.btn-lg {
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+}
+
+.btn-primary {
+    background-color: var(--cf-brown);
+    color: var(--cf-white);
+    border-color: var(--cf-brown);
+}
+
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: var(--cf-orange);
+        color: var(--cf-white);
+        border-color: var(--cf-orange);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(78, 52, 46, 0.25);
+    }
+
+.btn-outline-light {
+    border-radius: 21px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-width: 2px;
+}
+
+    .btn-outline-light:hover {
+        background-color: var(--cf-orange);
+        color: var(--cf-white);
+        border-color: var(--cf-orange);
+        transform: translateY(-3px);
+    }
+
+.btn-outline-primary {
+    border-radius: 21px;
+    color: var(--cf-brown);
+    border-color: var(--cf-brown);
+}
+
+    .btn-outline-primary:hover {
+        background-color: var(--cf-brown);
+        color: var(--cf-white);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px var(--cf-shadow);
+    }
+
+.btn-success {
+    background-color: var(--cf-orange);
+    border-color: var(--cf-orange);
+}
+
+    .btn-success:hover {
+        background-color: #a96323;
+        border-color: #a96323;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(78, 52, 46, 0.25);
+    }
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px var(--cf-shadow);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(78, 52, 46, 0.2);
+    }
+
+.card-title {
+    color: var(--cf-dark-brown);
+    font-weight: 600;
+}
+
+.card-img-container {
+    overflow: hidden;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.card-img-top {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    transition: transform 0.4s ease;
+}
+
+.card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+.card-footer {
+    background-color: var(--cf-white);
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}

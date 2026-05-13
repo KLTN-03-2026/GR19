@@ -1,8 +1,8 @@
 ﻿using CafebookApi.Data;
+using CafebookApi.Services;
 using CafebookModel.Model.ModelWeb.KhachHang;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -14,10 +14,12 @@ namespace CafebookApi.Controllers.Web.KhachHang
     public class DoiMatKhauController : ControllerBase
     {
         private readonly CafebookDbContext _context;
+        private readonly IPasswordService _passwordService;
 
-        public DoiMatKhauController(CafebookDbContext context)
+        public DoiMatKhauController(CafebookDbContext context, IPasswordService passwordService)
         {
             _context = context;
+            _passwordService = passwordService;
         }
 
         [HttpPut("{id}")]
@@ -33,13 +35,14 @@ namespace CafebookApi.Controllers.Web.KhachHang
             var kh = await _context.KhachHangs.FindAsync(id);
             if (kh == null) return NotFound(new { Message = "Không tìm thấy tài khoản." });
 
-            // TODO: Ở phiên bản sau nên áp dụng BCrypt/Argon2 thay vì so sánh chuỗi thô
-            if (kh.MatKhau != model.MatKhauCu)
+            // SỬ DỤNG HÀM VERIFY KÈM KIỂM TRA NULL
+            if (string.IsNullOrEmpty(kh.MatKhau) || !_passwordService.VerifyPassword(kh.MatKhau, model.MatKhauCu))
             {
                 return BadRequest(new { Message = "Mật khẩu cũ không chính xác." });
             }
 
-            kh.MatKhau = model.MatKhauMoi;
+            // SỬ DỤNG HÀM HASH ĐỂ MÃ HÓA MẬT KHẨU MỚI
+            kh.MatKhau = _passwordService.HashPassword(model.MatKhauMoi);
             await _context.SaveChangesAsync();
 
             return Ok(new { Message = "Đổi mật khẩu thành công." });

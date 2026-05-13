@@ -1,4 +1,5 @@
 ﻿using CafebookApi.Data;
+using CafebookApi.Services;
 using CafebookModel.Model.ModelWeb.KhachHang;
 using CafebookModel.Utils;
 using Microsoft.AspNetCore.Authorization;
@@ -21,12 +22,14 @@ namespace CafebookApi.Controllers.Web.KhachHang
         private readonly CafebookDbContext _context;
         private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
+        private readonly IPasswordService _passwordService;
 
-        public DangNhapController(CafebookDbContext context, IConfiguration config, IMemoryCache cache)
+        public DangNhapController(CafebookDbContext context, IConfiguration config, IMemoryCache cache, IPasswordService passwordService)
         {
             _context = context;
             _config = config;
             _cache = cache;
+            _passwordService = passwordService;
         }
 
         [HttpPost]
@@ -71,11 +74,11 @@ namespace CafebookApi.Controllers.Web.KhachHang
             // 2. TÌM KHÁCH HÀNG & XỬ LÝ ĐẾM SỐ LẦN SAI
             // ====================================================================
             EntityKhachHang? khachHang = await _context.KhachHangs.FirstOrDefaultAsync(k =>
-                (k.TenDangNhap == userInput || k.SoDienThoai == userInput || k.Email == userInput) &&
-                (k.MatKhau == passInput)
+                (k.TenDangNhap == userInput || k.SoDienThoai == userInput || k.Email == userInput)
             );
 
-            if (khachHang == null)
+            // Gộp kiểm tra Tồn tại tài khoản VÀ Mật khẩu bằng Service
+            if (khachHang == null || !_passwordService.VerifyPassword(khachHang.MatKhau ?? string.Empty, passInput))
             {
                 // Khách nhập sai -> Tăng bộ đếm cho CẢ IP VÀ TÀI KHOẢN
                 string failIpKey = $"LOGIN_FAIL_IP_{ipAddress}";
@@ -166,7 +169,7 @@ namespace CafebookApi.Controllers.Web.KhachHang
 
             string token = GenerateJwtToken(khachHang);
 
-            // THÊM ĐOẠN CODE LƯU LOG VÀO ĐÂY =========================
+            // LƯU LOG VÀO HỆ THỐNG =========================
             var log = new CafebookModel.Model.ModelEntities.NhatKyHeThong
             {
                 IdKhachHang = khachHang.IdKhachHang,

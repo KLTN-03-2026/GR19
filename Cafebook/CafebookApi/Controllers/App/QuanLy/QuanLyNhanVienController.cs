@@ -1,6 +1,8 @@
 ﻿using CafebookApi.Data;
+using CafebookApi.Services;
 using CafebookModel.Model.ModelApp.QuanLy;
 using CafebookModel.Utils; // Kéo thư viện Utils
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,8 +11,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-
 using NhanVienEntity = CafebookModel.Model.ModelEntities.NhanVien;
 
 namespace CafebookApi.Controllers.App.QuanLy
@@ -22,11 +22,13 @@ namespace CafebookApi.Controllers.App.QuanLy
     {
         private readonly CafebookDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IPasswordService _passwordService;
 
-        public QuanLyNhanVienController(CafebookDbContext context, IWebHostEnvironment env)
+        public QuanLyNhanVienController(CafebookDbContext context, IWebHostEnvironment env, IPasswordService passwordService)
         {
             _context = context;
             _env = env;
+            _passwordService = passwordService;
             if (string.IsNullOrEmpty(_env.WebRootPath))
             {
                 _env.WebRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
@@ -112,7 +114,7 @@ namespace CafebookApi.Controllers.App.QuanLy
             {
                 HoTen = request.HoTen.Trim(),
                 TenDangNhap = tenDangNhap,
-                MatKhau = request.MatKhau,
+                MatKhau = _passwordService.HashPassword(request.MatKhau), // <-- MÃ HÓA TẠI ĐÂY
                 IdVaiTro = request.IdVaiTro,
                 LuongCoBan = request.LuongCoBan,
                 TrangThaiLamViec = request.TrangThaiLamViec,
@@ -165,7 +167,7 @@ namespace CafebookApi.Controllers.App.QuanLy
 
             if (!string.IsNullOrWhiteSpace(request.MatKhau))
             {
-                entity.MatKhau = request.MatKhau;
+                entity.MatKhau = _passwordService.HashPassword(request.MatKhau); // <-- MÃ HÓA TẠI ĐÂY
             }
 
             // XỬ LÝ ẢNH
