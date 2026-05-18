@@ -361,7 +361,3 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-*.exe
-*.deploy
-Cafebook/tailieucode/appcancai/WEBAPI/linux64/CafebookApi
-Cafebook/tailieucode/appcancai/WEBAPP/linux64/WebCafebookApi

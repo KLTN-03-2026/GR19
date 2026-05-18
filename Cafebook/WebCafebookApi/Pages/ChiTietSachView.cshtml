@@ -72,8 +72,8 @@
                         }
                     </div>
                     
-                    <button type="button" class="btn btn-primary btn-lg w-100 fw-bold d-flex justify-content-center align-items-center shadow-sm" disabled style="border-radius: 12px;">
-                        <span class="material-symbols-outlined me-2">menu_book</span> Thuê sách (Đang phát triển)
+                    <button type="button" class="btn btn-primary btn-lg w-100 fw-bold d-flex justify-content-center align-items-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modalHuongDanThue" style="border-radius: 12px;">
+                        <span class="material-symbols-outlined me-2">menu_book</span> Hướng dẫn Thuê sách
                     </button>
                     <small class="text-muted d-block text-center mt-3"><i class="fa-solid fa-circle-info me-1"></i>Vui lòng liên hệ trực tiếp tại quầy để làm thủ tục mượn sách.</small>
                 </div>
@@ -174,6 +174,52 @@
     }
 </div>
 
+<div class="modal fade" id="modalHuongDanThue" tabindex="-1" aria-labelledby="modalHuongDanThueLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow" style="border-radius: 16px; border: none; overflow: hidden;">
+            <div class="modal-header border-0" style="background-color: var(--cf-brown); color: white;">
+                <h5 class="modal-title fw-bold d-flex align-items-center" id="modalHuongDanThueLabel">
+                    <span class="material-symbols-outlined me-2">info</span> Quy Định Thuê Sách Tại Quán
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body p-4 p-md-5">
+                <div class="alert alert-warning d-flex align-items-center mb-4 border-0" role="alert" style="border-radius: 12px; background-color: #fff3cd;">
+                    <span class="material-symbols-outlined me-3 fs-1 text-warning">storefront</span>
+                    <div>
+                        <strong>Thông báo:</strong> Để đảm bảo chất lượng sách và quy trình quản lý, hệ thống <strong>chỉ hỗ trợ làm thủ tục thuê sách trực tiếp tại quầy thu ngân.</strong>
+                    </div>
+                </div>
+
+                <div class="row gy-4">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3" style="color: var(--cf-dark-brown);">
+                            <span class="material-symbols-outlined align-middle me-1 fs-5">format_list_numbered</span> Cách thức mượn:
+                        </h6>
+                        <ul class="text-muted" style="line-height: 1.8; padding-left: 1.2rem;">
+                            <li>Tìm sách tại kệ: <strong class="text-dark">@(Model.Sach?.ViTri ?? "Khu vực trưng bày")</strong>.</li>
+                            <li>Mang sách đến quầy thu ngân để nhân viên hỗ trợ.</li>
+                            <li>Thanh toán tiền cọc: <strong class="text-danger fs-6">@(Model.Sach?.GiaBia.ToString("N0") ?? "0") đ</strong>.</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3" style="color: var(--cf-dark-brown);">
+                            <span class="material-symbols-outlined align-middle me-1 fs-5">gavel</span> Lưu ý:
+                        </h6>
+                        <ul class="text-muted" style="line-height: 1.8; padding-left: 1.2rem;">
+                            <li>Vui lòng kiểm tra kỹ tình trạng sách cùng nhân viên trước khi mượn.</li>
+                            <li>Tiền cọc sẽ được hoàn lại sau khi trừ phí thuê lúc quý khách trả sách.</li>
+                            <li>Mọi chi tiết vui lòng xem tại <a asp-page="/ChinhSachView" class="text-decoration-none fw-bold" style="color: var(--cf-orange);">Chính sách dịch vụ</a>.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-secondary px-5 fw-bold" data-bs-dismiss="modal" style="border-radius: 12px;">Đã rõ</button>
+            </div>
+        </div>
+    </div>
+</div>
 @section Scripts {
     <script>
         $(function () {

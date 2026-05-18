@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CafebookModel.Utils;
-using System.Data.Common; // <-- DÙNG CHO TEXT TO SQL
+using System.Data.Common; 
 
 namespace CafebookApi.Services
 {
@@ -102,13 +102,11 @@ namespace CafebookApi.Services
                 sachMessage += $"- {sach.TenSach} \n[BUTTON: Xem sách này | {LinkDetailSach}?token={token}]\n";
             }
 
-            // Nếu không có dữ liệu (database trống)
             if (string.IsNullOrEmpty(spMessage) && string.IsNullOrEmpty(sachMessage))
             {
                 return new { Message = "Dạ hiện tại quán mới mở nên chưa có thống kê bán chạy. Mời bạn tham khảo qua thực đơn nha!\n[BUTTON: Xem Thực Đơn | /san-pham]" };
             }
 
-            // BƯỚC 3: TRẢ VỀ DỮ LIỆU CÓ CHỨA CÚ PHÁP NÚT BẤM
             return new
             {
                 Message = $"Dạ đây là những món và sách đang cực hot, được mọi người yêu thích nhất tại Cafebook ạ:\n\n" +
@@ -118,12 +116,10 @@ namespace CafebookApi.Services
             };
         }
 
-        // 2. TỰ ĐỘNG TEXT TO SQL CHO AI (LỌC BẢO MẬT)
         public async Task<object> QueryDatabaseAsync(string sqlQuery)
         {
             try
             {
-                // Bảo mật: Chỉ cho phép câu lệnh SELECT, chặn DROP, DELETE, Cập nhật và chặn query bảng nhạy cảm
                 if (!sqlQuery.Trim().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) ||
                     sqlQuery.Contains("DROP", StringComparison.OrdinalIgnoreCase) ||
                     sqlQuery.Contains("DELETE", StringComparison.OrdinalIgnoreCase) ||

@@ -15,9 +15,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
     //public static final String BASE_URL = "http://10.0.2.2:5202/";
-    public static final String BASE_URL = "https://cafebookapi.shushushu.id.vn/";
+    //public static final String BASE_URL = "https://cafebookapi.shushushu.id.vn/";
     //public static final String BASE_URL = "https://apicafebook.shushushu.id.vn/";
-    //public static final String BASE_URL = "https://api.cafebookapi.id.vn/";
+    public static final String BASE_URL = "https://api.shushushu.id.vn/";
+    //public static final String BASE_URL = "https://api.cafebook.id.vn/";
 
     private static Retrofit retrofit = null;
 

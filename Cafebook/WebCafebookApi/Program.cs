@@ -122,7 +122,6 @@ var app = builder.Build();
 // 6. PIPELINE MIDDLEWARE
 // ==========================================
 app.UseExceptionHandler("/loi-he-thong?code=500");
-app.UseExceptionHandler("/loi-he-thong?code=400");
 app.UseStatusCodePagesWithReExecute("/loi-he-thong", "?code={0}");
 
 app.UseStaticFiles();

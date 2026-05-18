@@ -1,5 +1,0 @@
-{
-  "ConnectionStrings": {
-    "CafeBookConnectionString": "Server=localhost\\SQLEXPRESS;Database=CAFEBOOKDB;Integrated Security=True;Encrypt=False;"
-  }
-}
